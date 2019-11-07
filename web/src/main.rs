@@ -1,3 +1,5 @@
+use stdweb::web::alert;
+
 fn main() {
-    println!("Hello, world!");
+    alert("Hello, world!");
 }
