@@ -1,3 +1,5 @@
+#![allow(unused_imports)]
+
 use std::collections::HashMap;
 use std::fmt;
 
@@ -6,12 +8,14 @@ use itertools::Itertools;
 use log::*;
 use stdweb::js;
 use stdweb::unstable::{TryFrom, TryInto};
-use stdweb::web::{alert, document, Element, IElement, INode, Node};
+use stdweb::web::{alert, document, Element, IElement, INode};
 use web_logger;
 
 use Expr::*;
 
 type SvgPoint = default::Point2D<f32>;
+type SvgRect = default::Rect<f32>;
+type SvgSize = default::Size2D<f32>;
 
 #[derive(Debug, Clone)]
 enum Expr {
@@ -19,6 +23,12 @@ enum Expr {
     Lit { kind: String, content: String },
     Var { name: String },
     Do { expressions: Vec<Expr> },
+}
+
+#[derive(Debug)]
+struct ExprRendering {
+    elements: Vec<Element>,
+    area: SvgRect,
 }
 
 struct RenderingState {
@@ -56,16 +66,17 @@ impl RenderingState {
     }
 
     /// Measure text by using a hidden svg element's text metrics methods.
-    fn measure_text(&mut self, text: &str) -> f32 {
+    fn measure_text(&mut self, text: &str) -> SvgSize {
         if let Some(width) = self.text_metrics_cache.get(text) {
-            *width
+            size2(*width, 20.)
         } else {
             self.measurement_text_element.set_text_content(text);
             let width = js! { return @{&self.measurement_text_element}.getComputedTextLength(); };
             // Stdweb doesn't do f32s.
             let width = f64::try_from(width).unwrap() as f32;
             self.text_metrics_cache.insert(text.to_string(), width);
-            width
+            //TODO: Get the height.
+            size2(width, 20.)
         }
     }
 }
@@ -117,10 +128,21 @@ fn new_text(pt: SvgPoint, contents: &str) -> Element {
     text
 }
 
-fn render(state: &mut RenderingState, expr: &Expr) -> Vec<Element> {
+fn render_text(state: &mut RenderingState, pt: SvgPoint, contents: &str) -> ExprRendering {
+    let text = new_text(pt, contents);
+    ExprRendering {
+        elements: vec![text],
+        area: Rect::new(pt, state.measure_text(contents)),
+    }
+}
+
+fn render(state: &mut RenderingState, expr: &Expr) -> ExprRendering {
     match expr {
-        Var { name } => vec![new_text(point2(20., 20.), name)],
-        _ => Vec::new(),
+        Var { name } => render_text(state, point2(20., 20.), name),
+        _ => ExprRendering {
+            elements: vec![],
+            area: Rect::zero(),
+        },
     }
 }
 
@@ -145,7 +167,7 @@ fn main() {
             height = "200",
             viewBox = "0 0 200 200",
     };
-    for elem in render_list {
+    for elem in render_list.elements {
         canvas.append_child(&elem);
     }
 
