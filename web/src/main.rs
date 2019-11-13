@@ -16,12 +16,30 @@ use Expr::*;
 type SvgPoint = default::Point2D<f32>;
 type SvgSize = default::Size2D<f32>;
 
+#[derive(Debug, Clone, Copy)]
+struct ExprId(u32);
+
+// If we get any more fields in common, something like the diff_enum crate might come in handy.
 #[derive(Debug, Clone)]
 enum Expr {
-    Call { name: String, arguments: Vec<Expr> },
-    Lit { kind: String, content: String },
-    Var { name: String },
-    Do { expressions: Vec<Expr> },
+    Call {
+        id: ExprId,
+        name: String,
+        arguments: Vec<Expr>,
+    },
+    Lit {
+        id: ExprId,
+        kind: String,
+        content: String,
+    },
+    Var {
+        id: ExprId,
+        name: String,
+    },
+    Do {
+        id: ExprId,
+        expressions: Vec<Expr>,
+    },
 }
 
 #[derive(Debug)]
@@ -35,8 +53,15 @@ struct RenderingState {
     measurement_text_element: Element,
 }
 
+/// Data about a particual instance of the Kale editor.
+struct Editor {
+    frozen: bool,
+    expr: Expr,
+    selection: Vec<ExprId>,
+}
+
 const FONT: &str = "16px Helvetica";
-const DEBUG: bool = true;
+const DEBUG: bool = false;
 
 macro_rules! attrs {
     ($element:expr; $($name:expr => $value:expr,)*) => {{
@@ -54,6 +79,14 @@ macro_rules! svg {
         $(node.set_attribute($name, $value).unwrap();)*
         node
     }};
+}
+
+impl Expr {
+    fn id(&self) -> ExprId {
+        match self {
+            Call { id, .. } | Lit { id, .. } | Var { id, .. } | Do { id, .. } => *id,
+        }
+    }
 }
 
 impl RenderingState {
@@ -142,35 +175,51 @@ impl ExprRendering {
 impl fmt::Display for Expr {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Call { name, arguments } => write!(f, "{}({})", name, arguments.iter().format(", ")),
-            Lit { kind, content } => write!(f, "{}:{}", content, kind),
-            Var { name } => write!(f, "{}", name),
-            Do { expressions } => write!(f, "{{{}}}", expressions.iter().format(", ")),
+            Call {
+                name, arguments, ..
+            } => write!(f, "{}({})", name, arguments.iter().format(", ")),
+            Lit { kind, content, .. } => write!(f, "{}:{}", content, kind),
+            Var { name, .. } => write!(f, "{}", name),
+            Do { expressions, .. } => write!(f, "{{{}}}", expressions.iter().format(", ")),
         }
     }
 }
 
-macro_rules! expr {
-    ($val:tt => $kind:ident) => {
+macro_rules! expr_inner {
+    ($id:ident; $val:tt => $kind:ident) => {{
+        $id += 1;
         Expr::Lit {
+            id: ExprId($id),
             content: stringify!($val).to_string(),
             kind: stringify!($kind).to_string(),
         }
-    };
-    (block $([$($tok:tt)+])*) => {
+    }};
+    ($id:ident; block $([$($tok:tt)+])*) => {{
+        $id += 1;
         Expr::Do {
-            expressions: vec![$(expr!($($tok)*),)*],
+            id: ExprId($id),
+            expressions: vec![$(expr_inner!($id; $($tok)*),)*],
         }
-    };
-    ($name:tt($([$($tok:tt)+])*)) => {
+    }};
+    ($id:ident; $name:tt($([$($tok:tt)+])*)) => {{
+        $id += 1;
         Expr::Call {
+            id: ExprId($id),
             name: stringify!($name).to_string(),
-            arguments: vec![$(expr!($($tok)*),)*],
+            arguments: vec![$(expr_inner!($id; $($tok)*),)*],
         }
-    };
-    ($var:tt) => {
-        Expr::Var { name: stringify!($var).to_string() }
-    };
+    }};
+    ($id:ident; $var:tt) => {{
+        $id += 1;
+        Expr::Var { name: stringify!($var).to_string(), id: ExprId($id) }
+    }};
+}
+
+macro_rules! expr {
+    ($($tok:tt)*) => {{
+        let mut current_id = 0;
+        expr_inner!(current_id; $($tok)*)
+    }}
 }
 
 /// Create a new svg text element with a hanging baseline.
@@ -197,9 +246,11 @@ fn render(state: &mut RenderingState, expr: &Expr) -> ExprRendering {
     trace!("Rendering {:?}", expr);
 
     match expr {
-        Var { name } => render_text(state, name).fill("green"),
+        Var { name, .. } => render_text(state, name).fill("green"),
         Lit { content, .. } => render_text(state, content).fill("red"),
-        Call { name, arguments } => {
+        Call {
+            name, arguments, ..
+        } => {
             let mut rendering = render_text(state, name);
             rendering.size.width += PADDING;
             for arg in arguments {
@@ -208,7 +259,7 @@ fn render(state: &mut RenderingState, expr: &Expr) -> ExprRendering {
             }
             rendering
         }
-        Do { expressions } => {
+        Do { expressions, .. } => {
             let mut rendering = ExprRendering::empty();
             for expr in expressions {
                 rendering.place(point2(0., rendering.size.height), render(state, expr));
