@@ -28,7 +28,7 @@ enum Expr {
 #[derive(Debug)]
 struct ExprRendering {
     elements: Vec<Element>,
-    area: SvgRect,
+    size: SvgSize,
 }
 
 struct RenderingState {
@@ -36,13 +36,19 @@ struct RenderingState {
     measurement_text_element: Element,
 }
 
-const FONT: &str = "20px Helvetica";
+const FONT: &str = "16px Helvetica";
+
+macro_rules! attrs {
+    ($element:expr; $($name:expr => $value:expr,)*) => {
+        $($element.set_attribute($name, $value).unwrap();)*
+    };
+}
 
 macro_rules! svg {
-    ($tag:expr; $($name:ident = $value:expr,)*) => {{
+    ($tag:expr; $($name:expr => $value:expr,)*) => {{
         const SVG_NS: &str = "http://www.w3.org/2000/svg";
         let node = document().create_element_ns(SVG_NS, $tag).unwrap();
-        $(node.set_attribute(stringify!($name), $value).unwrap();)*
+        $(node.set_attribute($name, $value).unwrap();)*
         node
     }};
 }
@@ -51,12 +57,12 @@ impl RenderingState {
     fn new() -> RenderingState {
         let svg = svg! { "svg";
             // It has to be visibility instead of display none. Not really sure why.
-            style = "visibility: hidden; position: absolute;",
-            width = "200",
-            height = "200",
-            viewBox = "0 0 200 200",
+            "style" => "visibility: hidden; position: absolute;",
+            "width" => "200",
+            "height" => "200",
+            "viewBox" => "0 0 200 200",
         };
-        let text = new_text(point2(0., 0.), "");
+        let text = new_text(SvgPoint::zero(), "");
         svg.append_child(&text);
         document().body().unwrap().append_child(&svg);
         RenderingState {
@@ -77,6 +83,38 @@ impl RenderingState {
             self.text_metrics_cache.insert(text.to_string(), width);
             //TODO: Get the height.
             size2(width, 20.)
+        }
+    }
+}
+
+impl ExprRendering {
+    fn group(self) -> Element {
+        let group = svg! { "g"; };
+        for e in self.elements {
+            group.append_child(&e);
+        }
+        group
+    }
+
+    fn translate(self, point: SvgPoint) -> Self {
+        let size = self.size;
+        let group = self.group();
+        group
+            .set_attribute("transform", &format!("translate({} {})", point.x, point.y))
+            .unwrap();
+        ExprRendering {
+            elements: vec![group],
+            size,
+        }
+    }
+
+    fn fill(self, colour: &str) -> Self {
+        let size = self.size;
+        let group = self.group();
+        group.set_attribute("fill", colour).unwrap();
+        ExprRendering {
+            elements: vec![group],
+            size,
         }
     }
 }
@@ -118,31 +156,52 @@ macro_rules! expr {
 /// Create a new svg text element with a hanging baseline.
 fn new_text(pt: SvgPoint, contents: &str) -> Element {
     let text = svg! { "text";
-        style = &format!("font: {}", FONT),
-        x = &format!("{}", pt.x),
-        y = &format!("{}", pt.y),
+        "style" => &format!("font: {};", FONT),
+        "x" => &pt.x.to_string(),
+        "y" => &pt.y.to_string(),
+        "alignment-baseline" => "hanging",
     };
-    // Sadly Rust doesn't support minus in identifiers, so we can't do this using the macro.
-    text.set_attribute("alignment-baseline", "hagning").unwrap();
     text.set_text_content(contents);
     text
 }
 
-fn render_text(state: &mut RenderingState, pt: SvgPoint, contents: &str) -> ExprRendering {
-    let text = new_text(pt, contents);
+fn render_text(state: &mut RenderingState, contents: &str) -> ExprRendering {
     ExprRendering {
-        elements: vec![text],
-        area: Rect::new(pt, state.measure_text(contents)),
+        elements: vec![new_text(SvgPoint::zero(), contents)],
+        size: state.measure_text(contents),
     }
 }
 
 fn render(state: &mut RenderingState, expr: &Expr) -> ExprRendering {
     match expr {
-        Var { name } => render_text(state, point2(20., 20.), name),
-        _ => ExprRendering {
-            elements: vec![],
-            area: Rect::zero(),
-        },
+        Var { name } => render_text(state, name).fill("green"),
+        Lit { content, .. } => render_text(state, content).fill("red"),
+        Call { name, arguments } => {
+            const PADDING: f32 = 3.;
+            let mut elements = Vec::with_capacity(name.len() + arguments.len());
+            let mut size = state.measure_text(name);
+            size.width += PADDING;
+            elements.push(new_text(SvgPoint::zero(), name));
+            for arg in arguments {
+                let arg_rendering = render(state, arg).translate(point2(size.width, 0.));
+                size.width += arg_rendering.size.width + PADDING;
+                size.height = size.height.max(arg_rendering.size.height);
+                elements.extend(arg_rendering.elements.into_iter());
+            }
+            ExprRendering { elements, size }
+        }
+        Do { expressions } => {
+            const PADDING: f32 = 3.;
+            let mut elements = Vec::with_capacity(expressions.len());
+            let mut size = SvgSize::zero();
+            for expr in expressions {
+                let arg_rendering = render(state, expr).translate(point2(0., size.height));
+                size.height += arg_rendering.size.height + PADDING;
+                size.width = size.width.max(arg_rendering.size.width);
+                elements.extend(arg_rendering.elements.into_iter());
+            }
+            ExprRendering { elements, size }
+        }
     }
 }
 
@@ -160,12 +219,12 @@ fn main() {
     web_logger::init();
     info!("{}", fact);
     let mut state = RenderingState::new();
-    let render_list = render(&mut state, &expr! { x });
+    let render_list = render(&mut state, &fact);
 
     let canvas = svg! {"svg";
-            width = "200",
-            height = "200",
-            viewBox = "0 0 200 200",
+            "width" => "500",
+            "height" => "500",
+            "viewBox" => "0 0 500 500",
     };
     for elem in render_list.elements {
         canvas.append_child(&elem);
