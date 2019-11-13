@@ -14,7 +14,6 @@ use web_logger;
 use Expr::*;
 
 type SvgPoint = default::Point2D<f32>;
-type SvgRect = default::Rect<f32>;
 type SvgSize = default::Size2D<f32>;
 
 #[derive(Debug, Clone)]
@@ -37,6 +36,7 @@ struct RenderingState {
 }
 
 const FONT: &str = "16px Helvetica";
+const DEBUG: bool = true;
 
 macro_rules! attrs {
     ($element:expr; $($name:expr => $value:expr,)*) => {{
@@ -61,9 +61,9 @@ impl RenderingState {
         let svg = svg! { "svg";
             // It has to be visibility instead of display none. Not really sure why.
             "style" => "visibility: hidden; position: absolute;",
-            "width" => "200",
-            "height" => "200",
-            "viewBox" => "0 0 200 200",
+            "width" => "1",
+            "height" => "1",
+            "viewBox" => "0 0 1 1",
         };
         let text = new_text(SvgPoint::zero(), "");
         svg.append_child(&text);
@@ -91,8 +91,23 @@ impl RenderingState {
 }
 
 impl ExprRendering {
+    fn empty() -> Self {
+        ExprRendering {
+            elements: vec![],
+            size: SvgSize::zero(),
+        }
+    }
+
     fn group(self) -> Element {
         let group = svg! { "g"; };
+        if DEBUG {
+            group.append_child(&svg! { "rect";
+                "width" => &self.size.width.to_string(),
+                "height" => &self.size.height.to_string(),
+                "fill" => "none",
+                "stroke" => "#ddd",
+            });
+        }
         for e in self.elements {
             group.append_child(&e);
         }
@@ -115,6 +130,12 @@ impl ExprRendering {
                 "fill" => colour,
             }],
         }
+    }
+
+    fn place(&mut self, point: SvgPoint, rendering: ExprRendering) {
+        let mut rendering = rendering.translate(point);
+        self.elements.append(&mut rendering.elements);
+        self.size = self.size.max(rendering.size + size2(point.x, point.y));
     }
 }
 
@@ -172,34 +193,28 @@ fn render_text(state: &mut RenderingState, contents: &str) -> ExprRendering {
 }
 
 fn render(state: &mut RenderingState, expr: &Expr) -> ExprRendering {
+    const PADDING: f32 = 3.;
+    trace!("Rendering {:?}", expr);
+
     match expr {
         Var { name } => render_text(state, name).fill("green"),
         Lit { content, .. } => render_text(state, content).fill("red"),
         Call { name, arguments } => {
-            const PADDING: f32 = 3.;
-            let mut elements = Vec::with_capacity(name.len() + arguments.len());
-            let mut size = state.measure_text(name);
-            size.width += PADDING;
-            elements.push(new_text(SvgPoint::zero(), name));
+            let mut rendering = render_text(state, name);
+            rendering.size.width += PADDING;
             for arg in arguments {
-                let arg_rendering = render(state, arg).translate(point2(size.width, 0.));
-                size.width += arg_rendering.size.width + PADDING;
-                size.height = size.height.max(arg_rendering.size.height);
-                elements.extend(arg_rendering.elements.into_iter());
+                rendering.place(point2(rendering.size.width, 0.), render(state, arg));
+                rendering.size.width += PADDING;
             }
-            ExprRendering { elements, size }
+            rendering
         }
         Do { expressions } => {
-            const PADDING: f32 = 3.;
-            let mut elements = Vec::with_capacity(expressions.len());
-            let mut size = SvgSize::zero();
+            let mut rendering = ExprRendering::empty();
             for expr in expressions {
-                let arg_rendering = render(state, expr).translate(point2(0., size.height));
-                size.height += arg_rendering.size.height + PADDING;
-                size.width = size.width.max(arg_rendering.size.width);
-                elements.extend(arg_rendering.elements.into_iter());
+                rendering.place(point2(0., rendering.size.height), render(state, expr));
+                rendering.size.height += PADDING;
             }
-            ExprRendering { elements, size }
+            rendering
         }
     }
 }
