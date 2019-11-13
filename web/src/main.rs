@@ -39,9 +39,12 @@ struct RenderingState {
 const FONT: &str = "16px Helvetica";
 
 macro_rules! attrs {
-    ($element:expr; $($name:expr => $value:expr,)*) => {
-        $($element.set_attribute($name, $value).unwrap();)*
-    };
+    ($element:expr; $($name:expr => $value:expr,)*) => {{
+        // Possibly move the element.
+        let element = $element;
+        $(element.set_attribute($name, $value).unwrap();)*
+        element
+    }};
 }
 
 macro_rules! svg {
@@ -97,24 +100,20 @@ impl ExprRendering {
     }
 
     fn translate(self, point: SvgPoint) -> Self {
-        let size = self.size;
-        let group = self.group();
-        group
-            .set_attribute("transform", &format!("translate({} {})", point.x, point.y))
-            .unwrap();
         ExprRendering {
-            elements: vec![group],
-            size,
+            size: self.size,
+            elements: vec![attrs! { self.group();
+                "transform" => &format!("translate({} {})", point.x, point.y),
+            }],
         }
     }
 
     fn fill(self, colour: &str) -> Self {
-        let size = self.size;
-        let group = self.group();
-        group.set_attribute("fill", colour).unwrap();
         ExprRendering {
-            elements: vec![group],
-            size,
+            size: self.size,
+            elements: vec![attrs! { self.group();
+                "fill" => colour,
+            }],
         }
     }
 }
