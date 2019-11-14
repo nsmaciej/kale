@@ -14,7 +14,6 @@ use stdweb::{console, js};
 use web_logger;
 
 use expr::*;
-use TextStyle::*;
 
 type SvgPoint = default::Point2D<f32>;
 type SvgSize = default::Size2D<f32>;
@@ -33,7 +32,7 @@ struct RenderingState {
 
 enum TextStyle {
     Mono,
-    Sans,
+    Comment,
 }
 
 /// Data about a particual instance of the Kale editor.
@@ -74,7 +73,7 @@ impl RenderingState {
             "viewBox" => "0 0 1 1",
         };
         //TODO: Work with different text styles.
-        let text = new_text(SvgPoint::zero(), "", Mono);
+        let text = new_text(SvgPoint::zero(), "", TextStyle::Mono);
         svg.append_child(&text);
         document().body().unwrap().append_child(&svg);
         RenderingState {
@@ -166,8 +165,8 @@ impl fmt::Display for Expr {
 fn new_text(pt: SvgPoint, contents: &str, text_style: TextStyle) -> Element {
     let text = svg! { "text";
         "style" => &format!("font: {};", match text_style {
-            Mono => "16px Input Sans",
-            Sans => "italic 16px Helvetica Neue",
+            TextStyle::Mono => "16px Input Sans",
+            TextStyle::Comment => "italic 16px Helvetica Neue",
         }),
         "x" => &pt.x.to_string(),
         "y" => &pt.y.to_string(),
@@ -233,9 +232,11 @@ impl Editor {
         fn render(state: &mut RenderingState, expr: &Expr) -> ExprRendering {
             const PADDING: f32 = 3.;
             match expr {
-                Comment { text, .. } => render_text(state, text, Sans).fill("green"),
-                Var { name, .. } => render_text(state, name, Mono).fill("green"),
-                Lit { content, .. } => render_text(state, content, Mono).fill("red"),
+                Comment { text, .. } => {
+                    render_text(state, text, TextStyle::Comment).fill("#43a047")
+                }
+                Var { name, .. } => render_text(state, name, TextStyle::Mono).fill("#f44336"),
+                Lit { content, .. } => render_text(state, content, TextStyle::Mono).fill("#283593"),
                 Call {
                     name, arguments, ..
                 } => {
@@ -243,7 +244,7 @@ impl Editor {
                     //TODO: The spacing between the arguments shouldn't just be a constant. For
                     // shorter expressions, or maybe certain functions the spacing should be
                     // decreased.
-                    let mut rendering = render_text(state, name, Mono);
+                    let mut rendering = render_text(state, name, TextStyle::Mono);
                     rendering.size.width += PADDING;
                     for arg in arguments {
                         rendering.place(
