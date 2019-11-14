@@ -106,25 +106,21 @@ impl<'a> IntoIterator for &'a Expr {
     type IntoIter = ExprIterator<'a>;
 
     fn into_iter(self) -> Self::IntoIter {
-        ExprIterator {
-            current: Some(self),
-            queue: Vec::new(),
-        }
+        ExprIterator { queue: vec![&self] }
     }
 }
 
 pub struct ExprIterator<'a> {
-    current: Option<&'a Expr>,
     queue: Vec<&'a Expr>,
 }
 
 impl<'a> Iterator for ExprIterator<'a> {
     type Item = &'a Expr;
     fn next(&mut self) -> Option<Self::Item> {
-        if let Some(previous) = self.current {
-            self.queue.extend(previous.childeren().iter());
-            self.current = self.queue.pop()
+        let item = self.queue.pop();
+        if let Some(item) = item {
+            self.queue.extend(item.childeren().iter());
         }
-        self.current
+        item
     }
 }
