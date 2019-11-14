@@ -5,6 +5,10 @@ pub use Expr::*;
 // If we get any more fields in common, something like the diff_enum crate might come in handy.
 #[derive(Debug, Clone)]
 pub enum Expr {
+    Comment {
+        id: ExprId,
+        text: String,
+    },
     Call {
         id: ExprId,
         name: String,
@@ -25,7 +29,7 @@ pub enum Expr {
     },
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ExprId(u32);
 
 #[macro_export]
@@ -43,6 +47,13 @@ macro_rules! _expr_inner {
         Expr::Do {
             id: ExprId::from_raw($id),
             expressions: vec![$(_expr_inner!($id; $($tok)*),)*],
+        }
+    }};
+    ($id:ident; comment $text:expr) => {{
+        $id += 1;
+        Expr::Comment {
+            id: ExprId::from_raw($id),
+            text: $text.to_string(),
         }
     }};
     ($id:ident; $name:tt($([$($tok:tt)+])*)) => {{
@@ -79,7 +90,11 @@ impl ExprId {
 impl Expr {
     pub fn id(&self) -> ExprId {
         match self {
-            Call { id, .. } | Lit { id, .. } | Var { id, .. } | Do { id, .. } => *id,
+            Call { id, .. }
+            | Lit { id, .. }
+            | Var { id, .. }
+            | Do { id, .. }
+            | Comment { id, .. } => *id,
         }
     }
 
@@ -97,7 +112,7 @@ impl Expr {
     // twice
     pub fn valid(&self) -> bool {
         let mut seen_ids = HashSet::new();
-        self.into_iter().all(|x| seen_ids.insert(x.id().0))
+        self.into_iter().all(|x| seen_ids.insert(x.id()))
     }
 }
 

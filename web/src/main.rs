@@ -14,9 +14,11 @@ use stdweb::{console, js};
 use web_logger;
 
 use expr::*;
+use TextStyle::*;
 
 type SvgPoint = default::Point2D<f32>;
 type SvgSize = default::Size2D<f32>;
+type SvgRect = default::Rect<f32>;
 
 #[derive(Debug)]
 struct ExprRendering {
@@ -29,14 +31,19 @@ struct RenderingState {
     measurement_text_element: Element,
 }
 
+enum TextStyle {
+    Mono,
+    Sans,
+}
+
 /// Data about a particual instance of the Kale editor.
 struct Editor {
+    root: Element,
     frozen: bool,
     expr: Expr,
     selection: Vec<ExprId>,
 }
 
-const FONT: &str = "16px Helvetica";
 const DEBUG: bool = false;
 
 macro_rules! attrs {
@@ -66,7 +73,8 @@ impl RenderingState {
             "height" => "1",
             "viewBox" => "0 0 1 1",
         };
-        let text = new_text(SvgPoint::zero(), "");
+        //TODO: Work with different text styles.
+        let text = new_text(SvgPoint::zero(), "", Mono);
         svg.append_child(&text);
         document().body().unwrap().append_child(&svg);
         RenderingState {
@@ -149,14 +157,18 @@ impl fmt::Display for Expr {
             Lit { kind, content, .. } => write!(f, "{}:{}", content, kind),
             Var { name, .. } => write!(f, "{}", name),
             Do { expressions, .. } => write!(f, "{{{}}}", expressions.iter().format(", ")),
+            Comment { text, .. } => write!(f, "/* {} */", text),
         }
     }
 }
 
 /// Create a new svg text element with a hanging baseline.
-fn new_text(pt: SvgPoint, contents: &str) -> Element {
+fn new_text(pt: SvgPoint, contents: &str, text_style: TextStyle) -> Element {
     let text = svg! { "text";
-        "style" => &format!("font: {};", FONT),
+        "style" => &format!("font: {};", match text_style {
+            Mono => "16px Input Sans",
+            Sans => "italic 16px Helvetica Neue",
+        }),
         "x" => &pt.x.to_string(),
         "y" => &pt.y.to_string(),
         "alignment-baseline" => "hanging",
@@ -165,38 +177,102 @@ fn new_text(pt: SvgPoint, contents: &str) -> Element {
     text
 }
 
-fn render_text(state: &mut RenderingState, contents: &str) -> ExprRendering {
+fn render_text(state: &mut RenderingState, contents: &str, text_style: TextStyle) -> ExprRendering {
     ExprRendering {
-        elements: vec![new_text(SvgPoint::zero(), contents)],
+        elements: vec![new_text(SvgPoint::zero(), contents, text_style)],
         size: state.measure_text(contents),
     }
 }
 
-fn render(state: &mut RenderingState, expr: &Expr) -> ExprRendering {
-    const PADDING: f32 = 3.;
-    trace!("Rendering {:?}", expr);
+fn render_rect(rect: SvgRect) -> ExprRendering {
+    ExprRendering {
+        elements: vec![svg! {"rect";
+            "x" => &rect.origin.x.to_string(),
+            "y" => &rect.origin.y.to_string(),
+            "width" => &rect.size.width.to_string(),
+            "height" => &rect.size.height.to_string(),
+            "fill" => "#aaa",
+        }],
+        size: rect.size,
+    }
+}
 
-    match expr {
-        Var { name, .. } => render_text(state, name).fill("green"),
-        Lit { content, .. } => render_text(state, content).fill("red"),
-        Call {
-            name, arguments, ..
-        } => {
-            let mut rendering = render_text(state, name);
-            rendering.size.width += PADDING;
-            for arg in arguments {
-                rendering.place(point2(rendering.size.width, 0.), render(state, arg));
-                rendering.size.width += PADDING;
-            }
-            rendering
+fn render_circle(origin: SvgPoint, r: f32) -> ExprRendering {
+    ExprRendering {
+        elements: vec![svg! {"circle";
+            "cx" => &origin.x.to_string(),
+            "cy" => &origin.y.to_string(),
+            "r" => &r.to_string(),
+            "fill" => "#aaa",
+        }],
+        size: size2(r * 2., r * 2.),
+    }
+}
+
+impl Editor {
+    fn new(size: SvgSize) -> Editor {
+        let root = svg! {"svg";
+                "width" => &size.width.to_string(),
+                "height" => &size.height.to_string(),
+                "viewBox" => &format!("0 0 {} {}", size.width, size.height),
+        };
+        let body = document().body().unwrap();
+        body.append_child(&root);
+        Editor {
+            root,
+            frozen: false,
+            selection: vec![],
+            expr: Do {
+                id: ExprId::from_raw(0),
+                expressions: Vec::new(),
+            },
         }
-        Do { expressions, .. } => {
-            let mut rendering = ExprRendering::empty();
-            for expr in expressions {
-                rendering.place(point2(0., rendering.size.height), render(state, expr));
-                rendering.size.height += PADDING;
+    }
+
+    fn render(&mut self, state: &mut RenderingState) {
+        fn render(state: &mut RenderingState, expr: &Expr) -> ExprRendering {
+            const PADDING: f32 = 3.;
+            match expr {
+                Comment { text, .. } => render_text(state, text, Sans).fill("green"),
+                Var { name, .. } => render_text(state, name, Mono).fill("green"),
+                Lit { content, .. } => render_text(state, content, Mono).fill("red"),
+                Call {
+                    name, arguments, ..
+                } => {
+                    //TODO: Render the underlines/whatever else to help show the nesting level.
+                    //TODO: The spacing between the arguments shouldn't just be a constant. For
+                    // shorter expressions, or maybe certain functions the spacing should be
+                    // decreased.
+                    let mut rendering = render_text(state, name, Mono);
+                    rendering.size.width += PADDING;
+                    for arg in arguments {
+                        rendering.place(
+                            point2(rendering.size.width + 3., 2.),
+                            render_circle(point2(3., 3.), 3.),
+                        );
+                        rendering.place(point2(rendering.size.width + 1., 0.), render(state, arg));
+                        rendering.size.width += PADDING;
+                    }
+                    rendering
+                }
+                Do { expressions, .. } => {
+                    let mut rendering = ExprRendering::empty();
+                    for expr in expressions {
+                        rendering.place(point2(5., rendering.size.height), render(state, expr));
+                        rendering.size.height += PADDING;
+                    }
+                    rendering.place(
+                        SvgPoint::zero(),
+                        render_rect(rect(0., 0., 1., rendering.size.height)),
+                    );
+                    rendering
+                }
             }
-            rendering
+        }
+
+        let render_list = render(state, &self.expr);
+        for elem in render_list.elements {
+            self.root.append_child(&elem);
         }
     }
 }
@@ -204,31 +280,27 @@ fn render(state: &mut RenderingState, expr: &Expr) -> ExprRendering {
 fn main() {
     // Example KaleLisp function.
     let fact = expr! {
-        if([=([n] [0 => int])]
-           [1 => int]
-           [block [print([n])]
-                  [*([n]
-                     [fact([-([n]
-                              [1 => int])])])]])
+        block [comment "This is a test program"]
+              [if([=([n] [0 => int])]
+                  [1 => int]
+                  [block [comment "Now print out n"]
+                         [print([n])]
+                         [*([n]
+                            [fact([-([n]
+                                     [1 => int])])])]])]
     };
 
     web_logger::init();
-    info!("{}", fact);
-    let mut state = RenderingState::new();
-    let render_list = render(&mut state, &fact);
 
-    let canvas = svg! {"svg";
-            "width" => "500",
-            "height" => "500",
-            "viewBox" => "0 0 500 500",
-    };
-    for elem in render_list.elements {
-        canvas.append_child(&elem);
-    }
-
+    // Greet the user.
     let body = document().body().unwrap();
     let greeting = document().create_element("h1").unwrap();
     greeting.set_text_content("Welcome to Kale!");
     body.append_child(&greeting);
-    body.append_child(&canvas);
+
+    // Render the editor.
+    let mut state = RenderingState::new();
+    let mut editor = Editor::new(size2(500., 500.));
+    editor.expr = fact;
+    editor.render(&mut state);
 }
