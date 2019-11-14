@@ -1,46 +1,22 @@
 #![allow(unused_imports)]
 
+mod expr;
+
 use std::collections::HashMap;
 use std::fmt;
 
 use euclid::*;
 use itertools::Itertools;
 use log::*;
-use stdweb::js;
 use stdweb::unstable::{TryFrom, TryInto};
 use stdweb::web::{alert, document, Element, IElement, INode};
+use stdweb::{console, js};
 use web_logger;
 
-use Expr::*;
+use expr::*;
 
 type SvgPoint = default::Point2D<f32>;
 type SvgSize = default::Size2D<f32>;
-
-#[derive(Debug, Clone, Copy)]
-struct ExprId(u32);
-
-// If we get any more fields in common, something like the diff_enum crate might come in handy.
-#[derive(Debug, Clone)]
-enum Expr {
-    Call {
-        id: ExprId,
-        name: String,
-        arguments: Vec<Expr>,
-    },
-    Lit {
-        id: ExprId,
-        kind: String,
-        content: String,
-    },
-    Var {
-        id: ExprId,
-        name: String,
-    },
-    Do {
-        id: ExprId,
-        expressions: Vec<Expr>,
-    },
-}
 
 #[derive(Debug)]
 struct ExprRendering {
@@ -79,14 +55,6 @@ macro_rules! svg {
         $(node.set_attribute($name, $value).unwrap();)*
         node
     }};
-}
-
-impl Expr {
-    fn id(&self) -> ExprId {
-        match self {
-            Call { id, .. } | Lit { id, .. } | Var { id, .. } | Do { id, .. } => *id,
-        }
-    }
 }
 
 impl RenderingState {
@@ -183,43 +151,6 @@ impl fmt::Display for Expr {
             Do { expressions, .. } => write!(f, "{{{}}}", expressions.iter().format(", ")),
         }
     }
-}
-
-macro_rules! expr_inner {
-    ($id:ident; $val:tt => $kind:ident) => {{
-        $id += 1;
-        Expr::Lit {
-            id: ExprId($id),
-            content: stringify!($val).to_string(),
-            kind: stringify!($kind).to_string(),
-        }
-    }};
-    ($id:ident; block $([$($tok:tt)+])*) => {{
-        $id += 1;
-        Expr::Do {
-            id: ExprId($id),
-            expressions: vec![$(expr_inner!($id; $($tok)*),)*],
-        }
-    }};
-    ($id:ident; $name:tt($([$($tok:tt)+])*)) => {{
-        $id += 1;
-        Expr::Call {
-            id: ExprId($id),
-            name: stringify!($name).to_string(),
-            arguments: vec![$(expr_inner!($id; $($tok)*),)*],
-        }
-    }};
-    ($id:ident; $var:tt) => {{
-        $id += 1;
-        Expr::Var { name: stringify!($var).to_string(), id: ExprId($id) }
-    }};
-}
-
-macro_rules! expr {
-    ($($tok:tt)*) => {{
-        let mut current_id = 0;
-        expr_inner!(current_id; $($tok)*)
-    }}
 }
 
 /// Create a new svg text element with a hanging baseline.
