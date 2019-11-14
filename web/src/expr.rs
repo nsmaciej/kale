@@ -1,4 +1,7 @@
 use std::collections::HashSet;
+use std::fmt;
+
+use itertools::Itertools;
 
 pub use Expr::*;
 
@@ -29,6 +32,7 @@ pub enum Expr {
     },
 }
 
+#[repr(transparent)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ExprId(u32);
 
@@ -113,6 +117,20 @@ impl Expr {
     pub fn valid(&self) -> bool {
         let mut seen_ids = HashSet::new();
         self.into_iter().all(|x| seen_ids.insert(x.id()))
+    }
+}
+
+impl fmt::Display for Expr {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Call {
+                name, arguments, ..
+            } => write!(f, "{}({})", name, arguments.iter().format(", ")),
+            Lit { kind, content, .. } => write!(f, "{}:{}", content, kind),
+            Var { name, .. } => write!(f, "{}", name),
+            Do { expressions, .. } => write!(f, "{{{}}}", expressions.iter().format(", ")),
+            Comment { text, .. } => write!(f, "/* {} */", text),
+        }
     }
 }
 

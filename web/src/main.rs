@@ -3,10 +3,8 @@
 mod expr;
 
 use std::collections::HashMap;
-use std::fmt;
 
 use euclid::*;
-use itertools::Itertools;
 use log::*;
 use stdweb::unstable::{TryFrom, TryInto};
 use stdweb::web::{alert, document, Element, IElement, INode};
@@ -144,20 +142,6 @@ impl ExprRendering {
         let mut rendering = rendering.translate(point);
         self.elements.append(&mut rendering.elements);
         self.size = self.size.max(rendering.size + size2(point.x, point.y));
-    }
-}
-
-impl fmt::Display for Expr {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Call {
-                name, arguments, ..
-            } => write!(f, "{}({})", name, arguments.iter().format(", ")),
-            Lit { kind, content, .. } => write!(f, "{}:{}", content, kind),
-            Var { name, .. } => write!(f, "{}", name),
-            Do { expressions, .. } => write!(f, "{{{}}}", expressions.iter().format(", ")),
-            Comment { text, .. } => write!(f, "/* {} */", text),
-        }
     }
 }
 
