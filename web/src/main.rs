@@ -7,7 +7,8 @@ use std::collections::HashMap;
 use euclid::*;
 use log::*;
 use stdweb::unstable::{TryFrom, TryInto};
-use stdweb::web::{alert, document, Element, IElement, INode};
+use stdweb::web::event::*;
+use stdweb::web::{alert, document, Element, EventListenerHandle, IElement, IEventTarget, INode};
 use stdweb::{console, js};
 use web_logger;
 
@@ -21,6 +22,7 @@ type SvgRect = default::Rect<f32>;
 struct ExprRendering {
     elements: Vec<Element>,
     size: SvgSize,
+    event_listeners: Vec<EventListenerHandle>,
 }
 
 struct RenderingState {
@@ -99,12 +101,13 @@ impl RenderingState {
 impl ExprRendering {
     fn empty() -> Self {
         ExprRendering {
-            elements: vec![],
+            elements: Vec::new(),
             size: SvgSize::zero(),
+            event_listeners: Vec::new(),
         }
     }
 
-    fn group(self) -> Element {
+    fn group(&self) -> Element {
         let group = svg! { "g"; };
         if DEBUG {
             group.append_child(&svg! { "rect";
@@ -114,34 +117,51 @@ impl ExprRendering {
                 "stroke" => "#ddd",
             });
         }
-        for e in self.elements {
-            group.append_child(&e);
+        for e in &self.elements {
+            group.append_child(e);
         }
         group
     }
 
+    fn click(mut self, id: ExprId) -> Self {
+        for elem in &self.elements {
+            let handle = elem.add_event_listener(move |_e: ClickEvent| {
+                alert(&format!("Clicked {:?}", id));
+            });
+            self.event_listeners.push(handle);
+        }
+        self
+    }
+
     fn translate(self, point: SvgPoint) -> Self {
         ExprRendering {
-            size: self.size,
             elements: vec![attrs! { self.group();
                 "transform" => &format!("translate({} {})", point.x, point.y),
             }],
+            ..self
         }
     }
 
     fn fill(self, colour: &str) -> Self {
         ExprRendering {
-            size: self.size,
             elements: vec![attrs! { self.group();
                 "fill" => colour,
             }],
+            ..self
         }
     }
 
     fn place(&mut self, point: SvgPoint, rendering: ExprRendering) {
-        let mut rendering = rendering.translate(point);
-        self.elements.append(&mut rendering.elements);
-        self.size = self.size.max(rendering.size + size2(point.x, point.y));
+        // Must be careful here. It's easy to forget to update self, forgetting to copy something
+        // from 'rendering'. We pattern match to make adding new fields a hard error.
+        let ExprRendering {
+            size,
+            ref mut elements,
+            ref mut event_listeners,
+        } = rendering.translate(point);
+        self.elements.append(elements);
+        self.event_listeners.append(event_listeners);
+        self.size = self.size.max(size + size2(point.x, point.y));
     }
 }
 
@@ -164,6 +184,7 @@ fn render_text(state: &mut RenderingState, contents: &str, text_style: TextStyle
     ExprRendering {
         elements: vec![new_text(SvgPoint::zero(), contents, text_style)],
         size: state.measure_text(contents),
+        event_listeners: Vec::new(),
     }
 }
 
@@ -177,6 +198,7 @@ fn render_rect(rect: SvgRect) -> ExprRendering {
             "fill" => "#aaa",
         }],
         size: rect.size,
+        event_listeners: Vec::new(),
     }
 }
 
@@ -189,6 +211,7 @@ fn render_circle(origin: SvgPoint, r: f32) -> ExprRendering {
             "fill" => "#aaa",
         }],
         size: size2(r * 2., r * 2.),
+        event_listeners: Vec::new(),
     }
 }
 
@@ -216,31 +239,41 @@ impl Editor {
         fn render(state: &mut RenderingState, expr: &Expr) -> ExprRendering {
             const PADDING: f32 = 3.;
             match expr {
-                Comment { text, .. } => {
-                    render_text(state, text, TextStyle::Comment).fill("#43a047")
-                }
-                Var { name, .. } => render_text(state, name, TextStyle::Mono).fill("#f44336"),
-                Lit { content, .. } => render_text(state, content, TextStyle::Mono).fill("#283593"),
+                Comment { id, text, .. } => render_text(state, text, TextStyle::Comment)
+                    .fill("#43a047")
+                    .click(*id),
+                Var { id, name, .. } => render_text(state, name, TextStyle::Mono)
+                    .fill("#f44336")
+                    .click(*id),
+                Lit { id, content, .. } => render_text(state, content, TextStyle::Mono)
+                    .fill("#283593")
+                    .click(*id),
                 Call {
-                    name, arguments, ..
+                    id,
+                    name,
+                    arguments,
+                    ..
                 } => {
                     //TODO: Render the underlines/whatever else to help show the nesting level.
                     //TODO: The spacing between the arguments shouldn't just be a constant. For
                     // shorter expressions, or maybe certain functions the spacing should be
                     // decreased.
-                    let mut rendering = render_text(state, name, TextStyle::Mono);
+                    let mut rendering = render_text(state, name, TextStyle::Mono).click(*id);
                     rendering.size.width += PADDING;
                     for arg in arguments {
+                        // Clicking the separator dot selects its argument.
                         rendering.place(
                             point2(rendering.size.width + 3., 2.),
-                            render_circle(point2(3., 3.), 3.),
+                            render_circle(point2(3., 3.), 3.).click(arg.id()),
                         );
                         rendering.place(point2(rendering.size.width + 1., 0.), render(state, arg));
                         rendering.size.width += PADDING;
                     }
                     rendering
                 }
-                Do { expressions, .. } => {
+                Do {
+                    id, expressions, ..
+                } => {
                     let mut rendering = ExprRendering::empty();
                     for expr in expressions {
                         rendering.place(point2(5., rendering.size.height), render(state, expr));
@@ -248,7 +281,9 @@ impl Editor {
                     }
                     rendering.place(
                         SvgPoint::zero(),
-                        render_rect(rect(0., 0., 1., rendering.size.height)),
+                        //TODO: It would be nice for the rect to expand in some fashion when hovered
+                        // about. It should not have a single-pixel wide hit box.
+                        render_rect(rect(0., 0., 1., rendering.size.height)).click(*id),
                     );
                     rendering
                 }
