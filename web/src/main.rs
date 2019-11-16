@@ -45,11 +45,39 @@ struct Editor {
 
 const DEBUG: bool = false;
 
+trait AssignAttribute {
+    fn assign_attribute(&self, element: &Element, name: &str);
+}
+
+macro_rules! impl_assign_attribute {
+    ($($type:ty),*) => {
+        $(
+            impl AssignAttribute for $type {
+                fn assign_attribute(&self, element: &Element, name: &str) {
+                    element.set_attribute(name, &self.to_string()).unwrap();
+                }
+            }
+        )*
+    };
+}
+// Ideally we would just have two blanket impls: Option<T> and T where T: ToString. But since the
+// compiler is unwilling to rule out Option implementing ToString we implement common types one by
+// one.
+impl_assign_attribute!(&str, String, f32, f64, u8, u16, u32, u64, i8, i16, i32, i64);
+
+impl<T: AssignAttribute> AssignAttribute for Option<T> {
+    fn assign_attribute(&self, element: &Element, name: &str) {
+        if let Some(val) = self {
+            val.assign_attribute(element, name);
+        }
+    }
+}
+
 macro_rules! attrs {
     ($element:expr; $($name:expr => $value:expr,)*) => {{
         // Possibly move the element.
         let element = $element;
-        $(element.set_attribute($name, $value).unwrap();)*
+        $($value.assign_attribute(&element, $name);)*
         element
     }};
 }
@@ -57,9 +85,9 @@ macro_rules! attrs {
 macro_rules! svg {
     ($tag:expr; $($name:expr => $value:expr,)*) => {{
         const SVG_NS: &str = "http://www.w3.org/2000/svg";
-        let node = document().create_element_ns(SVG_NS, $tag).unwrap();
-        $(node.set_attribute($name, $value).unwrap();)*
-        node
+        let element = document().create_element_ns(SVG_NS, $tag).unwrap();
+        $($value.assign_attribute(&element, $name);)*
+        element
     }};
 }
 
@@ -111,8 +139,8 @@ impl ExprRendering {
         let group = svg! { "g"; };
         if DEBUG {
             group.append_child(&svg! { "rect";
-                "width" => &self.size.width.to_string(),
-                "height" => &self.size.height.to_string(),
+                "width" => self.size.width,
+                "height" => self.size.height,
                 "fill" => "none",
                 "stroke" => "#ddd",
             });
@@ -136,7 +164,7 @@ impl ExprRendering {
     fn translate(self, point: SvgPoint) -> Self {
         ExprRendering {
             elements: vec![attrs! { self.group();
-                "transform" => &format!("translate({} {})", point.x, point.y),
+                "transform" => format!("translate({} {})", point.x, point.y),
             }],
             ..self
         }
@@ -168,12 +196,12 @@ impl ExprRendering {
 /// Create a new svg text element with a hanging baseline.
 fn new_text(pt: SvgPoint, contents: &str, text_style: TextStyle) -> Element {
     let text = svg! { "text";
-        "style" => &format!("font: {};", match text_style {
+        "style" => format!("font: {};", match text_style {
             TextStyle::Mono => "16px Input Sans",
             TextStyle::Comment => "italic 16px Helvetica Neue",
         }),
-        "x" => &pt.x.to_string(),
-        "y" => &pt.y.to_string(),
+        "x" => pt.x,
+        "y" => pt.y,
         "alignment-baseline" => "hanging",
     };
     text.set_text_content(contents);
@@ -205,9 +233,9 @@ fn render_rect(rect: SvgRect) -> ExprRendering {
 fn render_circle(origin: SvgPoint, r: f32) -> ExprRendering {
     ExprRendering {
         elements: vec![svg! {"circle";
-            "cx" => &origin.x.to_string(),
-            "cy" => &origin.y.to_string(),
-            "r" => &r.to_string(),
+            "cx" => origin.x,
+            "cy" => origin.y,
+            "r" => r,
             "fill" => "#aaa",
         }],
         size: size2(r * 2., r * 2.),
@@ -218,9 +246,9 @@ fn render_circle(origin: SvgPoint, r: f32) -> ExprRendering {
 impl Editor {
     fn new(size: SvgSize) -> Editor {
         let root = svg! {"svg";
-                "width" => &size.width.to_string(),
-                "height" => &size.height.to_string(),
-                "viewBox" => &format!("0 0 {} {}", size.width, size.height),
+                "width" => size.width,
+                "height" => size.height,
+                "viewBox" => format!("0 0 {} {}", size.width, size.height),
         };
         let body = document().body().unwrap();
         body.append_child(&root);
