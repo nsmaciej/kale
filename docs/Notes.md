@@ -5,6 +5,7 @@
 * canvas - The area on which all the expressions live.
 * toy box - A list of programming primitives users can drag things from.
 * editor - Canvas, expressions and all other state.
+* do, block - A list of expressions to be executed one by one. progn.
 
 ## New TextMetrics object in canvas
 
@@ -31,3 +32,11 @@ Since Chrome 77 it is ok to use
   Scratch mode.
 * A rough 'compactness' setting which would decide how much 'visual sugar'
   should be applied for the sake of brevity.
+* Since Kale will not be filed oriented it would be nice if the function browser
+  had some kind of Sublime Text mini map like preview of each function.
+
+## Selling points
+
+* No syntax errors
+* Because strings are completely separated from the structure of the program,
+  i18n is a nice selling point (no need to worry about https://lord.io/blog/2019/text-editing-hates-you-too/)
