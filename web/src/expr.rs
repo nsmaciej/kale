@@ -79,6 +79,7 @@ macro_rules! _expr_inner {
 macro_rules! expr {
     ($($tok:tt)*) => {{
         let mut current_id = 0;
+        #[allow(clippy::eval_order_dependence)]
         let expr = _expr_inner!(current_id; $($tok)*);
         assert!(expr.valid());
         expr
