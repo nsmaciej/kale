@@ -8,6 +8,9 @@ pub use Expr::*;
 // If we get any more fields in common, something like the diff_enum crate might come in handy.
 #[derive(Debug, Clone)]
 pub enum Expr {
+    Hole {
+        id: ExprId,
+    },
     Comment {
         id: ExprId,
         text: String,
@@ -61,6 +64,10 @@ macro_rules! _expr_inner {
             text: $text.to_string(),
         }
     }};
+    ($id:ident; hole) => {{
+        $id += 1;
+        Expr::Hole { id: ExprId::from_raw($id) }
+    }};
     ($id:ident; $name:tt($([$($tok:tt)+])*)) => {{
         $id += 1;
         Expr::Call {
@@ -97,10 +104,11 @@ impl Expr {
     pub fn id(&self) -> ExprId {
         match self {
             Call { id, .. }
-            | Lit { id, .. }
-            | Var { id, .. }
+            | Comment { id, .. }
             | Do { id, .. }
-            | Comment { id, .. } => *id,
+            | Hole { id, .. }
+            | Lit { id, .. }
+            | Var { id, .. } => *id,
         }
     }
 
@@ -132,10 +140,11 @@ impl fmt::Display for Expr {
             Call {
                 name, arguments, ..
             } => write!(f, "{}({})", name, arguments.iter().format(", ")),
+            Comment { text, .. } => write!(f, "/* {} */", text),
+            Do { expressions, .. } => write!(f, "{{{}}}", expressions.iter().format(", ")),
+            Hole { .. } => write!(f, "?"),
             Lit { kind, content, .. } => write!(f, "{}:{}", content, kind),
             Var { name, .. } => write!(f, "{}", name),
-            Do { expressions, .. } => write!(f, "{{{}}}", expressions.iter().format(", ")),
-            Comment { text, .. } => write!(f, "/* {} */", text),
         }
     }
 }

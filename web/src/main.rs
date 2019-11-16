@@ -119,6 +119,9 @@ impl Editor {
                     );
                     rendering
                 }
+                Hole { id } => {
+                    todo!("Render the hole");
+                }
             };
 
             // Handle drawing the selection.
