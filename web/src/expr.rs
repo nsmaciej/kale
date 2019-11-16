@@ -36,6 +36,7 @@ pub enum Expr {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ExprId(u32);
 
+/// Internals of the expr macro.
 #[macro_export]
 macro_rules! _expr_inner {
     ($id:ident; $val:tt => $kind:ident) => {{
@@ -101,6 +102,10 @@ impl Expr {
             | Do { id, .. }
             | Comment { id, .. } => *id,
         }
+    }
+
+    pub fn find_by_id(&self, id: ExprId) -> Option<&Expr> {
+        self.into_iter().find(|x| x.id() == id)
     }
 
     pub fn childeren(&self) -> &[Expr] {

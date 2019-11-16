@@ -1,3 +1,5 @@
+#![feature(vec_remove_item)]
+
 /// KaleLisp expressions.
 mod expr;
 /// Rendering engine.
@@ -16,6 +18,7 @@ struct Editor {
     root: Element,
     frozen: bool,
     expr: Expr,
+    // We assume the user will only ever select a few expressions.
     selection: Vec<ExprId>,
 }
 
@@ -36,6 +39,16 @@ impl Editor {
                 id: ExprId::from_raw(0),
                 expressions: Vec::new(),
             },
+        }
+    }
+
+    fn select(&mut self, id: ExprId) {
+        if !self.selection.contains(&id) {
+            // Remove all the children of the new selection.
+            for expr in self.expr.find_by_id(id) {
+                self.selection.remove_item(&expr.id());
+            }
+            self.selection.push(id);
         }
     }
 
@@ -107,6 +120,8 @@ impl Editor {
                     rendering
                 }
             };
+
+            // Handle drawing the selection.
             if editor.selection.contains(&expr.id()) {
                 rendering.place(
                     SvgPoint::zero(),

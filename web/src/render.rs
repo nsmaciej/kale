@@ -32,6 +32,7 @@ pub enum TextStyle {
     Comment,
 }
 
+/// Implemented on types which can be assigned to an html attribute.
 pub trait AssignAttribute {
     fn assign_attribute(&self, element: &Element, name: &str);
 }
@@ -52,6 +53,7 @@ macro_rules! impl_assign_attribute {
 // one.
 impl_assign_attribute!(&str, String, f32, f64, u8, u16, u32, u64, i8, i16, i32, i64);
 
+/// The attribute is not assigned if option is None.
 impl<T: AssignAttribute> AssignAttribute for Option<T> {
     fn assign_attribute(&self, element: &Element, name: &str) {
         if let Some(val) = self {
@@ -263,11 +265,12 @@ impl Renderable for Circle {
 
 impl Renderable for Rect {
     fn element(&self) -> Element {
+        let SvgRect { origin, size } = self.rect;
         svg! {"rect";
-            "x" => self.rect.origin.x,
-            "y" => self.rect.origin.y,
-            "width" => self.rect.size.width,
-            "height" => self.rect.size.height,
+            "x" => origin.x,
+            "y" => origin.y,
+            "width" => size.width,
+            "height" => size.height,
             "fill" => self.fill.unwrap_or("transparent"),
             "stroke" => self.stroke.unwrap_or("transparent"),
         }
