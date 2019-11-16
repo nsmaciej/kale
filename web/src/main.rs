@@ -18,6 +18,8 @@ struct Editor {
     root: Element,
     frozen: bool,
     expr: Expr,
+    /// Yanked expressions.
+    yanked: Vec<Expr>,
     // We assume the user will only ever select a few expressions.
     selection: Vec<ExprId>,
 }
@@ -34,7 +36,8 @@ impl Editor {
         Editor {
             root,
             frozen: false,
-            selection: vec![],
+            selection: Vec::new(),
+            yanked: Vec::new(),
             expr: Do {
                 id: ExprId::from_raw(0),
                 expressions: Vec::new(),

@@ -5,6 +5,7 @@ use itertools::Itertools;
 
 pub use Expr::*;
 
+//TODO: Some sort of lambda.
 // If we get any more fields in common, something like the diff_enum crate might come in handy.
 #[derive(Debug, Clone)]
 pub enum Expr {

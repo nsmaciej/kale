@@ -1,8 +1,6 @@
 use std::collections::HashMap;
 
 use euclid::*;
-use stdweb::js;
-use stdweb::unstable::TryFrom;
 use stdweb::web::event::*;
 use stdweb::web::{alert, document, Element, EventListenerHandle, IElement, IEventTarget, INode};
 
@@ -64,7 +62,7 @@ impl<T: AssignAttribute> AssignAttribute for Option<T> {
 
 #[macro_export]
 macro_rules! attrs {
-    ($element:expr; $($name:expr => $value:expr,)*) => {{
+    ($element:expr; $($name:expr => $value:expr),* $(,)?) => {{
         // Possibly move the element.
         let element = $element;
         $($value.assign_attribute(&element, $name);)*
@@ -74,7 +72,7 @@ macro_rules! attrs {
 
 #[macro_export]
 macro_rules! svg {
-    ($tag:expr; $($name:expr => $value:expr,)*) => {{
+    ($tag:expr; $($name:expr => $value:expr),* $(,)?) => {{
         const SVG_NS: &str = "http://www.w3.org/2000/svg";
         let element = document().create_element_ns(SVG_NS, $tag).unwrap();
         $($value.assign_attribute(&element, $name);)*
@@ -103,6 +101,7 @@ impl RenderingState {
 
     /// Measure text by using a hidden svg element's text metrics methods.
     fn measure_text(&mut self, text: &str) -> SvgSize {
+        use stdweb::{js, unstable::TryFrom};
         if let Some(width) = self.text_metrics_cache.get(text) {
             size2(*width, 20.)
         } else {
