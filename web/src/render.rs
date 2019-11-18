@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 
 use euclid::*;
+use stdweb::js;
+use stdweb::unstable::{TryFrom, TryInto};
 use stdweb::web::event::*;
 use stdweb::web::{document, Element, EventListenerHandle, IElement, IEventTarget, INode};
 
@@ -77,6 +79,12 @@ macro_rules! svg {
     }};
 }
 
+// Missing from stdweb. My PR https://github.com/koute/stdweb/pull/378
+/// Call window.prompt
+pub fn prompt(message: &str) -> Option<String> {
+    js!( return window.prompt(@{message}); ).try_into().unwrap()
+}
+
 impl RenderingState {
     pub fn new() -> RenderingState {
         let svg = svg! { "svg";
@@ -98,7 +106,6 @@ impl RenderingState {
 
     /// Measure text by using a hidden svg element's text metrics methods.
     fn measure_text(&mut self, text: &str) -> SvgSize {
-        use stdweb::{js, unstable::TryFrom};
         if let Some(width) = self.text_metrics_cache.get(text) {
             size2(*width, 20.)
         } else {
