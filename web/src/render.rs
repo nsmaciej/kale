@@ -130,7 +130,7 @@ impl ExprRendering {
         group
     }
 
-    pub fn click<T, F>(mut self, listener: F) -> Self
+    pub fn event<T, F>(mut self, listener: F) -> Self
     where
         T: ConcreteEvent,
         F: Fn(T) + Clone + 'static,

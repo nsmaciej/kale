@@ -126,15 +126,15 @@ impl Editor {
                 Comment { id, text, .. } => Text::new(text, TextStyle::Comment)
                     .colour("#43a047")
                     .render(state)
-                    .click(make_click_handler(*id)),
+                    .event(make_click_handler(*id)),
                 Var { id, name, .. } => Text::new(name, TextStyle::Mono)
                     .colour("#f44336")
                     .render(state)
-                    .click(make_click_handler(*id)),
+                    .event(make_click_handler(*id)),
                 Lit { id, content, .. } => Text::new(content, TextStyle::Mono)
                     .colour("#283593")
                     .render(state)
-                    .click(make_click_handler(*id)),
+                    .event(make_click_handler(*id)),
                 Call {
                     id,
                     name,
@@ -147,7 +147,7 @@ impl Editor {
                     // decreased.
                     let mut rendering = Text::new(name, TextStyle::Mono)
                         .render(state)
-                        .click(make_click_handler(*id));
+                        .event(make_click_handler(*id));
                     rendering.size.width += PADDING;
                     for arg in arguments {
                         // Clicking the separator dot selects its argument.
@@ -156,7 +156,7 @@ impl Editor {
                             Circle::new(point2(3., 3.), 3.)
                                 .fill("#aaa")
                                 .render(state)
-                                .click(make_click_handler(arg.id())),
+                                .event(make_click_handler(arg.id())),
                         );
                         rendering.place(
                             point2(rendering.size.width + 1., 0.),
@@ -184,7 +184,7 @@ impl Editor {
                         Rect::new(rect(0., 0., 1., rendering.size.height))
                             .fill("#aaa")
                             .render(state)
-                            .click(make_click_handler(*id)),
+                            .event(make_click_handler(*id)),
                     );
                     rendering
                 }
