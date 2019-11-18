@@ -5,13 +5,26 @@ mod expr;
 /// Rendering engine.
 mod render;
 
+use std::cell::RefCell;
+use std::collections::VecDeque;
+use std::rc::Rc;
+
 use euclid::{point2, rect, size2};
 use log::*;
-use stdweb::web::{document, Element, INode};
+use stdweb::js;
+use stdweb::web::event::*;
+use stdweb::web::{alert, document, Element, INode};
 use web_logger;
 
 use expr::*;
 use render::*;
+
+type Shared<T> = Rc<RefCell<T>>;
+
+#[derive(Debug)]
+enum Event {
+    Select { id: ExprId },
+}
 
 /// Data about a particual instance of the Kale editor.
 struct Editor {
@@ -20,8 +33,53 @@ struct Editor {
     expr: Expr,
     /// Yanked expressions.
     yanked: Vec<Expr>,
-    // We assume the user will only ever select a few expressions.
-    selection: Vec<ExprId>,
+    selection: Option<ExprId>,
+}
+
+struct KaleState {
+    editor: RefCell<Editor>,
+    rendering_state: RefCell<RenderingState>,
+    event_queue: Shared<VecDeque<Event>>,
+}
+
+thread_local! {
+    static KALE_STATE: Rc<KaleState> = Rc::new(KaleState::new());
+}
+
+pub(crate) fn kale() -> Rc<KaleState> {
+    KALE_STATE.with(Rc::clone)
+}
+
+impl KaleState {
+    fn new() -> Self {
+        KaleState {
+            event_queue: Rc::new(RefCell::new(VecDeque::new())),
+            editor: RefCell::new(Editor::new(size2(500., 500.))),
+            rendering_state: RefCell::new(RenderingState::new()),
+        }
+    }
+
+    fn push_event(&self, event: Event) {
+        self.event_queue.borrow_mut().push_back(event);
+    }
+
+    fn process_events(&self) {
+        use Event::*;
+        loop {
+            let event = self.event_queue.borrow_mut().pop_front();
+            if let Some(event) = event {
+                let mut editor = self.editor.borrow_mut();
+                match event {
+                    Select { id } => editor.select(id),
+                };
+            } else {
+                break;
+            }
+        }
+        self.editor
+            .borrow_mut()
+            .render(&mut self.rendering_state.borrow_mut());
+    }
 }
 
 impl Editor {
@@ -36,7 +94,7 @@ impl Editor {
         Editor {
             root,
             frozen: false,
-            selection: Vec::new(),
+            selection: None,
             yanked: Vec::new(),
             expr: Do {
                 id: ExprId::from_raw(0),
@@ -45,32 +103,38 @@ impl Editor {
         }
     }
 
+    //TODO: Is supporting multiple select expressions a good idea?
     fn select(&mut self, id: ExprId) {
-        if !self.selection.contains(&id) {
-            // Remove all the children of the new selection.
-            for expr in self.expr.find_by_id(id) {
-                self.selection.remove_item(&expr.id());
-            }
-            self.selection.push(id);
-        }
+        self.selection = Some(id);
+        info!(
+            "Inside the editor it's mutable and everyting! with id: {:?}",
+            id
+        );
     }
 
     fn render(&mut self, state: &mut RenderingState) {
         fn render(editor: &Editor, state: &mut RenderingState, expr: &Expr) -> ExprRendering {
             const PADDING: f32 = 3.;
+            let make_click_handler = move |id: ExprId| {
+                move |event: ClickEvent| {
+                    event.stop_propagation();
+                    kale().push_event(Event::Select { id });
+                    kale().process_events();
+                }
+            };
             let mut rendering = match expr {
                 Comment { id, text, .. } => Text::new(text, TextStyle::Comment)
                     .colour("#43a047")
                     .render(state)
-                    .click(*id),
+                    .click(make_click_handler(*id)),
                 Var { id, name, .. } => Text::new(name, TextStyle::Mono)
                     .colour("#f44336")
                     .render(state)
-                    .click(*id),
+                    .click(make_click_handler(*id)),
                 Lit { id, content, .. } => Text::new(content, TextStyle::Mono)
                     .colour("#283593")
                     .render(state)
-                    .click(*id),
+                    .click(make_click_handler(*id)),
                 Call {
                     id,
                     name,
@@ -81,7 +145,9 @@ impl Editor {
                     //TODO: The spacing between the arguments shouldn't just be a constant. For
                     // shorter expressions, or maybe certain functions the spacing should be
                     // decreased.
-                    let mut rendering = Text::new(name, TextStyle::Mono).render(state).click(*id);
+                    let mut rendering = Text::new(name, TextStyle::Mono)
+                        .render(state)
+                        .click(make_click_handler(*id));
                     rendering.size.width += PADDING;
                     for arg in arguments {
                         // Clicking the separator dot selects its argument.
@@ -90,7 +156,7 @@ impl Editor {
                             Circle::new(point2(3., 3.), 3.)
                                 .fill("#aaa")
                                 .render(state)
-                                .click(arg.id()),
+                                .click(make_click_handler(arg.id())),
                         );
                         rendering.place(
                             point2(rendering.size.width + 1., 0.),
@@ -118,7 +184,7 @@ impl Editor {
                         Rect::new(rect(0., 0., 1., rendering.size.height))
                             .fill("#aaa")
                             .render(state)
-                            .click(*id),
+                            .click(make_click_handler(*id)),
                     );
                     rendering
                 }
@@ -128,7 +194,7 @@ impl Editor {
             };
 
             // Handle drawing the selection.
-            if editor.selection.contains(&expr.id()) {
+            if editor.selection == Some(expr.id()) {
                 rendering.place(
                     SvgPoint::zero(),
                     Rect::new(rect(0., 0., rendering.size.width, rendering.size.height))
@@ -140,6 +206,7 @@ impl Editor {
         }
 
         let render_list = render(self, state, &self.expr);
+        js! { @{&self.root}.innerHTML = "" };
         for elem in render_list.elements {
             self.root.append_child(&elem);
         }
@@ -168,9 +235,9 @@ fn main() {
     body.append_child(&greeting);
 
     // Render the editor.
-    let mut state = RenderingState::new();
-    let mut editor = Editor::new(size2(500., 500.));
-    editor.selection.push(ExprId::from_raw(5));
-    editor.expr = fact;
-    editor.render(&mut state);
+    let kale = kale();
+    kale.editor.borrow_mut().expr = fact;
+    kale.editor
+        .borrow_mut()
+        .render(&mut kale.rendering_state.borrow_mut());
 }

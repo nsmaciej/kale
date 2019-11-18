@@ -2,10 +2,7 @@ use std::collections::HashMap;
 
 use euclid::*;
 use stdweb::web::event::*;
-use stdweb::web::{alert, document, Element, EventListenerHandle, IElement, IEventTarget, INode};
-
-//TODO: Get rid of this, used by the click() method.
-use crate::expr::ExprId;
+use stdweb::web::{document, Element, EventListenerHandle, IElement, IEventTarget, INode};
 
 pub type Colour = &'static str;
 pub type SvgPoint = default::Point2D<f32>;
@@ -133,12 +130,14 @@ impl ExprRendering {
         group
     }
 
-    pub fn click(mut self, id: ExprId) -> Self {
+    pub fn click<T, F>(mut self, listener: F) -> Self
+    where
+        T: ConcreteEvent,
+        F: Fn(T) + Clone + 'static,
+    {
         for elem in &self.elements {
-            let handle = elem.add_event_listener(move |_e: ClickEvent| {
-                alert(&format!("Clicked {:?}", id));
-            });
-            self.event_listeners.push(handle);
+            self.event_listeners
+                .push(elem.add_event_listener(listener.clone()));
         }
         self
     }
