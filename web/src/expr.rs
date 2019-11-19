@@ -5,12 +5,15 @@ use itertools::Itertools;
 
 pub use Expr::*;
 
+/// Create an enum from a list of structs. Structs inherit the visibility given to the enum and all
+/// their fields are public.
 macro_rules! make_expr {
-    ($enum_vis:vis enum $expr_name:ident { .. }
-     $($variant_vis:vis struct $variant:ident { $($name:ident : $type:ty,)* })*) => {
+    ($(#[$enum_meta:meta])* $vis:vis enum $expr_name:ident { .. }
+     $($(#[$variant_meta:meta])* struct $variant:ident { $($name:ident : $type:ty,)* })*) => {
         $(
+            $(#[$variant_meta])*
             #[derive(Debug, Clone)]
-            $variant_vis struct $variant {
+            $vis struct $variant {
                 $(pub $name: $type,)*
             }
 
@@ -20,8 +23,8 @@ macro_rules! make_expr {
                 }
             }
         )*
-        #[derive(Debug, Clone)]
-        $enum_vis enum $expr_name {
+        $(#[$enum_meta])*
+        $vis enum $expr_name {
             $($variant($variant),)*
         }
     };
@@ -32,37 +35,40 @@ macro_rules! make_expr {
 // for our purposes than a plain enum. It lets us handle known variants much more neatly and use the
 // struct update syntax.
 make_expr! {
+    #[derive(Debug, Clone)]
     pub enum Expr {
         ..
     }
 
-    pub struct Hole {
+    struct Hole {
         id: ExprId,
     }
-    pub struct Comment {
+    struct Comment {
         id: ExprId,
         text: String,
     }
-    pub struct Call {
+    struct Call {
         id: ExprId,
         name: String,
         arguments: Vec<Expr>,
     }
-    pub struct Lit {
+    struct Lit {
         id: ExprId,
         kind: String,
         content: String,
     }
-    pub struct Var {
+    struct Var {
         id: ExprId,
         name: String,
     }
-    pub struct Do {
+    /// A group of expressions, like progn.
+    struct Do {
         id: ExprId,
         expressions: Vec<Expr>,
     }
 }
 
+/// A unique number identifying an expression.
 #[repr(transparent)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ExprId(u32);
@@ -144,6 +150,10 @@ impl Expr {
         self.into_iter().find(|x| x.id() == id)
     }
 
+    pub fn update(&mut self, id: ExprId, transform: fn(Expr) -> Expr) {
+        todo!("Implement this, maybe use an enum of structs instead");
+    }
+
     pub fn childeren(&self) -> &[Expr] {
         match self {
             Call(x) => &x.arguments,
@@ -154,8 +164,8 @@ impl Expr {
         }
     }
 
-    // Verify the integiry of an expression tree. Right now this just makes sure that no id appears
-    // twice
+    /// Verify the integiry of an expression tree. Right now this just makes sure that no id appears
+    /// twice
     pub fn valid(&self) -> bool {
         let mut seen_ids = HashSet::new();
         self.into_iter().all(|x| seen_ids.insert(x.id()))

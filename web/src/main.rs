@@ -46,7 +46,7 @@ thread_local! {
     static KALE_STATE: Rc<KaleState> = Rc::new(KaleState::new());
 }
 
-pub(crate) fn kale() -> Rc<KaleState> {
+fn kale() -> Rc<KaleState> {
     KALE_STATE.with(Rc::clone)
 }
 
@@ -71,6 +71,7 @@ impl KaleState {
                 let mut editor = self.editor.borrow_mut();
                 match event {
                     Select { id } => editor.select(id),
+                    _ => todo!("Event not handled"),
                 };
             } else {
                 break;
@@ -124,33 +125,29 @@ impl Editor {
                 }
             };
             let mut rendering = match expr {
-                Expr::Comment(Comment { id, text, .. }) => Text::new(text, TextStyle::Comment)
+                Expr::Comment(e) => Text::new(&e.text, TextStyle::Comment)
                     .colour("#43a047")
                     .render(state)
-                    .event(make_click_handler(*id)),
-                Expr::Var(Var { id, name, .. }) => Text::new(name, TextStyle::Mono)
+                    .event(make_click_handler(e.id)),
+                Expr::Var(e) => Text::new(&e.name, TextStyle::Mono)
                     .colour("#f44336")
                     .render(state)
-                    .event(make_click_handler(*id)),
-                Expr::Lit(Lit { id, content, .. }) => Text::new(content, TextStyle::Mono)
+                    .event(make_click_handler(e.id)),
+                //TODO: Render the lit type somehow or something.
+                Expr::Lit(e) => Text::new(&e.content, TextStyle::Mono)
                     .colour("#283593")
                     .render(state)
-                    .event(make_click_handler(*id)),
-                Expr::Call(Call {
-                    id,
-                    name,
-                    arguments,
-                    ..
-                }) => {
+                    .event(make_click_handler(e.id)),
+                Expr::Call(e) => {
                     //TODO: Render the underlines/whatever else to help show the nesting level.
                     //TODO: The spacing between the arguments shouldn't just be a constant. For
                     // shorter expressions, or maybe certain functions the spacing should be
                     // decreased.
-                    let mut rendering = Text::new(name, TextStyle::Mono)
+                    let mut rendering = Text::new(&e.name, TextStyle::Mono)
                         .render(state)
-                        .event(make_click_handler(*id));
+                        .event(make_click_handler(e.id));
                     rendering.size.width += PADDING;
-                    for arg in arguments {
+                    for arg in &e.arguments {
                         // Clicking the separator dot selects its argument.
                         rendering.place(
                             point2(rendering.size.width + 3., 2.),
@@ -167,11 +164,9 @@ impl Editor {
                     }
                     rendering
                 }
-                Expr::Do(Do {
-                    id, expressions, ..
-                }) => {
+                Expr::Do(e) => {
                     let mut rendering = ExprRendering::empty();
-                    for expr in expressions {
+                    for expr in &e.expressions {
                         rendering.place(
                             point2(5., rendering.size.height),
                             render(editor, state, expr),
@@ -185,7 +180,7 @@ impl Editor {
                         Rect::new(rect(0., 0., 1., rendering.size.height))
                             .fill("#aaa")
                             .render(state)
-                            .event(make_click_handler(*id)),
+                            .event(make_click_handler(e.id)),
                     );
                     rendering
                 }
