@@ -96,10 +96,11 @@ impl Editor {
             frozen: false,
             selection: None,
             yanked: Vec::new(),
-            expr: Expr::Do(Do {
+            expr: Do {
                 id: ExprId::from_raw(0),
                 expressions: Vec::new(),
-            }),
+            }
+            .into(),
         }
     }
 

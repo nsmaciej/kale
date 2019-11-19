@@ -13,6 +13,12 @@ macro_rules! make_expr {
             $variant_vis struct $variant {
                 $(pub $name: $type,)*
             }
+
+            impl From<$variant> for Expr {
+                fn from(expr: $variant) -> Self {
+                    $variant(expr)
+                }
+            }
         )*
         #[derive(Debug, Clone)]
         $enum_vis enum $expr_name {
@@ -66,41 +72,41 @@ pub struct ExprId(u32);
 macro_rules! _expr_inner {
     ($id:ident; $val:tt => $kind:ident) => {{
         $id += 1;
-        Expr::Lit(Lit {
+        Lit {
             id: ExprId::from_raw($id),
             content: stringify!($val).to_string(),
             kind: stringify!($kind).to_string(),
-        })
+        }.into()
     }};
     ($id:ident; block $([$($tok:tt)+])*) => {{
         $id += 1;
-        Expr::Do(Do {
+        Do {
             id: ExprId::from_raw($id),
             expressions: vec![$(_expr_inner!($id; $($tok)*),)*],
-        })
+        }.into()
     }};
     ($id:ident; comment $text:expr) => {{
         $id += 1;
-        Expr::Comment(Comment {
+        Comment {
             id: ExprId::from_raw($id),
             text: $text.to_string(),
-        })
+        }.into()
     }};
     ($id:ident; hole) => {{
         $id += 1;
-        Expr::Hole(Hole { id: ExprId::from_raw($id) })
+        Hole { id: ExprId::from_raw($id) }.into()
     }};
     ($id:ident; $name:tt($([$($tok:tt)+])*)) => {{
         $id += 1;
-        Expr::Call(Call {
+        Call {
             id: ExprId::from_raw($id),
             name: stringify!($name).to_string(),
             arguments: vec![$(_expr_inner!($id; $($tok)*),)*],
-        })
+        }.into()
     }};
     ($id:ident; $var:tt) => {{
         $id += 1;
-        Expr::Var(Var { name: stringify!($var).to_string(), id: ExprId::from_raw($id) })
+        Var { name: stringify!($var).to_string(), id: ExprId::from_raw($id) }.into()
     }};
 }
 
@@ -110,7 +116,7 @@ macro_rules! expr {
     ($($tok:tt)*) => {{
         let mut current_id = 0;
         #[allow(clippy::eval_order_dependence)]
-        let expr = _expr_inner!(current_id; $($tok)*);
+        let expr: Expr = _expr_inner!(current_id; $($tok)*);
         assert!(expr.valid());
         expr
     }}
