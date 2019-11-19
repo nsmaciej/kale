@@ -5,35 +5,56 @@ use itertools::Itertools;
 
 pub use Expr::*;
 
-//TODO: Some sort of lambda.
-// If we get any more fields in common, something like the diff_enum crate might come in handy.
-#[derive(Debug, Clone)]
-pub enum Expr {
-    Hole {
+macro_rules! make_expr {
+    ($enum_vis:vis enum $expr_name:ident { .. }
+     $($variant_vis:vis struct $variant:ident { $($name:ident : $type:ty,)* })*) => {
+        $(
+            #[derive(Debug, Clone)]
+            $variant_vis struct $variant {
+                $(pub $name: $type,)*
+            }
+        )*
+        #[derive(Debug, Clone)]
+        $enum_vis enum $expr_name {
+            $($variant($variant),)*
+        }
+    };
+}
+
+// Once https://github.com/rust-lang/rfcs/pull/2593 "Enum Variant Types" lands (hopefully early
+// 2020), this should be able to go away. Until then it's much nicer to deal with an enum of structs
+// for our purposes than a plain enum. It lets us handle known variants much more neatly and use the
+// struct update syntax.
+make_expr! {
+    pub enum Expr {
+        ..
+    }
+
+    pub struct Hole {
         id: ExprId,
-    },
-    Comment {
+    }
+    pub struct Comment {
         id: ExprId,
         text: String,
-    },
-    Call {
+    }
+    pub struct Call {
         id: ExprId,
         name: String,
         arguments: Vec<Expr>,
-    },
-    Lit {
+    }
+    pub struct Lit {
         id: ExprId,
         kind: String,
         content: String,
-    },
-    Var {
+    }
+    pub struct Var {
         id: ExprId,
         name: String,
-    },
-    Do {
+    }
+    pub struct Do {
         id: ExprId,
         expressions: Vec<Expr>,
-    },
+    }
 }
 
 #[repr(transparent)]
@@ -45,41 +66,41 @@ pub struct ExprId(u32);
 macro_rules! _expr_inner {
     ($id:ident; $val:tt => $kind:ident) => {{
         $id += 1;
-        Expr::Lit {
+        Expr::Lit(Lit {
             id: ExprId::from_raw($id),
             content: stringify!($val).to_string(),
             kind: stringify!($kind).to_string(),
-        }
+        })
     }};
     ($id:ident; block $([$($tok:tt)+])*) => {{
         $id += 1;
-        Expr::Do {
+        Expr::Do(Do {
             id: ExprId::from_raw($id),
             expressions: vec![$(_expr_inner!($id; $($tok)*),)*],
-        }
+        })
     }};
     ($id:ident; comment $text:expr) => {{
         $id += 1;
-        Expr::Comment {
+        Expr::Comment(Comment {
             id: ExprId::from_raw($id),
             text: $text.to_string(),
-        }
+        })
     }};
     ($id:ident; hole) => {{
         $id += 1;
-        Expr::Hole { id: ExprId::from_raw($id) }
+        Expr::Hole(Hole { id: ExprId::from_raw($id) })
     }};
     ($id:ident; $name:tt($([$($tok:tt)+])*)) => {{
         $id += 1;
-        Expr::Call {
+        Expr::Call(Call {
             id: ExprId::from_raw($id),
             name: stringify!($name).to_string(),
             arguments: vec![$(_expr_inner!($id; $($tok)*),)*],
-        }
+        })
     }};
     ($id:ident; $var:tt) => {{
         $id += 1;
-        Expr::Var { name: stringify!($var).to_string(), id: ExprId::from_raw($id) }
+        Expr::Var(Var { name: stringify!($var).to_string(), id: ExprId::from_raw($id) })
     }};
 }
 
@@ -104,12 +125,12 @@ impl ExprId {
 impl Expr {
     pub fn id(&self) -> ExprId {
         match self {
-            Call { id, .. }
-            | Comment { id, .. }
-            | Do { id, .. }
-            | Hole { id, .. }
-            | Lit { id, .. }
-            | Var { id, .. } => *id,
+            Call(x) => x.id,
+            Comment(x) => x.id,
+            Do(x) => x.id,
+            Hole(x) => x.id,
+            Lit(x) => x.id,
+            Var(x) => x.id,
         }
     }
 
@@ -119,8 +140,8 @@ impl Expr {
 
     pub fn childeren(&self) -> &[Expr] {
         match self {
-            Call { arguments, .. } => arguments,
-            Do { expressions, .. } => expressions,
+            Call(x) => &x.arguments,
+            Do(x) => &x.expressions,
             // I'm kind of surprised this worked, but it makes sense the empty slice should have
             // any lifetime.
             _ => &[],
@@ -138,14 +159,12 @@ impl Expr {
 impl fmt::Display for Expr {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Call {
-                name, arguments, ..
-            } => write!(f, "{}({})", name, arguments.iter().format(", ")),
-            Comment { text, .. } => write!(f, "/* {} */", text),
-            Do { expressions, .. } => write!(f, "{{{}}}", expressions.iter().format(", ")),
-            Hole { .. } => write!(f, "?"),
-            Lit { kind, content, .. } => write!(f, "{}:{}", content, kind),
-            Var { name, .. } => write!(f, "{}", name),
+            Call(x) => write!(f, "{}({})", x.name, x.arguments.iter().format(", ")),
+            Comment(x) => write!(f, "/* {} */", x.text),
+            Do(x) => write!(f, "{{{}}}", x.expressions.iter().format(", ")),
+            Hole(_) => write!(f, "?"),
+            Lit(x) => write!(f, "{}:{}", x.content, x.kind),
+            Var(x) => write!(f, "{}", x.name),
         }
     }
 }

@@ -96,10 +96,10 @@ impl Editor {
             frozen: false,
             selection: None,
             yanked: Vec::new(),
-            expr: Do {
+            expr: Expr::Do(Do {
                 id: ExprId::from_raw(0),
                 expressions: Vec::new(),
-            },
+            }),
         }
     }
 
@@ -123,24 +123,24 @@ impl Editor {
                 }
             };
             let mut rendering = match expr {
-                Comment { id, text, .. } => Text::new(text, TextStyle::Comment)
+                Expr::Comment(Comment { id, text, .. }) => Text::new(text, TextStyle::Comment)
                     .colour("#43a047")
                     .render(state)
                     .event(make_click_handler(*id)),
-                Var { id, name, .. } => Text::new(name, TextStyle::Mono)
+                Expr::Var(Var { id, name, .. }) => Text::new(name, TextStyle::Mono)
                     .colour("#f44336")
                     .render(state)
                     .event(make_click_handler(*id)),
-                Lit { id, content, .. } => Text::new(content, TextStyle::Mono)
+                Expr::Lit(Lit { id, content, .. }) => Text::new(content, TextStyle::Mono)
                     .colour("#283593")
                     .render(state)
                     .event(make_click_handler(*id)),
-                Call {
+                Expr::Call(Call {
                     id,
                     name,
                     arguments,
                     ..
-                } => {
+                }) => {
                     //TODO: Render the underlines/whatever else to help show the nesting level.
                     //TODO: The spacing between the arguments shouldn't just be a constant. For
                     // shorter expressions, or maybe certain functions the spacing should be
@@ -166,9 +166,9 @@ impl Editor {
                     }
                     rendering
                 }
-                Do {
+                Expr::Do(Do {
                     id, expressions, ..
-                } => {
+                }) => {
                     let mut rendering = ExprRendering::empty();
                     for expr in expressions {
                         rendering.place(
@@ -188,7 +188,7 @@ impl Editor {
                     );
                     rendering
                 }
-                Hole { id } => {
+                Expr::Hole(_) => {
                     todo!("Render the hole");
                 }
             };
