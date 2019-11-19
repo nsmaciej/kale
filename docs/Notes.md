@@ -5,7 +5,7 @@
 * canvas - The area on which all the expressions live.
 * toy box - A list of programming primitives users can drag things from.
 * editor - Canvas, expressions and all other state.
-* do, block - A list of expressions to be executed one by one. progn.
+* do, block, group - A list of expressions to be executed one by one. progn.
 
 ## New TextMetrics object in canvas
 
@@ -32,8 +32,20 @@ Since Chrome 77 it is ok to use
   Scratch mode.
 * A rough 'compactness' setting which would decide how much 'visual sugar'
   should be applied for the sake of brevity.
-* Since Kale will not be filed oriented it would be nice if the function browser
+* Since Kale will not be file oriented it would be nice if the function browser
   had some kind of Sublime Text mini map like preview of each function.
+
+## Potential shortcuts
+
+* Enter - Insert a new hole in the closest group ancestor (possibly already selected)
+* Esc - Edit exit a modal interface or select next parent
+* Space - Insert a new hole in the closest call ancestor (possibly already selected)
+  In the future it might also interact with data structures like lists
+* Arrow keys - should the meaning change on the 'direction' of the expression?
+  It makes sense that up/down should move between siblings in group expressions,
+  but left/right makes more sense for calls. I feel like thinking about this
+  visually will be more helpful than thinking about the underlying AST, but it
+  might make sense to test that.
 
 ## Selling points
 
