@@ -24,6 +24,7 @@ type Shared<T> = Rc<RefCell<T>>;
 #[derive(Debug)]
 enum Event {
     Select { id: ExprId },
+    Edit { id: ExprId },
 }
 
 /// Data about a particual instance of the Kale editor.
@@ -71,7 +72,25 @@ impl KaleState {
                 let mut editor = self.editor.borrow_mut();
                 match event {
                     Select { id } => editor.select(id),
-                    _ => todo!("Event not handled"),
+                    Edit { id } => editor.expr.update(id, |mut e| {
+                        let string = match &mut e {
+                            Call(x) => &mut x.function,
+                            Comment(x) => &mut x.text,
+                            Lit(x) => &mut x.content,
+                            Var(x) => &mut x.name,
+                            // We don't know how to edit this. Exit early.
+                            _ => return e,
+                        };
+                        if let Some(answer) = prompt(string) {
+                            *string = answer;
+                            e
+                        } else {
+                            Hole {
+                                id: ExprId::from_raw(0),
+                            }
+                            .into()
+                        }
+                    }),
                 };
             } else {
                 break;
@@ -117,10 +136,17 @@ impl Editor {
     fn render(&mut self, state: &mut RenderingState) {
         fn render(editor: &Editor, state: &mut RenderingState, expr: &Expr) -> ExprRendering {
             const PADDING: f32 = 3.;
-            let make_click_handler = move |id: ExprId| {
+            let make_click_handler = |id: ExprId| {
                 move |event: ClickEvent| {
                     event.stop_propagation();
                     kale().push_event(Event::Select { id });
+                    kale().process_events();
+                }
+            };
+            let transform_handler = |id: ExprId| {
+                move |event: DoubleClickEvent| {
+                    event.stop_propagation();
+                    kale().push_event(Event::Edit { id });
                     kale().process_events();
                 }
             };
@@ -128,24 +154,28 @@ impl Editor {
                 Expr::Comment(e) => Text::new(&e.text, TextStyle::Comment)
                     .colour("#43a047")
                     .render(state)
-                    .event(make_click_handler(e.id)),
+                    .event(make_click_handler(e.id))
+                    .event(transform_handler(e.id)),
                 Expr::Var(e) => Text::new(&e.name, TextStyle::Mono)
                     .colour("#f44336")
                     .render(state)
-                    .event(make_click_handler(e.id)),
+                    .event(make_click_handler(e.id))
+                    .event(transform_handler(e.id)),
                 //TODO: Render the lit type somehow or something.
                 Expr::Lit(e) => Text::new(&e.content, TextStyle::Mono)
                     .colour("#283593")
                     .render(state)
-                    .event(make_click_handler(e.id)),
+                    .event(make_click_handler(e.id))
+                    .event(transform_handler(e.id)),
                 Expr::Call(e) => {
                     //TODO: Render the underlines/whatever else to help show the nesting level.
                     //TODO: The spacing between the arguments shouldn't just be a constant. For
                     // shorter expressions, or maybe certain functions the spacing should be
                     // decreased.
-                    let mut rendering = Text::new(&e.name, TextStyle::Mono)
+                    let mut rendering = Text::new(&e.function, TextStyle::Mono)
                         .render(state)
-                        .event(make_click_handler(e.id));
+                        .event(make_click_handler(e.id))
+                        .event(transform_handler(e.id));
                     rendering.size.width += PADDING;
                     for arg in &e.arguments {
                         // Clicking the separator dot selects its argument.
@@ -154,7 +184,9 @@ impl Editor {
                             Circle::new(point2(3., 3.), 3.)
                                 .fill("#aaa")
                                 .render(state)
-                                .event(make_click_handler(arg.id())),
+                                .event(make_click_handler(arg.id()))
+                                //TODO: This doesn't really work for groups.
+                                .event(transform_handler(arg.id())),
                         );
                         rendering.place(
                             point2(rendering.size.width + 1., 0.),
@@ -184,14 +216,13 @@ impl Editor {
                     );
                     rendering
                 }
-                Expr::Hole(_) => {
-                    todo!("Render the hole");
-                }
+                Expr::Hole(_) => Rect::new(rect(0., 0., 16., 16.)).fill("red").render(state),
             };
 
             // Handle drawing the selection.
             if editor.selection == Some(expr.id()) {
-                rendering.place(
+                rendering.place_at(
+                    0, // Note the zero. Selection should be behind everything else.
                     SvgPoint::zero(),
                     Rect::new(rect(0., 0., rendering.size.width, rendering.size.height))
                         .stroke("#aaa")

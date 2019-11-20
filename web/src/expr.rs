@@ -49,7 +49,7 @@ make_expr! {
     }
     struct Call {
         id: ExprId,
-        name: String,
+        function: String,
         arguments: Vec<Expr>,
     }
     struct Lit {
@@ -106,7 +106,7 @@ macro_rules! _expr_inner {
         $id += 1;
         Call {
             id: ExprId::from_raw($id),
-            name: stringify!($name).to_string(),
+            function: stringify!($name).to_string(),
             arguments: vec![$(_expr_inner!($id; $($tok)*),)*],
         }.into()
     }};
@@ -150,17 +150,30 @@ impl Expr {
         self.into_iter().find(|x| x.id() == id)
     }
 
-    pub fn update(&mut self, id: ExprId, transform: fn(Expr) -> Expr) {
-        todo!("Implement this, maybe use an enum of structs instead");
+    pub fn update(&mut self, id: ExprId, transform: impl Fn(Expr) -> Expr + Copy) {
+        use std::mem::replace;
+        if self.id() == id {
+            *self = transform(replace(self, Expr::default()));
+        } else {
+            for child in self.childeren_mut() {
+                Expr::update(child, id, transform);
+            }
+        }
     }
 
     pub fn childeren(&self) -> &[Expr] {
         match self {
             Call(x) => &x.arguments,
             Do(x) => &x.expressions,
-            // I'm kind of surprised this worked, but it makes sense the empty slice should have
-            // any lifetime.
             _ => &[],
+        }
+    }
+
+    pub fn childeren_mut(&mut self) -> &mut [Expr] {
+        match self {
+            Call(x) => &mut x.arguments,
+            Do(x) => &mut x.expressions,
+            _ => &mut [],
         }
     }
 
@@ -172,10 +185,19 @@ impl Expr {
     }
 }
 
+impl Default for Expr {
+    fn default() -> Self {
+        Hole {
+            id: ExprId::from_raw(0),
+        }
+        .into()
+    }
+}
+
 impl fmt::Display for Expr {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Call(x) => write!(f, "{}({})", x.name, x.arguments.iter().format(", ")),
+            Call(x) => write!(f, "{}({})", x.function, x.arguments.iter().format(", ")),
             Comment(x) => write!(f, "/* {} */", x.text),
             Do(x) => write!(f, "{{{}}}", x.expressions.iter().format(", ")),
             Hole(_) => write!(f, "?"),

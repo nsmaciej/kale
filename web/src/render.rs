@@ -158,17 +158,16 @@ impl ExprRendering {
         }
     }
 
-    pub fn place(&mut self, point: SvgPoint, rendering: ExprRendering) {
-        // Must be careful here. It's easy to forget to update self, forgetting to copy something
-        // from 'rendering'. We pattern match to make adding new fields a hard error.
-        let ExprRendering {
-            size,
-            ref mut elements,
-            ref mut event_listeners,
-        } = rendering.translate(point);
-        self.elements.append(elements);
-        self.event_listeners.append(event_listeners);
-        self.size = self.size.max(size + size2(point.x, point.y));
+    pub fn place_at(&mut self, z: usize, point: SvgPoint, rendering: ExprRendering) {
+        let mut rendering = rendering.translate(point);
+        self.elements
+            .splice(z..z, rendering.elements.iter().cloned());
+        self.event_listeners.append(&mut rendering.event_listeners);
+        self.size = self.size.max(rendering.size + size2(point.x, point.y));
+    }
+
+    pub fn place(&mut self, point: SvgPoint, rendeirng: ExprRendering) {
+        self.place_at(self.elements.len(), point, rendeirng);
     }
 }
 
@@ -289,7 +288,7 @@ impl Renderable for Rect {
 impl Renderable for Text<'_> {
     fn element(&self) -> Element {
         let text = svg! { "text";
-            "style" => format!("font: {};", match self.style {
+            "style" => format!("font: {}; user-select: none;", match self.style {
                 TextStyle::Mono => "16px Input Sans",
                 TextStyle::Comment => "italic 16px Helvetica Neue",
             }),
