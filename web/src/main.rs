@@ -25,6 +25,7 @@ type Shared<T> = Rc<RefCell<T>>;
 enum Event {
     Select { id: ExprId },
     Edit { id: ExprId },
+    Yank { expr: Expr },
 }
 
 /// Data about a particual instance of the Kale editor.
@@ -85,12 +86,19 @@ impl KaleState {
                             *string = answer;
                             e
                         } else {
+                            // Don't just remove the expression - yank it.
+                            //TODO: Work on the signature of update so that this isn't needed. There
+                            // will probably still be a yank event, but we should be able to yank
+                            // it directly here - this closure doesn't escape.
+                            kale().push_event(Yank { expr: e });
                             Hole {
+                                //TODO: We need some sort of globally unqiue id registery.
                                 id: ExprId::from_raw(0),
                             }
                             .into()
                         }
                     }),
+                    Yank { expr } => editor.yanked.push(expr),
                 };
             } else {
                 break;
