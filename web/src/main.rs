@@ -25,7 +25,6 @@ type Shared<T> = Rc<RefCell<T>>;
 enum Event {
     Select { id: ExprId },
     Edit { id: ExprId },
-    Yank { expr: Expr },
 }
 
 /// Data about a particual instance of the Kale editor.
@@ -73,32 +72,7 @@ impl KaleState {
                 let mut editor = self.editor.borrow_mut();
                 match event {
                     Select { id } => editor.select(id),
-                    Edit { id } => editor.expr.update(id, |mut e| {
-                        let string = match &mut e {
-                            Call(x) => &mut x.function,
-                            Comment(x) => &mut x.text,
-                            Lit(x) => &mut x.content,
-                            Var(x) => &mut x.name,
-                            // We don't know how to edit this. Exit early.
-                            _ => return e,
-                        };
-                        if let Some(answer) = prompt(string) {
-                            *string = answer;
-                            e
-                        } else {
-                            // Don't just remove the expression - yank it.
-                            //TODO: Work on the signature of update so that this isn't needed. There
-                            // will probably still be a yank event, but we should be able to yank
-                            // it directly here - this closure doesn't escape.
-                            kale().push_event(Yank { expr: e });
-                            Hole {
-                                //TODO: We need some sort of globally unqiue id registery.
-                                id: ExprId::from_raw(0),
-                            }
-                            .into()
-                        }
-                    }),
-                    Yank { expr } => editor.yanked.push(expr),
+                    Edit { id } => editor.edit(id, prompt("")),
                 };
             } else {
                 break;
@@ -132,13 +106,27 @@ impl Editor {
         }
     }
 
+    fn edit(&mut self, id: ExprId, text: Option<String>) {
+        if let Some(text) = text {
+            if let Some(expr) = self.expr.borrow_mut(id) {
+                *match expr {
+                    Call(x) => &mut x.function,
+                    Comment(x) => &mut x.text,
+                    Lit(x) => &mut x.content,
+                    Var(x) => &mut x.name,
+                    // We don't know how to edit this. Exit early.
+                    _ => return,
+                } = text;
+            }
+        } else {
+            // Don't just remove the expression - yank it.
+            self.yanked.push(self.expr.remove_by_id(id).unwrap());
+        }
+    }
+
     //TODO: Is supporting multiple select expressions a good idea?
     fn select(&mut self, id: ExprId) {
         self.selection = Some(id);
-        info!(
-            "Inside the editor it's mutable and everyting! with id: {:?}",
-            id
-        );
     }
 
     fn render(&mut self, state: &mut RenderingState) {

@@ -1,5 +1,6 @@
 use std::collections::HashSet;
 use std::fmt;
+use std::mem::replace;
 
 use itertools::Itertools;
 
@@ -146,19 +147,22 @@ impl Expr {
         }
     }
 
-    pub fn find_by_id(&self, id: ExprId) -> Option<&Expr> {
+    pub fn borrow(&self, id: ExprId) -> Option<&Expr> {
         self.into_iter().find(|x| x.id() == id)
     }
 
-    pub fn update(&mut self, id: ExprId, transform: impl Fn(Expr) -> Expr + Copy) {
-        use std::mem::replace;
+    pub fn borrow_mut(&mut self, id: ExprId) -> Option<&mut Expr> {
         if self.id() == id {
-            *self = transform(replace(self, Expr::default()));
+            Some(self)
         } else {
-            for child in self.childeren_mut() {
-                Expr::update(child, id, transform);
-            }
+            self.childeren_mut()
+                .into_iter()
+                .find_map(|x| x.borrow_mut(id))
         }
+    }
+
+    pub fn remove_by_id(&mut self, id: ExprId) -> Option<Expr> {
+        self.borrow_mut(id).map(|x| replace(x, Expr::default()))
     }
 
     pub fn childeren(&self) -> &[Expr] {
