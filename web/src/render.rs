@@ -12,7 +12,7 @@ pub type SvgSize = default::Size2D<f32>;
 pub type SvgRect = default::Rect<f32>;
 
 #[derive(Debug)]
-pub struct ExprRendering {
+pub struct Svg {
     //TODO: These should not be pub once we work out the api.
     pub elements: Vec<Element>,
     pub size: SvgSize,
@@ -120,9 +120,9 @@ impl RenderingState {
     }
 }
 
-impl ExprRendering {
+impl Svg {
     pub fn empty() -> Self {
-        ExprRendering {
+        Svg {
             elements: Vec::new(),
             size: SvgSize::zero(),
             event_listeners: Vec::new(),
@@ -150,7 +150,7 @@ impl ExprRendering {
     }
 
     pub fn translate(self, point: SvgPoint) -> Self {
-        ExprRendering {
+        Svg {
             elements: vec![attrs! { self.group();
                 "transform" => format!("translate({} {})", point.x, point.y),
             }],
@@ -158,7 +158,7 @@ impl ExprRendering {
         }
     }
 
-    pub fn place_at(&mut self, z: usize, point: SvgPoint, rendering: ExprRendering) {
+    pub fn place_at(&mut self, z: usize, point: SvgPoint, rendering: Svg) {
         let mut rendering = rendering.translate(point);
         self.elements
             .splice(z..z, rendering.elements.iter().cloned());
@@ -166,7 +166,7 @@ impl ExprRendering {
         self.size = self.size.max(rendering.size + size2(point.x, point.y));
     }
 
-    pub fn place(&mut self, point: SvgPoint, rendeirng: ExprRendering) {
+    pub fn place(&mut self, point: SvgPoint, rendeirng: Svg) {
         self.place_at(self.elements.len(), point, rendeirng);
     }
 
@@ -184,8 +184,8 @@ pub trait Renderable {
     fn element(&self) -> Element;
     fn size(&self, state: &mut RenderingState) -> SvgSize;
 
-    fn render(&self, state: &mut RenderingState) -> ExprRendering {
-        ExprRendering {
+    fn render(&self, state: &mut RenderingState) -> Svg {
+        Svg {
             elements: vec![self.element()],
             size: self.size(state),
             event_listeners: Vec::new(),

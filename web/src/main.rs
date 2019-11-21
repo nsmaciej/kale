@@ -130,7 +130,7 @@ impl Editor {
     }
 
     fn render(&mut self, state: &mut RenderingState) {
-        fn render(editor: &Editor, state: &mut RenderingState, expr: &Expr) -> ExprRendering {
+        fn render(editor: &Editor, state: &mut RenderingState, expr: &Expr) -> Svg {
             const PADDING: f32 = 3.;
             let make_click_handler = |id: ExprId| {
                 move |event: ClickEvent| {
@@ -193,7 +193,7 @@ impl Editor {
                     rendering
                 }
                 Expr::Do(e) => {
-                    let mut rendering = ExprRendering::empty();
+                    let mut rendering = Svg::empty();
                     for expr in &e.expressions {
                         rendering.place(
                             point2(5., rendering.size.height),
