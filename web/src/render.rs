@@ -169,6 +169,15 @@ impl ExprRendering {
     pub fn place(&mut self, point: SvgPoint, rendeirng: ExprRendering) {
         self.place_at(self.elements.len(), point, rendeirng);
     }
+
+    pub fn mount(&self, parent: &Element) {
+        let fragment = document().create_document_fragment();
+        js! { @{&parent}.innerHTML = "" };
+        for child in &self.elements {
+            fragment.append_child(child);
+        }
+        parent.append_child(&fragment);
+    }
 }
 
 pub trait Renderable {

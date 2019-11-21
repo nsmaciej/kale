@@ -228,11 +228,7 @@ impl Editor {
             rendering
         }
 
-        let render_list = render(self, state, &self.expr);
-        js! { @{&self.root}.innerHTML = "" };
-        for elem in render_list.elements {
-            self.root.append_child(&elem);
-        }
+        render(self, state, &self.expr).mount(&self.root);
     }
 }
 
