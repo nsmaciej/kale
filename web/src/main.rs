@@ -165,7 +165,7 @@ impl<'a> ExprView<'a> {
     }
 
     fn render(&mut self, state: &mut RenderingState) -> Svg {
-        fn render(editor: &ExprView, state: &mut RenderingState, expr: &Expr) -> Svg {
+        fn render(editor: &ExprView, state: &mut RenderingState, expr: &Expr, frozen: bool) -> Svg {
             //TODO: Add a theming api and react to the frozen state.
             const PADDING: f32 = 3.;
             let make_click_handler = |id: ExprId| {
@@ -178,8 +178,10 @@ impl<'a> ExprView<'a> {
             let transform_handler = |id: ExprId| {
                 move |event: DoubleClickEvent| {
                     event.stop_propagation();
-                    kale().push_event(Event::Edit { id });
-                    kale().process_events();
+                    if !frozen {
+                        kale().push_event(Event::Edit { id });
+                        kale().process_events();
+                    }
                 }
             };
             let mut rendering = match expr {
@@ -222,7 +224,7 @@ impl<'a> ExprView<'a> {
                         );
                         rendering.place(
                             point2(rendering.size.width + 1., 0.),
-                            render(editor, state, arg),
+                            render(editor, state, arg, frozen),
                         );
                         rendering.size.width += PADDING;
                     }
@@ -233,7 +235,7 @@ impl<'a> ExprView<'a> {
                     for expr in &e.expressions {
                         rendering.place(
                             point2(5., rendering.size.height),
-                            render(editor, state, expr),
+                            render(editor, state, expr, frozen),
                         );
                         rendering.size.height += PADDING;
                     }
@@ -263,7 +265,7 @@ impl<'a> ExprView<'a> {
             }
             rendering
         }
-        render(self, state, &self.expr)
+        render(self, state, &self.expr, self.frozen)
     }
 }
 
