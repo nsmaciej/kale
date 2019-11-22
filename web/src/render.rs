@@ -140,7 +140,7 @@ impl Svg {
     pub fn event<T, F>(mut self, listener: F) -> Self
     where
         T: ConcreteEvent,
-        F: Fn(T) + Clone + 'static,
+        F: FnMut(T) + Clone + 'static,
     {
         for elem in &self.elements {
             self.event_listeners

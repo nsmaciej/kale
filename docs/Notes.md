@@ -6,6 +6,7 @@
 * toy box - A list of programming primitives users can drag things from.
 * editor - Canvas, expressions and all other state.
 * do, block, group - A list of expressions to be executed one by one. progn.
+* crate - A Rust library.
 
 ## New TextMetrics object in canvas
 
@@ -59,3 +60,4 @@ Since Chrome 77 it is ok to use
 * Rust Xi editor on how to structure a project like this
 * Yew Rust web framework on how to use the stdweb library well
 * Visual Studio Code for inspiration on modern programming GUIs and editor APIs
+* petgraph and rust-forest crates for working with graphs

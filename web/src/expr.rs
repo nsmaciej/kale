@@ -31,6 +31,7 @@ macro_rules! make_expr {
     };
 }
 
+//TODO: Need something to act as variable assignment.
 // Once https://github.com/rust-lang/rfcs/pull/2593 "Enum Variant Types" lands (hopefully early
 // 2020), this should be able to go away. Until then it's much nicer to deal with an enum of structs
 // for our purposes than a plain enum. It lets us handle known variants much more neatly and use the
