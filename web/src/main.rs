@@ -30,11 +30,19 @@ enum Event {
 /// Data about a particual instance of the Kale editor.
 struct Editor {
     root: Element,
-    frozen: bool,
     expr: Expr,
     /// Yanked expressions.
     yanked: Vec<Expr>,
     selection: Option<ExprId>,
+}
+
+/// A view showing a single Kale expression.
+struct ExprView<'a> {
+    //TODO: Something like VSCode's text decoration system would be nice.
+    selection: Option<ExprId>,
+    /// This expression is not editable and should be displayed appropriately.
+    frozen: bool,
+    expr: &'a Expr,
 }
 
 struct KaleState {
@@ -55,7 +63,8 @@ impl KaleState {
     fn new() -> Self {
         KaleState {
             event_queue: Rc::new(RefCell::new(VecDeque::new())),
-            editor: RefCell::new(Editor::new(size2(500., 500.))),
+            //TODO: Obivously don't make this fixed size.
+            editor: RefCell::new(Editor::new(size2(1000., 1000.))),
             rendering_state: RefCell::new(RenderingState::new()),
         }
     }
@@ -95,7 +104,6 @@ impl Editor {
         body.append_child(&root);
         Editor {
             root,
-            frozen: false,
             selection: None,
             yanked: Vec::new(),
             expr: Do {
@@ -130,7 +138,35 @@ impl Editor {
     }
 
     fn render(&mut self, state: &mut RenderingState) {
-        fn render(editor: &Editor, state: &mut RenderingState, expr: &Expr) -> Svg {
+        const YANK_COLUMN_OFFSET: f32 = 500.;
+        let mut canvas = Svg::empty();
+        // Reverse to render the last added item first.
+        for expr in self.yanked.iter().rev() {
+            canvas.place(
+                point2(YANK_COLUMN_OFFSET, canvas.size.height + 20.),
+                ExprView::new(expr, true, None).render(state),
+            );
+        }
+        canvas.place(
+            SvgPoint::zero(),
+            ExprView::new(&self.expr, false, self.selection).render(state),
+        );
+        canvas.mount(&self.root);
+    }
+}
+
+impl<'a> ExprView<'a> {
+    fn new(expr: &'a Expr, frozen: bool, selection: Option<ExprId>) -> Self {
+        Self {
+            expr,
+            frozen,
+            selection,
+        }
+    }
+
+    fn render(&mut self, state: &mut RenderingState) -> Svg {
+        fn render(editor: &ExprView, state: &mut RenderingState, expr: &Expr) -> Svg {
+            //TODO: Add a theming api and react to the frozen state.
             const PADDING: f32 = 3.;
             let make_click_handler = |id: ExprId| {
                 move |event: ClickEvent| {
@@ -227,8 +263,7 @@ impl Editor {
             }
             rendering
         }
-
-        render(self, state, &self.expr).mount(&self.root);
+        render(self, state, &self.expr)
     }
 }
 

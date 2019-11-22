@@ -166,8 +166,8 @@ impl Svg {
         self.size = self.size.max(rendering.size + size2(point.x, point.y));
     }
 
-    pub fn place(&mut self, point: SvgPoint, rendeirng: Svg) {
-        self.place_at(self.elements.len(), point, rendeirng);
+    pub fn place(&mut self, point: SvgPoint, rendering: Svg) {
+        self.place_at(self.elements.len(), point, rendering);
     }
 
     pub fn mount(&self, parent: &Element) {
