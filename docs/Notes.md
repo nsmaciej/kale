@@ -52,3 +52,10 @@ Since Chrome 77 it is ok to use
 * No syntax errors
 * Because strings are completely separated from the structure of the program,
   i18n is a nice selling point (no need to worry about https://lord.io/blog/2019/text-editing-hates-you-too/)
+
+## Inspirations
+
+* Scratch on how to nicely render unique graphical elements and measure text
+* Rust Xi editor on how to structure a project like this
+* Yew Rust web framework on how to use the stdweb library well
+* Visual Studio Code for inspiration on modern programming GUIs and editor APIs
