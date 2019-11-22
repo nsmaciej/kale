@@ -33,6 +33,7 @@ enum Event {
 enum ExprViewId {
     Main,
     Yanked { index: usize },
+    ToyBox { index: usize },
 }
 
 /// Data about a particual instance of the Kale editor.
@@ -42,9 +43,10 @@ struct Editor {
     expr: Expr,
     /// Yanked expressions.
     yanked: Vec<Expr>,
-    //TODO: Track which view has the selection.
     /// The current selection in one of the editor's views.
     selection: Option<(ExprViewId, ExprId)>,
+    /// A constant list from which the user can drag expressions from.
+    toy_box: Vec<Expr>,
 }
 
 /// A view showing a single Kale expression.
@@ -124,12 +126,25 @@ impl Editor {
             root,
             selection: None,
             yanked: Vec::new(),
+            toy_box: Self::make_toy_box(),
             expr: Do {
                 id: ExprId::from_raw(0),
                 expressions: Vec::new(),
             }
             .into(),
         }
+    }
+
+    fn make_toy_box() -> Vec<Expr> {
+        // A list of expressions the user might want to have within a pointer's reach.
+        vec![
+            expr! { block [hole] },
+            expr! { if([hole] [hole] [hole]) },
+            expr! { print([thing]) },
+            expr! { comment "A comment" },
+            expr! { 42 => int },
+            expr! { variable },
+        ]
     }
 
     fn edit(&mut self, id: ExprId, text: Option<String>) {
@@ -150,13 +165,30 @@ impl Editor {
         }
     }
 
-    fn render(&mut self, state: &mut RenderingState) {
-        const YANK_COLUMN_OFFSET: f32 = 500.;
-        let mut canvas = Svg::empty();
-        // Reverse to render the last added item first.
+    fn render_toy_box(&mut self, state: &mut RenderingState) -> Svg {
+        let mut toy_box = Svg::empty();
+        // Render the toy box.
+        for (index, expr) in self.toy_box.iter().enumerate() {
+            toy_box.place(
+                point2(0., toy_box.size.height + 20.),
+                ExprView {
+                    id: ExprViewId::ToyBox { index },
+                    selection: None,
+                    expr,
+                    frozen: true,
+                }
+                .render(state),
+            );
+        }
+        toy_box
+    }
+
+    fn render_yank_list(&mut self, state: &mut RenderingState) -> Svg {
+        let mut yank_list = Svg::empty();
+        // Render the yank list. Reverse to render the last added item first.
         for (index, expr) in self.yanked.iter().rev().enumerate() {
-            canvas.place(
-                point2(YANK_COLUMN_OFFSET, canvas.size.height + 20.),
+            yank_list.place(
+                point2(0., yank_list.size.height + 20.),
                 ExprView {
                     id: ExprViewId::Yanked { index },
                     //TODO: How about no.
@@ -167,14 +199,23 @@ impl Editor {
                             None
                         }
                     }),
-                    expr: expr,
+                    expr,
                     frozen: false,
                 }
                 .render(state),
             );
         }
+        yank_list
+    }
+
+    fn render(&mut self, state: &mut RenderingState) {
+        const YANK_COLUMN_OFFSET: f32 = 500.;
+        const EDITOR_COLUMN_OFFSET: f32 = 200.;
+        let mut canvas = Svg::empty();
+        canvas.place(SvgPoint::zero(), self.render_toy_box(state));
+        canvas.place(point2(YANK_COLUMN_OFFSET, 0.), self.render_yank_list(state));
         canvas.place(
-            SvgPoint::zero(),
+            point2(EDITOR_COLUMN_OFFSET, 0.),
             ExprView {
                 id: ExprViewId::Main,
                 selection: self.selection.as_ref().and_then(|x| {
