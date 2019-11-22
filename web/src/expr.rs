@@ -163,6 +163,10 @@ impl Expr {
     }
 
     pub fn remove_by_id(&mut self, id: ExprId) -> Option<Expr> {
+        //TODO: Removing is a bit hard. Removing a 'top-level' expression from a group should not
+        // replace it with a hole but remove the entry from the group vector entirely. For
+        // functions this should depend on the type of function: + always has two paramters, but
+        // 'list' behaves more like a group.
         self.borrow_mut(id).map(|x| replace(x, Expr::default()))
     }
 
