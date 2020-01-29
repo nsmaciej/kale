@@ -8,18 +8,6 @@
 * do, block, group - A list of expressions to be executed one by one. progn.
 * crate - A Rust library.
 
-## New TextMetrics object in canvas
-
-https://www.chromestatus.com/feature/5307344997056512
-
-Since Chrome 77 it is ok to use
-
-    * actualBondingBoxAscent
-    * actualBondingBoxDescent
-    * actualBondingBoxLeft
-    * actualBondingBoxRight
-    * width
-
 ## Settings that Kale should have
 
 * What happens when you drag an expression onto a blank space? Either it should
@@ -35,6 +23,10 @@ Since Chrome 77 it is ok to use
   should be applied for the sake of brevity.
 * Since Kale will not be file oriented it would be nice if the function browser
   had some kind of Sublime Text mini map like preview of each function.
+* It might be nice if the function structure in Kale was not defined by a simple
+  tree but a DAG. Kinda of how the Bear Note app uses tags. Tags in Bear can be
+  thought as file-system paths but each note can have multiple such tags and
+  as such can be accessed by traversing the tree in different ways.
 
 ## Potential shortcuts
 
@@ -61,3 +53,12 @@ Since Chrome 77 it is ok to use
 * Yew Rust web framework on how to use the stdweb library well
 * Visual Studio Code for inspiration on modern programming GUIs and editor APIs
 * petgraph and rust-forest crates for working with graphs
+
+## Rust web framework options
+
+* https://github.com/fitzgen/dodrio Great potential but still very experimental
+  lots of weird casts and an obsession with bump allocation. The todo mvc writes
+  to local storage after every action.
+* yew - Not keyed, not sure if it's versatile enough and seems too complex to
+  easily modify. Quite a few complaints too https://www.reddit.com/r/rust/comments/9iab7y/writing_a_front_app_with_rust_yew_real_use_cases/
+* seed - doesn't provide a way to abstract away components amongst other things.
