@@ -4,6 +4,42 @@ import * as ReactDOM from "react-dom"
 import { Expr, ExprVisitor } from "./expr"
 import * as E from "./expr"
 
+class TextMeasurement {
+    private static globalInstance: TextMeasurement;
+
+    textMetricsCache: { [content: string]: number } = {}
+    measurementTextElement: SVGTextElement
+
+    static get global(): TextMeasurement {
+        if (TextMeasurement.globalInstance) return TextMeasurement.globalInstance;
+        return TextMeasurement.globalInstance = new TextMeasurement();
+    }
+
+    constructor() {
+        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg")
+        // It has to be visibility instead of display none. Not really sure why.
+        svg.setAttribute("width", "1")
+        svg.setAttribute("height", "1")
+        svg.setAttribute("viewBox", "0 0 1 1")
+        svg.style.visibility = "hidden"
+        svg.style.position = "absolute"
+
+        const text = document.createElementNS("http://www.w3.org/2000/svg", "text")
+        text.setAttribute("font", "italic 40px serif")
+        svg.appendChild(text)
+        this.measurementTextElement = text
+        document.body.appendChild(svg)
+    }
+
+    measure(text: string) {
+        if (text in this.textMetricsCache) return this.textMetricsCache[text];
+        this.measurementTextElement.textContent = text;
+        const width = this.measurementTextElement.getComputedTextLength();
+        this.textMetricsCache[text] = width;
+        return [width, 20];
+    }
+}
+
 class ExprView extends Component<{ expr: Expr }> implements ExprVisitor<ReactNode> {
     visitList(expr: E.List) {
         return expr.list.map((x) => <div><ExprView expr={x} /></div>)
