@@ -1,12 +1,12 @@
 let GLOBAL_ID = 1
 
-export interface ExprVisitor<R> {
+export interface ExprVisitor<R = any> {
     visitList(expr: List): R
     visitLiteral(expr: Literal): R
     visitVariable(expr: Variable): R
     visitComment(expr: Comment): R
     visitHole(expr: Hole): R
-    visitCall(call: Hole): R
+    visitCall(call: Call): R
 }
 
 export class UnvisitableExpr extends Error {
