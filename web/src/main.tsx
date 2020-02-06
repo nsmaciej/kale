@@ -6,7 +6,7 @@ import { Expr, ExprVisitor } from "./expr"
 import * as E from "./expr"
 import { size, Size, Vector } from "./geometry"
 
-const FONT_SIZE_PX = 14
+const FONT_SIZE_PX = 16
 const FONT_FAMILY = "SF Mono, monospace"
 
 class TextMeasurement {
@@ -52,6 +52,7 @@ class TextMeasurement {
 const Code = styled.text`
     font-size: ${FONT_SIZE_PX}px;
     font-family: ${FONT_FAMILY};
+    dominant-baseline: text-before-edge;
 `
 
 function Group({ children, translate }: { children: ReactNode, translate: Vector }) {
@@ -61,6 +62,13 @@ function Group({ children, translate }: { children: ReactNode, translate: Vector
 }
 
 type Layout = [Size, ReactNode]
+
+function layoutCode(text: string, colour?: string): Layout {
+    return [
+        TextMeasurement.global.measure(text),
+        <Code fill={colour}>{text}</Code>
+    ]
+}
 
 class ExprLayout implements ExprVisitor<Layout> {
     visitList(expr: E.List): Layout {
@@ -75,30 +83,19 @@ class ExprLayout implements ExprVisitor<Layout> {
     }
 
     visitLiteral(expr: E.Literal): Layout {
-        return [
-            TextMeasurement.global.measure(expr.content),
-            <Code>{expr.content}</Code>
-        ]
+        return layoutCode(expr.content)
     }
-
     visitVariable(expr: E.Variable): Layout {
-        return [
-            TextMeasurement.global.measure(expr.name),
-            <Code>{expr.name}</Code>
-        ]
+        return layoutCode(expr.name)
     }
-
     visitComment(expr: E.Comment): Layout {
-        return [
-            TextMeasurement.global.measure(expr.comment),
-            <Code fill="#0f0">{expr.comment}</Code>
-        ]
+        return layoutCode(expr.comment, "#16a831")
     }
 
     visitHole(expr: E.Hole): Layout {
         return [
             size(FONT_SIZE_PX, FONT_SIZE_PX),
-            <rect width={FONT_SIZE_PX} height={FONT_SIZE_PX} rx="3" fill="#f00" />
+            <rect width={FONT_SIZE_PX} height={FONT_SIZE_PX} rx="3" fill="#f56342" />
         ]
     }
 
@@ -138,8 +135,7 @@ const expr = new E.List([
         new E.Call("=", [new E.Variable("n"), new E.Literal("0", "int")]),
         new E.Literal("1", "int"),
         new E.List([
-            new E.Comment("Now print out n"),
-            new E.Call("print", [new E.Variable("n")]),
+            new E.Call("print", [new E.Hole()]),
             new E.Call("*", [
                 new E.Variable("n"),
                 new E.Call("fact", [new E.Call("-", [new E.Variable("n"), new E.Literal("1", "int")])])
