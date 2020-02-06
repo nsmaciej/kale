@@ -16,6 +16,7 @@ class TextMeasurement {
     measurementTextElement: SVGTextElement
 
     static get global(): TextMeasurement {
+        // This needs to be lazy because we use the DOM.
         if (TextMeasurement.globalInstance) return TextMeasurement.globalInstance;
         return TextMeasurement.globalInstance = new TextMeasurement();
     }
@@ -49,6 +50,8 @@ class TextMeasurement {
 }
 
 
+// See https://vanseodesign.com/web-design/svg-text-baseline-alignment/ for excellent discussion
+// on SVG aligment properties.
 const Code = styled.text`
     font-size: ${FONT_SIZE_PX}px;
     font-family: ${FONT_FAMILY};
@@ -120,16 +123,17 @@ class ExprView extends Component<{ expr: Expr }> {
 
 class Editor extends Component<{ expr: Expr }> {
     render() {
+        // As I understand it, viewBox is not a required property.
         return <>
             <h1>Editor</h1>
-            <svg xmlns="http://www.w3.org/2000/svg">
+            <svg xmlns="http://www.w3.org/2000/svg" style={{ width: "100%" }}>
                 <ExprView expr={this.props.expr} />
             </svg>
         </>
     }
 }
 
-const expr = new E.List([
+const sampleExpr = new E.List([
     new E.Comment("Find a factorial of n"),
     new E.Call("if", [
         new E.Call("=", [new E.Variable("n"), new E.Literal("0", "int")]),
@@ -145,6 +149,6 @@ const expr = new E.List([
 ])
 
 ReactDOM.render(
-    <Editor expr={expr} />,
+    <Editor expr={sampleExpr} />,
     document.getElementById('main')
 );
