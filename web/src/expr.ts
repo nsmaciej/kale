@@ -44,6 +44,8 @@ export class Comment extends Expr {
     constructor(readonly comment: string) { super() }
 }
 export class Call extends Expr {
-    constructor(readonly fn: string, readonly args: Expr[]) { super() }
+    constructor(readonly fn: string, readonly args: Expr[] = []) { super() }
 }
-export class Hole extends Expr { }
+export class Hole extends Expr {
+    constructor(readonly containedList = false) { super() }
+}

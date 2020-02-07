@@ -4,7 +4,7 @@ import styled from "styled-components"
 
 import { Expr, ExprVisitor } from "./expr"
 import * as E from "./expr"
-import { size, Size, Vector } from "./geometry"
+import { size, vec, Size, Vector } from "./geometry"
 
 const FONT_SIZE_PX = 16
 const FONT_FAMILY = "SF Mono, monospace"
@@ -64,25 +64,31 @@ function Group({ children, translate }: { children: ReactNode, translate: Vector
     </g >
 }
 
-type Layout = [Size, ReactNode]
+interface Layout {
+    size: Size,
+    nodes: ReactNode,
+    containsList: boolean,
+}
 
 function layoutCode(text: string, colour?: string): Layout {
-    return [
-        TextMeasurement.global.measure(text),
-        <Code fill={colour}>{text}</Code>
-    ]
+    return {
+        size: TextMeasurement.global.measure(text),
+        nodes: <Code fill={colour}>{text}</Code>,
+        containsList: false,
+    }
 }
 
 class ExprLayout implements ExprVisitor<Layout> {
     visitList(expr: E.List): Layout {
-        let finalSize = Size.zero
+        let size = Size.zero
         const nodes = expr.list.map(x => {
-            const [lineSize, line] = x.visit(this)
-            const bottomLeft = finalSize.bottom_left
-            finalSize = finalSize.extend(bottomLeft, lineSize).pad_height(5)
-            return <Group translate={bottomLeft} key={x.id}>{line}</Group>
+            const line = x.visit(this)
+            const bottomLeft = size.bottom_left
+            size = size.extend(bottomLeft, line.size).pad_height(5)
+            return <Group translate={bottomLeft} key={x.id}>{line.nodes}</Group>
         })
-        return [finalSize, nodes]
+        // A list is always contains-list.
+        return { containsList: true, size, nodes }
     }
 
     visitLiteral(expr: E.Literal): Layout {
@@ -96,28 +102,52 @@ class ExprLayout implements ExprVisitor<Layout> {
     }
 
     visitHole(expr: E.Hole): Layout {
-        return [
-            size(FONT_SIZE_PX, FONT_SIZE_PX),
-            <rect width={FONT_SIZE_PX} height={FONT_SIZE_PX} rx="3" fill="#f56342" />
-        ]
+        return {
+            size: size(FONT_SIZE_PX, FONT_SIZE_PX),
+            nodes: <rect width={FONT_SIZE_PX} height={FONT_SIZE_PX} rx="3" fill="#f56342" />,
+            containsList: expr.containedList,
+        }
     }
 
     visitCall(call: E.Call): Layout {
-        let finalSize = TextMeasurement.global.measure(call.fn).pad_width(5)
+        // Contains-list arguments layout downwards, while consecutive non-contains-list arguments
+        // clump together.
+        const DRIFT_MARGIN = 5;
+        const LINE_MARGIN = 12;
+        let size = TextMeasurement.global.measure(call.fn)
+        const leftMargin = size.width + DRIFT_MARGIN;
+        let drift = vec(leftMargin, 0)
+        let containsList = false
+
         const nodes = call.args.map(x => {
-            const [argSize, arg] = x.visit(this)
-            const topRight = finalSize.top_right
-            finalSize = finalSize.extend(topRight, argSize).pad_width(5)
-            return <Group translate={topRight} key={x.id}>{arg}</Group>
+            const arg = x.visit(this)
+            containsList = containsList || arg.containsList
+
+            // A contains-list argument ignores the drift and places itself at the bottom, adding
+            // some margin for the ruler.
+            const pos = arg.containsList ? vec(leftMargin + 12, size.height + LINE_MARGIN) : drift
+            size = size.extend(pos, arg.size)
+            // A contains-list argument resets the drift.
+            drift = arg.containsList
+                ? vec(leftMargin, size.height + LINE_MARGIN)
+                : drift.dx(arg.size.width + DRIFT_MARGIN)
+
+            const ruler = arg.containsList
+                ? <rect width="2" height={arg.size.height} x={pos.x - 10} y={pos.y} fill="#ccc" />
+                : null
+            return <>
+                {ruler}
+                <Group translate={pos} key={x.id}>{arg.nodes}</Group>
+            </>
         })
-        return [finalSize, [<Code>{call.fn}</Code>].concat(nodes)]
+
+        return { nodes: [<Code>{call.fn}</Code>].concat(nodes), size, containsList }
     }
 }
 
 class ExprView extends Component<{ expr: Expr }> {
     render() {
-        const [size, nodes] = this.props.expr.visit(new ExprLayout());
-        return nodes;
+        return this.props.expr.visit(new ExprLayout()).nodes
     }
 }
 
@@ -126,7 +156,7 @@ class Editor extends Component<{ expr: Expr }> {
         // As I understand it, viewBox is not a required property.
         return <>
             <h1>Editor</h1>
-            <svg xmlns="http://www.w3.org/2000/svg" style={{ width: "100%" }}>
+            <svg xmlns="http://www.w3.org/2000/svg" style={{ width: "100%" }} height="500">
                 <ExprView expr={this.props.expr} />
             </svg>
         </>
@@ -137,14 +167,21 @@ const sampleExpr = new E.List([
     new E.Comment("Find a factorial of n"),
     new E.Call("if", [
         new E.Call("=", [new E.Variable("n"), new E.Literal("0", "int")]),
-        new E.Literal("1", "int"),
+        new E.List([
+            new E.Call("print", [new E.Literal("Reached the base case", "str")]),
+            new E.Literal("1", "int"),
+        ]),
         new E.List([
             new E.Call("print", [new E.Hole()]),
             new E.Call("*", [
                 new E.Variable("n"),
-                new E.Call("fact", [new E.Call("-", [new E.Variable("n"), new E.Literal("1", "int")])])
+                new E.Call("fact", [
+                    new E.Call("-", [new E.Variable("n"), new E.Literal("1", "int")])
+                ])
             ])
-        ])
+        ]),
+        new E.Call("sample-call"),
+        new E.Call("sample-call-2")
     ])
 ])
 

@@ -20,6 +20,8 @@ export class Size {
 
 export class Vector {
     constructor(readonly x: number, readonly y: number) { }
+    dx(d: number) { return vec(this.x + d, this.y) }
+    dy(d: number) { return vec(this.x, this.y + d) }
 }
 
 export function size(width: number, height: number) { return new Size(width, height) }
