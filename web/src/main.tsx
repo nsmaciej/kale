@@ -5,56 +5,13 @@ import styled from "styled-components"
 import { Expr, ExprVisitor } from "./expr"
 import * as E from "./expr"
 import { size, vec, Size, Vector } from "./geometry"
-
-const FONT_SIZE_PX = 16
-const FONT_FAMILY = "SF Mono, monospace"
-
-class TextMeasurement {
-    private static globalInstance: TextMeasurement;
-
-    textMetricsCache: { [content: string]: number } = {}
-    measurementTextElement: SVGTextElement
-
-    static get global(): TextMeasurement {
-        // This needs to be lazy because we use the DOM.
-        if (TextMeasurement.globalInstance) return TextMeasurement.globalInstance;
-        return TextMeasurement.globalInstance = new TextMeasurement();
-    }
-
-    constructor() {
-        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg")
-        // It has to be visibility instead of display none. Not really sure why.
-        svg.setAttribute("width", "1")
-        svg.setAttribute("height", "1")
-        svg.setAttribute("viewBox", "0 0 1 1")
-        svg.style.visibility = "hidden"
-        svg.style.position = "absolute"
-
-        const text = document.createElementNS("http://www.w3.org/2000/svg", "text")
-        text.style.fontFamily = FONT_FAMILY
-        text.style.fontSize = `${FONT_SIZE_PX}px`
-        svg.appendChild(text)
-        this.measurementTextElement = text
-        document.body.appendChild(svg)
-    }
-
-    measure(text: string): Size {
-        if (text in this.textMetricsCache) {
-            return size(this.textMetricsCache[text], FONT_SIZE_PX)
-        }
-        this.measurementTextElement.textContent = text
-        const width = this.measurementTextElement.getComputedTextLength()
-        this.textMetricsCache[text] = width
-        return size(width, FONT_SIZE_PX)
-    }
-}
-
+import TextMetrics, { KALE_THEME } from "./text_metrics"
 
 // See https://vanseodesign.com/web-design/svg-text-baseline-alignment/ for excellent discussion
 // on SVG aligment properties.
 const Code = styled.text`
-    font-size: ${FONT_SIZE_PX}px;
-    font-family: ${FONT_FAMILY};
+    font-size: ${KALE_THEME.fontSizePx}px;
+    font-family: ${KALE_THEME.fontFamily};
     dominant-baseline: text-before-edge;
 `
 
@@ -72,7 +29,7 @@ interface Layout {
 
 function layoutCode(text: string, colour?: string): Layout {
     return {
-        size: TextMeasurement.global.measure(text),
+        size: TextMetrics.global.measure(text),
         nodes: <Code fill={colour}>{text}</Code>,
         containsList: false,
     }
@@ -102,9 +59,10 @@ class ExprLayout implements ExprVisitor<Layout> {
     }
 
     visitHole(expr: E.Hole): Layout {
+        const dim = KALE_THEME.fontSizePx;
         return {
-            size: size(FONT_SIZE_PX, FONT_SIZE_PX),
-            nodes: <rect width={FONT_SIZE_PX} height={FONT_SIZE_PX} rx="3" fill="#f56342" />,
+            size: size(dim, dim),
+            nodes: <rect width={dim} height={dim} rx="3" fill="#f56342" />,
             containsList: expr.containedList,
         }
     }
@@ -112,9 +70,11 @@ class ExprLayout implements ExprVisitor<Layout> {
     visitCall(call: E.Call): Layout {
         // Contains-list arguments layout downwards, while consecutive non-contains-list arguments
         // clump together.
-        const DRIFT_MARGIN = 5;
-        const LINE_MARGIN = 12;
-        let size = TextMeasurement.global.measure(call.fn)
+
+        //TODO: This should be determined by the size of the space or something.
+        const DRIFT_MARGIN = 8
+        const LINE_MARGIN = KALE_THEME.fontSizePx
+        let size = TextMetrics.global.measure(call.fn)
         const leftMargin = size.width + DRIFT_MARGIN;
         let drift = vec(leftMargin, 0)
         let containsList = false
@@ -125,6 +85,8 @@ class ExprLayout implements ExprVisitor<Layout> {
 
             // A contains-list argument ignores the drift and places itself at the bottom, adding
             // some margin for the ruler.
+            //BUG: Ignoring the drift like this means single argument contains-list functions look
+            // weird.
             const pos = arg.containsList ? vec(leftMargin + 12, size.height + LINE_MARGIN) : drift
             size = size.extend(pos, arg.size)
             // A contains-list argument resets the drift.
@@ -133,7 +95,7 @@ class ExprLayout implements ExprVisitor<Layout> {
                 : drift.dx(arg.size.width + DRIFT_MARGIN)
 
             const ruler = arg.containsList
-                ? <rect width="2" height={arg.size.height} x={pos.x - 10} y={pos.y} fill="#ccc" />
+                ? <rect width="1" height={arg.size.height} x={pos.x - 10} y={pos.y} fill="#ccc" />
                 : null
             return <>
                 {ruler}
@@ -155,7 +117,7 @@ class Editor extends Component<{ expr: Expr }> {
     render() {
         // As I understand it, viewBox is not a required property.
         return <>
-            <h1>Editor</h1>
+            <h1 style={{ fontFamily: KALE_THEME.fontFamily }}>Kale Editor</h1>
             <svg xmlns="http://www.w3.org/2000/svg" style={{ width: "100%" }} height="500">
                 <ExprView expr={this.props.expr} />
             </svg>
@@ -171,21 +133,25 @@ const sampleExpr = new E.List([
             new E.Call("print", [new E.Literal("Reached the base case", "str")]),
             new E.Literal("1", "int"),
         ]),
-        new E.List([
-            new E.Call("print", [new E.Hole()]),
-            new E.Call("*", [
-                new E.Variable("n"),
-                new E.Call("fact", [
-                    new E.Call("-", [new E.Variable("n"), new E.Literal("1", "int")])
+        new E.Call("id", [
+            new E.List([
+                new E.Call("print", [new E.Hole()]),
+                new E.Call("*", [
+                    new E.Variable("n"),
+                    new E.Call("fact", [
+                        new E.Call("-", [new E.Variable("n"), new E.Literal("1", "int")]),
+                    ])
                 ])
-            ])
+            ]),
         ]),
         new E.Call("sample-call"),
         new E.Call("sample-call-2")
     ])
 ])
 
-ReactDOM.render(
-    <Editor expr={sampleExpr} />,
-    document.getElementById('main')
-);
+window.addEventListener("load", () => {
+    ReactDOM.render(
+        <Editor expr={sampleExpr} />,
+        document.getElementById('main')
+    )
+})
