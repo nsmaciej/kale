@@ -6,7 +6,7 @@ export interface ExprVisitor<R = any> {
     visitVariable(expr: Variable): R
     visitComment(expr: Comment): R
     visitHole(expr: Hole): R
-    visitCall(call: Call): R
+    visitCall(expr: Call): R
 }
 
 export class UnvisitableExpr extends Error {
@@ -29,7 +29,12 @@ export abstract class Expr {
         else if (this instanceof Call) return visitor.visitCall(this)
         throw new UnvisitableExpr(this)
     }
+
+    isValid() {
+        return this.visit(new ExprValidator())
+    }
 }
+
 
 export class List extends Expr {
     constructor(readonly list: Expr[]) { super() }
@@ -46,6 +51,29 @@ export class Comment extends Expr {
 export class Call extends Expr {
     constructor(readonly fn: string, readonly args: Expr[] = []) { super() }
 }
-export class Hole extends Expr {
-    constructor(readonly containedList = false) { super() }
+export class Hole extends Expr { }
+
+
+class ExprValidator implements ExprVisitor<boolean> {
+    visitHole(expr: Hole) {
+        return true
+    }
+    visitLiteral(expr: Literal) {
+        //TODO: Check for valid literals.
+        return !!expr.content && !!expr.type
+    }
+    visitComment(expr: Comment) {
+        return !!expr.comment
+    }
+    visitVariable(expr: Variable) {
+        //TODO: Verify reasonable identifer names.
+        return true
+    }
+    visitList(expr: List) {
+        return expr.list.length > 0 && !expr.list.some(x => x instanceof List)
+    }
+    visitCall(expr: Call) {
+        //TODO: Verify reasonable function names.
+        return !!expr.fn
+    }
 }

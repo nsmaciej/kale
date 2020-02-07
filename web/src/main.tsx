@@ -58,28 +58,29 @@ class ExprLayout implements ExprVisitor<Layout> {
         return layoutCode(expr.comment, "#16a831")
     }
 
-    visitHole(expr: E.Hole): Layout {
+    visitHole(_expr: E.Hole): Layout {
         const dim = KALE_THEME.fontSizePx;
+        //TODO: A hole might have to remmber what it contained before it became a hole.
         return {
             size: size(dim, dim),
             nodes: <rect width={dim} height={dim} rx="3" fill="#f56342" />,
-            containsList: expr.containedList,
+            containsList: true,
         }
     }
 
-    visitCall(call: E.Call): Layout {
+    visitCall(expr: E.Call): Layout {
         // Contains-list arguments layout downwards, while consecutive non-contains-list arguments
         // clump together.
 
         //TODO: This should be determined by the size of the space or something.
         const DRIFT_MARGIN = 8
         const LINE_MARGIN = KALE_THEME.fontSizePx
-        let size = TextMetrics.global.measure(call.fn)
+        let size = TextMetrics.global.measure(expr.fn)
         const leftMargin = size.width + DRIFT_MARGIN;
         let drift = vec(leftMargin, 0)
         let containsList = false
 
-        const nodes = call.args.map(x => {
+        const nodes = expr.args.map(x => {
             const arg = x.visit(this)
             containsList = containsList || arg.containsList
 
@@ -103,7 +104,7 @@ class ExprLayout implements ExprVisitor<Layout> {
             </>
         })
 
-        return { nodes: [<Code>{call.fn}</Code>].concat(nodes), size, containsList }
+        return { nodes: [<Code>{expr.fn}</Code>].concat(nodes), size, containsList }
     }
 }
 
@@ -148,6 +149,7 @@ const sampleExpr = new E.List([
         new E.Call("sample-call-2")
     ])
 ])
+console.assert(sampleExpr.isValid())
 
 window.addEventListener("load", () => {
     ReactDOM.render(
