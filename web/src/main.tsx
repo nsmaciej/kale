@@ -28,6 +28,7 @@ const Code = styled.text`
     font-size: ${KALE_THEME.fontSizePx}px;
     font-family: ${KALE_THEME.fontFamily};
     dominant-baseline: text-before-edge;
+    font-weight: ${(props: { bold?: boolean }) => props.bold ? "bold" : "normal"};
 `
 
 const Comment = styled(Code)`
@@ -132,7 +133,7 @@ class ExprLayout implements ExprVisitor<Layout> {
             </>
         })
 
-        return { nodes: [<Code>{expr.fn}</Code>].concat(nodes), size, containsList }
+        return { nodes: [<Code bold={containsList}>{expr.fn}</Code>].concat(nodes), size, containsList }
     }
 }
 
@@ -156,7 +157,7 @@ class Editor extends Component<{ expr: Expr }> {
 }
 
 const sampleExpr = new E.List([
-    new E.Comment("Find a factorial of n"),
+    new E.Comment("Find a factorial of n."),
     new E.Call("if", [
         new E.Call("=", [new E.Variable("n"), new E.Literal("0", "int")]),
         new E.List([
