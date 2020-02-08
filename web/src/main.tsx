@@ -1,6 +1,6 @@
 import React, { Component, ReactNode } from "react"
 import * as ReactDOM from "react-dom"
-import styled from "styled-components"
+import styled, { createGlobalStyle } from "styled-components"
 
 import { Expr, ExprVisitor } from "./expr"
 import * as E from "./expr"
@@ -12,6 +12,15 @@ export const KALE_THEME = {
     fontFamily: "iA Writer Quattro",
 }
 
+//TODO: Refactor, just stuff to make the demo look nice.
+const GlobalStyle = createGlobalStyle`
+body {
+    margin: 60px 40px;
+}
+h1 {
+    margin: 30px 0;
+}
+`
 
 // See https://vanseodesign.com/web-design/svg-text-baseline-alignment/ for excellent discussion
 // on SVG aligment properties.
@@ -55,13 +64,17 @@ class ExprLayout implements ExprVisitor<Layout> {
     }
 
     visitLiteral(expr: E.Literal): Layout {
-        return layoutCode(expr.content)
+        return layoutCode(expr.content, "#f59a11")
     }
     visitVariable(expr: E.Variable): Layout {
-        return layoutCode(expr.name)
+        return layoutCode(expr.name, "#248af0")
     }
     visitComment(expr: E.Comment): Layout {
-        return layoutCode(expr.comment, "#16a831")
+        //TODO: Right now this just adds bottom margin. Add top margin (and maybe implement
+        // collapsing)
+        const comment = layoutCode(expr.comment, "#16a831")
+        comment.size = comment.size.pad_height(comment.size.height * 0.5)
+        return comment
     }
 
     visitHole(_expr: E.Hole): Layout {
@@ -70,39 +83,42 @@ class ExprLayout implements ExprVisitor<Layout> {
         return {
             size: size(dim, dim),
             nodes: <rect width={dim} height={dim} rx="3" fill="#f56342" />,
-            containsList: true,
+            containsList: false,
         }
     }
 
     visitCall(expr: E.Call): Layout {
         // Contains-list arguments layout downwards, while consecutive non-contains-list arguments
         // clump together.
-
-        //TODO: This should be determined by the size of the space or something.
-        const DRIFT_MARGIN = 8
-        const LINE_MARGIN = KALE_THEME.fontSizePx
         let size = TextMetrics.global.measure(expr.fn)
-        const leftMargin = size.width + DRIFT_MARGIN;
-        let drift = vec(leftMargin, 0)
         let containsList = false
+
+        const DRIFT_MARGIN = TextMetrics.global.measure("\xa0").width  // Non-breaking space.
+        const LINE_MARGIN = KALE_THEME.fontSizePx * 0.5
+        const leftMargin = size.width + DRIFT_MARGIN;
+
+        // How much to shift the next argument left, or if it's a contains-list, how far down.
+        let driftX = leftMargin
+        let currentLineY = 0
+        let nextLineY = 0
 
         const nodes = expr.args.map(x => {
             const arg = x.visit(this)
             containsList = containsList || arg.containsList
 
-            // A contains-list argument ignores the drift and places itself at the bottom, adding
-            // some margin for the ruler.
-            //BUG: Ignoring the drift like this means single argument contains-list functions look
-            // weird.
-            const pos = arg.containsList ? vec(leftMargin + 12, size.height + LINE_MARGIN) : drift
+            const pos = arg.containsList
+                ? vec(leftMargin + 12, nextLineY)
+                : vec(driftX, currentLineY)
             size = size.extend(pos, arg.size)
-            // A contains-list argument resets the drift.
-            drift = arg.containsList
-                ? vec(leftMargin, size.height + LINE_MARGIN)
-                : drift.dx(arg.size.width + DRIFT_MARGIN)
-
+            if (arg.containsList) {
+                nextLineY = currentLineY = size.height + LINE_MARGIN
+                driftX = leftMargin
+            } else {
+                nextLineY = size.height + LINE_MARGIN
+                driftX += arg.size.width + DRIFT_MARGIN
+            }
             const ruler = arg.containsList
-                ? <rect width="1" height={arg.size.height} x={pos.x - 10} y={pos.y} fill="#ccc" />
+                ? <rect width="1" height={arg.size.height - 12} x={pos.x - 10} y={pos.y + 6} fill="#ccc" />
                 : null
             return <>
                 {ruler}
@@ -124,6 +140,7 @@ class Editor extends Component<{ expr: Expr }> {
     render() {
         // As I understand it, viewBox is not a required property.
         return <>
+            <GlobalStyle />
             <h1 style={{ fontFamily: KALE_THEME.fontFamily }}>Kale Editor</h1>
             <svg xmlns="http://www.w3.org/2000/svg" style={{ width: "100%" }} height="500">
                 <ExprView expr={this.props.expr} />

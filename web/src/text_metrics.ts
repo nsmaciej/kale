@@ -37,12 +37,13 @@ export default class TextMetrics {
     }
 
     measure(text: string): Size {
+        const height = this._theme.fontSizePx * 0.8
         if (text in this._metricsCache) {
-            return size(this._metricsCache[text], this._theme.fontSizePx)
+            return size(this._metricsCache[text], height)
         }
         this._textElement.textContent = text
         const width = this._textElement.getComputedTextLength()
         this._metricsCache[text] = width
-        return size(width, this._theme.fontSizePx)
+        return size(width, height)
     }
 }
