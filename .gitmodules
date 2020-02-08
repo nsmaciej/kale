@@ -1,0 +1,3 @@
+[submodule "web/vendor/ia_fonts"]
+	path = web/vendor/ia_fonts
+	url = https://github.com/iaolo/iA-Fonts
