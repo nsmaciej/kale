@@ -5,7 +5,13 @@ import styled from "styled-components"
 import { Expr, ExprVisitor } from "./expr"
 import * as E from "./expr"
 import { size, vec, Size, Vector } from "./geometry"
-import TextMetrics, { KALE_THEME } from "./text_metrics"
+import TextMetrics from "./text_metrics"
+
+export const KALE_THEME = {
+    fontSizePx: 16,
+    fontFamily: "iA Writer Quattro",
+}
+
 
 // See https://vanseodesign.com/web-design/svg-text-baseline-alignment/ for excellent discussion
 // on SVG aligment properties.
@@ -151,7 +157,8 @@ const sampleExpr = new E.List([
 ])
 console.assert(sampleExpr.isValid())
 
-window.addEventListener("load", () => {
+document.addEventListener("DOMContentLoaded", async () => {
+    await TextMetrics.loadGlobal(KALE_THEME)
     ReactDOM.render(
         <Editor expr={sampleExpr} />,
         document.getElementById('main')
