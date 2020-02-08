@@ -78,6 +78,7 @@ class ExprLayout implements ExprVisitor<Layout> {
     visitComment(expr: E.Comment): Layout {
         //TODO: Right now this just adds bottom margin. Add top margin (and maybe implement
         // collapsing)
+        //TODO: In the future links to websites and functions inside comments should be clickable.
         return {
             size: TextMetrics.global.measure(expr.comment).pad_height(5),
             nodes: <Comment fill="#16a831">{expr.comment}</Comment>,
@@ -128,11 +129,13 @@ class ExprLayout implements ExprVisitor<Layout> {
 
             const ry = pos.y + 6
             const rx = pos.x - 10
-            const ruler = arg.containsList
-                ? <line y2={ry + arg.size.height - 6} x1={rx} x2={rx} y1={ry} stroke="#cccccc" stroke-dasharray="1" />
-                : null
             return <>
-                {ruler}
+                {arg.containsList &&
+                    <line
+                        y2={ry + arg.size.height - 6} x1={rx} x2={rx} y1={ry}
+                        stroke="#cccccc"
+                        stroke-dasharray="1" />
+                }
                 <Group translate={pos} key={x.id}>{arg.nodes}</Group>
             </>
         })
@@ -162,11 +165,14 @@ class Editor extends Component<{ expr: Expr }> {
 }
 
 const sampleExpr = new E.List([
-    new E.Comment("Find a factorial of n."),
+    new E.Comment("Find a factorial of n. (https://example.com)"),
     new E.Call("if", [
         new E.Call("=", [new E.Variable("n"), new E.Literal("0", "int")]),
         new E.List([
-            new E.Call("print", [new E.Literal("Reached the base case", "str")]),
+            new E.Call("print", [
+                new E.Literal("Reached the base case", "str"),
+                new E.Literal("Some other long string to test line breaking", "str"),
+            ]),
             new E.Literal("1", "int"),
         ]),
         new E.Call("id", [
