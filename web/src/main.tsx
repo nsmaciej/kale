@@ -30,6 +30,10 @@ const Code = styled.text`
     dominant-baseline: text-before-edge;
 `
 
+const Comment = styled(Code)`
+    font-style: italic;
+`
+
 function Group({ children, translate }: { children: ReactNode, translate: Vector }) {
     return <g transform={`translate(${translate.x} ${translate.y})`}>
         {children}
@@ -56,7 +60,7 @@ class ExprLayout implements ExprVisitor<Layout> {
         const nodes = expr.list.map(x => {
             const line = x.visit(this)
             const bottomLeft = size.bottom_left
-            size = size.extend(bottomLeft, line.size).pad_height(5)
+            size = size.extend(bottomLeft, line.size).pad_height(KALE_THEME.fontSizePx / 2)
             return <Group translate={bottomLeft} key={x.id}>{line.nodes}</Group>
         })
         // A list is always contains-list.
@@ -72,9 +76,11 @@ class ExprLayout implements ExprVisitor<Layout> {
     visitComment(expr: E.Comment): Layout {
         //TODO: Right now this just adds bottom margin. Add top margin (and maybe implement
         // collapsing)
-        const comment = layoutCode(expr.comment, "#16a831")
-        comment.size = comment.size.pad_height(comment.size.height * 0.5)
-        return comment
+        return {
+            size: TextMetrics.global.measure(expr.comment).pad_height(5),
+            nodes: <Comment fill="#16a831">{expr.comment}</Comment>,
+            containsList: false,
+        }
     }
 
     visitHole(_expr: E.Hole): Layout {
