@@ -69,7 +69,8 @@ class ExprLayout implements ExprVisitor<Layout> {
     }
 
     visitLiteral(expr: E.Literal): Layout {
-        return layoutCode(expr.content, "#f59a11")
+        const content = expr.type == "str" ? `"${expr.content}"` : expr.content
+        return layoutCode(content, "#f59a11")
     }
     visitVariable(expr: E.Variable): Layout {
         return layoutCode(expr.name, "#248af0")
@@ -124,8 +125,11 @@ class ExprLayout implements ExprVisitor<Layout> {
                 nextLineY = size.height + LINE_MARGIN
                 driftX += arg.size.width + DRIFT_MARGIN
             }
+
+            const ry = pos.y + 6
+            const rx = pos.x - 10
             const ruler = arg.containsList
-                ? <rect width="1" height={arg.size.height - 12} x={pos.x - 10} y={pos.y + 6} fill="#ccc" />
+                ? <line y2={ry + arg.size.height - 6} x1={rx} x2={rx} y1={ry} stroke="#cccccc" stroke-dasharray="1" />
                 : null
             return <>
                 {ruler}
@@ -133,6 +137,7 @@ class ExprLayout implements ExprVisitor<Layout> {
             </>
         })
 
+        //TODO: Render the nesting-underlines.
         return { nodes: [<Code bold={containsList}>{expr.fn}</Code>].concat(nodes), size, containsList }
     }
 }
