@@ -3,7 +3,7 @@ import { size, Size } from "./geometry"
 // Eventually this will be passed to TextMetrics somehow.
 export const KALE_THEME = {
     fontSizePx: 16,
-    fontFamily: "'IBM Plex Sans', monospace",
+    fontFamily: "'iA Writer Quattro', monospace",
 }
 
 export default class TextMetrics {
