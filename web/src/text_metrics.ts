@@ -22,7 +22,7 @@ export default class TextMetrics {
         this._theme = theme;
         const svg = document.createElementNS(
             "http://www.w3.org/2000/svg",
-            "svg"
+            "svg",
         );
         // It has to be visibility instead of display none. Not really sure why.
         svg.setAttribute("width", "1");
@@ -33,7 +33,7 @@ export default class TextMetrics {
 
         const text = document.createElementNS(
             "http://www.w3.org/2000/svg",
-            "text"
+            "text",
         );
         text.style.fontFamily = this._theme.fontFamily;
         text.style.fontSize = `${this._theme.fontSizePx}px`;
@@ -43,7 +43,7 @@ export default class TextMetrics {
     }
 
     measure(text: string): Size {
-        const height = this._theme.fontSizePx * 0.8;
+        const height = this._theme.fontSizePx;
         if (text in this._metricsCache) {
             return size(this._metricsCache[text], height);
         }

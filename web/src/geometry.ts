@@ -12,6 +12,10 @@ export class Size {
         return vec(this.width, 0);
     }
 
+    pad(d: number) {
+        return size(this.width + d, this.height + d);
+    }
+
     pad_width(d: number) {
         return size(this.width + d, this.height);
     }
