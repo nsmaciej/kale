@@ -73,25 +73,61 @@ function layoutComment(comment: string): Layout {
     };
 }
 
+class Stack {
+    readonly driftMargin: number;
+    readonly lineMargin: number;
+
+    private nodes: ReactNode[] = [];
+    private size = Size.zero;
+    private containsList = false;
+
+    // How much to shift the next argument left, or if it's a contains-list, how far down.
+    private driftX = 0;
+    private currentLineY = 0;
+    private nextLineY = 0;
+
+    constructor() {
+        this.driftMargin = TextMetrics.global.measure("\xa0").width; // Non-breaking space.
+        this.lineMargin = KALE_THEME.fontSizePx * 0.5;
+    }
+
+    private place(position: Vector, layout: Layout) {
+        this.nodes.push(<Group translate={position}>{layout.nodes}</Group>);
+        this.size = this.size.extend(position, layout.size);
+    }
+
+    stackRight(layout: Layout) {
+        this.place(vec(this.driftX, this.currentLineY), layout);
+        this.containsList = this.containsList || layout.containsList;
+        this.driftX += layout.size.width + this.driftMargin;
+        this.nextLineY = this.size.height + this.lineMargin;
+    }
+    stackDown(layout: Layout) {
+        this.place(vec(0, this.nextLineY), layout);
+        this.containsList = true;
+        this.driftX = 0;
+        this.nextLineY = this.size.height + this.lineMargin;
+        this.currentLineY = this.nextLineY;
+    }
+
+    layout(): Layout {
+        return {
+            nodes: this.nodes,
+            size: this.size,
+            containsList: this.containsList,
+        };
+    }
+}
+
 class ExprLayout implements ExprVisitor<Layout> {
     visitList(expr: E.List): Layout {
         if (expr.comment)
             throw new LayoutNotSupported("List comments are not supported");
-        let size = Size.zero;
-        const nodes = expr.list.map(x => {
-            const line = x.visit(this);
-            const bottomLeft = size.bottom_left;
-            size = size
-                .extend(bottomLeft, line.size)
-                .pad_height(KALE_THEME.fontSizePx / 2);
-            return (
-                <Group translate={bottomLeft} key={x.id}>
-                    {line.nodes}
-                </Group>
-            );
-        });
-        // A list is always contains-list.
-        return { containsList: true, size, nodes };
+        const listStack = new Stack();
+        for (const x of expr.list) {
+            listStack.stackDown(x.visit(this));
+        }
+        return listStack.layout();
     }
 
     visitLiteral(expr: E.Literal): Layout {
@@ -122,81 +158,27 @@ class ExprLayout implements ExprVisitor<Layout> {
 
     visitCall(expr: E.Call): Layout {
         //TODO: Comment might be placed inline for short enough non-containing-list calls.
-        // Contains-list arguments layout downwards, while consecutive non-contains-list arguments
-        // clump together. Comments are placed above the function name.
-        let comment = expr.comment ? layoutComment(expr.comment) : null;
-        const exprSize = TextMetrics.global.measure(expr.fn);
-        // For the purpose of caluclating size, stacking order doesn't matter. (e.g. comment below
-        // the function name has the same size as the opposite)
-        let size = exprSize.extend(
-            exprSize.bottom_left,
-            comment?.size ?? Size.zero,
-        );
-        let containsList = !!expr.comment;
-
-        const DRIFT_MARGIN = TextMetrics.global.measure("\xa0").width; // Non-breaking space.
-        const LINE_MARGIN = KALE_THEME.fontSizePx * 0.5;
-        // Note exprSize width not size width (we do not include the comment size).
-        const leftMargin = exprSize.width + DRIFT_MARGIN;
-
-        // How much to shift the next argument left, or if it's a contains-list, how far down.
-        let driftX = leftMargin;
-        let currentLineY = comment?.size.pad_height(LINE_MARGIN).height ?? 0;
-        let nextLineY = currentLineY;
-
-        const nodes = expr.args.map(x => {
+        const argStack = new Stack();
+        for (const x of expr.args) {
             const arg = x.visit(this);
-            containsList = containsList || arg.containsList;
-
-            const pos = arg.containsList
-                ? vec(leftMargin + 12, nextLineY)
-                : vec(driftX, currentLineY);
-            size = size.extend(pos, arg.size);
             if (arg.containsList) {
-                nextLineY = currentLineY = size.height + LINE_MARGIN;
-                driftX = leftMargin;
+                argStack.stackDown(arg);
             } else {
-                nextLineY = size.height + LINE_MARGIN;
-                driftX += arg.size.width + DRIFT_MARGIN;
+                argStack.stackRight(arg);
             }
+        }
 
-            const ry = pos.y + 6;
-            const rx = pos.x - 10;
-            return (
-                <>
-                    {arg.containsList && (
-                        <line
-                            y2={ry + arg.size.height - 6}
-                            x1={rx}
-                            x2={rx}
-                            y1={ry}
-                            stroke="#cccccc"
-                            strokeDasharray="1"
-                        />
-                    )}
-                    <Group translate={pos} key={x.id}>
-                        {arg.nodes}
-                    </Group>
-                </>
-            );
-        });
+        let callStack = new Stack();
+        callStack.stackRight(layoutCode(expr.fn));
+        callStack.stackRight(argStack.layout());
 
-        //TODO: Render the nesting-underlines.
-        return {
-            nodes: [
-                comment?.nodes,
-                <Group
-                    translate={
-                        comment?.size.pad_height(LINE_MARGIN).bottom_left
-                    }
-                >
-                    <Code bold={containsList}>{expr.fn}</Code>
-                </Group>,
-                ...nodes,
-            ],
-            size,
-            containsList,
-        };
+        if (expr.comment) {
+            const commentStack = new Stack();
+            commentStack.stackDown(layoutComment(expr.comment));
+            commentStack.stackDown(callStack.layout());
+            return commentStack.layout();
+        }
+        return callStack.layout();
     }
 }
 
