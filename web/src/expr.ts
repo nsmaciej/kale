@@ -56,15 +56,17 @@ export abstract class Expr {
 }
 
 export class List extends Expr {
-    constructor(readonly list: Expr[], data = exprData()) {
+    constructor(readonly list: Readonly<Expr[]>, data = exprData()) {
         super(data);
     }
 }
+
 export class Variable extends Expr {
     constructor(readonly name: string, data = exprData()) {
         super(data);
     }
 }
+
 export class Literal extends Expr {
     constructor(
         readonly content: string,
@@ -74,15 +76,17 @@ export class Literal extends Expr {
         super(data);
     }
 }
+
 export class Call extends Expr {
     constructor(
         readonly fn: string,
-        readonly args: Expr[] = [],
+        readonly args: Readonly<Expr[]> = [],
         data = exprData(),
     ) {
         super(data);
     }
 }
+
 export class Hole extends Expr {
     constructor(data = exprData()) {
         super(data);
@@ -90,7 +94,7 @@ export class Hole extends Expr {
 }
 
 class ExprValidator implements ExprVisitor<void> {
-    seenIds = new Set<ExprId>();
+    private seenIds = new Set<ExprId>();
 
     private assert(expr: Expr, check: boolean) {
         // An empty comment should be a missing comment.
