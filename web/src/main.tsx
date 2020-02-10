@@ -47,7 +47,7 @@ function layoutText(
     return {
         size: TextMetrics.global.measure(text),
         nodes: (
-            <Code fill={colour} font-style={italic ? "italic" : null}>
+            <Code fill={colour} fontStyle={italic ? "italic" : undefined}>
                 {title && <title>{title}</title>}
                 {text}
             </Code>
