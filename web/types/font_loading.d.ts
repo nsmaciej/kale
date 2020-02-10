@@ -1,10 +1,10 @@
-export { }
+export {};
 
 // Thanks to https://github.com/Microsoft/TypeScript/issues/30984#issuecomment-581953895
 
 type CSSOMString = string;
-type FontFaceLoadStatus = 'unloaded' | 'loading' | 'loaded' | 'error';
-type FontFaceSetStatus = 'loading' | 'loaded';
+type FontFaceLoadStatus = "unloaded" | "loading" | "loaded" | "error";
+type FontFaceSetStatus = "loading" | "loaded";
 
 interface FontFace {
     family: CSSOMString;
@@ -25,11 +25,11 @@ interface FontFaceSet {
     readonly status: FontFaceSetStatus;
     readonly ready: Promise<FontFaceSet>;
     check(font: string, text?: string): Boolean;
-    load(font: string, text?: string): Promise<FontFace[]>
+    load(font: string, text?: string): Promise<FontFace[]>;
 }
 
 declare global {
     interface Document {
-        fonts: FontFaceSet
+        fonts: FontFaceSet;
     }
 }
