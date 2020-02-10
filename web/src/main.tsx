@@ -152,7 +152,7 @@ class ExprLayout implements ExprVisitor<Layout> {
                             x2={rx}
                             y1={ry}
                             stroke="#cccccc"
-                            stroke-dasharray="1"
+                            strokeDasharray="1"
                         />
                     )}
                     <Group translate={pos} key={x.id}>
@@ -230,7 +230,7 @@ const sampleExpr = new E.List([
         new E.Call("sample-call-2"),
     ]),
 ]);
-console.assert(sampleExpr.isValid());
+sampleExpr.validate();
 
 document.addEventListener("DOMContentLoaded", async () => {
     await TextMetrics.loadGlobal(KALE_THEME);

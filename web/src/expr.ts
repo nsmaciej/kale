@@ -11,7 +11,13 @@ export interface ExprVisitor<R = any> {
 
 export class UnvisitableExpr extends Error {
     constructor(readonly expr: Expr) {
-        super("Unvisitable expr");
+        super("Unvisitable Expr");
+    }
+}
+
+export class InvalidExpr extends Error {
+    constructor(readonly expr: Expr) {
+        super("Invalid Expr");
     }
 }
 
@@ -38,8 +44,8 @@ export abstract class Expr {
         throw new UnvisitableExpr(this);
     }
 
-    isValid(): boolean {
-        return this.visit(new ExprValidator());
+    validate() {
+        this.visit(new ExprValidator());
     }
 }
 
@@ -70,43 +76,40 @@ export class Call extends Expr {
 }
 export class Hole extends Expr {}
 
-class ExprValidator implements ExprVisitor<boolean> {
+class ExprValidator implements ExprVisitor<void> {
     seenIds = new Set<ExprId>();
 
-    private unseen(expr: Expr) {
-        if (this.seenIds.has(expr.id)) return true;
+    private assert(expr: Expr, check: boolean) {
+        if (this.seenIds.has(expr.id) || !check) {
+            throw new InvalidExpr(expr);
+        }
         this.seenIds.add(expr.id);
-        return false;
     }
 
-    visitHole(expr: Hole): boolean {
-        return this.unseen(expr);
+    visitHole(expr: Hole) {
+        this.assert(expr, true);
     }
-    visitLiteral(expr: Literal): boolean {
+    visitLiteral(expr: Literal) {
         //TODO: Check for valid literals.
-        return this.unseen(expr) && !!expr.content && !!expr.type;
+        this.assert(expr, !!expr.content && !!expr.type);
     }
-    visitComment(expr: Comment): boolean {
-        return this.unseen(expr) && !!expr.comment;
+    visitComment(expr: Comment) {
+        this.assert(expr, !!expr.comment);
     }
-    visitVariable(expr: Variable): boolean {
+    visitVariable(expr: Variable) {
         //TODO: Verify reasonable identifer names.
-        return this.unseen(expr);
+        this.assert(expr, !!expr.name);
     }
-    visitList(expr: List): boolean {
-        return (
-            this.unseen(expr) &&
-            expr.list.length > 0 &&
-            !expr.list.some(x => x instanceof List) &&
-            expr.list.every(x => x.visit(this))
+    visitList(expr: List) {
+        this.assert(
+            expr,
+            expr.list.length > 0 && !expr.list.some(x => x instanceof List),
         );
+        expr.list.forEach(x => x.visit(this));
     }
-    visitCall(expr: Call): boolean {
+    visitCall(expr: Call) {
         //TODO: Verify reasonable function names.
-        return (
-            this.unseen(expr) &&
-            !!expr.fn &&
-            expr.args.every(x => x.visit(this))
-        );
+        this.assert(expr, !!expr.fn);
+        expr.args.forEach(x => x.visit(this));
     }
 }
