@@ -4,6 +4,7 @@ export class Size {
     static readonly zero = new Size(0, 0);
 
     constructor(readonly width: number, readonly height: number) {}
+
     get bottom_left(): Vector {
         return vec(0, this.height);
     }
@@ -21,13 +22,16 @@ export class Size {
     extend(offset: Vector, size: Size): Size {
         return new Size(
             Math.max(this.width, offset.x + size.width),
-            Math.max(this.height, offset.y + size.height)
+            Math.max(this.height, offset.y + size.height),
         );
     }
 }
 
 export class Vector {
+    static readonly zero = new Vector(0, 0);
+
     constructor(readonly x: number, readonly y: number) {}
+
     dx(d: number) {
         return vec(this.x + d, this.y);
     }

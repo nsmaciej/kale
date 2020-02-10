@@ -1,10 +1,20 @@
 export type ExprId = number;
 
+export interface ExprData {
+    id: ExprId;
+    comment?: string;
+}
+
+// Construct simple ExprData for sample Exprs.
+export function exprData(comment?: string): ExprData {
+    return { id: exprData.serialExprId++, comment };
+}
+exprData.serialExprId = 1;
+
 export interface ExprVisitor<R = any> {
     visitList(expr: List): R;
     visitLiteral(expr: Literal): R;
     visitVariable(expr: Variable): R;
-    visitComment(expr: Comment): R;
     visitHole(expr: Hole): R;
     visitCall(expr: Call): R;
 }
@@ -22,23 +32,19 @@ export class InvalidExpr extends Error {
 }
 
 export abstract class Expr {
-    private static globalId = 1;
-
     // Two expressions have the same id if they have the same content.
-    private _id: ExprId;
-    get id(): ExprId {
-        return this._id;
-    }
+    readonly id: ExprId;
+    readonly comment?: string;
 
-    constructor(id = Expr.globalId++) {
-        this._id = id;
+    constructor(data: ExprData) {
+        this.id = data.id;
+        this.comment = data.comment;
     }
 
     visit<R>(visitor: ExprVisitor<R>): R {
         if (this instanceof List) return visitor.visitList(this);
         else if (this instanceof Variable) return visitor.visitVariable(this);
         else if (this instanceof Literal) return visitor.visitLiteral(this);
-        else if (this instanceof Comment) return visitor.visitComment(this);
         else if (this instanceof Hole) return visitor.visitHole(this);
         else if (this instanceof Call) return visitor.visitCall(this);
         throw new UnvisitableExpr(this);
@@ -50,37 +56,45 @@ export abstract class Expr {
 }
 
 export class List extends Expr {
-    constructor(readonly list: Expr[]) {
-        super();
+    constructor(readonly list: Expr[], data = exprData()) {
+        super(data);
     }
 }
 export class Variable extends Expr {
-    constructor(readonly name: string) {
-        super();
+    constructor(readonly name: string, data = exprData()) {
+        super(data);
     }
 }
 export class Literal extends Expr {
-    constructor(readonly content: string, readonly type: string) {
-        super();
-    }
-}
-export class Comment extends Expr {
-    constructor(readonly comment: string) {
-        super();
+    constructor(
+        readonly content: string,
+        readonly type: string,
+        data = exprData(),
+    ) {
+        super(data);
     }
 }
 export class Call extends Expr {
-    constructor(readonly fn: string, readonly args: Expr[] = []) {
-        super();
+    constructor(
+        readonly fn: string,
+        readonly args: Expr[] = [],
+        data = exprData(),
+    ) {
+        super(data);
     }
 }
-export class Hole extends Expr {}
+export class Hole extends Expr {
+    constructor(data = exprData()) {
+        super(data);
+    }
+}
 
 class ExprValidator implements ExprVisitor<void> {
     seenIds = new Set<ExprId>();
 
     private assert(expr: Expr, check: boolean) {
-        if (this.seenIds.has(expr.id) || !check) {
+        // An empty comment should be a missing comment.
+        if (this.seenIds.has(expr.id) || expr.comment === "" || !check) {
             throw new InvalidExpr(expr);
         }
         this.seenIds.add(expr.id);
@@ -92,9 +106,6 @@ class ExprValidator implements ExprVisitor<void> {
     visitLiteral(expr: Literal) {
         //TODO: Check for valid literals.
         this.assert(expr, !!expr.content && !!expr.type);
-    }
-    visitComment(expr: Comment) {
-        this.assert(expr, !!expr.comment);
     }
     visitVariable(expr: Variable) {
         //TODO: Verify reasonable identifer names.
