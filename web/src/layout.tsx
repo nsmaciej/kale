@@ -72,11 +72,11 @@ export class Stack {
         this.nextLineY = this.size.height + this.lineMargin;
     }
     stackDown(layout: Layout) {
-        this.place(vec(0, this.nextLineY), layout);
-        this.containsList = true;
-        this.driftX = 0;
-        this.nextLineY = this.size.height + this.lineMargin;
         this.currentLineY = this.nextLineY;
+        this.place(vec(0, this.currentLineY), layout);
+        this.containsList = true;
+        this.driftX = layout.size.width + this.driftMargin;
+        this.nextLineY = this.size.height + this.lineMargin;
     }
 
     resetDrift() {
