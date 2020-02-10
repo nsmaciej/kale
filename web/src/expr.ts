@@ -118,7 +118,7 @@ class ExprValidator implements ExprVisitor<void> {
     visitList(expr: List) {
         this.assert(
             expr,
-            expr.list.length > 0 && !expr.list.some(x => x instanceof List),
+            expr.list.length > 1 && !expr.list.some(x => x instanceof List),
         );
         expr.list.forEach(x => x.visit(this));
     }

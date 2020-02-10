@@ -4,7 +4,7 @@ import styled, { createGlobalStyle } from "styled-components";
 
 import { Expr, ExprVisitor } from "./expr";
 import { size } from "./geometry";
-import { Stack, Layout, containInBox, stackDown } from "./layout";
+import { Stack, Layout, containInBox } from "./layout";
 import * as E from "./expr";
 import SAMPLE_EXPR from "./sample";
 import TextMetrics from "./text_metrics";
@@ -60,7 +60,9 @@ class ExprLayout implements ExprVisitor<Layout> {
     visitList(expr: E.List): Layout {
         if (expr.comment)
             throw new LayoutNotSupported("List comments are not supported");
-        return stackDown(expr.list.map(x => x.visit(this)));
+        return Stack.fromList(
+            expr.list.flatMap(x => [x.visit(this), Stack.CLEAR]),
+        );
     }
 
     visitLiteral(expr: E.Literal): Layout {
@@ -83,41 +85,45 @@ class ExprLayout implements ExprVisitor<Layout> {
     }
 
     visitCall(expr: E.Call): Layout {
+        // The y1 and y2 are fudged to make this look good with the inaccurate metrics.
+        const line = (height: number) => (
+            <line
+                x1={5}
+                x2={5}
+                y1={10}
+                y2={height}
+                stroke="#cccccc"
+                strokeDasharray="1"
+            />
+        );
         //TODO: Comment might be placed inline for short enough non-containing-list calls.
-        const argStack = new Stack();
-        for (const x of expr.args) {
-            const arg = x.visit(this);
-            if (arg.containsList) {
-                const line = (
-                    <line
-                        y2={arg.size.height}
-                        stroke="#cccccc"
-                        strokeDasharray="1"
-                    />
-                );
-                argStack.stackDown({
-                    nodes: line,
-                    containsList: true,
-                    size: size(5, arg.size.height),
-                });
-                argStack.stackRight(arg);
-                argStack.resetDrift();
-            } else {
-                argStack.stackRight(arg);
-            }
-        }
+        const argStack = Stack.fromList(
+            expr.args.flatMap(x => {
+                const arg: Layout = x.visit(this);
+                if (arg.containsList) {
+                    const lineLayout = {
+                        nodes: line(arg.size.height),
+                        containsList: true,
+                        size: size(5, arg.size.height),
+                    };
+                    return [Stack.CLEAR, lineLayout, arg, Stack.CLEAR];
+                }
+                return arg;
+            }),
+        );
 
-        let callStack = new Stack();
-        callStack.stackRight(layoutText(expr.fn));
-        callStack.stackRight(argStack.layout());
-
+        const callStack =
+            expr.args.length > 0
+                ? Stack.fromList([layoutText(expr.fn), argStack])
+                : layoutText(expr.fn);
         if (expr.comment) {
-            return stackDown([
+            return Stack.fromList([
                 layoutText(expr.comment, { colour: "#16a831", italic: true }),
-                callStack.layout(),
+                Stack.CLEAR,
+                callStack,
             ]);
         }
-        return callStack.layout();
+        return callStack;
     }
 }
 

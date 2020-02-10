@@ -40,61 +40,62 @@ export function containInBox({ nodes, size, containsList }: Layout): Layout {
     };
 }
 
-//TODO: Rewrite to lazily compute layout.
+// This essentially works like a typewriter. Calling stack 'types' a block. Calling clear 'presses'
+// the Enter key.
 export class Stack {
-    readonly driftMargin: number;
-    readonly lineMargin: number;
+    private previousLines: Layout[][] = [];
+    private currentLine: Layout[] = [];
 
-    private nodes: ReactNode[] = [];
-    private size = Size.zero;
-    private containsList = false;
+    static CLEAR: "clear" = "clear";
 
-    // How much to shift the next argument left, or if it's a contains-list, how far down.
-    private driftX = 0;
-    private currentLineY = 0;
-    private nextLineY = 0;
-
-    constructor() {
-        this.driftMargin = TextMetrics.global.measure("\xa0").width; // Non-breaking space.
-        //TODO: This should be based on the current text size.
-        this.lineMargin = 8;
+    static fromList(blocks: (Layout | typeof Stack.CLEAR)[]): Layout {
+        const stack = new Stack();
+        for (const x of blocks) {
+            if (x == "clear") {
+                stack.clear();
+            } else {
+                stack.stack(x);
+            }
+        }
+        return stack.layout();
     }
 
-    private place(position: Vector, layout: Layout) {
-        this.nodes.push(<Group translate={position}>{layout.nodes}</Group>);
-        this.size = this.size.extend(position, layout.size);
+    stack(layout: Layout) {
+        this.currentLine.push(layout);
     }
 
-    stackRight(layout: Layout) {
-        this.place(vec(this.driftX, this.currentLineY), layout);
-        this.containsList = this.containsList || layout.containsList;
-        this.driftX += layout.size.width + this.driftMargin;
-        this.nextLineY = this.size.height + this.lineMargin;
-    }
-    stackDown(layout: Layout) {
-        this.currentLineY = this.nextLineY;
-        this.place(vec(0, this.currentLineY), layout);
-        this.containsList = true;
-        this.driftX = layout.size.width + this.driftMargin;
-        this.nextLineY = this.size.height + this.lineMargin;
+    // Idempotent, calling when the current line is empty does nothing.
+    clear() {
+        if (this.currentLine) {
+            this.previousLines.push(this.currentLine);
+            this.currentLine = [];
+        }
     }
 
-    resetDrift() {
-        this.driftX = 0;
-        this.currentLineY = this.nextLineY;
-    }
-
+    // Calling layout clears any pending lines.
     layout(): Layout {
-        return {
-            nodes: this.nodes,
-            size: this.size,
-            containsList: this.containsList,
-        };
-    }
-}
+        this.clear();
 
-export function stackDown(children: Layout[]): Layout {
-    const stack = new Stack();
-    for (const x of children) stack.stackDown(x);
-    return stack.layout();
+        const driftMargin = TextMetrics.global.measure("\xa0").width; // Non-breaking space.
+        const lineMargin = 8; //TODO: This should be based on the current text size.
+
+        const nodes: ReactNode[] = [];
+        let size = Size.zero;
+        let containsList = this.previousLines.length > 1;
+
+        for (const line of this.previousLines) {
+            // Don't add the line margin to the first line.
+            const lineY = size.height + (size.height ? lineMargin : 0);
+            let lineX = 0;
+            for (const block of line) {
+                const pos = vec(lineX, lineY);
+                size = size.extend(pos, block.size);
+                nodes.push(<Group translate={pos}>{block.nodes}</Group>);
+                lineX += block.size.width + driftMargin;
+                containsList = containsList || block.containsList;
+            }
+        }
+
+        return { size, nodes, containsList };
+    }
 }

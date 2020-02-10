@@ -1,11 +1,12 @@
 {
-  "compilerOptions": {
-    "outDir": "./dist/",
-    "sourceMap": true,
-    "strict": true,
-    "target": "es6",
-    "allowJs": true,
-    "jsx": "react",
-    "allowSyntheticDefaultImports": true
-  }
+    "compilerOptions": {
+        "outDir": "./dist/",
+        "sourceMap": true,
+        "strict": true,
+        "target": "es6",
+        "allowJs": true,
+        "jsx": "react",
+        "lib": ["es2019", "dom"],
+        "allowSyntheticDefaultImports": true
+    }
 }
