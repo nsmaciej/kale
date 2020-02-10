@@ -82,7 +82,8 @@ class ExprLayout implements ExprVisitor<Layout> {
     }
 
     visitLiteral(expr: E.Literal): Layout {
-        const content = expr.type == "str" ? `"${expr.content}"` : expr.content;
+        const content =
+            expr.type === "str" ? `"${expr.content}"` : expr.content;
         return layoutCode(content, "#f59a11");
     }
     visitVariable(expr: E.Variable): Layout {

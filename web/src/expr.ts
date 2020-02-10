@@ -69,7 +69,7 @@ export class Call extends Expr {
 export class Hole extends Expr {}
 
 class ExprValidator implements ExprVisitor<boolean> {
-    visitHole(expr: Hole) {
+    visitHole(_expr: Hole) {
         return true;
     }
     visitLiteral(expr: Literal) {
@@ -79,15 +79,19 @@ class ExprValidator implements ExprVisitor<boolean> {
     visitComment(expr: Comment) {
         return !!expr.comment;
     }
-    visitVariable(expr: Variable) {
+    visitVariable(_expr: Variable) {
         //TODO: Verify reasonable identifer names.
         return true;
     }
-    visitList(expr: List) {
-        return expr.list.length > 0 && !expr.list.some(x => x instanceof List);
+    visitList(expr: List): boolean {
+        return (
+            expr.list.length > 0 &&
+            !expr.list.some(x => x instanceof List) &&
+            expr.list.every(x => x.visit(this))
+        );
     }
-    visitCall(expr: Call) {
+    visitCall(expr: Call): boolean {
         //TODO: Verify reasonable function names.
-        return !!expr.fn;
+        return !!expr.fn && expr.args.every(x => x.visit(this));
     }
 }
