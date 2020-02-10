@@ -1,4 +1,4 @@
-let GLOBAL_ID = 1;
+export type ExprId = number;
 
 export interface ExprVisitor<R = any> {
     visitList(expr: List): R;
@@ -16,13 +16,15 @@ export class UnvisitableExpr extends Error {
 }
 
 export abstract class Expr {
+    private static globalId = 1;
+
     // Two expressions have the same id if they have the same content.
-    private _id: number;
-    get id() {
+    private _id: ExprId;
+    get id(): ExprId {
         return this._id;
     }
 
-    constructor(id = GLOBAL_ID++) {
+    constructor(id = Expr.globalId++) {
         this._id = id;
     }
 
@@ -36,7 +38,7 @@ export abstract class Expr {
         throw new UnvisitableExpr(this);
     }
 
-    isValid() {
+    isValid(): boolean {
         return this.visit(new ExprValidator());
     }
 }
@@ -69,22 +71,31 @@ export class Call extends Expr {
 export class Hole extends Expr {}
 
 class ExprValidator implements ExprVisitor<boolean> {
-    visitHole(_expr: Hole) {
-        return true;
+    seenIds = new Set<ExprId>();
+
+    private unseen(expr: Expr) {
+        if (this.seenIds.has(expr.id)) return true;
+        this.seenIds.add(expr.id);
+        return false;
     }
-    visitLiteral(expr: Literal) {
+
+    visitHole(expr: Hole): boolean {
+        return this.unseen(expr);
+    }
+    visitLiteral(expr: Literal): boolean {
         //TODO: Check for valid literals.
-        return !!expr.content && !!expr.type;
+        return this.unseen(expr) && !!expr.content && !!expr.type;
     }
-    visitComment(expr: Comment) {
-        return !!expr.comment;
+    visitComment(expr: Comment): boolean {
+        return this.unseen(expr) && !!expr.comment;
     }
-    visitVariable(_expr: Variable) {
+    visitVariable(expr: Variable): boolean {
         //TODO: Verify reasonable identifer names.
-        return true;
+        return this.unseen(expr);
     }
     visitList(expr: List): boolean {
         return (
+            this.unseen(expr) &&
             expr.list.length > 0 &&
             !expr.list.some(x => x instanceof List) &&
             expr.list.every(x => x.visit(this))
@@ -92,6 +103,10 @@ class ExprValidator implements ExprVisitor<boolean> {
     }
     visitCall(expr: Call): boolean {
         //TODO: Verify reasonable function names.
-        return !!expr.fn && expr.args.every(x => x.visit(this));
+        return (
+            this.unseen(expr) &&
+            !!expr.fn &&
+            expr.args.every(x => x.visit(this))
+        );
     }
 }
