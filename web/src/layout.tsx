@@ -22,8 +22,8 @@ export interface Layout {
 
 export interface Underline {
     width: number;
-    offset: number;
-    childeren: Underline[];
+    // Offset and underline.
+    children: [number, Underline][];
 }
 
 export interface ExprLayout extends Layout {
