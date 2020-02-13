@@ -36,10 +36,10 @@ const sampleExpr = new E.Call(
                 ]),
             ]),
         ]),
-        new E.Call("sample-call"),
         new E.Call("sample-call-2", [
             new E.Hole(E.exprData("Missing argument")),
         ]),
+        new E.Call("sample-call"),
     ],
     E.exprData("Find a factorial of n. (https://example.com)"),
 );

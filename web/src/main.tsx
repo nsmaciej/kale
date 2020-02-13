@@ -21,10 +21,10 @@ import SAMPLE_EXPR from "./sample";
 import TextMetrics from "./text_metrics";
 
 export const KALE_THEME = {
-    fontSizePx: 16,
+    fontSizePx: 13,
     fontFamily: "iA Writer Quattro",
     //TODO: This should be based on the current text size.
-    lineSpacing: 16,
+    lineSpacing: 10,
     underlineColour: "#6a6a6a",
 };
 
@@ -93,7 +93,7 @@ class ExprLayoutHelper implements ExprVisitor<ExprLayout> {
                 nodes.push(
                     place(
                         pos.dy(KALE_THEME.fontSizePx + 5),
-                        layoutUnderline(layout.underlines),
+                        layoutUnderline(layout.underlines, true),
                     ),
                 );
             }
@@ -138,27 +138,40 @@ function underlineTreeHeight(underline: null | Underline): number {
         : 1 + max(underline.children.map(x => underlineTreeHeight(x[1])));
 }
 
-function layoutUnderline(underline: Underline): Layout {
-    function layout(ix: number, underline: Underline, pos: Vector): ReactNode {
+function layoutUnderline(underline: Underline, skipFirst = false): Layout {
+    function layout(
+        level: number,
+        ix: number,
+        underline: Underline,
+        pos: Vector,
+    ): ReactNode {
         // It took a while, but black, crispEdge, 0.5 stroke lines work well. They looks equally
         // well at full and half-pixel multiples; and look good on high-dpi screens.
+        const drawn = level > 0 || !skipFirst;
         return (
             <React.Fragment key={ix}>
-                <Line
-                    start={pos}
-                    end={pos.dx(underline.width)}
-                    strokeWidth={0.5}
-                    shapeRendering="crispEdges"
-                    stroke={KALE_THEME.underlineColour}
-                />
+                {drawn && (
+                    <Line
+                        start={pos}
+                        end={pos.dx(underline.width)}
+                        strokeWidth={0.5}
+                        shapeRendering="crispEdges"
+                        stroke={KALE_THEME.underlineColour}
+                    />
+                )}
                 {underline.children.map(([offset, next], ix) =>
-                    layout(ix, next, pos.dx(offset).dy(4)),
+                    layout(
+                        level + 1,
+                        ix,
+                        next,
+                        pos.dx(offset).dy(drawn ? 3 : 0),
+                    ),
                 )}
             </React.Fragment>
         );
     }
     return {
-        nodes: layout(0, underline, Vector.zero),
+        nodes: layout(0, 0, underline, Vector.zero),
         size: size(underline.width, 1),
     };
 }
@@ -214,7 +227,9 @@ export class CallLayoutHelper {
                 size = size.extend(pos, arg.size);
             }
             return underline(
-                stackHorizontal(inlineMargin, fnName, { nodes, size }),
+                this.args.length > 0
+                    ? stackHorizontal(inlineMargin, fnName, { nodes, size })
+                    : fnName,
                 underlines,
             );
         }
