@@ -3,7 +3,6 @@ import React, { Component, ReactNode } from "react";
 import styled, { createGlobalStyle } from "styled-components";
 
 import { assert, max } from "./utils";
-import { Expr, ExprVisitor } from "./expr";
 import { Size, size, vec, Vector } from "./geometry";
 import {
     ExprLayout,
@@ -16,6 +15,7 @@ import {
     stackHorizontal,
     stackVertical,
 } from "./layout";
+import { Expr, ExprId, ExprVisitor } from "./expr";
 import * as E from "./expr";
 import SAMPLE_EXPR from "./sample";
 import TextMetrics from "./text_metrics";
@@ -26,6 +26,7 @@ export const KALE_THEME = {
     //TODO: This should be based on the current text size.
     lineSpacing: 10,
     underlineColour: "#6a6a6a",
+    selectionColour: "#d8eeff",
 };
 
 class LayoutNotSupported extends Error {}
@@ -55,36 +56,68 @@ interface TextProperties {
     title?: string;
 }
 
-function layoutText(
-    text: string,
-    { italic, colour, title, bold }: TextProperties = {},
-): ExprLayout {
-    const size = TextMetrics.global.measure(text);
-    return {
-        size,
-        nodes: (
-            <Code
-                fill={colour}
-                fontStyle={italic ? "italic" : undefined}
-                fontWeight={bold ? "bold" : undefined}
-            >
-                {title && <title>{title}</title>}
-                {text}
-            </Code>
-        ),
-        underlines: null,
-        inline: true,
-    };
-}
-
 class ExprLayoutHelper implements ExprVisitor<ExprLayout> {
+    constructor(private readonly parentView: ExprView) {}
+
+    layoutText(
+        expr: Expr,
+        text: string,
+        { italic, colour, title, bold }: TextProperties = {},
+    ): ExprLayout {
+        const size = TextMetrics.global.measure(text);
+        return {
+            size,
+            nodes: (
+                <Code
+                    fill={colour}
+                    fontStyle={italic ? "italic" : undefined}
+                    fontWeight={bold ? "bold" : undefined}
+                    onClick={_e => this.parentView.selected(expr)}
+                >
+                    {title && <title>{title}</title>}
+                    {text}
+                </Code>
+            ),
+            underlines: null,
+            inline: true,
+        };
+    }
+
+    layout(expr: Expr): ExprLayout {
+        const layout = expr.visit(this);
+        if (this.parentView.state.selection === expr) {
+            const { size, inline, underlines, nodes } = layout;
+            const PADDING = 3;
+            return {
+                size,
+                inline,
+                underlines,
+                nodes: (
+                    <>
+                        <rect
+                            x={-PADDING}
+                            y={-PADDING}
+                            width={size.width + PADDING * 2}
+                            height={size.height + PADDING * 2}
+                            rx={3}
+                            fill={KALE_THEME.selectionColour}
+                        />
+                        {nodes}
+                    </>
+                ),
+            };
+        }
+        return layout;
+    }
+
     visitList(expr: E.List): ExprLayout {
+        //TODO: Add a larger clickable area to the list ruler.
         if (expr.comment)
             throw new LayoutNotSupported("List comments are not supported");
         let size = Size.zero;
         let nodes: ReactNode[] = [];
         for (const line of expr.list) {
-            const layout = line.visit(this);
+            const layout = this.layout(line);
             const pos = size.bottom_left.dy(
                 // Skip first line.
                 size.height ? KALE_THEME.lineSpacing : 0,
@@ -93,7 +126,7 @@ class ExprLayoutHelper implements ExprVisitor<ExprLayout> {
                 nodes.push(
                     place(
                         pos.dy(KALE_THEME.fontSizePx + 5),
-                        layoutUnderline(layout.underlines, true),
+                        layoutUnderlines(layout.underlines, true),
                     ),
                 );
             }
@@ -101,13 +134,13 @@ class ExprLayoutHelper implements ExprVisitor<ExprLayout> {
             size = size.extend(pos, layout.size);
         }
 
-        const BAD_HEIGHT_FUDGE = 5;
         const ruler = {
             size: new Size(10, 0),
             nodes: (
                 <Line
-                    start={vec(3, BAD_HEIGHT_FUDGE)}
-                    end={vec(3, size.height + BAD_HEIGHT_FUDGE)}
+                    start={vec(3, 5)}
+                    end={vec(3, size.height)}
+                    onClick={_e => this.parentView.selected(expr)}
                 />
             ),
         };
@@ -117,11 +150,14 @@ class ExprLayoutHelper implements ExprVisitor<ExprLayout> {
     visitLiteral(expr: E.Literal): ExprLayout {
         const content =
             expr.type === "str" ? `"${expr.content}"` : expr.content;
-        return layoutText(content, { title: expr.comment, colour: "#f59a11" });
+        return this.layoutText(expr, content, {
+            title: expr.comment,
+            colour: "#f59a11",
+        });
     }
 
     visitVariable(expr: E.Variable): ExprLayout {
-        return layoutText(expr.name, {
+        return this.layoutText(expr, expr.name, {
             title: expr.comment,
             colour: "#248af0",
         });
@@ -129,12 +165,14 @@ class ExprLayoutHelper implements ExprVisitor<ExprLayout> {
 
     visitHole(expr: E.Hole): ExprLayout {
         //TODO: Wrap this in a nice box or something.
-        return layoutText(expr.comment ?? "HOLE", { colour: "#ff0000" });
+        return this.layoutText(expr, expr.comment ?? "HOLE", {
+            colour: "#ff0000",
+        });
     }
 
     visitCall(expr: E.Call): ExprLayout {
         //TODO: Add the comment back.
-        return new CallLayoutHelper(expr).layout();
+        return callLayoutHelper.bind(this)(expr);
     }
 }
 
@@ -144,7 +182,7 @@ function underlineTreeHeight(underline: null | Underline): number {
         : 1 + max(underline.children.map(x => underlineTreeHeight(x[1])));
 }
 
-function layoutUnderline(underline: Underline, skipFirst = false): Layout {
+function layoutUnderlines(underline: Underline, skipFirst = false): Layout {
     function layout(
         level: number,
         ix: number,
@@ -182,95 +220,111 @@ function layoutUnderline(underline: Underline, skipFirst = false): Layout {
     };
 }
 
-export class CallLayoutHelper {
-    private readonly args: Readonly<ExprLayout[]> = [];
-    private readonly exprLayoutHelper = new ExprLayoutHelper();
-    // If false we should render the underlines on the args.
-    private readonly inline: boolean;
-
-    constructor(private readonly expr: E.Call) {
-        this.args = this.expr.args.map(x => x.visit(this.exprLayoutHelper));
-
-        this.inline = this.args.every(x => x.inline);
-        // Staying inline is not easy. Two more tests follow: does the call fit within an arbitrary
-        // width and is the underline tree shallow enough.
-        if (this.inline) {
-            const LINE_BREAK_POINT = 200;
-            const lineWidth = this.args
-                .map(x => x.size.width)
-                .reduce((x, y) => x + y, 0);
-            this.inline = lineWidth < LINE_BREAK_POINT;
-
-            if (this.inline) {
-                const underlineHeights = this.args.map(x =>
-                    underlineTreeHeight(x.underlines),
-                );
-                const MAX_NESTING_LEVEL = 3;
-                this.inline = max(underlineHeights) < MAX_NESTING_LEVEL;
-            }
-        }
+function isCallInline(args: ExprLayout[]): boolean {
+    if (!args.every(x => x.inline)) {
+        return false;
     }
 
-    layout(): ExprLayout {
-        const inlineMargin = TextMetrics.global.measure("\xa0").width; // Non-breaking space.
-        const fnName = layoutText(this.expr.fn, { bold: !this.inline });
-        assert(fnName.inline);
+    // Do we need a line break?
+    const LINE_BREAK_POINT = 200;
+    const lineWidth = args.map(x => x.size.width).reduce((x, y) => x + y, 0);
+    if (lineWidth > LINE_BREAK_POINT) {
+        return false;
+    }
+
+    // Is the expression too nested?
+    const underlineHeights = args.map(x => underlineTreeHeight(x.underlines));
+    const MAX_NESTING_LEVEL = 3;
+    return max(underlineHeights) < MAX_NESTING_LEVEL;
+}
+
+//TODO: Probably maybe don't do this. Using this makes the code instantly movable to
+// ExprLayoutHelper, but I feel it's too big to move there.
+function callLayoutHelper(this: ExprLayoutHelper, expr: E.Call): ExprLayout {
+    const args = expr.args.map(x => this.layout(x));
+    const inline = isCallInline(args);
+    const inlineMargin = TextMetrics.global.measure("\xa0").width; // Non-breaking space.
+    const fnName = this.layoutText(expr, expr.fn, { bold: !inline });
+    assert(fnName.inline);
+
+    if (inline) {
+        const underlines: [number, Underline][] = [];
         const nodes: ReactNode[] = [];
         let size = Size.zero;
 
-        if (this.inline) {
-            const underlines: [number, Underline][] = [];
-            for (const arg of this.args) {
-                // Skip adding the margin to the first argument.
-                const pos = size.top_right.dx(size.width ? inlineMargin : 0);
-                nodes.push(place(pos, arg));
-                if (arg.underlines)
-                    // Sadly we have to account for the size of fnName straight away.
-                    underlines.push([
-                        pos.x + fnName.size.width + inlineMargin,
-                        arg.underlines,
-                    ]);
-                size = size.extend(pos, arg.size);
-            }
-            return underline(
-                this.args.length > 0
-                    ? stackHorizontal(inlineMargin, fnName, { nodes, size })
-                    : fnName,
-                underlines,
-            );
+        for (const arg of args) {
+            // Skip adding the margin to the first argument.
+            const pos = size.top_right.dx(size.width ? inlineMargin : 0);
+            nodes.push(place(pos, arg));
+            if (arg.underlines)
+                // Sadly we have to account for the size of fnName straight away.
+                underlines.push([
+                    pos.x + fnName.size.width + inlineMargin,
+                    arg.underlines,
+                ]);
+            size = size.extend(pos, arg.size);
         }
-
-        const argStack = stackVertical(
-            KALE_THEME.lineSpacing,
-            ...this.args.map(arg => {
-                // Materialise all underlines.
-                if (!arg.underlines) return arg;
-                const underlines = place(
-                    vec(0, KALE_THEME.fontSizePx + 5),
-                    layoutUnderline(arg.underlines),
-                );
-                return {
-                    size: arg.size,
-                    nodes: (
-                        <>
-                            {arg.nodes}
-                            {underlines}
-                        </>
-                    ),
-                };
-            }),
+        return underline(
+            args.length > 0
+                ? stackHorizontal(inlineMargin, fnName, { nodes, size })
+                : fnName,
+            underlines,
         );
-        return toExprLayout(stackHorizontal(inlineMargin, fnName, argStack));
     }
+
+    const argStack = stackVertical(
+        KALE_THEME.lineSpacing,
+        ...args.map(arg => {
+            // Materialise all underlines.
+            if (!arg.underlines) return arg;
+            const underlines = place(
+                vec(0, KALE_THEME.fontSizePx + 5),
+                layoutUnderlines(arg.underlines),
+            );
+            return {
+                size: arg.size,
+                nodes: (
+                    <>
+                        {arg.nodes}
+                        {underlines}
+                    </>
+                ),
+            };
+        }),
+    );
+    return toExprLayout(stackHorizontal(inlineMargin, fnName, argStack));
 }
 
-class ExprView extends Component<{ expr: Expr }> {
+class ExprView extends Component<
+    { expr: Expr; frozen?: boolean; exprUpdated: (expr: Expr) => void },
+    { selection: Expr | null }
+> {
+    state = {
+        selection: null,
+    };
+
+    selected(expr: Expr) {
+        this.setState(state => {
+            return {
+                selection: state.selection === expr ? null : expr,
+            };
+        });
+    }
+
     render() {
-        return this.props.expr.visit(new ExprLayoutHelper()).nodes;
+        return this.props.expr.visit(new ExprLayoutHelper(this)).nodes;
     }
 }
 
-class Editor extends Component<{ expr: Expr }> {
+class Editor extends Component<{}, { expr: Expr }> {
+    state = {
+        expr: SAMPLE_EXPR,
+    };
+
+    updateExpr = (expr: Expr) => {
+        this.setState({ expr });
+    };
+
     render() {
         // As I understand it, viewBox is not a required property.
         return (
@@ -284,7 +338,10 @@ class Editor extends Component<{ expr: Expr }> {
                     style={{ width: "100%" }}
                     height="500"
                 >
-                    <ExprView expr={this.props.expr} />
+                    <ExprView
+                        expr={this.state.expr}
+                        exprUpdated={this.updateExpr}
+                    />
                 </svg>
             </>
         );
@@ -294,8 +351,5 @@ class Editor extends Component<{ expr: Expr }> {
 document.addEventListener("DOMContentLoaded", async () => {
     await TextMetrics.loadGlobal(KALE_THEME);
     // new E.Call("print", [new E.Call("hello"), new E.Call("world")])
-    ReactDOM.render(
-        <Editor expr={SAMPLE_EXPR} />,
-        document.getElementById("main"),
-    );
+    ReactDOM.render(<Editor />, document.getElementById("main"));
 });

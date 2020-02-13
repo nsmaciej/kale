@@ -43,7 +43,8 @@ export default class TextMetrics {
     }
 
     measure(text: string): Size {
-        const height = this._theme.fontSizePx;
+        const HEIGHT_FUDGE_FACTOR = 1.3;
+        const height = this._theme.fontSizePx * HEIGHT_FUDGE_FACTOR;
         if (text in this._metricsCache) {
             return size(this._metricsCache[text], height);
         }
