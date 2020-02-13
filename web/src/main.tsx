@@ -4,7 +4,7 @@ import styled, { createGlobalStyle } from "styled-components";
 
 import { Expr, ExprVisitor } from "./expr";
 import { Size, size, vec, Vector } from "./geometry";
-import { ExprLayout, Group, Underline, Layout } from "./layout";
+import { ExprLayout, Group, Underline, Layout, Line, place } from "./layout";
 import * as E from "./expr";
 import SAMPLE_EXPR from "./sample";
 import TextMetrics from "./text_metrics";
@@ -74,12 +74,13 @@ class ExprLayoutHelper implements ExprVisitor<ExprLayout> {
             );
             if (layout.underlines !== null) {
                 nodes.push(
-                    <Group translate={pos.dy(KALE_THEME.fontSizePx + 5)}>
-                        {layoutUnderline(layout.underlines).nodes}
-                    </Group>,
+                    place(
+                        pos.dy(KALE_THEME.fontSizePx + 5),
+                        layoutUnderline(layout.underlines),
+                    ),
                 );
             }
-            nodes.push(<Group translate={pos}>{layout.nodes}</Group>);
+            nodes.push(place(pos, layout));
             size = size.extend(pos, layout.size);
         }
         return { nodes, size, underlines: null, inline: false };
@@ -125,22 +126,19 @@ function underlineTreeHeight(underline: null | Underline): number {
 
 function layoutUnderline(underline: Underline): Layout {
     function layout(underline: Underline, pos: Vector): ReactNode {
-        const end = pos.dx(underline.width);
         // It took a while, but black, crispEdge, 0.5 stroke lines work well. They looks equally
         // well at full and half-pixel multiples; and look good on high-dpi screens.
         return (
             <>
-                <line
-                    x1={pos.x}
-                    x2={end.x}
-                    y1={pos.y}
-                    y2={end.y}
+                <Line
+                    start={pos}
+                    end={pos.dx(underline.width)}
                     strokeWidth={0.5}
                     shapeRendering="crsipEdges"
                     stroke="#6a6a6a"
                 />
                 {underline.children.map(([offset, next]) =>
-                    layout(next, pos.dx(offset).dy(5)),
+                    layout(next, pos.dx(offset).dy(4)),
                 )}
             </>
         );
@@ -217,15 +215,14 @@ export class CallLayoutHelper {
             for (const arg of line) {
                 const pos = vec(lineX, lineY);
                 size = size.extend(pos, arg.size);
-                nodes.push(<Group translate={pos}>{arg.nodes}</Group>);
+                nodes.push(place(pos, arg));
                 if (arg.underlines !== null) {
                     if (this.isBlock) {
                         nodes.push(
-                            <Group
-                                translate={pos.dy(KALE_THEME.fontSizePx + 5)}
-                            >
-                                {layoutUnderline(arg.underlines).nodes}
-                            </Group>,
+                            place(
+                                pos.dy(KALE_THEME.fontSizePx + 5),
+                                layoutUnderline(arg.underlines),
+                            ),
                         );
                     } else {
                         underlineChildren.push([
