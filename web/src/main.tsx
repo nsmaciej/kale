@@ -125,6 +125,8 @@ function underlineTreeHeight(underline: null | Underline): number {
 function layoutUnderline(underline: Underline): Layout {
     function layout(underline: Underline, pos: Vector): ReactNode {
         const end = pos.dx(underline.width);
+        // It took a while, but black, crispEdge, 0.5 stroke lines work well. They looks equally
+        // well at full and half-pixel multiples; and look good on high-dpi screens.
         return (
             <>
                 <line
@@ -132,8 +134,9 @@ function layoutUnderline(underline: Underline): Layout {
                     x2={end.x}
                     y1={pos.y}
                     y2={end.y}
-                    strokeWidth={0.4}
-                    stroke="#cccccc"
+                    strokeWidth={0.5}
+                    shapeRendering="crsipEdges"
+                    stroke="#6a6a6a"
                 />
                 {underline.children.map(([offset, next]) =>
                     layout(next, pos.dx(offset).dy(5)),
