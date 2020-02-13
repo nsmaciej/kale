@@ -41,7 +41,7 @@ h1 {
 `;
 
 // See https://vanseodesign.com/web-design/svg-text-baseline-alignment/ for excellent discussion
-// on SVG aligment properties.
+// on SVG text aligment properties.
 const Code = styled.text`
     font-size: ${KALE_THEME.fontSizePx}px;
     font-family: ${KALE_THEME.fontFamily};
@@ -148,7 +148,7 @@ function layoutUnderline(underline: Underline): Layout {
                     start={pos}
                     end={pos.dx(underline.width)}
                     strokeWidth={0.5}
-                    shapeRendering="crsipEdges"
+                    shapeRendering="crispEdges"
                     stroke={KALE_THEME.underlineColour}
                 />
                 {underline.children.map(([offset, next], ix) =>
