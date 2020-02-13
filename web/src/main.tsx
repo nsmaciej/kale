@@ -101,9 +101,15 @@ class ExprLayoutHelper implements ExprVisitor<ExprLayout> {
             size = size.extend(pos, layout.size);
         }
 
+        const BAD_HEIGHT_FUDGE = 5;
         const ruler = {
             size: new Size(10, 0),
-            nodes: <Line start={vec(3, 5)} end={vec(3, size.height + 5)} />,
+            nodes: (
+                <Line
+                    start={vec(3, BAD_HEIGHT_FUDGE)}
+                    end={vec(3, size.height + BAD_HEIGHT_FUDGE)}
+                />
+            ),
         };
         return toExprLayout(stackHorizontal(0, ruler, { nodes, size }));
     }
