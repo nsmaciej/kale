@@ -4,7 +4,17 @@ import styled, { createGlobalStyle } from "styled-components";
 
 import { Expr, ExprVisitor } from "./expr";
 import { Size, size, vec, Vector } from "./geometry";
-import { ExprLayout, Group, Underline, Layout, Line, place } from "./layout";
+import {
+    ExprLayout,
+    Group,
+    Underline,
+    Layout,
+    Line,
+    place,
+    stackHorizontal,
+    toExprLayout,
+    underline,
+} from "./layout";
 import * as E from "./expr";
 import SAMPLE_EXPR from "./sample";
 import TextMetrics from "./text_metrics";
@@ -14,6 +24,7 @@ export const KALE_THEME = {
     fontFamily: "iA Writer Quattro",
     //TODO: This should be based on the current text size.
     lineSpacing: 16,
+    underlineColour: "#6a6a6a",
 };
 
 class LayoutNotSupported extends Error {}
@@ -83,7 +94,16 @@ class ExprLayoutHelper implements ExprVisitor<ExprLayout> {
             nodes.push(place(pos, layout));
             size = size.extend(pos, layout.size);
         }
-        return { nodes, size, underlines: null, inline: false };
+
+        const listLine = {
+            size: new Size(10, 0),
+            nodes: <Line start={vec(3, 5)} end={vec(3, size.height + 5)} />,
+        };
+        return {
+            ...stackHorizontal(listLine, { nodes, size }),
+            inline: false,
+            underlines: null,
+        };
     }
 
     visitLiteral(expr: E.Literal): ExprLayout {
@@ -108,7 +128,7 @@ class ExprLayoutHelper implements ExprVisitor<ExprLayout> {
         //TODO: Add the comment back.
         const fnName = layoutText(expr.fn);
         if (expr.args.length == 0) {
-            return fnName;
+            return underline(fnName);
         }
         return new CallLayoutHelper(expr).layout();
     }
@@ -135,7 +155,7 @@ function layoutUnderline(underline: Underline): Layout {
                     end={pos.dx(underline.width)}
                     strokeWidth={0.5}
                     shapeRendering="crsipEdges"
-                    stroke="#6a6a6a"
+                    stroke={KALE_THEME.underlineColour}
                 />
                 {underline.children.map(([offset, next]) =>
                     layout(next, pos.dx(offset).dy(4)),
@@ -248,9 +268,7 @@ export class CallLayoutHelper {
             };
         }
 
-        return {
-            inline: !this.isBlock,
-            underlines,
+        const layout = {
             size: totalSize,
             nodes: (
                 <>
@@ -261,6 +279,9 @@ export class CallLayoutHelper {
                 </>
             ),
         };
+        return this.isBlock
+            ? toExprLayout(layout)
+            : underline(layout, underlineChildren);
     }
 }
 

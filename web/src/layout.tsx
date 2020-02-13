@@ -22,9 +22,19 @@ export function Group({
 export function Line({
     start,
     end,
+    stroke = "#000000",
     ...props
 }: CustomSvgProps<SVGLineElement, { start: Vector; end: Vector }>) {
-    return <line x1={start.x} x2={end.x} y1={start.y} y2={end.y} {...props} />;
+    return (
+        <line
+            x1={start.x}
+            x2={end.x}
+            y1={start.y}
+            y2={end.y}
+            stroke={stroke}
+            {...props}
+        />
+    );
 }
 
 export interface Layout {
@@ -47,6 +57,22 @@ export interface ExprLayout extends Layout {
 
 export function place(at: Vector, layout: Layout) {
     return <Group translate={at}>{layout.nodes}</Group>;
+}
+
+export function toExprLayout(layout: Layout): ExprLayout {
+    return { ...layout, inline: false, underlines: null };
+}
+
+// Underlinging a layout means it's inline.
+export function underline(
+    layout: Layout,
+    children: [number, Underline][] = [],
+): ExprLayout {
+    return {
+        ...layout,
+        inline: true,
+        underlines: { width: layout.size.width, children },
+    };
 }
 
 export function stackHorizontal(...children: Layout[]): Layout {
