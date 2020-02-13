@@ -27,6 +27,8 @@ export interface Underline {
 }
 
 export interface ExprLayout extends Layout {
-    // Null underline means the layout contains a block and won't be underlined.
+    // Pending underlines, only inline layouts can be underlined.
     underlines: null | Underline;
+    // Whether a layout is inline (nee "not contains-block").
+    inline: boolean;
 }

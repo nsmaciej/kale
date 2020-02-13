@@ -55,7 +55,8 @@ function layoutText(
                 {text}
             </Code>
         ),
-        underlines: { width: size.width, children: [] },
+        underlines: null,
+        inline: true,
     };
 }
 
@@ -81,7 +82,7 @@ class ExprLayoutHelper implements ExprVisitor<ExprLayout> {
             nodes.push(<Group translate={pos}>{layout.nodes}</Group>);
             size = size.extend(pos, layout.size);
         }
-        return { nodes, size, underlines: null };
+        return { nodes, size, underlines: null, inline: false };
     }
 
     visitLiteral(expr: E.Literal): ExprLayout {
@@ -185,16 +186,16 @@ export class CallLayoutHelper {
         let containsBlock = false;
         for (const arg of this.expr.args) {
             const layout = arg.visit(this.exprLayoutHelper);
-            if (layout.underlines === null) {
-                newLine();
-                containsBlock = true;
-                this.lines.push([layout]);
-            } else {
+            if (layout.inline) {
                 if (lineWidth > LINE_BREAK_POINT) {
                     newLine();
                 }
                 currentLine.push(layout);
                 lineWidth += layout.size.width;
+            } else {
+                newLine();
+                containsBlock = true;
+                this.lines.push([layout]);
             }
         }
         newLine();
@@ -251,6 +252,7 @@ export class CallLayoutHelper {
         }
 
         return {
+            inline: !this.isBlock,
             underlines,
             size: totalSize,
             nodes: (
