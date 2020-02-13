@@ -27,6 +27,8 @@ export const KALE_THEME = {
     lineSpacing: 10,
     underlineColour: "#6a6a6a",
     selectionColour: "#d8eeff",
+    variableColour: "#248af0",
+    literalColour: "#f59a11",
 };
 
 class LayoutNotSupported extends Error {}
@@ -152,14 +154,14 @@ class ExprLayoutHelper implements ExprVisitor<ExprLayout> {
             expr.type === "str" ? `"${expr.content}"` : expr.content;
         return this.layoutText(expr, content, {
             title: expr.comment,
-            colour: "#f59a11",
+            colour: KALE_THEME.literalColour,
         });
     }
 
     visitVariable(expr: E.Variable): ExprLayout {
         return this.layoutText(expr, expr.name, {
             title: expr.comment,
-            colour: "#248af0",
+            colour: KALE_THEME.variableColour,
         });
     }
 
