@@ -1,7 +1,6 @@
 import React, { ReactNode, SVGProps } from "react";
-import { vec, Size, Vector } from "./geometry";
-import TextMetrics from "./text_metrics";
-import { Expr } from "./expr";
+import { Size, Vector } from "./geometry";
+import { assert } from "./utils";
 
 // A type for components that have custom props but pass everything else on.
 type CustomSvgProps<Element, CustomProps> = CustomProps &
@@ -75,12 +74,30 @@ export function underline(
     };
 }
 
-export function stackHorizontal(...children: Layout[]): Layout {
+function stack(
+    children: Layout[],
+    corner: (size: Size, ix: number) => Vector,
+): Layout {
     let size = Size.zero;
     const nodes: ReactNode[] = [];
-    for (const child of children) {
-        nodes.push(place(size.top_right, child));
-        size = size.extend(size.top_right, child.size);
-    }
+    children.forEach((child, ix) => {
+        // Make sure that if we are stacking something we aren't discarding underlines.
+        assert(!(child as ExprLayout).underlines);
+        const pos = corner(size, ix);
+        nodes.push(place(pos, child));
+        size = size.extend(pos, child.size);
+    });
     return { size, nodes };
+}
+
+export function stackHorizontal(margin: number, ...children: Layout[]) {
+    return stack(children, (x, i) =>
+        i === 0 ? Vector.zero : x.top_right.dx(margin),
+    );
+}
+
+export function stackVertical(margin: number, ...children: Layout[]) {
+    return stack(children, (x, i) =>
+        i === 0 ? Vector.zero : x.bottom_left.dy(margin),
+    );
 }

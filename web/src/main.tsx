@@ -2,18 +2,19 @@ import * as ReactDOM from "react-dom";
 import React, { Component, ReactNode } from "react";
 import styled, { createGlobalStyle } from "styled-components";
 
+import { assert, max } from "./utils";
 import { Expr, ExprVisitor } from "./expr";
 import { Size, size, vec, Vector } from "./geometry";
 import {
     ExprLayout,
-    Group,
     Underline,
     Layout,
     Line,
     place,
-    stackHorizontal,
     toExprLayout,
     underline,
+    stackHorizontal,
+    stackVertical,
 } from "./layout";
 import * as E from "./expr";
 import SAMPLE_EXPR from "./sample";
@@ -49,19 +50,24 @@ const Code = styled.text`
 
 interface TextProperties {
     italic?: boolean;
+    bold?: boolean;
     colour?: string;
     title?: string;
 }
 
 function layoutText(
     text: string,
-    { italic, colour, title }: TextProperties = {},
+    { italic, colour, title, bold }: TextProperties = {},
 ): ExprLayout {
     const size = TextMetrics.global.measure(text);
     return {
         size,
         nodes: (
-            <Code fill={colour} fontStyle={italic ? "italic" : undefined}>
+            <Code
+                fill={colour}
+                fontStyle={italic ? "italic" : undefined}
+                fontWeight={bold ? "bold" : undefined}
+            >
                 {title && <title>{title}</title>}
                 {text}
             </Code>
@@ -95,15 +101,11 @@ class ExprLayoutHelper implements ExprVisitor<ExprLayout> {
             size = size.extend(pos, layout.size);
         }
 
-        const listLine = {
+        const ruler = {
             size: new Size(10, 0),
             nodes: <Line start={vec(3, 5)} end={vec(3, size.height + 5)} />,
         };
-        return {
-            ...stackHorizontal(listLine, { nodes, size }),
-            inline: false,
-            underlines: null,
-        };
+        return toExprLayout(stackHorizontal(0, ruler, { nodes, size }));
     }
 
     visitLiteral(expr: E.Literal): ExprLayout {
@@ -126,16 +128,8 @@ class ExprLayoutHelper implements ExprVisitor<ExprLayout> {
 
     visitCall(expr: E.Call): ExprLayout {
         //TODO: Add the comment back.
-        const fnName = layoutText(expr.fn);
-        if (expr.args.length == 0) {
-            return underline(fnName);
-        }
         return new CallLayoutHelper(expr).layout();
     }
-}
-
-function max(list: number[]): number {
-    return list.reduce((a, b) => Math.max(a, b), 0);
 }
 
 function underlineTreeHeight(underline: null | Underline): number {
@@ -145,11 +139,11 @@ function underlineTreeHeight(underline: null | Underline): number {
 }
 
 function layoutUnderline(underline: Underline): Layout {
-    function layout(underline: Underline, pos: Vector): ReactNode {
+    function layout(ix: number, underline: Underline, pos: Vector): ReactNode {
         // It took a while, but black, crispEdge, 0.5 stroke lines work well. They looks equally
         // well at full and half-pixel multiples; and look good on high-dpi screens.
         return (
-            <>
+            <React.Fragment key={ix}>
                 <Line
                     start={pos}
                     end={pos.dx(underline.width)}
@@ -157,131 +151,95 @@ function layoutUnderline(underline: Underline): Layout {
                     shapeRendering="crsipEdges"
                     stroke={KALE_THEME.underlineColour}
                 />
-                {underline.children.map(([offset, next]) =>
-                    layout(next, pos.dx(offset).dy(4)),
+                {underline.children.map(([offset, next], ix) =>
+                    layout(ix, next, pos.dx(offset).dy(4)),
                 )}
-            </>
+            </React.Fragment>
         );
     }
     return {
-        nodes: layout(underline, Vector.zero),
+        nodes: layout(0, underline, Vector.zero),
         size: size(underline.width, 1),
     };
 }
 
 export class CallLayoutHelper {
-    private lines: ExprLayout[][] = [];
-    private exprLayoutHelper = new ExprLayoutHelper();
-    // If true we should render the underlines on the args.
-    private isBlock: boolean;
+    private readonly args: Readonly<ExprLayout[]> = [];
+    private readonly exprLayoutHelper = new ExprLayoutHelper();
+    // If false we should render the underlines on the args.
+    private readonly inline: boolean;
 
     constructor(private readonly expr: E.Call) {
-        const containsBlock = this.breakIntoLines();
-        // The call is a block if it contains another block or has multiple lines or is very nested.
-        // Making a deeply nested call a block means that the underlines will stop piling up.
-        this.isBlock =
-            containsBlock ||
-            this.lines.length > 1 ||
-            max(this.lines[0].map(x => underlineTreeHeight(x.underlines))) > 2;
-    }
+        this.args = this.expr.args.map(x => x.visit(this.exprLayoutHelper));
 
-    private breakIntoLines(): boolean {
-        if (this.expr.args.length === 0) {
-            throw new LayoutNotSupported("Call layout helper cannot be used");
-        }
-        const LINE_BREAK_POINT = 200;
+        this.inline = this.args.every(x => x.inline);
+        // Staying inline is not easy. Two more tests follow: does the call fit within an arbitrary
+        // width and is the underline tree shallow enough.
+        if (this.inline) {
+            const LINE_BREAK_POINT = 200;
+            const lineWidth = this.args
+                .map(x => x.size.width)
+                .reduce((x, y) => x + y, 0);
+            this.inline = lineWidth < LINE_BREAK_POINT;
 
-        // Break the arguments up into lines.
-        let currentLine: ExprLayout[] = [];
-        let lineWidth = 0;
-        const newLine = () => {
-            if (currentLine.length > 0) {
-                this.lines.push(currentLine);
-                currentLine = [];
-                lineWidth = 0;
-            }
-        };
-        let containsBlock = false;
-        for (const arg of this.expr.args) {
-            const layout = arg.visit(this.exprLayoutHelper);
-            if (layout.inline) {
-                if (lineWidth > LINE_BREAK_POINT) {
-                    newLine();
-                }
-                currentLine.push(layout);
-                lineWidth += layout.size.width;
-            } else {
-                newLine();
-                containsBlock = true;
-                this.lines.push([layout]);
+            if (this.inline) {
+                const underlineHeights = this.args.map(x =>
+                    underlineTreeHeight(x.underlines),
+                );
+                const MAX_NESTING_LEVEL = 3;
+                this.inline = max(underlineHeights) < MAX_NESTING_LEVEL;
             }
         }
-        newLine();
-        return containsBlock;
     }
 
     layout(): ExprLayout {
-        const driftMargin = TextMetrics.global.measure("\xa0").width; // Non-breaking space.
-
+        const inlineMargin = TextMetrics.global.measure("\xa0").width; // Non-breaking space.
+        const fnName = layoutText(this.expr.fn, { bold: !this.inline });
+        assert(fnName.inline);
         const nodes: ReactNode[] = [];
         let size = Size.zero;
-        const underlineChildren: [number, Underline][] = [];
-        const fnName = layoutText(this.expr.fn);
-        for (const line of this.lines) {
-            // Don't add the line margin to the first line.
-            const lineY =
-                size.height + (size.height ? KALE_THEME.lineSpacing : 0);
-            let lineX = 0;
-            for (const arg of line) {
-                const pos = vec(lineX, lineY);
-                size = size.extend(pos, arg.size);
+
+        if (this.inline) {
+            const underlines: [number, Underline][] = [];
+            for (const arg of this.args) {
+                // Skip adding the margin to the first argument.
+                const pos = size.top_right.dx(size.width ? inlineMargin : 0);
                 nodes.push(place(pos, arg));
-                if (arg.underlines !== null) {
-                    if (this.isBlock) {
-                        nodes.push(
-                            place(
-                                pos.dy(KALE_THEME.fontSizePx + 5),
-                                layoutUnderline(arg.underlines),
-                            ),
-                        );
-                    } else {
-                        underlineChildren.push([
-                            lineX + driftMargin + fnName.size.width,
-                            arg.underlines,
-                        ]);
-                    }
-                }
-                lineX += arg.size.width + driftMargin;
+                if (arg.underlines)
+                    // Sadly we have to account for the size of fnName straight away.
+                    underlines.push([
+                        pos.x + fnName.size.width + inlineMargin,
+                        arg.underlines,
+                    ]);
+                size = size.extend(pos, arg.size);
             }
+            return underline(
+                stackHorizontal(inlineMargin, fnName, { nodes, size }),
+                underlines,
+            );
         }
 
-        const totalSize = new Size(
-            size.width + driftMargin + fnName.size.width,
-            Math.max(size.height, fnName.size.height),
+        const argStack = stackVertical(
+            KALE_THEME.lineSpacing,
+            ...this.args.map(arg => {
+                // Materialise all underlines.
+                if (!arg.underlines) return arg;
+                const underlines = place(
+                    vec(0, KALE_THEME.fontSizePx + 5),
+                    layoutUnderline(arg.underlines),
+                );
+                return {
+                    size: arg.size,
+                    nodes: (
+                        <>
+                            {arg.nodes}
+                            {underlines}
+                        </>
+                    ),
+                };
+            }),
         );
-
-        let underlines: Underline | null = null;
-        if (!this.isBlock) {
-            underlines = {
-                width: totalSize.width,
-                children: underlineChildren,
-            };
-        }
-
-        const layout = {
-            size: totalSize,
-            nodes: (
-                <>
-                    {fnName.nodes}
-                    <Group translate={fnName.size.top_right.dx(driftMargin)}>
-                        {nodes}
-                    </Group>
-                </>
-            ),
-        };
-        return this.isBlock
-            ? toExprLayout(layout)
-            : underline(layout, underlineChildren);
+        return toExprLayout(stackHorizontal(inlineMargin, fnName, argStack));
     }
 }
 
