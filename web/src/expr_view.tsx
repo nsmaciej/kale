@@ -44,7 +44,18 @@ export default class ExprView extends Component<ExprViewProps> {
         this.props.onClick?.(expr);
     }
     render() {
-        return this.props.expr.visit(new ExprLayoutHelper(this)).nodes;
+        const { nodes, size } = this.props.expr.visit(
+            new ExprLayoutHelper(this),
+        );
+        return (
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width={size.width}
+                height={size.height}
+            >
+                {nodes}
+            </svg>
+        );
     }
 }
 
@@ -128,10 +139,12 @@ class ExprLayoutHelper implements ExprVisitor<ExprLayout> {
                     place(
                         pos.dy(KALE_THEME.fontSizePx + 5),
                         layoutUnderlines(layout.underlines, true),
+                        "underlines",
+                        line.id,
                     ),
                 );
             }
-            nodes.push(place(pos, layout));
+            nodes.push(place(pos, layout, "line", line.id));
             size = size.extend(pos, layout.size);
         }
 
@@ -184,10 +197,11 @@ class ExprLayoutHelper implements ExprVisitor<ExprLayout> {
             const nodes: ReactNode[] = [];
             let size = Size.zero;
 
+            let i = 0;
             for (const arg of args) {
                 // Skip adding the margin to the first argument.
                 const pos = size.top_right.dx(size.width ? inlineMargin : 0);
-                nodes.push(place(pos, arg));
+                nodes.push(place(pos, arg, "arg", expr.args[i].id));
                 if (arg.underlines)
                     // Sadly we have to account for the size of fnName straight away.
                     underlines.push([
@@ -195,6 +209,7 @@ class ExprLayoutHelper implements ExprVisitor<ExprLayout> {
                         arg.underlines,
                     ]);
                 size = size.extend(pos, arg.size);
+                i++;
             }
             return underline(
                 args.length > 0
@@ -206,12 +221,14 @@ class ExprLayoutHelper implements ExprVisitor<ExprLayout> {
 
         const argStack = stackVertical(
             KALE_THEME.lineSpacing,
-            ...args.map(arg => {
+            ...args.map((arg, ix) => {
                 // Materialise all underlines.
                 if (!arg.underlines) return arg;
                 const underlines = place(
                     vec(0, KALE_THEME.fontSizePx + 5),
                     layoutUnderlines(arg.underlines),
+                    "underlines",
+                    expr.args[ix].id,
                 );
                 return {
                     size: arg.size,

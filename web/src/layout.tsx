@@ -54,8 +54,12 @@ export interface ExprLayout extends Layout {
     inline: boolean;
 }
 
-export function place(at: Vector, layout: Layout) {
-    return <Group translate={at}>{layout.nodes}</Group>;
+export function place(at: Vector, layout: Layout, key: string, id: number) {
+    return (
+        <Group translate={at} key={`${key}-${id}`}>
+            {layout.nodes}
+        </Group>
+    );
 }
 
 export function toExprLayout(layout: Layout): ExprLayout {
@@ -84,7 +88,7 @@ function stack(
         // Make sure that if we are stacking something we aren't discarding underlines.
         assert(!(child as ExprLayout).underlines);
         const pos = corner(size, ix);
-        nodes.push(place(pos, child));
+        nodes.push(place(pos, child, "stack", ix));
         size = size.extend(pos, child.size);
     });
     return { size, nodes };
