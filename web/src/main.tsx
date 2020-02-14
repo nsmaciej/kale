@@ -2,10 +2,12 @@ import * as ReactDOM from "react-dom";
 import React, { Component } from "react";
 import { createGlobalStyle } from "styled-components";
 
+import * as E from "./expr";
 import { Expr } from "./expr";
 import ExprView, { KALE_THEME } from "./expr_view";
 import SAMPLE_EXPR from "./sample";
 import TextMetrics from "./text_metrics";
+import { Optional } from "./utils";
 
 //TODO: Refactor, just stuff to make the demo look nice.
 const GlobalStyle = createGlobalStyle`
@@ -22,8 +24,8 @@ div:focus {
 `;
 
 interface EditorState {
-    expr: Expr;
-    selection: Expr | null;
+    expr: Optional<Expr>;
+    selection: Optional<Expr>;
 }
 
 class Editor extends Component<{}, EditorState> {
@@ -40,7 +42,11 @@ class Editor extends Component<{}, EditorState> {
         // See https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values.
         switch (event.key) {
             case "Backspace":
-                alert("Deleting selection!");
+                this.setState(state => ({
+                    expr:
+                        state.selection && state.expr?.remove(state.selection),
+                    selection: null,
+                }));
                 break;
         }
     };
@@ -54,7 +60,7 @@ class Editor extends Component<{}, EditorState> {
     };
 
     render() {
-        // As I understand it, viewBox is not a required property.
+        // As I understand it, svg viewBox is not a required property.
         return (
             <div
                 onKeyDown={this.keyDown}
@@ -70,11 +76,16 @@ class Editor extends Component<{}, EditorState> {
                     style={{ width: "100%" }}
                     height="500"
                 >
-                    <ExprView
-                        expr={this.state.expr}
-                        selection={this.state.selection}
-                        onClick={this.exprSelected}
-                    />
+                    {
+                        <ExprView
+                            expr={
+                                this.state.expr ??
+                                new E.Hole(E.exprData("Empty function"))
+                            }
+                            selection={this.state.selection}
+                            onClick={this.exprSelected}
+                        />
+                    }
                 </svg>
             </div>
         );

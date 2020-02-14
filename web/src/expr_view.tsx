@@ -1,7 +1,7 @@
 import React, { Component, ReactNode } from "react";
 import styled from "styled-components";
 
-import { assert, max } from "./utils";
+import { Optional, assert, max } from "./utils";
 import { Size, size, vec, Vector } from "./geometry";
 import {
     ExprLayout,
@@ -32,7 +32,7 @@ export const KALE_THEME = {
 interface ExprViewProps {
     expr: Expr;
     frozen?: boolean;
-    selection: Expr | null;
+    selection?: Optional<Expr>;
     onClick?: (expr: Expr) => void;
 }
 
@@ -113,7 +113,7 @@ class ExprLayoutHelper implements ExprVisitor<ExprLayout> {
 
     visitList(expr: E.List): ExprLayout {
         //TODO: Add a larger clickable area to the list ruler.
-        if (expr.comment)
+        if (expr.data.comment)
             throw new LayoutNotSupported("List comments are not yet supported");
         let size = Size.zero;
         let nodes: ReactNode[] = [];
@@ -152,21 +152,21 @@ class ExprLayoutHelper implements ExprVisitor<ExprLayout> {
         const content =
             expr.type === "str" ? `"${expr.content}"` : expr.content;
         return this.layoutText(expr, content, {
-            title: expr.comment,
+            title: expr.data.comment,
             colour: KALE_THEME.literalColour,
         });
     }
 
     visitVariable(expr: E.Variable): ExprLayout {
         return this.layoutText(expr, expr.name, {
-            title: expr.comment,
+            title: expr.data.comment,
             colour: KALE_THEME.variableColour,
         });
     }
 
     visitHole(expr: E.Hole): ExprLayout {
         //TODO: Wrap this in a nice box or something.
-        return this.layoutText(expr, expr.comment ?? "HOLE", {
+        return this.layoutText(expr, expr.data.comment ?? "HOLE", {
             colour: "#ff0000",
         });
     }

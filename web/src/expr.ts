@@ -1,15 +1,15 @@
+import { filterMap, Optional, arrayEquals } from "./utils";
+
 export type ExprId = number;
 
 export interface ExprData {
-    id: ExprId;
     comment?: string;
 }
 
-// Construct simple ExprData for sample Exprs.
+// Construct simple ExprData for sample Exprs. Not very exciting right now.
 export function exprData(comment?: string): ExprData {
-    return { id: exprData.serialExprId++, comment };
+    return { comment };
 }
-exprData.serialExprId = 1;
 
 export interface ExprVisitor<R = any> {
     visitList(expr: List): R;
@@ -32,14 +32,10 @@ export class InvalidExpr extends Error {
 }
 
 export abstract class Expr {
-    // Two expressions have the same id if they have the same content.
-    readonly id: ExprId;
-    readonly comment?: string;
-
-    constructor(data: ExprData) {
-        this.id = data.id;
-        this.comment = data.comment;
-    }
+    private static serialExprId = 1;
+    //TODO: Maybe we don't even need an id.
+    readonly id: ExprId = Expr.serialExprId++;
+    constructor(readonly data: ExprData) {}
 
     visit<R>(visitor: ExprVisitor<R>): R {
         if (this instanceof List) return visitor.visitList(this);
@@ -53,10 +49,18 @@ export abstract class Expr {
     validate() {
         this.visit(new ExprValidator());
     }
+
+    filterMap(fn: (expr: Expr) => Optional<Expr>): Optional<Expr> {
+        return this.visit(new ExprFilterMap(fn));
+    }
+
+    remove(expr: Expr) {
+        return this.filterMap(x => (x === expr ? null : x));
+    }
 }
 
 export class List extends Expr {
-    constructor(readonly list: Readonly<Expr[]>, data = exprData()) {
+    constructor(readonly list: readonly Expr[], data = exprData()) {
         super(data);
     }
 }
@@ -80,7 +84,7 @@ export class Literal extends Expr {
 export class Call extends Expr {
     constructor(
         readonly fn: string,
-        readonly args: Readonly<Expr[]> = [],
+        readonly args: readonly Expr[] = [],
         data = exprData(),
     ) {
         super(data);
@@ -93,12 +97,39 @@ export class Hole extends Expr {
     }
 }
 
+// Traverses the expr tree in post-order.
+class ExprFilterMap implements ExprVisitor<Optional<Expr>> {
+    constructor(private readonly fn: (expr: Expr) => Optional<Expr>) {}
+    visitList(expr: List) {
+        const items = filterMap(expr.list, x => this.fn(x));
+        if (arrayEquals(expr.list, items)) return this.fn(expr); // Nothing changed.
+        //TODO: What should happen to the comment if we destory the list.
+        if (items.length === 1) return this.fn(items[0]);
+        if (items.length === 0) return null;
+        return this.fn(new List(items, expr.data));
+    }
+    visitLiteral(expr: Literal) {
+        return this.fn(expr);
+    }
+    visitVariable(expr: Variable) {
+        return this.fn(expr);
+    }
+    visitHole(expr: Hole) {
+        return this.fn(expr);
+    }
+    visitCall(expr: Call) {
+        const args = filterMap(expr.args, x => this.fn(x));
+        if (arrayEquals(expr.args, args)) return this.fn(expr); // Nothing changed.
+        return this.fn(new Call(expr.fn, args, expr.data));
+    }
+}
+
 class ExprValidator implements ExprVisitor<void> {
     private seenIds = new Set<ExprId>();
 
     private assert(expr: Expr, check: boolean) {
         // An empty comment should be a missing comment.
-        if (this.seenIds.has(expr.id) || expr.comment === "" || !check) {
+        if (this.seenIds.has(expr.id) || expr.data.comment === "" || !check) {
             throw new InvalidExpr(expr);
         }
         this.seenIds.add(expr.id);
