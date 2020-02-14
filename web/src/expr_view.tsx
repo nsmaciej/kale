@@ -281,14 +281,23 @@ function layoutUnderlines(underline: Underline, skipFirst = false): Layout {
 }
 
 function isCallInline(args: ExprLayout[]): boolean {
+    if (args.length === 0) {
+        return true;
+    }
+
     if (!args.every(x => x.inline)) {
         return false;
+    }
+
+    // Our situation won't improve much from here on by making the function not-inline.
+    if (args.length === 1) {
+        return true;
     }
 
     // Do we need a line break?
     const LINE_BREAK_POINT = 200;
     const lineWidth = args.map(x => x.size.width).reduce((x, y) => x + y, 0);
-    if (lineWidth > LINE_BREAK_POINT) {
+    if (lineWidth > LINE_BREAK_POINT && args.length > 0) {
         return false;
     }
 
