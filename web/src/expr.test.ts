@@ -46,7 +46,6 @@ describe("remove", () => {
         const print = (SAMPLE_EXPR.args[1] as List).list[0] as Call;
         expect(print.fn).toBe("print");
         const r = SAMPLE_EXPR.remove(print) as Call;
-        console.log(r.args[1]);
         expect(r.args[1]).toBeInstanceOf(Literal);
     });
 });

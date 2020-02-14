@@ -76,7 +76,6 @@ class Editor extends Component<EditorProps, EditorState> {
                 tabIndex={0}
                 onClick={this.clearSelection}
             >
-                <GlobalStyle />
                 <h1>Kale Editor</h1>
                 <p>Backspace to delete</p>
                 <ExprView
@@ -107,7 +106,12 @@ class Kale extends Component<{}, KaleState> {
     };
 
     render() {
-        return <Editor onRemovedExpr={this.addToRemovedList} />;
+        return (
+            <>
+                <GlobalStyle />
+                <Editor onRemovedExpr={this.addToRemovedList} />
+            </>
+        );
     }
 }
 
