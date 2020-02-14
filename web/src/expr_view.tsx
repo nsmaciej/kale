@@ -13,6 +13,7 @@ import {
     underline,
     stackHorizontal,
     stackVertical,
+    Group,
 } from "./layout";
 import { Expr, ExprVisitor } from "./expr";
 import * as E from "./expr";
@@ -27,6 +28,8 @@ export const KALE_THEME = {
     selectionColour: "#d8eeff",
     variableColour: "#248af0",
     literalColour: "#f59a11",
+    // This also needs to be large enough to allow bottom-most underlines to render.
+    selectionPaddingPx: 5,
 };
 
 interface ExprViewProps {
@@ -44,16 +47,21 @@ export default class ExprView extends Component<ExprViewProps> {
         this.props.onClick?.(expr);
     }
     render() {
-        const { nodes, size } = this.props.expr.visit(
-            new ExprLayoutHelper(this),
+        const { nodes, size } = new ExprLayoutHelper(this).layout(
+            this.props.expr,
+        );
+        const { width, height } = size.pad(KALE_THEME.selectionPaddingPx * 2);
+        const padding = vec(
+            KALE_THEME.selectionPaddingPx,
+            KALE_THEME.selectionPaddingPx,
         );
         return (
             <svg
                 xmlns="http://www.w3.org/2000/svg"
-                width={size.width}
-                height={size.height}
+                width={width}
+                height={height}
             >
-                {nodes}
+                <Group translate={padding}>{nodes}</Group>
             </svg>
         );
     }
@@ -98,26 +106,22 @@ class ExprLayoutHelper implements ExprVisitor<ExprLayout> {
     layout(expr: Expr): ExprLayout {
         const layout = expr.visit(this);
         if (this.parentView.props.selection === expr) {
-            const { size, inline, underlines, nodes } = layout;
-            const PADDING = 3;
-            return {
-                size,
-                inline,
-                underlines,
-                nodes: (
-                    <>
-                        <rect
-                            x={-PADDING}
-                            y={-PADDING}
-                            width={size.width + PADDING * 2}
-                            height={size.height + PADDING * 2}
-                            rx={3}
-                            fill={KALE_THEME.selectionColour}
-                        />
-                        {nodes}
-                    </>
-                ),
-            };
+            const { size, inline, underlines, nodes: layoutNodes } = layout;
+            const padding = KALE_THEME.selectionPaddingPx;
+            const nodes = (
+                <>
+                    <rect
+                        x={-padding}
+                        y={-padding}
+                        width={size.width + padding * 2}
+                        height={size.height + padding * 2}
+                        rx={3}
+                        fill={KALE_THEME.selectionColour}
+                    />
+                    {layoutNodes}
+                </>
+            );
+            return { size, inline, underlines, nodes };
         }
         return layout;
     }
@@ -126,13 +130,13 @@ class ExprLayoutHelper implements ExprVisitor<ExprLayout> {
         //TODO: Add a larger clickable area to the list ruler.
         if (expr.data.comment)
             throw new LayoutNotSupported("List comments are not yet supported");
-        let size = Size.zero;
+        let listSize = Size.zero;
         let nodes: ReactNode[] = [];
         for (const line of expr.list) {
             const layout = this.layout(line);
-            const pos = size.bottom_left.dy(
+            const pos = listSize.bottom_left.dy(
                 // Skip first line.
-                size.height ? KALE_THEME.lineSpacing : 0,
+                listSize.height ? KALE_THEME.lineSpacing : 0,
             );
             if (layout.underlines !== null) {
                 nodes.push(
@@ -145,20 +149,22 @@ class ExprLayoutHelper implements ExprVisitor<ExprLayout> {
                 );
             }
             nodes.push(place(pos, layout, "line", line.id));
-            size = size.extend(pos, layout.size);
+            listSize = listSize.extend(pos, layout.size);
         }
 
         const ruler = {
-            size: new Size(10, 0),
+            size: size(10, 0),
             nodes: (
                 <Line
                     start={vec(3, 5)}
-                    end={vec(3, size.height)}
+                    end={vec(3, listSize.height)}
                     onClick={e => this.parentView.onClick(e, expr)}
                 />
             ),
         };
-        return toExprLayout(stackHorizontal(0, ruler, { nodes, size }));
+        return toExprLayout(
+            stackHorizontal(0, ruler, { nodes, size: listSize }),
+        );
     }
 
     visitLiteral(expr: E.Literal): ExprLayout {
@@ -187,7 +193,9 @@ class ExprLayoutHelper implements ExprVisitor<ExprLayout> {
     visitCall(expr: E.Call): ExprLayout {
         //TODO: Add the comment back.
         const args = expr.args.map(x => this.layout(x));
-        const inline = isCallInline(args);
+        //FIXME: This forces top-level call underlines to materialise, find a nicer way to do this.
+        const inline =
+            isCallInline(args) && expr !== this.parentView.props.expr;
         const inlineMargin = TextMetrics.global.measure("\xa0").width; // Non-breaking space.
         const fnName = this.layoutText(expr, expr.fn, { bold: !inline });
         assert(fnName.inline);
@@ -297,7 +305,7 @@ function layoutUnderlines(underline: Underline, skipFirst = false): Layout {
     };
 }
 
-function isCallInline(args: ExprLayout[]): boolean {
+function isCallInline(args: readonly ExprLayout[]): boolean {
     if (args.length === 0) {
         return true;
     }

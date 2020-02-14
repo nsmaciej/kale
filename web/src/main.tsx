@@ -117,6 +117,5 @@ class Kale extends Component<{}, KaleState> {
 
 document.addEventListener("DOMContentLoaded", async () => {
     await TextMetrics.loadGlobal(KALE_THEME);
-    // new E.Call("print", [new E.Call("hello"), new E.Call("world")])
     ReactDOM.render(<Kale />, document.getElementById("main"));
 });
