@@ -1,4 +1,12 @@
-import { Expr, Hole, List, Call, Variable } from "./expr";
+import {
+    Expr,
+    Hole,
+    List,
+    Call,
+    Variable,
+    InvalidExpr,
+    exprData,
+} from "./expr";
 
 const foo = new Variable("foo");
 const bar = new Variable("bar");
@@ -30,5 +38,18 @@ describe("remove", () => {
         const expr = new List([foo, bar]).validate();
         const r = expr.remove(foo) as List;
         expect(r).toBe(bar);
+    });
+});
+
+describe("validate", () => {
+    test("rejects duplicate ids", () => {
+        expect(() => new List([foo, foo]).validate()).toThrow(InvalidExpr);
+        expect(() => new Call("foo", [foo, foo]).validate()).toThrow(
+            InvalidExpr,
+        );
+    });
+
+    test("rejects empty comments", () => {
+        expect(() => new Hole(exprData("")).validate()).toThrow(InvalidExpr);
     });
 });

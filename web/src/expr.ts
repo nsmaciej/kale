@@ -53,6 +53,7 @@ export abstract class Expr {
         let seenIds = new Set<ExprId>();
         const validator = new ExprFilterMap(x => {
             if (seenIds.has(x.id)) throw new InvalidExpr(x);
+            seenIds.add(x.id);
             return x;
         });
         this.visit(validator);
