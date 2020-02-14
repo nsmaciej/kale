@@ -15,10 +15,20 @@ body {
 h1 {
     margin: 30px 0;
 }
+/* Hide the focus ring around focused divs */
+div:focus {
+    outline: none;
+}
 `;
 
-class Editor extends Component<{}, { expr: Expr }> {
-    state = {
+interface EditorState {
+    expr: Expr;
+    selection: Expr | null;
+}
+
+class Editor extends Component<{}, EditorState> {
+    state: EditorState = {
+        selection: null,
         expr: SAMPLE_EXPR,
     };
 
@@ -26,10 +36,31 @@ class Editor extends Component<{}, { expr: Expr }> {
         this.setState({ expr });
     };
 
+    keyDown = (event: React.KeyboardEvent) => {
+        // See https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values.
+        switch (event.key) {
+            case "Backspace":
+                alert("Deleting selection!");
+                break;
+        }
+    };
+
+    exprSelected = (selection: Expr) => {
+        this.setState({ selection });
+    };
+
+    clearSelection = () => {
+        this.setState({ selection: null });
+    };
+
     render() {
         // As I understand it, viewBox is not a required property.
         return (
-            <>
+            <div
+                onKeyDown={this.keyDown}
+                tabIndex={0}
+                onClick={this.clearSelection}
+            >
                 <GlobalStyle />
                 <h1 style={{ fontFamily: KALE_THEME.fontFamily }}>
                     Kale Editor
@@ -41,10 +72,11 @@ class Editor extends Component<{}, { expr: Expr }> {
                 >
                     <ExprView
                         expr={this.state.expr}
-                        exprUpdated={this.updateExpr}
+                        selection={this.state.selection}
+                        onClick={this.exprSelected}
                     />
                 </svg>
-            </>
+            </div>
         );
     }
 }

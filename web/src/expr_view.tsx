@@ -29,22 +29,20 @@ export const KALE_THEME = {
     literalColour: "#f59a11",
 };
 
-export default class ExprView extends Component<
-    { expr: Expr; frozen?: boolean; exprUpdated: (expr: Expr) => void },
-    { selection: Expr | null }
-> {
-    state = {
-        selection: null,
-    };
+interface ExprViewProps {
+    expr: Expr;
+    frozen?: boolean;
+    selection: Expr | null;
+    onClick?: (expr: Expr) => void;
+}
 
-    selected(expr: Expr) {
-        this.setState(state => {
-            return {
-                selection: state.selection === expr ? null : expr,
-            };
-        });
+// This needs to be a class component so we can nicely pass it to the layout helper.
+//TODO: Support a prop indicating if the view has focus. (Otherwise dim selection)
+export default class ExprView extends Component<ExprViewProps> {
+    onClick(event: React.MouseEvent, expr: Expr) {
+        event.stopPropagation();
+        this.props.onClick?.(expr);
     }
-
     render() {
         return this.props.expr.visit(new ExprLayoutHelper(this)).nodes;
     }
@@ -75,7 +73,7 @@ class ExprLayoutHelper implements ExprVisitor<ExprLayout> {
                     fill={colour}
                     fontStyle={italic ? "italic" : undefined}
                     fontWeight={bold ? "bold" : undefined}
-                    onClick={_e => this.parentView.selected(expr)}
+                    onClick={e => this.parentView.onClick(e, expr)}
                 >
                     {title && <title>{title}</title>}
                     {text}
@@ -88,7 +86,7 @@ class ExprLayoutHelper implements ExprVisitor<ExprLayout> {
 
     layout(expr: Expr): ExprLayout {
         const layout = expr.visit(this);
-        if (this.parentView.state.selection === expr) {
+        if (this.parentView.props.selection === expr) {
             const { size, inline, underlines, nodes } = layout;
             const PADDING = 3;
             return {
@@ -143,7 +141,7 @@ class ExprLayoutHelper implements ExprVisitor<ExprLayout> {
                 <Line
                     start={vec(3, 5)}
                     end={vec(3, size.height)}
-                    onClick={_e => this.parentView.selected(expr)}
+                    onClick={e => this.parentView.onClick(e, expr)}
                 />
             ),
         };
