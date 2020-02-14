@@ -37,6 +37,8 @@ export abstract class Expr {
     readonly id: ExprId = Expr.serialExprId++;
     constructor(readonly data: ExprData) {}
 
+    protected abstract shallowValid(): boolean;
+
     visit<R>(visitor: ExprVisitor<R>): R {
         if (this instanceof List) return visitor.visitList(this);
         else if (this instanceof Variable) return visitor.visitVariable(this);
@@ -47,7 +49,13 @@ export abstract class Expr {
     }
 
     validate() {
-        this.visit(new ExprValidator());
+        if (this.data.comment === "") throw new InvalidExpr(this);
+        let seenIds = new Set<ExprId>();
+        const validator = new ExprFilterMap(x => {
+            if (seenIds.has(x.id)) throw new InvalidExpr(x);
+            return x;
+        });
+        this.visit(validator);
         return this;
     }
 
@@ -61,18 +69,29 @@ export abstract class Expr {
 }
 
 export class List extends Expr {
+    shallowValid() {
+        return this.list.length > 1 && !this.list.some(x => x instanceof List);
+    }
     constructor(readonly list: readonly Expr[], data = exprData()) {
         super(data);
     }
 }
 
 export class Variable extends Expr {
+    shallowValid() {
+        //TODO: Verify reasonable identifer names.
+        return !!this.name;
+    }
     constructor(readonly name: string, data = exprData()) {
         super(data);
     }
 }
 
 export class Literal extends Expr {
+    shallowValid() {
+        //TODO: Check for valid literals.
+        return !!this.content && !!this.type;
+    }
     constructor(
         readonly content: string,
         readonly type: string,
@@ -83,6 +102,10 @@ export class Literal extends Expr {
 }
 
 export class Call extends Expr {
+    shallowValid() {
+        //TODO: Verify reasonable function names.
+        return !!this.fn;
+    }
     constructor(
         readonly fn: string,
         readonly args: readonly Expr[] = [],
@@ -93,6 +116,9 @@ export class Call extends Expr {
 }
 
 export class Hole extends Expr {
+    shallowValid() {
+        return true;
+    }
     constructor(data = exprData()) {
         super(data);
     }
@@ -122,41 +148,5 @@ class ExprFilterMap implements ExprVisitor<Optional<Expr>> {
         const args = filterMap(expr.args, x => this.fn(x));
         if (arrayEquals(expr.args, args)) return this.fn(expr); // Nothing changed.
         return this.fn(new Call(expr.fn, args, expr.data));
-    }
-}
-
-class ExprValidator implements ExprVisitor<void> {
-    private seenIds = new Set<ExprId>();
-
-    private assert(expr: Expr, check: boolean) {
-        // An empty comment should be a missing comment.
-        if (this.seenIds.has(expr.id) || expr.data.comment === "" || !check) {
-            throw new InvalidExpr(expr);
-        }
-        this.seenIds.add(expr.id);
-    }
-
-    visitHole(expr: Hole) {
-        this.assert(expr, true);
-    }
-    visitLiteral(expr: Literal) {
-        //TODO: Check for valid literals.
-        this.assert(expr, !!expr.content && !!expr.type);
-    }
-    visitVariable(expr: Variable) {
-        //TODO: Verify reasonable identifer names.
-        this.assert(expr, !!expr.name);
-    }
-    visitList(expr: List) {
-        this.assert(
-            expr,
-            expr.list.length > 1 && !expr.list.some(x => x instanceof List),
-        );
-        expr.list.forEach(x => x.visit(this));
-    }
-    visitCall(expr: Call) {
-        //TODO: Verify reasonable function names.
-        this.assert(expr, !!expr.fn);
-        expr.args.forEach(x => x.visit(this));
     }
 }
