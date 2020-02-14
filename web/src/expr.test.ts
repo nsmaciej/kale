@@ -6,7 +6,9 @@ import {
     Variable,
     InvalidExpr,
     exprData,
+    Literal,
 } from "./expr";
+import SAMPLE_EXPR from "./sample";
 
 const foo = new Variable("foo");
 const bar = new Variable("bar");
@@ -38,6 +40,14 @@ describe("remove", () => {
         const expr = new List([foo, bar]).validate();
         const r = expr.remove(foo) as List;
         expect(r).toBe(bar);
+    });
+
+    test("works on complex expressions", () => {
+        const print = (SAMPLE_EXPR.args[1] as List).list[0] as Call;
+        expect(print.fn).toBe("print");
+        const r = SAMPLE_EXPR.remove(print) as Call;
+        console.log(r.args[1]);
+        expect(r.args[1]).toBeInstanceOf(Literal);
     });
 });
 

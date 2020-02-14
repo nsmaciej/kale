@@ -128,25 +128,25 @@ export class Hole extends Expr {
 // Traverses the expr tree in post-order.
 class ExprFilterMap implements ExprVisitor<Optional<Expr>> {
     constructor(private readonly fn: (expr: Expr) => Optional<Expr>) {}
-    visitList(expr: List) {
-        const items = filterMap(expr.list, x => this.fn(x));
+    visitList(expr: List): Optional<Expr> {
+        const items = filterMap(expr.list, x => x.visit(this));
         if (arrayEquals(expr.list, items)) return this.fn(expr); // Nothing changed.
         //TODO: What should happen to the comment if we destory the list.
         if (items.length === 1) return this.fn(items[0]);
         if (items.length === 0) return null;
         return this.fn(new List(items, expr.data));
     }
-    visitLiteral(expr: Literal) {
+    visitLiteral(expr: Literal): Optional<Expr> {
         return this.fn(expr);
     }
-    visitVariable(expr: Variable) {
+    visitVariable(expr: Variable): Optional<Expr> {
         return this.fn(expr);
     }
-    visitHole(expr: Hole) {
+    visitHole(expr: Hole): Optional<Expr> {
         return this.fn(expr);
     }
-    visitCall(expr: Call) {
-        const args = filterMap(expr.args, x => this.fn(x));
+    visitCall(expr: Call): Optional<Expr> {
+        const args = filterMap(expr.args, x => x.visit(this));
         if (arrayEquals(expr.args, args)) return this.fn(expr); // Nothing changed.
         return this.fn(new Call(expr.fn, args, expr.data));
     }
