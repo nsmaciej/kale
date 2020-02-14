@@ -48,6 +48,7 @@ export abstract class Expr {
 
     validate() {
         this.visit(new ExprValidator());
+        return this;
     }
 
     filterMap(fn: (expr: Expr) => Optional<Expr>): Optional<Expr> {
