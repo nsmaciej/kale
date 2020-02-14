@@ -1,26 +1,30 @@
 {
-  "name": "kale",
-  "version": "0.1.0",
-  "description": "The Kick-Ass Lisp Environment",
-  "main": "index.js",
-  "scripts": {
-    "build": "webpack --mode=production",
-    "watch": "webpack --mode=development --watch"
-  },
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "react": "^16.12.0",
-    "react-dom": "^16.12.0",
-    "styled-components": "^5.0.1"
-  },
-  "devDependencies": {
-    "@types/react": "^16.9.19",
-    "@types/react-dom": "^16.9.5",
-    "@types/styled-components": "^4.4.2",
-    "ts-loader": "^6.2.1",
-    "typescript": "^3.7.5",
-    "webpack": "^4.41.5",
-    "webpack-cli": "^3.3.10"
-  }
+    "name": "kale",
+    "version": "0.1.0",
+    "description": "The Kick-Ass Lisp Environment",
+    "main": "index.js",
+    "scripts": {
+        "build": "webpack --mode=production",
+        "watch": "webpack --mode=development --watch",
+        "test": "jest"
+    },
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "react": "^16.12.0",
+        "react-dom": "^16.12.0",
+        "styled-components": "^5.0.1"
+    },
+    "devDependencies": {
+        "@types/jest": "^25.1.2",
+        "@types/react": "^16.9.19",
+        "@types/react-dom": "^16.9.5",
+        "@types/styled-components": "^4.4.2",
+        "jest": "^25.1.0",
+        "ts-jest": "^25.2.0",
+        "ts-loader": "^6.2.1",
+        "typescript": "^3.7.5",
+        "webpack": "^4.41.5",
+        "webpack-cli": "^3.3.10"
+    }
 }
