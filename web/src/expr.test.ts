@@ -61,4 +61,8 @@ describe("validate", () => {
     test("rejects empty comments", () => {
         expect(() => new Hole(exprData("")).validate()).toThrow(InvalidExpr);
     });
+
+    test("rejects empty lists", () => {
+        expect(() => new List([]).validate()).toThrow(InvalidExpr);
+    });
 });

@@ -52,7 +52,9 @@ export abstract class Expr {
         if (this.data.comment === "") throw new InvalidExpr(this);
         let seenIds = new Set<ExprId>();
         const validator = new ExprFilterMap(x => {
-            if (seenIds.has(x.id)) throw new InvalidExpr(x);
+            if (seenIds.has(x.id) || !x.shallowValid()) {
+                throw new InvalidExpr(x);
+            }
             seenIds.add(x.id);
             return x;
         });
