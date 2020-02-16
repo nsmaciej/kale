@@ -105,9 +105,9 @@ class Editor extends Component<EditorProps & LayoutProps, EditorState> {
 }
 
 const ExprViewItem = styled.div`
-    /* margin: 5px 0; */
+    position: relative;
     border-radius: 3px;
-    background: #ececec;
+    background: #f5f5f5;
 `;
 
 function ExprViewList({ exprs, gridArea }: LayoutProps & { exprs: Expr[] }) {
@@ -143,7 +143,19 @@ interface KaleState {
     yankList: Expr[];
 }
 
+function hole(comment: string) {
+    return new E.Hole(E.exprData(comment));
+}
+
 class Kale extends Component<{}, KaleState> {
+    private static toyBox = [
+        new E.List([hole("first line"), hole("second line")]),
+        new E.Call("if", [hole("true branch"), hole("false branch")]),
+        new E.Variable("variable"),
+        new E.Literal("a string", "str"),
+        new E.Literal("42", "int"),
+    ];
+
     state: KaleState = { yankList: [] };
 
     addToYankList = (expr: Expr) => {
@@ -166,7 +178,7 @@ class Kale extends Component<{}, KaleState> {
                     <Heading>Kale</Heading>
                     <p>Press backspace to delete</p>
                 </HorizonstalStack>
-                <ExprViewList gridArea="toybox" exprs={this.state.yankList} />
+                <ExprViewList gridArea="toybox" exprs={Kale.toyBox} />
                 <Editor gridArea="editor" onRemovedExpr={this.addToYankList} />
                 <ExprViewList gridArea="yanklist" exprs={this.state.yankList} />
             </KaleContainer>

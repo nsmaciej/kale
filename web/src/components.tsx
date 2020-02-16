@@ -12,14 +12,16 @@ type AlignTypes =
     | "stretch"
     | "normal";
 
+type ContentAlignTypes =
+    | AlignTypes
+    | "space-between"
+    | "space-around"
+    | "space-evenly";
+
 export interface StackProps {
     gap?: number;
     alignItems?: AlignTypes;
-    justifyContent?:
-        | AlignTypes
-        | "space-between"
-        | "space-around"
-        | "space-evenly";
+    justifyContent?: ContentAlignTypes;
 }
 
 export const Box = styled.div<LayoutProps>`
