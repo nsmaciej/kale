@@ -1,6 +1,6 @@
 import * as ReactDOM from "react-dom";
 import React, { Component, ReactNode } from "react";
-import { createGlobalStyle } from "styled-components";
+import styled, { createGlobalStyle } from "styled-components";
 
 import * as E from "./expr";
 import { Expr } from "./expr";
@@ -8,16 +8,29 @@ import ExprView, { KALE_THEME } from "./expr_view";
 import SAMPLE_EXPR from "./sample";
 import TextMetrics from "./text_metrics";
 import { Optional } from "./utils";
+import {
+    Box,
+    HorizonstalStack,
+    VerticalStack,
+    LayoutProps,
+} from "./components";
 
 //TODO: Refactor, just stuff to make the demo look nice.
 const GlobalStyle = createGlobalStyle`
+#main {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    width: 100%;
+}
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
 body {
-    margin: 60px 40px;
     font-family: ${KALE_THEME.fontFamily}, sans-serif;
     font-size: ${KALE_THEME.fontSizePx}px;
-}
-h1 {
-    margin: 30px 0;
 }
 /* Hide the focus ring around focused divs */
 div:focus {
@@ -34,7 +47,7 @@ interface EditorState {
     selection: Optional<Expr>;
 }
 
-class Editor extends Component<EditorProps, EditorState> {
+class Editor extends Component<EditorProps & LayoutProps, EditorState> {
     state: EditorState = {
         selection: null,
         expr: SAMPLE_EXPR,
@@ -71,13 +84,13 @@ class Editor extends Component<EditorProps, EditorState> {
     render() {
         // As I understand it, svg viewBox is not a required property.
         return (
-            <div
+            <Box
                 onKeyDown={this.keyDown}
                 tabIndex={0}
                 onClick={this.clearSelection}
+                gridArea={this.props.gridArea}
+                style={{ gridArea: this.props.gridArea }}
             >
-                <h1>Kale Editor</h1>
-                <p>Backspace to delete</p>
                 <ExprView
                     expr={
                         this.state.expr ??
@@ -86,31 +99,77 @@ class Editor extends Component<EditorProps, EditorState> {
                     selection={this.state.selection}
                     onClick={this.exprSelected}
                 />
-            </div>
+            </Box>
         );
     }
 }
 
+const ExprViewItem = styled.div`
+    /* margin: 5px 0; */
+    border-radius: 3px;
+    background: #ececec;
+`;
+
+function ExprViewList({ exprs, gridArea }: LayoutProps & { exprs: Expr[] }) {
+    return (
+        <VerticalStack gridArea={gridArea} gap={10} alignItems="start">
+            {exprs.map(x => (
+                <ExprViewItem>
+                    <ExprView expr={x} />
+                </ExprViewItem>
+            ))}
+        </VerticalStack>
+    );
+}
+
+const KaleContainer = styled.div`
+    display: grid;
+    grid-template-areas:
+        "nav nav nav"
+        "toybox editor yanklist";
+    grid-template-rows: min-content auto;
+    grid-template-columns: minmax(200px, 1fr) 60% minmax(200px, 1fr);
+    grid-gap: 15px;
+    padding: 15px 15px 0;
+    height: 100%;
+`;
+
+const Heading = styled.h1`
+    font-size: 20px;
+    color: #0ba902;
+`;
+
 interface KaleState {
-    removedExprs: Expr[];
+    yankList: Expr[];
 }
 
 class Kale extends Component<{}, KaleState> {
-    state: KaleState = { removedExprs: [] };
+    state: KaleState = { yankList: [] };
 
-    addToRemovedList = (expr: Expr) => {
+    addToYankList = (expr: Expr) => {
         if (expr instanceof E.Hole) return;
         this.setState(state => ({
-            removedExprs: state.removedExprs.concat([expr]),
+            yankList: state.yankList.concat([expr]),
         }));
     };
 
     render() {
         return (
-            <>
+            <KaleContainer>
                 <GlobalStyle />
-                <Editor onRemovedExpr={this.addToRemovedList} />
-            </>
+                <HorizonstalStack
+                    gridArea="nav"
+                    gap={10}
+                    alignItems="baseline"
+                    justifyContent="space-between"
+                >
+                    <Heading>Kale</Heading>
+                    <p>Press backspace to delete</p>
+                </HorizonstalStack>
+                <ExprViewList gridArea="toybox" exprs={this.state.yankList} />
+                <Editor gridArea="editor" onRemovedExpr={this.addToYankList} />
+                <ExprViewList gridArea="yanklist" exprs={this.state.yankList} />
+            </KaleContainer>
         );
     }
 }
