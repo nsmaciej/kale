@@ -8,9 +8,9 @@ export interface Theme {
 export default class TextMetrics {
     static global: TextMetrics;
 
-    private _theme: Theme;
-    private _metricsCache: { [content: string]: number } = {};
-    private _textElement: SVGTextElement;
+    private readonly _theme: Theme;
+    private readonly _metricsCache: { [content: string]: number } = {};
+    private readonly _textElement: SVGTextElement;
 
     static async loadGlobal(theme: Theme): Promise<void> {
         // Types provided by types/font_loading.d.ts

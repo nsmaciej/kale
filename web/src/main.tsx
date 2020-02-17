@@ -1,6 +1,10 @@
 import * as ReactDOM from "react-dom";
 import React, { Component, ReactNode } from "react";
-import styled, { createGlobalStyle } from "styled-components";
+import styled, {
+    StyleSheetManager,
+    createGlobalStyle,
+    css,
+} from "styled-components";
 
 import * as E from "./expr";
 import { Expr } from "./expr";
@@ -47,17 +51,24 @@ interface EditorState {
     selection: Optional<Expr>;
 }
 
+const ExprViewAppearance = css`
+    border: 1px solid #f1f1f1;
+    border-radius: 3px;
+    background: #fbfbfb;
+`;
+
 class Editor extends Component<EditorProps & LayoutProps, EditorState> {
+    private static readonly Container = styled(Box)`
+        ${ExprViewAppearance}
+        padding: 10px 12px;
+    `;
+
     state: EditorState = {
         selection: null,
         expr: SAMPLE_EXPR,
     };
 
-    updateExpr = (expr: Expr) => {
-        this.setState({ expr });
-    };
-
-    keyDown = (event: React.KeyboardEvent) => {
+    private keyDown = (event: React.KeyboardEvent) => {
         // See https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values.
         switch (event.key) {
             case "Backspace":
@@ -73,23 +84,22 @@ class Editor extends Component<EditorProps & LayoutProps, EditorState> {
         }
     };
 
-    exprSelected = (selection: Expr) => {
+    private exprSelected = (selection: Expr) => {
         this.setState({ selection });
     };
 
-    clearSelection = () => {
+    private clearSelection = () => {
         this.setState({ selection: null });
     };
 
     render() {
         // As I understand it, svg viewBox is not a required property.
         return (
-            <Box
+            <Editor.Container
                 onKeyDown={this.keyDown}
                 tabIndex={0}
                 onClick={this.clearSelection}
                 gridArea={this.props.gridArea}
-                style={{ gridArea: this.props.gridArea }}
             >
                 <ExprView
                     expr={
@@ -99,45 +109,28 @@ class Editor extends Component<EditorProps & LayoutProps, EditorState> {
                     selection={this.state.selection}
                     onClick={this.exprSelected}
                 />
-            </Box>
+            </Editor.Container>
         );
     }
 }
 
 const ExprViewItem = styled.div`
+    ${ExprViewAppearance}
     position: relative;
-    border-radius: 3px;
-    background: #f5f5f5;
+    padding: 0;
 `;
 
 function ExprViewList({ exprs, gridArea }: LayoutProps & { exprs: Expr[] }) {
     return (
         <VerticalStack gridArea={gridArea} gap={10} alignItems="start">
-            {exprs.map(x => (
-                <ExprViewItem>
+            {exprs.map((x, i) => (
+                <ExprViewItem key={i}>
                     <ExprView expr={x} />
                 </ExprViewItem>
             ))}
         </VerticalStack>
     );
 }
-
-const KaleContainer = styled.div`
-    display: grid;
-    grid-template-areas:
-        "nav nav nav"
-        "toybox editor yanklist";
-    grid-template-rows: min-content auto;
-    grid-template-columns: minmax(200px, 1fr) 60% minmax(200px, 1fr);
-    grid-gap: 15px;
-    padding: 15px 15px 0;
-    height: 100%;
-`;
-
-const Heading = styled.h1`
-    font-size: 20px;
-    color: #0ba902;
-`;
 
 interface KaleState {
     yankList: Expr[];
@@ -148,7 +141,24 @@ function hole(comment: string) {
 }
 
 class Kale extends Component<{}, KaleState> {
-    private static toyBox = [
+    private static readonly Container = styled.div`
+        display: grid;
+        grid-template-areas:
+            "nav nav nav"
+            "toybox editor yanklist";
+        grid-template-rows: min-content auto;
+        grid-template-columns: minmax(200px, 1fr) 70% minmax(200px, 1fr);
+        grid-gap: 15px;
+        padding: 15px 15px 0;
+        height: 100%;
+    `;
+
+    private static readonly Heading = styled.h1`
+        font-size: 20px;
+        color: #0ba902;
+    `;
+
+    private static readonly toyBox = [
         new E.List([hole("first line"), hole("second line")]),
         new E.Call("if", [hole("true branch"), hole("false branch")]),
         new E.Variable("variable"),
@@ -158,7 +168,7 @@ class Kale extends Component<{}, KaleState> {
 
     state: KaleState = { yankList: [] };
 
-    addToYankList = (expr: Expr) => {
+    private addToYankList = (expr: Expr) => {
         if (expr instanceof E.Hole) return;
         this.setState(state => ({
             yankList: state.yankList.concat([expr]),
@@ -167,21 +177,29 @@ class Kale extends Component<{}, KaleState> {
 
     render() {
         return (
-            <KaleContainer>
-                <GlobalStyle />
-                <HorizonstalStack
-                    gridArea="nav"
-                    gap={10}
-                    alignItems="baseline"
-                    justifyContent="space-between"
-                >
-                    <Heading>Kale</Heading>
-                    <p>Press backspace to delete</p>
-                </HorizonstalStack>
-                <ExprViewList gridArea="toybox" exprs={Kale.toyBox} />
-                <Editor gridArea="editor" onRemovedExpr={this.addToYankList} />
-                <ExprViewList gridArea="yanklist" exprs={this.state.yankList} />
-            </KaleContainer>
+            <StyleSheetManager disableVendorPrefixes>
+                <Kale.Container>
+                    <GlobalStyle />
+                    <HorizonstalStack
+                        gridArea="nav"
+                        gap={10}
+                        alignItems="baseline"
+                        justifyContent="space-between"
+                    >
+                        <Kale.Heading>Kale</Kale.Heading>
+                        <p>Press backspace to delete</p>
+                    </HorizonstalStack>
+                    <ExprViewList gridArea="toybox" exprs={Kale.toyBox} />
+                    <Editor
+                        gridArea="editor"
+                        onRemovedExpr={this.addToYankList}
+                    />
+                    <ExprViewList
+                        gridArea="yanklist"
+                        exprs={this.state.yankList}
+                    />
+                </Kale.Container>
+            </StyleSheetManager>
         );
     }
 }

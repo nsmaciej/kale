@@ -1,7 +1,7 @@
 import styled from "styled-components";
 
 export interface LayoutProps {
-    gridArea: string;
+    gridArea?: string;
 }
 
 type AlignTypes =
@@ -25,7 +25,7 @@ export interface StackProps {
 }
 
 export const Box = styled.div<LayoutProps>`
-    grid-area: ${p => p.gridArea};
+    ${p => p.gridArea && `grid-area: ${p.gridArea};`}
 `;
 
 const Stack = styled(Box)<StackProps & LayoutProps>`
