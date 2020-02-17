@@ -69,9 +69,9 @@ export default class ExprView extends PureComponent<
     }
 
     render() {
-        const { nodes, size } = new ExprLayoutHelper(this).layout(
-            this.props.expr,
-        );
+        const { nodes, size } = new ExprLayoutHelper(this, {
+            hasSelectedParant: false,
+        }).layout(this.props.expr);
         const { width, height } = size.pad(KALE_THEME.selectionPaddingPx * 2);
         const padding = vec(
             KALE_THEME.selectionPaddingPx,
@@ -109,8 +109,18 @@ const Code = styled.text<{ cursor?: string }>`
     dominant-baseline: text-before-edge;
 `;
 
+interface ExprLayoutParams {
+    hasSelectedParant: boolean;
+}
+
 class ExprLayoutHelper implements ExprVisitor<ExprLayout> {
-    constructor(private readonly parentView: ExprView) {}
+    private childParams: ExprLayoutParams;
+    constructor(
+        private readonly parentView: ExprView,
+        private readonly params: ExprLayoutParams,
+    ) {
+        this.childParams = { ...params };
+    }
 
     private layoutText(
         expr: Expr,
@@ -139,9 +149,14 @@ class ExprLayoutHelper implements ExprVisitor<ExprLayout> {
     }
 
     layout(expr: Expr): ExprLayout {
-        const layout = expr.visit(this);
+        // Set up child params.
         const selected = this.parentView.props.selection === expr;
         const highlighted = this.parentView.state.hoverHighlight === expr;
+        this.childParams.hasSelectedParant =
+            this.params.hasSelectedParant || selected;
+
+        // Layout the expr.
+        const layout = expr.visit(this);
         if (selected || highlighted) {
             const { size, inline, underlines, nodes: layoutNodes } = layout;
             const padding = KALE_THEME.selectionPaddingPx;
@@ -156,6 +171,8 @@ class ExprLayoutHelper implements ExprVisitor<ExprLayout> {
                         fill={
                             selected
                                 ? KALE_THEME.selectionColour
+                                : this.params.hasSelectedParant
+                                ? KALE_THEME.refineHighlightColour
                                 : KALE_THEME.highlightColour
                         }
                     />
@@ -173,8 +190,12 @@ class ExprLayoutHelper implements ExprVisitor<ExprLayout> {
             throw new LayoutNotSupported("List comments are not yet supported");
         let listSize = Size.zero;
         let nodes: ReactNode[] = [];
+        const layoutHelper = new ExprLayoutHelper(
+            this.parentView,
+            this.childParams,
+        );
         for (const line of expr.list) {
-            const layout = this.layout(line);
+            const layout = layoutHelper.layout(line);
             const pos = listSize.bottom_left.dy(
                 // Skip first line.
                 listSize.height ? KALE_THEME.lineSpacing : 0,
@@ -235,7 +256,11 @@ class ExprLayoutHelper implements ExprVisitor<ExprLayout> {
 
     visitCall(expr: E.Call): ExprLayout {
         //TODO: Add the comment back.
-        const args = expr.args.map(x => this.layout(x));
+        const layoutHelper = new ExprLayoutHelper(
+            this.parentView,
+            this.childParams,
+        );
+        const args = expr.args.map(x => layoutHelper.layout(x));
         //FIXME: This forces top-level call underlines to materialise, find a nicer way to do this.
         const inline =
             isCallInline(args) && expr !== this.parentView.props.expr;
