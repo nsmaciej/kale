@@ -1,5 +1,5 @@
 import * as ReactDOM from "react-dom";
-import React, { Component, ReactNode } from "react";
+import React, { Component } from "react";
 import styled, {
     StyleSheetManager,
     createGlobalStyle,
@@ -19,7 +19,6 @@ import {
     LayoutProps,
 } from "./components";
 
-//TODO: Refactor, just stuff to make the demo look nice.
 const GlobalStyle = createGlobalStyle`
 #main {
     position: absolute;
@@ -53,7 +52,7 @@ interface EditorState {
 
 const ExprViewAppearance = css`
     border: 1px solid #f1f1f1;
-    border-radius: 3px;
+    border-radius: ${KALE_THEME.selectionPaddingPx}px;
     background: #fbfbfb;
 `;
 
@@ -118,14 +117,20 @@ const ExprViewItem = styled.div`
     ${ExprViewAppearance}
     position: relative;
     padding: 0;
+    cursor: grab;
 `;
 
-function ExprViewList({ exprs, gridArea }: LayoutProps & { exprs: Expr[] }) {
+function ExprViewList({
+    exprs,
+    gridArea,
+    frozen,
+}: LayoutProps & { exprs: Expr[]; frozen?: boolean }) {
+    //TODO: Add floating headings.
     return (
         <VerticalStack gridArea={gridArea} gap={10} alignItems="start">
             {exprs.map((x, i) => (
                 <ExprViewItem key={i}>
-                    <ExprView expr={x} />
+                    <ExprView expr={x} frozen={frozen} />
                 </ExprViewItem>
             ))}
         </VerticalStack>
@@ -189,7 +194,11 @@ class Kale extends Component<{}, KaleState> {
                         <Kale.Heading>Kale</Kale.Heading>
                         <p>Press backspace to delete</p>
                     </HorizonstalStack>
-                    <ExprViewList gridArea="toybox" exprs={Kale.toyBox} />
+                    <ExprViewList
+                        gridArea="toybox"
+                        exprs={Kale.toyBox}
+                        frozen
+                    />
                     <Editor
                         gridArea="editor"
                         onRemovedExpr={this.addToYankList}

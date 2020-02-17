@@ -30,6 +30,7 @@ export const KALE_THEME = {
     literalColour: "#f59a11",
     // This also needs to be large enough to allow bottom-most underlines to render.
     selectionPaddingPx: 5,
+    selectionRadiusPx: 3,
 };
 
 interface ExprViewProps {
@@ -39,13 +40,24 @@ interface ExprViewProps {
     onClick?: (expr: Expr) => void;
 }
 
+interface ExprViewState {
+    hoverHighlight: Optional<Expr>;
+}
+
 // This needs to be a class component so we can nicely pass it to the layout helper.
 //TODO: Support a prop indicating if the view has focus. (Otherwise dim selection)
 export default class ExprView extends Component<ExprViewProps> {
+    state: ExprViewState = { hoverHighlight: null };
+
     onClick(event: React.MouseEvent, expr: Expr) {
         event.stopPropagation();
         this.props.onClick?.(expr);
     }
+    onHover(event: React.MouseEvent, expr: Optional<Expr>) {
+        event.stopPropagation();
+        this.setState({ hoverHighlight: expr });
+    }
+
     render() {
         const { nodes, size } = new ExprLayoutHelper(this).layout(
             this.props.expr,
@@ -60,6 +72,9 @@ export default class ExprView extends Component<ExprViewProps> {
                 xmlns="http://www.w3.org/2000/svg"
                 width={width}
                 height={height}
+                // SVGs are inline by default, this leads to a scourge of invisible space
+                // characters. Make it a block instead.
+                display="block"
             >
                 <Group translate={padding}>{nodes}</Group>
             </svg>
@@ -75,6 +90,14 @@ interface TextProperties {
 }
 
 export class LayoutNotSupported extends Error {}
+
+// See https://vanseodesign.com/web-design/svg-text-baseline-alignment/ for excellent discussion
+// on SVG text aligment properties.
+const Code = styled.text<{ cursor?: string }>`
+    font-size: ${KALE_THEME.fontSizePx}px;
+    font-family: ${KALE_THEME.fontFamily};
+    dominant-baseline: text-before-edge;
+`;
 
 class ExprLayoutHelper implements ExprVisitor<ExprLayout> {
     constructor(private readonly parentView: ExprView) {}
@@ -93,6 +116,8 @@ class ExprLayoutHelper implements ExprVisitor<ExprLayout> {
                     fontStyle={italic ? "italic" : undefined}
                     fontWeight={bold ? "bold" : undefined}
                     onClick={e => this.parentView.onClick(e, expr)}
+                    onMouseOver={e => this.parentView.onHover(e, expr)}
+                    onMouseOut={e => this.parentView.onHover(e, null)}
                 >
                     {title && <title>{title}</title>}
                     {text}
@@ -105,7 +130,9 @@ class ExprLayoutHelper implements ExprVisitor<ExprLayout> {
 
     layout(expr: Expr): ExprLayout {
         const layout = expr.visit(this);
-        if (this.parentView.props.selection === expr) {
+        const selected = this.parentView.props.selection === expr;
+        const highlighted = this.parentView.state.hoverHighlight === expr;
+        if (selected || highlighted) {
             const { size, inline, underlines, nodes: layoutNodes } = layout;
             const padding = KALE_THEME.selectionPaddingPx;
             const nodes = (
@@ -115,8 +142,8 @@ class ExprLayoutHelper implements ExprVisitor<ExprLayout> {
                         y={-padding}
                         width={size.width + padding * 2}
                         height={size.height + padding * 2}
-                        rx={3}
-                        fill={KALE_THEME.selectionColour}
+                        rx={KALE_THEME.selectionRadiusPx}
+                        fill={selected ? KALE_THEME.selectionColour : "#eee"}
                     />
                     {layoutNodes}
                 </>
@@ -159,6 +186,8 @@ class ExprLayoutHelper implements ExprVisitor<ExprLayout> {
                     start={vec(3, 5)}
                     end={vec(3, listSize.height)}
                     onClick={e => this.parentView.onClick(e, expr)}
+                    onMouseOver={e => this.parentView.onHover(e, expr)}
+                    onMouseOut={e => this.parentView.onHover(e, null)}
                 />
             ),
         };
@@ -185,7 +214,7 @@ class ExprLayoutHelper implements ExprVisitor<ExprLayout> {
 
     visitHole(expr: E.Hole): ExprLayout {
         //TODO: Wrap this in a nice box or something.
-        return this.layoutText(expr, expr.data.comment ?? "HOLE", {
+        return this.layoutText(expr, `<${expr.data.comment ?? "HOLE"}>`, {
             colour: "#ff0000",
         });
     }
@@ -252,14 +281,6 @@ class ExprLayoutHelper implements ExprVisitor<ExprLayout> {
         return toExprLayout(stackHorizontal(inlineMargin, fnName, argStack));
     }
 }
-
-// See https://vanseodesign.com/web-design/svg-text-baseline-alignment/ for excellent discussion
-// on SVG text aligment properties.
-const Code = styled.text`
-    font-size: ${KALE_THEME.fontSizePx}px;
-    font-family: ${KALE_THEME.fontFamily};
-    dominant-baseline: text-before-edge;
-`;
 
 function underlineTreeHeight(underline: null | Underline): number {
     return underline === null
