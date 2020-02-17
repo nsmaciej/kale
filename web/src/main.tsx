@@ -60,6 +60,7 @@ class Editor extends Component<EditorProps & LayoutProps, EditorState> {
     private static readonly Container = styled(Box)`
         ${ExprViewAppearance}
         padding: 10px 12px;
+        overflow: auto;
     `;
 
     state: EditorState = {
@@ -152,7 +153,7 @@ class Kale extends Component<{}, KaleState> {
             "nav nav nav"
             "toybox editor yanklist";
         grid-template-rows: min-content auto;
-        grid-template-columns: minmax(200px, 1fr) 70% minmax(200px, 1fr);
+        grid-template-columns: minmax(200px, 1fr) 60% minmax(200px, 1fr);
         grid-gap: 15px;
         padding: 15px 15px 0;
         height: 100%;

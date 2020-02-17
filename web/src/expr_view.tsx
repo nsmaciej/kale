@@ -1,4 +1,4 @@
-import React, { Component, ReactNode } from "react";
+import React, { PureComponent, ReactNode } from "react";
 import styled from "styled-components";
 
 import { Optional, assert, max } from "./utils";
@@ -25,9 +25,12 @@ export const KALE_THEME = {
     //TODO: This should be based on the current text size.
     lineSpacing: 10,
     underlineColour: "#6a6a6a",
-    selectionColour: "#d8eeff",
+    selectionColour: "#d0e8fc",
+    highlightColour: "#eeeeee",
+    refineHighlightColour: "#94bcff",
     variableColour: "#248af0",
     literalColour: "#f59a11",
+    holeColour: "#ff0000",
     // This also needs to be large enough to allow bottom-most underlines to render.
     selectionPaddingPx: 5,
     selectionRadiusPx: 3,
@@ -46,13 +49,20 @@ interface ExprViewState {
 
 // This needs to be a class component so we can nicely pass it to the layout helper.
 //TODO: Support a prop indicating if the view has focus. (Otherwise dim selection)
-export default class ExprView extends Component<ExprViewProps> {
+export default class ExprView extends PureComponent<
+    ExprViewProps,
+    ExprViewState
+> {
     state: ExprViewState = { hoverHighlight: null };
 
     onClick(event: React.MouseEvent, expr: Expr) {
         event.stopPropagation();
         this.props.onClick?.(expr);
     }
+
+    //TODO: This is unreliable because React removes the original node when we add the highlight
+    // rect. Solution is either pre-create all the rects, or likely better for z-index: make
+    // ExprLayout return selection bounds.
     onHover(event: React.MouseEvent, expr: Optional<Expr>) {
         event.stopPropagation();
         this.setState({ hoverHighlight: expr });
@@ -143,7 +153,11 @@ class ExprLayoutHelper implements ExprVisitor<ExprLayout> {
                         width={size.width + padding * 2}
                         height={size.height + padding * 2}
                         rx={KALE_THEME.selectionRadiusPx}
-                        fill={selected ? KALE_THEME.selectionColour : "#eee"}
+                        fill={
+                            selected
+                                ? KALE_THEME.selectionColour
+                                : KALE_THEME.highlightColour
+                        }
                     />
                     {layoutNodes}
                 </>
@@ -215,7 +229,7 @@ class ExprLayoutHelper implements ExprVisitor<ExprLayout> {
     visitHole(expr: E.Hole): ExprLayout {
         //TODO: Wrap this in a nice box or something.
         return this.layoutText(expr, `<${expr.data.comment ?? "HOLE"}>`, {
-            colour: "#ff0000",
+            colour: KALE_THEME.holeColour,
         });
     }
 
