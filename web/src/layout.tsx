@@ -1,7 +1,7 @@
 import React, { ReactNode } from "react";
 
 import { Size, Vector } from "./geometry";
-import { max } from "./utils";
+import { Optional, max } from "./utils";
 import { Group } from "./components";
 
 export interface Underline {
@@ -54,11 +54,17 @@ export class Layout {
     }
 }
 
-type StackLayout = (Layout[] | Layout)[];
+type StackLayout = (Optional<Layout>[] | Optional<Layout>)[];
 
-function stack(column: boolean, margin: number, children: StackLayout) {
+function stack(column: boolean, margin: number, args: StackLayout) {
+    const children = args.flat().filter(x => x != null);
+    if (children.length === 1) {
+        return children[0];
+    }
+
     const layout = new Layout();
     for (const x of children.flat()) {
+        // Do not use the margin for the first element.
         const size = layout.size.pad(layout.size.isZero() ? 0 : margin);
         const pos = column ? size.bottom_left : size.top_right;
         layout.place(pos, x);

@@ -1,4 +1,4 @@
-import React, { PureComponent, ReactNode, Component } from "react";
+import React, { PureComponent, Component } from "react";
 import ReactDOM from "react-dom";
 import styled from "styled-components";
 
@@ -246,10 +246,18 @@ class ExprLayoutHelper implements ExprVisitor<Layout> {
                     {text}
                 </Code>
             ),
-            TextMetrics.global.measure(text),
+            TextMetrics.global.measure(text, { italic, bold }),
         );
         layout.inline = true;
         return layout;
+    }
+
+    private layoutComment(expr: Expr) {
+        if (expr.data.comment == null) return null;
+        return this.layoutText(expr, expr.data.comment, {
+            italic: true,
+            colour: THEME.commentColour,
+        });
     }
 
     layout(expr: Expr): Layout {
@@ -287,8 +295,6 @@ class ExprLayoutHelper implements ExprVisitor<Layout> {
 
     visitList(expr: E.List): Layout {
         //TODO: Add a larger clickable area to the list ruler.
-        if (expr.data.comment)
-            throw new LayoutNotSupported("List comments are not yet supported");
         const layoutHelper = new ExprLayoutHelper(
             this.parentView,
             this.childParams,
@@ -304,7 +310,11 @@ class ExprLayoutHelper implements ExprVisitor<Layout> {
                 {...this.exprProps(expr)}
             />
         );
-        return hstack(0, new Layout(ruler, size(10, 0)), layout);
+        return vstack(
+            THEME.lineSpacing,
+            this.layoutComment(expr),
+            hstack(0, new Layout(ruler, size(10, 0)), layout),
+        );
     }
 
     visitLiteral(expr: E.Literal): Layout {
@@ -331,28 +341,31 @@ class ExprLayoutHelper implements ExprVisitor<Layout> {
     }
 
     visitCall(expr: E.Call): Layout {
-        //TODO: Add the comment back.
         const layoutHelper = new ExprLayoutHelper(
             this.parentView,
             this.childParams,
         );
+
         const args = expr.args.map(x => layoutHelper.layout(x));
         const inline = isCallInline(args);
         const inlineMargin = TextMetrics.global.measure("\xa0").width; // Non-breaking space.
+
+        const comment = this.layoutComment(expr);
         const fnName = this.layoutText(expr, expr.fn, { bold: !inline });
 
-        if (inline) {
-            const layout = hstack(inlineMargin, fnName, args);
+        let layout: Layout;
+        if (inline && expr.data.comment == null) {
+            layout = hstack(inlineMargin, fnName, args);
             layout.isUnderlined = true;
             layout.inline = true;
-            return layout;
+        } else {
+            layout = hstack(
+                THEME.lineSpacing,
+                fnName,
+                vstack(THEME.lineSpacing, args.map(materialiseUnderlines)),
+            );
         }
-
-        return hstack(
-            THEME.lineSpacing,
-            fnName,
-            vstack(THEME.lineSpacing, args.map(materialiseUnderlines)),
-        );
+        return vstack(THEME.lineSpacing, comment, layout);
     }
 }
 
