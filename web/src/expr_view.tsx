@@ -1,4 +1,5 @@
-import React, { PureComponent, ReactNode } from "react";
+import React, { PureComponent, ReactNode, Component } from "react";
+import ReactDOM from "react-dom";
 import styled from "styled-components";
 
 import { Optional, assert, max } from "./utils";
@@ -47,16 +48,121 @@ interface ExprViewState {
     hoverHighlight: Optional<Expr>;
 }
 
+interface DragAndDropSurfaceContext {
+    maybeStartDrag: (start: Vector, expr: Expr) => void;
+    dismissDrag: () => void;
+}
+
+interface DragAndDropSurfaceState {
+    expr: Optional<Expr>;
+    position: Optional<Vector>;
+}
+
+export class DragAndDropSurface extends Component<{}, DragAndDropSurfaceState> {
+    static readonly Svg = styled.svg`
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        top: 0;
+        left: 0;
+    `;
+    state: DragAndDropSurfaceState = { expr: null, position: null };
+
+    static readonly Context = React.createContext<
+        Optional<DragAndDropSurfaceContext>
+    >(null);
+
+    private contextValue: DragAndDropSurfaceContext = {
+        dismissDrag: this.dismissDrag.bind(this),
+        maybeStartDrag: this.maybeStartDrag.bind(this),
+    };
+    private dragStart: Optional<Vector>;
+    private dragExpr: Optional<Expr>;
+
+    private maybeStartDrag(position: Vector, expr: Expr) {
+        this.dragStart = position;
+        this.dragExpr = expr;
+    }
+
+    private dismissDrag() {
+        console.log(this.state);
+        this.dragStart = null;
+        this.dragExpr = null;
+        if (this.state.expr != null) {
+            // Premature optimisation. This method is called on every other mouse move.
+            this.setState({ expr: null, position: null });
+        }
+    }
+
+    private onMouseMove = (event: MouseEvent) => {
+        const DRAG_THRESHOLD = 20;
+        const position = Vector.fromPage(event);
+        if (event.buttons != 1) {
+            // Just a random mouse mouse move with no buttons.
+            this.dismissDrag();
+        } else if (this.state.expr != null) {
+            // We are dragging, update the position
+            this.setState({ position });
+        } else if (
+            this.dragStart != null &&
+            this.dragStart.distance(position) > DRAG_THRESHOLD
+        ) {
+            // Start a new drag.
+            this.setState({ position, expr: this.dragExpr });
+        }
+    };
+
+    componentDidMount() {
+        document.addEventListener("mousemove", this.onMouseMove);
+    }
+
+    componentWillUnmount() {
+        document.removeEventListener("mousemove", this.onMouseMove);
+    }
+
+    render() {
+        let surface: React.ReactNode;
+
+        if (this.state.expr != null) {
+            assert(this.state.position != null);
+            const { nodes } = new ExprLayoutHelper(null, {
+                hasSelectedParant: false,
+            }).layout(this.state.expr);
+            surface = ReactDOM.createPortal(
+                <DragAndDropSurface.Svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    onMouseUp={this.dismissDrag.bind(this)}
+                >
+                    <Group translate={this.state.position}>{nodes}</Group>
+                </DragAndDropSurface.Svg>,
+                document.body,
+            );
+        }
+
+        return (
+            <DragAndDropSurface.Context.Provider value={this.contextValue}>
+                {surface}
+                {this.props.children}
+            </DragAndDropSurface.Context.Provider>
+        );
+    }
+}
+
 // This needs to be a class component so we can nicely pass it to the layout helper.
 //TODO: Support a prop indicating if the view has focus. (Otherwise dim selection)
 export default class ExprView extends PureComponent<
     ExprViewProps,
     ExprViewState
 > {
+    static contextType = DragAndDropSurface.Context;
+    declare context: React.ContextType<typeof DragAndDropSurface.Context>;
+
     state: ExprViewState = { hoverHighlight: null };
 
     onClick(event: React.MouseEvent, expr: Expr) {
         event.stopPropagation();
+        assert(this.context != null);
+        this.context.dismissDrag();
         this.props.onClick?.(expr);
     }
 
@@ -66,6 +172,14 @@ export default class ExprView extends PureComponent<
     onHover(event: React.MouseEvent, expr: Optional<Expr>) {
         event.stopPropagation();
         this.setState({ hoverHighlight: expr });
+    }
+
+    maybeStartDrag(event: React.MouseEvent, expr: Expr) {
+        assert(event.type == "mousedown");
+        if (event.buttons != 1) return;
+        event.stopPropagation();
+        assert(this.context != null);
+        this.context.maybeStartDrag(Vector.fromPage(event), expr);
     }
 
     render() {
@@ -107,6 +221,8 @@ const Code = styled.text<{ cursor?: string }>`
     font-size: ${KALE_THEME.fontSizePx}px;
     font-family: ${KALE_THEME.fontFamily};
     dominant-baseline: text-before-edge;
+    cursor: default;
+    user-select: none;
 `;
 
 interface ExprLayoutParams {
@@ -116,7 +232,7 @@ interface ExprLayoutParams {
 class ExprLayoutHelper implements ExprVisitor<ExprLayout> {
     private childParams: ExprLayoutParams;
     constructor(
-        private readonly parentView: ExprView,
+        private readonly parentView: Optional<ExprView>,
         private readonly params: ExprLayoutParams,
     ) {
         this.childParams = { ...params };
@@ -135,9 +251,10 @@ class ExprLayoutHelper implements ExprVisitor<ExprLayout> {
                     fill={colour}
                     fontStyle={italic ? "italic" : undefined}
                     fontWeight={bold ? "bold" : undefined}
-                    onClick={e => this.parentView.onClick(e, expr)}
-                    onMouseOver={e => this.parentView.onHover(e, expr)}
-                    onMouseOut={e => this.parentView.onHover(e, null)}
+                    onClick={e => this.parentView?.onClick(e, expr)}
+                    onMouseDown={e => this.parentView?.maybeStartDrag(e, expr)}
+                    onMouseOver={e => this.parentView?.onHover(e, expr)}
+                    onMouseOut={e => this.parentView?.onHover(e, null)}
                 >
                     {title && <title>{title}</title>}
                     {text}
@@ -150,8 +267,12 @@ class ExprLayoutHelper implements ExprVisitor<ExprLayout> {
 
     layout(expr: Expr): ExprLayout {
         // Set up child params.
-        const selected = this.parentView.props.selection === expr;
-        const highlighted = this.parentView.state.hoverHighlight === expr;
+        const selected = this.parentView?.props.selection === expr;
+        //TODO: Hack, if we have no parent we are highlighted.
+        const highlighted =
+            this.parentView == null
+                ? true
+                : this.parentView.state.hoverHighlight === expr;
         this.childParams.hasSelectedParant =
             this.params.hasSelectedParant || selected;
 
@@ -220,9 +341,9 @@ class ExprLayoutHelper implements ExprVisitor<ExprLayout> {
                 <Line
                     start={vec(3, 5)}
                     end={vec(3, listSize.height)}
-                    onClick={e => this.parentView.onClick(e, expr)}
-                    onMouseOver={e => this.parentView.onHover(e, expr)}
-                    onMouseOut={e => this.parentView.onHover(e, null)}
+                    onClick={e => this.parentView?.onClick(e, expr)}
+                    onMouseOver={e => this.parentView?.onHover(e, expr)}
+                    onMouseOut={e => this.parentView?.onHover(e, null)}
                 />
             ),
         };
@@ -263,7 +384,7 @@ class ExprLayoutHelper implements ExprVisitor<ExprLayout> {
         const args = expr.args.map(x => layoutHelper.layout(x));
         //FIXME: This forces top-level call underlines to materialise, find a nicer way to do this.
         const inline =
-            isCallInline(args) && expr !== this.parentView.props.expr;
+            isCallInline(args) && expr !== this.parentView?.props.expr;
         const inlineMargin = TextMetrics.global.measure("\xa0").width; // Non-breaking space.
         const fnName = this.layoutText(expr, expr.fn, { bold: !inline });
         assert(fnName.inline);

@@ -8,7 +8,7 @@ import styled, {
 
 import * as E from "./expr";
 import { Expr } from "./expr";
-import ExprView, { KALE_THEME } from "./expr_view";
+import ExprView, { KALE_THEME, DragAndDropSurface } from "./expr_view";
 import SAMPLE_EXPR from "./sample";
 import TextMetrics from "./text_metrics";
 import { Optional } from "./utils";
@@ -184,31 +184,33 @@ class Kale extends Component<{}, KaleState> {
     render() {
         return (
             <StyleSheetManager disableVendorPrefixes>
-                <Kale.Container>
+                <DragAndDropSurface>
                     <GlobalStyle />
-                    <HorizonstalStack
-                        gridArea="nav"
-                        gap={10}
-                        alignItems="baseline"
-                        justifyContent="space-between"
-                    >
-                        <Kale.Heading>Kale</Kale.Heading>
-                        <p>Press backspace to delete</p>
-                    </HorizonstalStack>
-                    <ExprViewList
-                        gridArea="toybox"
-                        exprs={Kale.toyBox}
-                        frozen
-                    />
-                    <Editor
-                        gridArea="editor"
-                        onRemovedExpr={this.addToYankList}
-                    />
-                    <ExprViewList
-                        gridArea="yanklist"
-                        exprs={this.state.yankList}
-                    />
-                </Kale.Container>
+                    <Kale.Container>
+                        <HorizonstalStack
+                            gridArea="nav"
+                            gap={10}
+                            alignItems="baseline"
+                            justifyContent="space-between"
+                        >
+                            <Kale.Heading>Kale</Kale.Heading>
+                            <p>Press backspace to delete</p>
+                        </HorizonstalStack>
+                        <ExprViewList
+                            gridArea="toybox"
+                            exprs={Kale.toyBox}
+                            frozen
+                        />
+                        <Editor
+                            gridArea="editor"
+                            onRemovedExpr={this.addToYankList}
+                        />
+                        <ExprViewList
+                            gridArea="yanklist"
+                            exprs={this.state.yankList}
+                        />
+                    </Kale.Container>
+                </DragAndDropSurface>
             </StyleSheetManager>
         );
     }

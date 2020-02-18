@@ -36,6 +36,22 @@ export class Vector {
 
     constructor(readonly x: number, readonly y: number) {}
 
+    static fromPage(e: { pageX: number; pageY: number }) {
+        return vec(e.pageX, e.pageY);
+    }
+
+    difference(other: Vector) {
+        return vec(this.x - other.x, this.y - other.y);
+    }
+
+    hypot() {
+        return Math.hypot(this.x, this.y);
+    }
+
+    distance(other: Vector) {
+        return this.difference(other).hypot();
+    }
+
     dx(d: number) {
         return vec(this.x + d, this.y);
     }
