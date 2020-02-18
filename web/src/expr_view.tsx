@@ -23,15 +23,18 @@ interface ExprViewState {
 }
 
 interface DragAndDropSurfaceContext {
-    maybeStartDrag: (start: Vector, expr: Expr) => void;
+    maybeStartDrag: (start: Vector, exprStart: Vector, expr: Expr) => void;
     dismissDrag: () => void;
 }
 
 interface DragAndDropSurfaceState {
-    expr: Optional<Expr>;
     position: Optional<Vector>;
 }
 
+// There are three states to a drag.
+// 1. Not dragging - drag and state.position is null.
+// 2. Maybe-drag - drag is now initialised, except for delta.
+// 3. Drag - Delta is now initialised, state.position follows the mouse.
 export class DragAndDropSurface extends Component<{}, DragAndDropSurfaceState> {
     static readonly Svg = styled.svg`
         width: 100%;
@@ -40,7 +43,7 @@ export class DragAndDropSurface extends Component<{}, DragAndDropSurfaceState> {
         top: 0;
         left: 0;
     `;
-    state: DragAndDropSurfaceState = { expr: null, position: null };
+    state: DragAndDropSurfaceState = { position: null };
 
     static readonly Context = React.createContext<
         Optional<DragAndDropSurfaceContext>
@@ -50,45 +53,47 @@ export class DragAndDropSurface extends Component<{}, DragAndDropSurfaceState> {
         dismissDrag: this.dismissDrag.bind(this),
         maybeStartDrag: this.maybeStartDrag.bind(this),
     };
-    private dragStart: Optional<Vector>;
-    private dragExpr: Optional<Expr>;
+    private drag: Optional<{
+        start: Vector; // Where the maybe-drag started.
+        delta: Optional<Vector>; // How much to offset the expr when showing the drag.
+        exprStart: Vector; // Page space coordinates of the expr.
+        expr: Expr;
+    }>;
 
-    private maybeStartDrag(position: Vector, expr: Expr) {
-        this.dragStart = position;
-        this.dragExpr = expr;
+    private maybeStartDrag(start: Vector, exprStart: Vector, expr: Expr) {
+        this.drag = { start, expr, exprStart, delta: null };
     }
 
     private dismissDrag() {
-        this.dragStart = null;
-        this.dragExpr = null;
-        if (this.state.expr != null) {
-            // Premature optimisation. This method is called on every other mouse move.
-            this.setState({ expr: null, position: null });
-        }
+        this.drag = null;
+        // Premature optimisation. This method is called on every other mouse move.
+        if (this.state.position != null) this.setState({ position: null });
     }
 
     private onMouseMove = (event: MouseEvent) => {
-        const DRAG_THRESHOLD = 20;
-        const position = Vector.fromPage(event);
-        if (event.buttons != 1) {
-            // Just a random mouse mouse move with no buttons.
+        // Ensure left mouse button is held down.
+        if (event.buttons != 1 || this.drag == null) {
             this.dismissDrag();
-        } else if (this.state.expr != null) {
-            // We are dragging, update the position
+            return;
+        }
+
+        const DRAG_THRESHOLD = 4; // Based on Windows default, DragHeight registry.
+        const position = Vector.fromPage(event);
+        if (this.drag.delta == null) {
+            // Consider starting a drag.
+            if (this.drag.start.distance(position) > DRAG_THRESHOLD) {
+                this.drag.delta = this.drag.exprStart.difference(position);
+                this.setState({ position });
+            }
+        } else {
+            // Update a drag.
             this.setState({ position });
-        } else if (
-            this.dragStart != null &&
-            this.dragStart.distance(position) > DRAG_THRESHOLD
-        ) {
-            // Start a new drag.
-            this.setState({ position, expr: this.dragExpr });
         }
     };
 
     componentDidMount() {
         document.addEventListener("mousemove", this.onMouseMove);
     }
-
     componentWillUnmount() {
         document.removeEventListener("mousemove", this.onMouseMove);
     }
@@ -96,17 +101,20 @@ export class DragAndDropSurface extends Component<{}, DragAndDropSurfaceState> {
     render() {
         let surface: React.ReactNode;
 
-        if (this.state.expr != null) {
+        if (this.drag?.delta != null) {
+            // drag.delta gets set when the drag starts proper.
             assert(this.state.position != null);
             const { nodes } = new ExprLayoutHelper(null, {
                 hasSelectedParant: false,
-            }).layout(this.state.expr);
+            }).layout(this.drag.expr);
             surface = ReactDOM.createPortal(
                 <DragAndDropSurface.Svg
                     xmlns="http://www.w3.org/2000/svg"
                     onMouseUp={this.dismissDrag.bind(this)}
                 >
-                    <Group translate={this.state.position}>{nodes}</Group>
+                    <Group translate={this.state.position.add(this.drag.delta)}>
+                        {nodes}
+                    </Group>
                 </DragAndDropSurface.Svg>,
                 document.body,
             );
@@ -149,7 +157,15 @@ export default class ExprView extends PureComponent<
         if (event.buttons != 1) return;
         event.stopPropagation();
         assert(this.context != null);
-        this.context.maybeStartDrag(Vector.fromPage(event), expr);
+        const rect = (event.target as SVGElement).getBoundingClientRect();
+        this.context.maybeStartDrag(
+            Vector.fromPage(event),
+            //TODO: This only really works well for the top-left element of an expr. For example
+            // this doesn't work for functions with comments on top of them, since the offset is
+            // relative to the function name instead of the whole expression.
+            Vector.fromBoundingRect(rect),
+            expr,
+        );
     }
 
     render() {

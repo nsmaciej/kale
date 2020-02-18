@@ -31,14 +31,12 @@ export class Layout {
             0,
             <Group translate={pos}>{layout.nodes.flat()}</Group>,
         );
-        if (layout.underlines.length) {
-            for (const x of layout.underlines) {
-                this.underlines.push({
-                    level: x.level + +layout.isUnderlined,
-                    length: x.length,
-                    offset: x.offset + pos.x,
-                });
-            }
+        for (const x of layout.underlines) {
+            this.underlines.push({
+                level: x.level + +layout.isUnderlined,
+                length: x.length,
+                offset: x.offset + pos.x,
+            });
         }
         if (layout.isUnderlined) {
             this.underlines.push({

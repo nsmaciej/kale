@@ -36,6 +36,9 @@ export class Vector {
     static fromPage(e: { pageX: number; pageY: number }) {
         return vec(e.pageX, e.pageY);
     }
+    static fromBoundingRect(rect: { left: number; top: number }) {
+        return vec(rect.left, rect.top);
+    }
 
     difference(other: Vector) {
         return vec(this.x - other.x, this.y - other.y);
@@ -47,6 +50,10 @@ export class Vector {
 
     distance(other: Vector) {
         return this.difference(other).hypot();
+    }
+
+    add(other: Vector) {
+        return vec(this.x + other.x, this.y + other.y);
     }
 
     dx(d: number) {
