@@ -1,4 +1,8 @@
+import React, { ReactNode, SVGProps } from "react";
 import styled from "styled-components";
+
+import { Vector } from "./geometry";
+import THEME from "./theme";
 
 export interface LayoutProps {
     gridArea?: string;
@@ -52,3 +56,49 @@ export const HorizonstalStack = styled(Stack)<StackProps & LayoutProps>`
         margin: 0 ${getGap}px;
     }
 `;
+
+// A type for components that have custom props but pass everything else on.
+type CustomSvgProps<Element, CustomProps> = CustomProps &
+    Omit<SVGProps<Element>, keyof CustomProps>;
+
+export function Group({
+    children,
+    translate = Vector.zero,
+}: {
+    children: ReactNode;
+    translate?: Vector;
+}) {
+    return (
+        <g transform={`translate(${translate.x} ${translate.y})`}>{children}</g>
+    );
+}
+
+type LineProps = CustomSvgProps<SVGLineElement, { start: Vector; end: Vector }>;
+
+export function Line({ start, end, stroke = "#000000", ...props }: LineProps) {
+    return (
+        <line
+            x1={start.x}
+            x2={end.x}
+            y1={start.y}
+            y2={end.y}
+            stroke={stroke}
+            {...props}
+        />
+    );
+}
+
+export function UnderlineLine(
+    props: Omit<LineProps, "shapeRendering" | "stroke" | "strokeWidth">,
+) {
+    // It took a while, but black, crispEdge, 0.5 stroke lines work well. They looks equally/ well
+    // at full and half-pixel multiples; and look good on high-dpi screens.
+    return (
+        <Line
+            strokeWidth={0.5}
+            shapeRendering="crsipEdges"
+            stroke={THEME.underlineColour}
+            {...props}
+        />
+    );
+}

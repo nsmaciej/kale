@@ -1,40 +1,8 @@
-import React, { ReactNode, SVGProps } from "react";
+import React, { ReactNode } from "react";
+
 import { Size, Vector, vec } from "./geometry";
 import { max } from "./utils";
-
-// A type for components that have custom props but pass everything else on.
-type CustomSvgProps<Element, CustomProps> = CustomProps &
-    Omit<SVGProps<Element>, keyof CustomProps>;
-
-export function Group({
-    children,
-    translate = Vector.zero,
-}: {
-    children: ReactNode;
-    translate?: Vector;
-}) {
-    return (
-        <g transform={`translate(${translate.x} ${translate.y})`}>{children}</g>
-    );
-}
-
-export function Line({
-    start,
-    end,
-    stroke = "#000000",
-    ...props
-}: CustomSvgProps<SVGLineElement, { start: Vector; end: Vector }>) {
-    return (
-        <line
-            x1={start.x}
-            x2={end.x}
-            y1={start.y}
-            y2={end.y}
-            stroke={stroke}
-            {...props}
-        />
-    );
-}
+import { Group, UnderlineLine } from "./components";
 
 export interface Underline {
     level: number;
@@ -87,21 +55,13 @@ export class Layout {
         return max(this.underlines.map(x => x.level)) + +this.isUnderlined;
     }
 
-    materialiseUnderlines(theme: { underlineColour: string }): Layout {
+    materialiseUnderlines(): Layout {
         const layout = new Layout(this.nodes, this.size);
         const LINE_GAP = 3;
-        // It took a while, but black, crispEdge, 0.5 stroke lines work well. They looks equally
-        // well at full and half-pixel multiples; and look good on high-dpi screens.
         for (const x of this.underlines) {
             const pos = vec(x.offset, this.size.height + x.level * LINE_GAP);
             layout.nodes.push(
-                <Line
-                    start={pos}
-                    end={pos.dx(x.length)}
-                    strokeWidth={0.5}
-                    shapeRendering="crispEdges"
-                    stroke={theme.underlineColour}
-                />,
+                <UnderlineLine start={pos} end={pos.dx(x.length)} />,
             );
         }
         return layout;

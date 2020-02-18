@@ -8,10 +8,11 @@ import styled, {
 
 import * as E from "./expr";
 import { Expr } from "./expr";
-import ExprView, { KALE_THEME, DragAndDropSurface } from "./expr_view";
+import ExprView, { DragAndDropSurface } from "./expr_view";
 import SAMPLE_EXPR from "./sample";
 import TextMetrics from "./text_metrics";
 import { Optional } from "./utils";
+import THEME from "./theme";
 import {
     Box,
     HorizonstalStack,
@@ -32,8 +33,8 @@ const GlobalStyle = createGlobalStyle`
     box-sizing: border-box;
 }
 body {
-    font-family: ${KALE_THEME.fontFamily}, sans-serif;
-    font-size: ${KALE_THEME.fontSizePx}px;
+    font-family: ${THEME.fontFamily}, sans-serif;
+    font-size: ${THEME.fontSizePx}px;
 }
 /* Hide the focus ring around focused divs */
 div:focus {
@@ -52,7 +53,7 @@ interface EditorState {
 
 const ExprViewAppearance = css`
     border: 1px solid #f1f1f1;
-    border-radius: ${KALE_THEME.selectionPaddingPx}px;
+    border-radius: ${THEME.selectionPaddingPx}px;
     background: #fbfbfb;
 `;
 
@@ -217,6 +218,6 @@ class Kale extends Component<{}, KaleState> {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-    await TextMetrics.loadGlobal(KALE_THEME);
+    await TextMetrics.loadGlobal();
     ReactDOM.render(<Kale />, document.getElementById("main"));
 });

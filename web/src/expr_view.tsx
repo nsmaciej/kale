@@ -4,27 +4,12 @@ import styled from "styled-components";
 
 import { Optional, assert, max } from "./utils";
 import { size, vec, Vector } from "./geometry";
-import { Layout, Line, hstack, vstack, Group } from "./layout";
+import { Layout, hstack, vstack } from "./layout";
 import { Expr, ExprVisitor } from "./expr";
 import * as E from "./expr";
 import TextMetrics from "./text_metrics";
-
-export const KALE_THEME = {
-    fontSizePx: 13,
-    fontFamily: "iA Writer Quattro",
-    //TODO: This should be based on the current text size.
-    lineSpacing: 10,
-    underlineColour: "#6a6a6a",
-    selectionColour: "#d0e8fc",
-    highlightColour: "#eeeeee",
-    refineHighlightColour: "#94bcff",
-    variableColour: "#248af0",
-    literalColour: "#f59a11",
-    holeColour: "#ff0000",
-    // This also needs to be large enough to allow bottom-most underlines to render.
-    selectionPaddingPx: 5,
-    selectionRadiusPx: 3,
-};
+import { Group, Line } from "./components";
+import THEME from "./theme";
 
 interface ExprViewProps {
     expr: Expr;
@@ -175,12 +160,9 @@ export default class ExprView extends PureComponent<
             hasSelectedParant: false,
         })
             .layout(this.props.expr)
-            .materialiseUnderlines(KALE_THEME);
-        const { width, height } = size.pad(KALE_THEME.selectionPaddingPx * 2);
-        const padding = vec(
-            KALE_THEME.selectionPaddingPx,
-            KALE_THEME.selectionPaddingPx,
-        );
+            .materialiseUnderlines();
+        const { width, height } = size.pad(THEME.selectionPaddingPx * 2);
+        const padding = vec(THEME.selectionPaddingPx, THEME.selectionPaddingPx);
         return (
             <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -208,8 +190,8 @@ export class LayoutNotSupported extends Error {}
 // See https://vanseodesign.com/web-design/svg-text-baseline-alignment/ for excellent discussion
 // on SVG text aligment properties.
 const Code = styled.text<{ cursor?: string }>`
-    font-size: ${KALE_THEME.fontSizePx}px;
-    font-family: ${KALE_THEME.fontFamily};
+    font-size: ${THEME.fontSizePx}px;
+    font-family: ${THEME.fontFamily};
     dominant-baseline: text-before-edge;
     cursor: default;
     user-select: none;
@@ -268,20 +250,20 @@ class ExprLayoutHelper implements ExprVisitor<Layout> {
         // Layout the expr.
         const layout = expr.visit(this);
         if (selected || highlighted) {
-            const padding = KALE_THEME.selectionPaddingPx;
+            const padding = THEME.selectionPaddingPx;
             const rect = (
                 <rect
                     x={-padding}
                     y={-padding}
                     width={layout.size.width + padding * 2}
                     height={layout.size.height + padding * 2}
-                    rx={KALE_THEME.selectionRadiusPx}
+                    rx={THEME.selectionRadiusPx}
                     fill={
                         selected
-                            ? KALE_THEME.selectionColour
+                            ? THEME.selectionColour
                             : this.params.hasSelectedParant
-                            ? KALE_THEME.refineHighlightColour
-                            : KALE_THEME.highlightColour
+                            ? THEME.refineHighlightColour
+                            : THEME.highlightColour
                     }
                 />
             );
@@ -299,10 +281,8 @@ class ExprLayoutHelper implements ExprVisitor<Layout> {
             this.childParams,
         );
         const layout = vstack(
-            KALE_THEME.lineSpacing,
-            expr.list.map(x =>
-                layoutHelper.layout(x).materialiseUnderlines(KALE_THEME),
-            ),
+            THEME.lineSpacing,
+            expr.list.map(x => layoutHelper.layout(x).materialiseUnderlines()),
         );
         const ruler = (
             <Line
@@ -321,21 +301,21 @@ class ExprLayoutHelper implements ExprVisitor<Layout> {
             expr.type === "str" ? `"${expr.content}"` : expr.content;
         return this.layoutText(expr, content, {
             title: expr.data.comment,
-            colour: KALE_THEME.literalColour,
+            colour: THEME.literalColour,
         });
     }
 
     visitVariable(expr: E.Variable): Layout {
         return this.layoutText(expr, expr.name, {
             title: expr.data.comment,
-            colour: KALE_THEME.variableColour,
+            colour: THEME.variableColour,
         });
     }
 
     visitHole(expr: E.Hole): Layout {
         //TODO: Wrap this in a nice box or something.
         return this.layoutText(expr, `<${expr.data.comment ?? "HOLE"}>`, {
-            colour: KALE_THEME.holeColour,
+            colour: THEME.holeColour,
         });
     }
 
@@ -358,11 +338,11 @@ class ExprLayoutHelper implements ExprVisitor<Layout> {
         }
 
         return hstack(
-            KALE_THEME.lineSpacing,
+            THEME.lineSpacing,
             fnName,
             vstack(
-                KALE_THEME.lineSpacing,
-                args.map(x => x.materialiseUnderlines(KALE_THEME)),
+                THEME.lineSpacing,
+                args.map(x => x.materialiseUnderlines()),
             ),
         );
     }

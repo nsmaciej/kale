@@ -1,25 +1,19 @@
 import { size, Size } from "./geometry";
-
-export interface Theme {
-    fontSizePx: number;
-    fontFamily: string;
-}
+import THEME from "./theme";
 
 export default class TextMetrics {
     static global: TextMetrics;
 
-    private readonly _theme: Theme;
     private readonly _metricsCache: { [content: string]: number } = {};
     private readonly _textElement: SVGTextElement;
 
-    static async loadGlobal(theme: Theme): Promise<void> {
+    static async loadGlobal(): Promise<void> {
         // Types provided by types/font_loading.d.ts
-        await document.fonts.load(`${theme.fontSizePx}px ${theme.fontFamily}`);
-        TextMetrics.global = new TextMetrics(theme);
+        await document.fonts.load(`${THEME.fontSizePx}px ${THEME.fontFamily}`);
+        TextMetrics.global = new TextMetrics();
     }
 
-    constructor(theme: Theme) {
-        this._theme = theme;
+    constructor() {
         const svg = document.createElementNS(
             "http://www.w3.org/2000/svg",
             "svg",
@@ -35,8 +29,8 @@ export default class TextMetrics {
             "http://www.w3.org/2000/svg",
             "text",
         );
-        text.style.fontFamily = this._theme.fontFamily;
-        text.style.fontSize = `${this._theme.fontSizePx}px`;
+        text.style.fontFamily = THEME.fontFamily;
+        text.style.fontSize = `${THEME.fontSizePx}px`;
         svg.appendChild(text);
         this._textElement = text;
         document.body.appendChild(svg);
@@ -44,7 +38,7 @@ export default class TextMetrics {
 
     measure(text: string): Size {
         const HEIGHT_FUDGE_FACTOR = 1.3;
-        const height = this._theme.fontSizePx * HEIGHT_FUDGE_FACTOR;
+        const height = THEME.fontSizePx * HEIGHT_FUDGE_FACTOR;
         if (text in this._metricsCache) {
             return size(this._metricsCache[text], height);
         }
