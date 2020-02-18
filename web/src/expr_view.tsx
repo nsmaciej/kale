@@ -3,19 +3,8 @@ import ReactDOM from "react-dom";
 import styled from "styled-components";
 
 import { Optional, assert, max } from "./utils";
-import { Size, size, vec, Vector } from "./geometry";
-import {
-    ExprLayout,
-    Underline,
-    Layout,
-    Line,
-    place,
-    toExprLayout,
-    underline,
-    stackHorizontal,
-    stackVertical,
-    Group,
-} from "./layout";
+import { size, vec, Vector } from "./geometry";
+import { Layout, Line, hstack, vstack, Group } from "./layout";
 import { Expr, ExprVisitor } from "./expr";
 import * as E from "./expr";
 import TextMetrics from "./text_metrics";
@@ -85,7 +74,6 @@ export class DragAndDropSurface extends Component<{}, DragAndDropSurfaceState> {
     }
 
     private dismissDrag() {
-        console.log(this.state);
         this.dragStart = null;
         this.dragExpr = null;
         if (this.state.expr != null) {
@@ -185,7 +173,9 @@ export default class ExprView extends PureComponent<
     render() {
         const { nodes, size } = new ExprLayoutHelper(this, {
             hasSelectedParant: false,
-        }).layout(this.props.expr);
+        })
+            .layout(this.props.expr)
+            .materialiseUnderlines(KALE_THEME);
         const { width, height } = size.pad(KALE_THEME.selectionPaddingPx * 2);
         const padding = vec(
             KALE_THEME.selectionPaddingPx,
@@ -229,7 +219,7 @@ interface ExprLayoutParams {
     hasSelectedParant: boolean;
 }
 
-class ExprLayoutHelper implements ExprVisitor<ExprLayout> {
+class ExprLayoutHelper implements ExprVisitor<Layout> {
     private childParams: ExprLayoutParams;
     constructor(
         private readonly parentView: Optional<ExprView>,
@@ -242,11 +232,9 @@ class ExprLayoutHelper implements ExprVisitor<ExprLayout> {
         expr: Expr,
         text: string,
         { italic, colour, title, bold }: TextProperties = {},
-    ): ExprLayout {
-        const size = TextMetrics.global.measure(text);
-        return {
-            size,
-            nodes: (
+    ) {
+        const layout = new Layout(
+            (
                 <Code
                     fill={colour}
                     fontStyle={italic ? "italic" : undefined}
@@ -260,12 +248,13 @@ class ExprLayoutHelper implements ExprVisitor<ExprLayout> {
                     {text}
                 </Code>
             ),
-            underlines: null,
-            inline: true,
-        };
+            TextMetrics.global.measure(text),
+        );
+        layout.inline = true;
+        return layout;
     }
 
-    layout(expr: Expr): ExprLayout {
+    layout(expr: Expr): Layout {
         // Set up child params.
         const selected = this.parentView?.props.selection === expr;
         //TODO: Hack, if we have no parent we are highlighted.
@@ -279,80 +268,55 @@ class ExprLayoutHelper implements ExprVisitor<ExprLayout> {
         // Layout the expr.
         const layout = expr.visit(this);
         if (selected || highlighted) {
-            const { size, inline, underlines, nodes: layoutNodes } = layout;
             const padding = KALE_THEME.selectionPaddingPx;
-            const nodes = (
-                <>
-                    <rect
-                        x={-padding}
-                        y={-padding}
-                        width={size.width + padding * 2}
-                        height={size.height + padding * 2}
-                        rx={KALE_THEME.selectionRadiusPx}
-                        fill={
-                            selected
-                                ? KALE_THEME.selectionColour
-                                : this.params.hasSelectedParant
-                                ? KALE_THEME.refineHighlightColour
-                                : KALE_THEME.highlightColour
-                        }
-                    />
-                    {layoutNodes}
-                </>
+            const rect = (
+                <rect
+                    x={-padding}
+                    y={-padding}
+                    width={layout.size.width + padding * 2}
+                    height={layout.size.height + padding * 2}
+                    rx={KALE_THEME.selectionRadiusPx}
+                    fill={
+                        selected
+                            ? KALE_THEME.selectionColour
+                            : this.params.hasSelectedParant
+                            ? KALE_THEME.refineHighlightColour
+                            : KALE_THEME.highlightColour
+                    }
+                />
             );
-            return { size, inline, underlines, nodes };
+            layout.place(Vector.zero, new Layout(rect), 0);
         }
         return layout;
     }
 
-    visitList(expr: E.List): ExprLayout {
+    visitList(expr: E.List): Layout {
         //TODO: Add a larger clickable area to the list ruler.
         if (expr.data.comment)
             throw new LayoutNotSupported("List comments are not yet supported");
-        let listSize = Size.zero;
-        let nodes: ReactNode[] = [];
         const layoutHelper = new ExprLayoutHelper(
             this.parentView,
             this.childParams,
         );
-        for (const line of expr.list) {
-            const layout = layoutHelper.layout(line);
-            const pos = listSize.bottom_left.dy(
-                // Skip first line.
-                listSize.height ? KALE_THEME.lineSpacing : 0,
-            );
-            if (layout.underlines !== null) {
-                nodes.push(
-                    place(
-                        pos.dy(KALE_THEME.fontSizePx + 5),
-                        layoutUnderlines(layout.underlines, true),
-                        "underlines",
-                        line.id,
-                    ),
-                );
-            }
-            nodes.push(place(pos, layout, "line", line.id));
-            listSize = listSize.extend(pos, layout.size);
-        }
-
-        const ruler = {
-            size: size(10, 0),
-            nodes: (
-                <Line
-                    start={vec(3, 5)}
-                    end={vec(3, listSize.height)}
-                    onClick={e => this.parentView?.onClick(e, expr)}
-                    onMouseOver={e => this.parentView?.onHover(e, expr)}
-                    onMouseOut={e => this.parentView?.onHover(e, null)}
-                />
+        const layout = vstack(
+            KALE_THEME.lineSpacing,
+            expr.list.map(x =>
+                layoutHelper.layout(x).materialiseUnderlines(KALE_THEME),
             ),
-        };
-        return toExprLayout(
-            stackHorizontal(0, ruler, { nodes, size: listSize }),
         );
+        const ruler = (
+            <Line
+                start={vec(3, 5)}
+                end={vec(3, layout.size.height)}
+                onClick={e => this.parentView?.onClick(e, expr)}
+                onMouseOver={e => this.parentView?.onHover(e, expr)}
+                onMouseOut={e => this.parentView?.onHover(e, null)}
+            />
+        );
+        return hstack(0, new Layout(ruler, size(10, 0)), layout);
     }
 
-    visitLiteral(expr: E.Literal): ExprLayout {
+    visitLiteral(expr: E.Literal): Layout {
         const content =
             expr.type === "str" ? `"${expr.content}"` : expr.content;
         return this.layoutText(expr, content, {
@@ -361,154 +325,68 @@ class ExprLayoutHelper implements ExprVisitor<ExprLayout> {
         });
     }
 
-    visitVariable(expr: E.Variable): ExprLayout {
+    visitVariable(expr: E.Variable): Layout {
         return this.layoutText(expr, expr.name, {
             title: expr.data.comment,
             colour: KALE_THEME.variableColour,
         });
     }
 
-    visitHole(expr: E.Hole): ExprLayout {
+    visitHole(expr: E.Hole): Layout {
         //TODO: Wrap this in a nice box or something.
         return this.layoutText(expr, `<${expr.data.comment ?? "HOLE"}>`, {
             colour: KALE_THEME.holeColour,
         });
     }
 
-    visitCall(expr: E.Call): ExprLayout {
+    visitCall(expr: E.Call): Layout {
         //TODO: Add the comment back.
         const layoutHelper = new ExprLayoutHelper(
             this.parentView,
             this.childParams,
         );
         const args = expr.args.map(x => layoutHelper.layout(x));
-        //FIXME: This forces top-level call underlines to materialise, find a nicer way to do this.
-        const inline =
-            isCallInline(args) && expr !== this.parentView?.props.expr;
+        const inline = isCallInline(args);
         const inlineMargin = TextMetrics.global.measure("\xa0").width; // Non-breaking space.
         const fnName = this.layoutText(expr, expr.fn, { bold: !inline });
-        assert(fnName.inline);
 
         if (inline) {
-            const underlines: [number, Underline][] = [];
-            const nodes: ReactNode[] = [];
-            let size = Size.zero;
-
-            let i = 0;
-            for (const arg of args) {
-                // Skip adding the margin to the first argument.
-                const pos = size.top_right.dx(size.width ? inlineMargin : 0);
-                nodes.push(place(pos, arg, "arg", expr.args[i].id));
-                if (arg.underlines)
-                    // Sadly we have to account for the size of fnName straight away.
-                    underlines.push([
-                        pos.x + fnName.size.width + inlineMargin,
-                        arg.underlines,
-                    ]);
-                size = size.extend(pos, arg.size);
-                i++;
-            }
-            return underline(
-                args.length > 0
-                    ? stackHorizontal(inlineMargin, fnName, { nodes, size })
-                    : fnName,
-                underlines,
-            );
+            const layout = hstack(inlineMargin, fnName, args);
+            layout.isUnderlined = true;
+            layout.inline = true;
+            return layout;
         }
 
-        const argStack = stackVertical(
+        return hstack(
             KALE_THEME.lineSpacing,
-            ...args.map((arg, ix) => {
-                // Materialise all underlines.
-                if (!arg.underlines) return arg;
-                const underlines = place(
-                    vec(0, KALE_THEME.fontSizePx + 5),
-                    layoutUnderlines(arg.underlines),
-                    "underlines",
-                    expr.args[ix].id,
-                );
-                return {
-                    size: arg.size,
-                    nodes: (
-                        <>
-                            {arg.nodes}
-                            {underlines}
-                        </>
-                    ),
-                };
-            }),
-        );
-        return toExprLayout(stackHorizontal(inlineMargin, fnName, argStack));
-    }
-}
-
-function underlineTreeHeight(underline: null | Underline): number {
-    return underline === null
-        ? 0
-        : 1 + max(underline.children.map(x => underlineTreeHeight(x[1])));
-}
-
-function layoutUnderlines(underline: Underline, skipFirst = false): Layout {
-    function layout(
-        level: number,
-        ix: number,
-        underline: Underline,
-        pos: Vector,
-    ): ReactNode {
-        // It took a while, but black, crispEdge, 0.5 stroke lines work well. They looks equally
-        // well at full and half-pixel multiples; and look good on high-dpi screens.
-        const drawn = level > 0 || !skipFirst;
-        return (
-            <React.Fragment key={ix}>
-                {drawn && (
-                    <Line
-                        start={pos}
-                        end={pos.dx(underline.width)}
-                        strokeWidth={0.5}
-                        shapeRendering="crispEdges"
-                        stroke={KALE_THEME.underlineColour}
-                    />
-                )}
-                {underline.children.map(([offset, next], ix) =>
-                    layout(
-                        level + 1,
-                        ix,
-                        next,
-                        pos.dx(offset).dy(drawn ? 3 : 0),
-                    ),
-                )}
-            </React.Fragment>
+            fnName,
+            vstack(
+                KALE_THEME.lineSpacing,
+                args.map(x => x.materialiseUnderlines(KALE_THEME)),
+            ),
         );
     }
-    return {
-        nodes: layout(0, 0, underline, Vector.zero),
-        size: size(underline.width, 1),
-    };
 }
 
-function isCallInline(args: readonly ExprLayout[]): boolean {
+function isCallInline(args: readonly Layout[]): boolean {
     if (args.length === 0) {
         return true;
     }
-
     if (!args.every(x => x.inline)) {
         return false;
     }
-
     // Our situation won't improve much from here on by making the function not-inline.
     if (args.length === 1) {
         return true;
     }
-
     // Do we need a line break?
     const LINE_BREAK_POINT = 200;
     const lineWidth = args.map(x => x.size.width).reduce((x, y) => x + y, 0);
     if (lineWidth > LINE_BREAK_POINT && args.length > 0) {
         return false;
     }
-
     // Is the expression too nested?
-    const underlineHeights = args.map(x => underlineTreeHeight(x.underlines));
+    const underlinesHeight = max(args.map(x => x.underlinesHeight()));
     const MAX_NESTING_LEVEL = 3;
-    return max(underlineHeights) < MAX_NESTING_LEVEL;
+    return underlinesHeight < MAX_NESTING_LEVEL;
 }

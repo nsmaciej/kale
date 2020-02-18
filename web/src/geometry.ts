@@ -16,11 +16,8 @@ export class Size {
         return size(this.width + d, this.height + d);
     }
 
-    pad_width(d: number) {
-        return size(this.width + d, this.height);
-    }
-    pad_height(d: number) {
-        return size(this.width, this.height + d);
+    isZero() {
+        return this.width == 0 && this.height == 0;
     }
 
     extend(offset: Vector, size: Size): Size {
