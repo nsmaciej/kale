@@ -2,7 +2,7 @@ import React, { ReactNode } from "react";
 
 import { Size, Vector, vec } from "./geometry";
 import { max } from "./utils";
-import { Group, UnderlineLine } from "./components";
+import { Group } from "./components";
 
 export interface Underline {
     level: number;
@@ -20,10 +20,8 @@ export class Layout {
         this.nodes = [node];
     }
 
-    stack(direction: "v" | "h", margin: number, layout: Layout) {
-        const size = this.size.pad(this.size.isZero() ? 0 : margin);
-        const pos = direction == "v" ? size.bottom_left : size.top_right;
-        this.place(pos, layout);
+    copy() {
+        return new Layout(this.nodes.slice(), this.size);
     }
 
     place(pos: Vector, layout: Layout, index = this.nodes.length) {
@@ -54,29 +52,21 @@ export class Layout {
     underlinesHeight() {
         return max(this.underlines.map(x => x.level)) + +this.isUnderlined;
     }
-
-    materialiseUnderlines(): Layout {
-        const layout = new Layout(this.nodes, this.size);
-        const LINE_GAP = 3;
-        for (const x of this.underlines) {
-            const pos = vec(x.offset, this.size.height + x.level * LINE_GAP);
-            layout.nodes.push(
-                <UnderlineLine start={pos} end={pos.dx(x.length)} />,
-            );
-        }
-        return layout;
-    }
 }
 
 type StackLayout = (Layout[] | Layout)[];
 
-function stack(direction: "v" | "h", margin: number, children: StackLayout) {
+function stack(column: boolean, margin: number, children: StackLayout) {
     const layout = new Layout();
-    for (const x of children.flat()) layout.stack(direction, margin, x);
+    for (const x of children.flat()) {
+        const size = layout.size.pad(layout.size.isZero() ? 0 : margin);
+        const pos = column ? size.bottom_left : size.top_right;
+        layout.place(pos, x);
+    }
     return layout;
 }
 
 export const hstack = (margin: number, ...children: StackLayout) =>
-    stack("h", margin, children);
+    stack(false, margin, children);
 export const vstack = (margin: number, ...children: StackLayout) =>
-    stack("v", margin, children);
+    stack(true, margin, children);

@@ -8,7 +8,7 @@ import { Layout, hstack, vstack } from "./layout";
 import { Expr, ExprVisitor } from "./expr";
 import * as E from "./expr";
 import TextMetrics from "./text_metrics";
-import { Group, Line } from "./components";
+import { Group, UnderlineLine, Line } from "./components";
 import THEME from "./theme";
 
 interface ExprViewProps {
@@ -156,11 +156,11 @@ export default class ExprView extends PureComponent<
     }
 
     render() {
-        const { nodes, size } = new ExprLayoutHelper(this, {
-            hasSelectedParant: false,
-        })
-            .layout(this.props.expr)
-            .materialiseUnderlines();
+        const { nodes, size } = materialiseUnderlines(
+            new ExprLayoutHelper(this, {
+                hasSelectedParant: false,
+            }).layout(this.props.expr),
+        );
         const { width, height } = size.pad(THEME.selectionPaddingPx * 2);
         const padding = vec(THEME.selectionPaddingPx, THEME.selectionPaddingPx);
         return (
@@ -199,6 +199,16 @@ const Code = styled.text<{ cursor?: string }>`
 
 interface ExprLayoutParams {
     hasSelectedParant: boolean;
+}
+
+function materialiseUnderlines(parent: Layout) {
+    const layout = parent.copy();
+    const LINE_GAP = 3;
+    for (const x of parent.underlines) {
+        const pos = vec(x.offset, parent.size.height + x.level * LINE_GAP);
+        layout.nodes.push(<UnderlineLine start={pos} end={pos.dx(x.length)} />);
+    }
+    return layout;
 }
 
 class ExprLayoutHelper implements ExprVisitor<Layout> {
@@ -282,7 +292,7 @@ class ExprLayoutHelper implements ExprVisitor<Layout> {
         );
         const layout = vstack(
             THEME.lineSpacing,
-            expr.list.map(x => layoutHelper.layout(x).materialiseUnderlines()),
+            expr.list.map(x => materialiseUnderlines(layoutHelper.layout(x))),
         );
         const ruler = (
             <Line
@@ -340,10 +350,7 @@ class ExprLayoutHelper implements ExprVisitor<Layout> {
         return hstack(
             THEME.lineSpacing,
             fnName,
-            vstack(
-                THEME.lineSpacing,
-                args.map(x => x.materialiseUnderlines()),
-            ),
+            vstack(THEME.lineSpacing, args.map(materialiseUnderlines)),
         );
     }
 }
