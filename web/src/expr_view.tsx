@@ -139,9 +139,6 @@ export default class ExprView extends PureComponent<
         this.props.onClick?.(expr);
     }
 
-    //TODO: This is unreliable because React removes the original node when we add the highlight
-    // rect. Solution is either pre-create all the rects, or likely better for z-index: make
-    // ExprLayout return selection bounds.
     onHover(event: React.MouseEvent, expr: Optional<Expr>) {
         event.stopPropagation();
         this.setState({ hoverHighlight: expr });
@@ -220,6 +217,18 @@ class ExprLayoutHelper implements ExprVisitor<Layout> {
         this.childParams = { ...params };
     }
 
+    private exprProps(expr: Expr) {
+        return {
+            onMouseEnter: (e: React.MouseEvent) =>
+                this.parentView?.onHover(e, expr),
+            onMouseLeave: (e: React.MouseEvent) =>
+                this.parentView?.onHover(e, null),
+            onClick: (e: React.MouseEvent) => this.parentView?.onClick(e, expr),
+            onMouseDown: (e: React.MouseEvent) =>
+                this.parentView?.maybeStartDrag(e, expr),
+        };
+    }
+
     private layoutText(
         expr: Expr,
         text: string,
@@ -231,10 +240,7 @@ class ExprLayoutHelper implements ExprVisitor<Layout> {
                     fill={colour}
                     fontStyle={italic ? "italic" : undefined}
                     fontWeight={bold ? "bold" : undefined}
-                    onClick={e => this.parentView?.onClick(e, expr)}
-                    onMouseDown={e => this.parentView?.maybeStartDrag(e, expr)}
-                    onMouseOver={e => this.parentView?.onHover(e, expr)}
-                    onMouseOut={e => this.parentView?.onHover(e, null)}
+                    {...this.exprProps(expr)}
                 >
                     {title && <title>{title}</title>}
                     {text}
@@ -247,7 +253,6 @@ class ExprLayoutHelper implements ExprVisitor<Layout> {
     }
 
     layout(expr: Expr): Layout {
-        // Set up child params.
         const selected = this.parentView?.props.selection === expr;
         //TODO: Hack, if we have no parent we are highlighted.
         const highlighted =
@@ -257,28 +262,26 @@ class ExprLayoutHelper implements ExprVisitor<Layout> {
         this.childParams.hasSelectedParant =
             this.params.hasSelectedParant || selected;
 
-        // Layout the expr.
         const layout = expr.visit(this);
-        if (selected || highlighted) {
-            const padding = THEME.selectionPaddingPx;
-            const rect = (
-                <rect
-                    x={-padding}
-                    y={-padding}
-                    width={layout.size.width + padding * 2}
-                    height={layout.size.height + padding * 2}
-                    rx={THEME.selectionRadiusPx}
-                    fill={
-                        selected
-                            ? THEME.selectionColour
-                            : this.params.hasSelectedParant
-                            ? THEME.refineHighlightColour
-                            : THEME.highlightColour
-                    }
-                />
-            );
-            layout.place(Vector.zero, new Layout(rect), 0);
-        }
+        const padding = THEME.selectionPaddingPx;
+        const fill = selected
+            ? THEME.selectionColour
+            : this.params.hasSelectedParant
+            ? THEME.refineHighlightColour
+            : THEME.highlightColour;
+        const rect = (
+            <rect
+                x={-padding}
+                y={-padding}
+                width={layout.size.width + padding * 2}
+                height={layout.size.height + padding * 2}
+                rx={THEME.selectionRadiusPx}
+                //TODO: Do not render the selection rect inline.
+                visibility={selected || highlighted ? "visible" : "hidden"}
+                fill={fill}
+            />
+        );
+        layout.place(Vector.zero, new Layout(rect), 0);
         return layout;
     }
 
@@ -298,9 +301,7 @@ class ExprLayoutHelper implements ExprVisitor<Layout> {
             <Line
                 start={vec(3, 5)}
                 end={vec(3, layout.size.height)}
-                onClick={e => this.parentView?.onClick(e, expr)}
-                onMouseOver={e => this.parentView?.onHover(e, expr)}
-                onMouseOut={e => this.parentView?.onHover(e, null)}
+                {...this.exprProps(expr)}
             />
         );
         return hstack(0, new Layout(ruler, size(10, 0)), layout);

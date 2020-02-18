@@ -1,6 +1,6 @@
 import React, { ReactNode } from "react";
 
-import { Size, Vector, vec } from "./geometry";
+import { Size, Vector } from "./geometry";
 import { max } from "./utils";
 import { Group } from "./components";
 
