@@ -1,8 +1,9 @@
 import React, { ReactNode } from "react";
 
-import { Size, Vector } from "./geometry";
+import { Size, Vector, Rect } from "./geometry";
 import { Optional, max } from "./utils";
 import { Group } from "./components";
+import { Expr } from "./expr";
 
 export interface Underline {
     level: number;
@@ -10,40 +11,68 @@ export interface Underline {
     length: number;
 }
 
+export interface Area {
+    rect: Rect;
+    expr: Expr;
+    children: Area[];
+}
+
 export class Layout {
+    size: Size;
     nodes: ReactNode[] = [];
     inline = false;
     underlines: Underline[] = [];
+    expr: Optional<Expr>;
+    areas: Area[] = [];
     isUnderlined = false;
 
-    constructor(node: ReactNode = null, public size = Size.zero) {
+    constructor(node: ReactNode = null, size = Size.zero) {
         this.nodes = [node];
+        this.size = size;
     }
 
-    copy() {
-        return new Layout(this.nodes.slice(), this.size);
+    withNoUnderlines() {
+        const layout = new Layout(this.nodes.slice(), this.size);
+        layout.areas = this.areas;
+        layout.expr = this.expr;
+        return layout;
     }
 
-    place(pos: Vector, layout: Layout, index = this.nodes.length) {
-        this.size = this.size.extend(pos, layout.size);
+    place(origin: Vector, layout: Layout, index = this.nodes.length) {
+        this.size = this.size.extend(origin, layout.size);
         this.nodes.splice(
             index,
             0,
-            <Group translate={pos}>{layout.nodes.flat()}</Group>,
+            <Group translate={origin}>{layout.nodes.flat()}</Group>,
         );
         for (const x of layout.underlines) {
             this.underlines.push({
                 level: x.level + +layout.isUnderlined,
                 length: x.length,
-                offset: x.offset + pos.x,
+                offset: x.offset + origin.x,
             });
         }
         if (layout.isUnderlined) {
             this.underlines.push({
                 level: 0,
                 length: layout.size.width,
-                offset: pos.x,
+                offset: origin.x,
             });
+        }
+        if (layout.expr != null) {
+            this.areas.push({
+                rect: new Rect(origin, layout.size),
+                expr: layout.expr,
+                children: layout.areas,
+            });
+        } else {
+            // Adopt the areas.
+            const orphans = layout.areas.map(({ rect, expr, children }) => ({
+                expr,
+                children,
+                rect: rect.shift(origin),
+            }));
+            this.areas.push(...orphans);
         }
     }
 
@@ -61,7 +90,7 @@ function stack(column: boolean, margin: number, args: StackLayout) {
     }
 
     const layout = new Layout();
-    for (const x of children.flat()) {
+    for (const x of children) {
         // Do not use the margin for the first element.
         const size = layout.size.pad(layout.size.isZero() ? 0 : margin);
         const pos = column ? size.bottom_left : size.top_right;

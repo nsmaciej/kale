@@ -8,6 +8,9 @@ export class Size {
     get bottom_left(): Vector {
         return vec(0, this.height);
     }
+    get bottom_right(): Vector {
+        return vec(this.width, this.height);
+    }
     get top_right(): Vector {
         return vec(this.width, 0);
     }
@@ -28,6 +31,26 @@ export class Size {
     }
 }
 
+export class Rect {
+    constructor(readonly origin: Vector, readonly size: Size) {}
+
+    contains(point: Vector) {
+        const corner = this.size.bottom_right.add(this.origin);
+        return this.origin.lt(point) && corner.gt(point);
+    }
+
+    pad(amount: number) {
+        return new Rect(
+            this.origin.dy(-amount).dx(-amount),
+            this.size.pad(amount * 2),
+        );
+    }
+
+    shift(offset: Vector) {
+        return new Rect(this.origin.add(offset), this.size);
+    }
+}
+
 export class Vector {
     static readonly zero = new Vector(0, 0);
 
@@ -43,17 +66,22 @@ export class Vector {
     difference(other: Vector) {
         return vec(this.x - other.x, this.y - other.y);
     }
+    add(other: Vector) {
+        return vec(this.x + other.x, this.y + other.y);
+    }
+
+    lt(other: Vector) {
+        return this.x < other.x && this.y < other.y;
+    }
+    gt(other: Vector) {
+        return this.x > other.x && this.y > other.y;
+    }
 
     hypot() {
         return Math.hypot(this.x, this.y);
     }
-
     distance(other: Vector) {
         return this.difference(other).hypot();
-    }
-
-    add(other: Vector) {
-        return vec(this.x + other.x, this.y + other.y);
     }
 
     dx(d: number) {

@@ -1,7 +1,7 @@
 import React, { ReactNode, SVGProps } from "react";
 import styled from "styled-components";
 
-import { Vector } from "./geometry";
+import { Vector, Rect } from "./geometry";
 import THEME from "./theme";
 
 export interface LayoutProps {
@@ -75,7 +75,12 @@ export function Group({
 
 type LineProps = CustomSvgProps<SVGLineElement, { start: Vector; end: Vector }>;
 
-export function Line({ start, end, stroke = "#000000", ...props }: LineProps) {
+export function SvgLine({
+    start,
+    end,
+    stroke = "#000000",
+    ...props
+}: LineProps) {
     return (
         <line
             x1={start.x}
@@ -88,13 +93,29 @@ export function Line({ start, end, stroke = "#000000", ...props }: LineProps) {
     );
 }
 
+export function SvgRect({
+    rect,
+    ...props
+}: CustomSvgProps<SVGRectElement, { rect: Rect }>) {
+    const { origin, size } = rect;
+    return (
+        <rect
+            x={origin.x}
+            y={origin.y}
+            width={size.width}
+            height={size.height}
+            {...props}
+        />
+    );
+}
+
 export function UnderlineLine(
     props: Omit<LineProps, "shapeRendering" | "stroke" | "strokeWidth">,
 ) {
     // It took a while, but black, crispEdge, 0.5 stroke lines work well. They looks equally/ well
     // at full and half-pixel multiples; and look good on high-dpi screens.
     return (
-        <Line
+        <SvgLine
             strokeWidth={0.5}
             shapeRendering="crsipEdges"
             stroke={THEME.underlineColour}

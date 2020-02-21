@@ -48,6 +48,19 @@ export abstract class Expr {
         throw new UnvisitableExpr(this);
     }
 
+    contains(expr: Expr) {
+        return this.some(x => x === expr);
+    }
+
+    some(fn: (expr: Expr) => boolean) {
+        let found = false;
+        this.filterMap(x => {
+            if (fn(x)) found = true;
+            return x;
+        });
+        return found;
+    }
+
     validate() {
         if (this.data.comment === "") throw new InvalidExpr(this);
         let seenIds = new Set<ExprId>();

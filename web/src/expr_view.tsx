@@ -1,14 +1,14 @@
-import React, { PureComponent, Component } from "react";
+import React, { PureComponent, Component, ReactNode } from "react";
 import ReactDOM from "react-dom";
 import styled from "styled-components";
 
 import { Optional, assert, max } from "./utils";
-import { size, vec, Vector } from "./geometry";
-import { Layout, hstack, vstack } from "./layout";
+import { size, vec, Vector, Rect } from "./geometry";
+import { Layout, hstack, vstack, Area } from "./layout";
 import { Expr, ExprVisitor } from "./expr";
 import * as E from "./expr";
 import TextMetrics from "./text_metrics";
-import { Group, UnderlineLine, Line } from "./components";
+import { Group, UnderlineLine, SvgLine, SvgRect } from "./components";
 import THEME from "./theme";
 
 interface ExprViewProps {
@@ -19,7 +19,7 @@ interface ExprViewProps {
 }
 
 interface ExprViewState {
-    hoverHighlight: Optional<Expr>;
+    highlight: Optional<Expr>;
 }
 
 interface DragAndDropSurfaceContext {
@@ -104,9 +104,7 @@ export class DragAndDropSurface extends Component<{}, DragAndDropSurfaceState> {
         if (this.drag?.delta != null) {
             // drag.delta gets set when the drag starts proper.
             assert(this.state.position != null);
-            const { nodes } = new ExprLayoutHelper(null, {
-                hasSelectedParant: false,
-            }).layout(this.drag.expr);
+            const { nodes } = new ExprLayoutHelper(null).layout(this.drag.expr);
             surface = ReactDOM.createPortal(
                 <DragAndDropSurface.Svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -138,7 +136,7 @@ export default class ExprView extends PureComponent<
     static contextType = DragAndDropSurface.Context;
     declare context: React.ContextType<typeof DragAndDropSurface.Context>;
 
-    state: ExprViewState = { hoverHighlight: null };
+    state: ExprViewState = { highlight: null };
 
     onClick(event: React.MouseEvent, expr: Expr) {
         event.stopPropagation();
@@ -149,7 +147,7 @@ export default class ExprView extends PureComponent<
 
     onHover(event: React.MouseEvent, expr: Optional<Expr>) {
         event.stopPropagation();
-        this.setState({ hoverHighlight: expr });
+        this.setState({ highlight: expr });
     }
 
     maybeStartDrag(event: React.MouseEvent, expr: Expr) {
@@ -168,14 +166,63 @@ export default class ExprView extends PureComponent<
         );
     }
 
-    render() {
-        const { nodes, size } = materialiseUnderlines(
-            new ExprLayoutHelper(this, {
-                hasSelectedParant: false,
-            }).layout(this.props.expr),
+    private findExprRect(expr: Expr, area: Area): Optional<Rect> {
+        if (area.expr === expr) return area.rect;
+        for (const child of area.children) {
+            const rect = this.findExprRect(expr, child);
+            if (rect != null) return rect.shift(area.rect.origin);
+        }
+        return null;
+    }
+
+    private drawRect(expr: Expr, area: Area, colour: string) {
+        const rect = this.findExprRect(expr, area);
+        assert(rect);
+        return (
+            <SvgRect
+                rect={rect.pad(THEME.selectionPaddingPx)}
+                rx={THEME.selectionRadiusPx}
+                fill={colour}
+            />
         );
-        const { width, height } = size.pad(THEME.selectionPaddingPx * 2);
-        const padding = vec(THEME.selectionPaddingPx, THEME.selectionPaddingPx);
+    }
+
+    render() {
+        const padding = THEME.selectionPaddingPx;
+        const groupShift = vec(padding, padding);
+        const { nodes, size, areas } = materialiseUnderlines(
+            new ExprLayoutHelper(this).layout(this.props.expr),
+        );
+        const { width, height } = size.pad(padding * 2);
+
+        // Selection and highlight drawing logic.
+        const area = {
+            expr: this.props.expr,
+            children: areas,
+            rect: new Rect(groupShift, size),
+        };
+        const highlight = this.state.highlight;
+        const selection = this.props.selection;
+        let layers: ReactNode = null;
+        if (highlight != null && selection != null && highlight !== selection) {
+            // I don't like this code one bit. Might abstract it away at some point.
+            if (selection.contains(highlight)) {
+                layers = [
+                    this.drawRect(selection, area, THEME.selectionColour),
+                    this.drawRect(highlight, area, THEME.refineHighlightColour),
+                ];
+            } else {
+                layers = [
+                    this.drawRect(highlight, area, THEME.highlightColour),
+                    this.drawRect(selection, area, THEME.selectionColour),
+                ];
+            }
+        } else if (selection != null) {
+            layers = this.drawRect(selection, area, THEME.selectionColour);
+        } else if (highlight != null) {
+            layers = this.drawRect(highlight, area, THEME.highlightColour);
+        }
+
         return (
             <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -185,7 +232,8 @@ export default class ExprView extends PureComponent<
                 // characters. Make it a block instead.
                 display="block"
             >
-                <Group translate={padding}>{nodes}</Group>
+                {layers}
+                <Group translate={groupShift}>{nodes}</Group>
             </svg>
         );
     }
@@ -210,12 +258,8 @@ const Code = styled.text<{ cursor?: string }>`
     user-select: none;
 `;
 
-interface ExprLayoutParams {
-    hasSelectedParant: boolean;
-}
-
 function materialiseUnderlines(parent: Layout) {
-    const layout = parent.copy();
+    const layout = parent.withNoUnderlines();
     const LINE_GAP = 3;
     for (const x of parent.underlines) {
         const pos = vec(x.offset, parent.size.height + x.level * LINE_GAP);
@@ -225,13 +269,7 @@ function materialiseUnderlines(parent: Layout) {
 }
 
 class ExprLayoutHelper implements ExprVisitor<Layout> {
-    private childParams: ExprLayoutParams;
-    constructor(
-        private readonly parentView: Optional<ExprView>,
-        private readonly params: ExprLayoutParams,
-    ) {
-        this.childParams = { ...params };
-    }
+    constructor(private readonly parentView: Optional<ExprView>) {}
 
     private exprProps(expr: Expr) {
         return {
@@ -277,50 +315,20 @@ class ExprLayoutHelper implements ExprVisitor<Layout> {
     }
 
     layout(expr: Expr): Layout {
-        const selected = this.parentView?.props.selection === expr;
-        //TODO: Hack, if we have no parent we are highlighted.
-        const highlighted =
-            this.parentView == null
-                ? true
-                : this.parentView.state.hoverHighlight === expr;
-        this.childParams.hasSelectedParant =
-            this.params.hasSelectedParant || selected;
-
         const layout = expr.visit(this);
-        const padding = THEME.selectionPaddingPx;
-        const fill = selected
-            ? THEME.selectionColour
-            : this.params.hasSelectedParant
-            ? THEME.refineHighlightColour
-            : THEME.highlightColour;
-        const rect = (
-            <rect
-                x={-padding}
-                y={-padding}
-                width={layout.size.width + padding * 2}
-                height={layout.size.height + padding * 2}
-                rx={THEME.selectionRadiusPx}
-                //TODO: Do not render the selection rect inline.
-                visibility={selected || highlighted ? "visible" : "hidden"}
-                fill={fill}
-            />
-        );
-        layout.place(Vector.zero, new Layout(rect), 0);
+        // This associates the layout with the expr, which is used for generating selection areas.
+        layout.expr = expr;
         return layout;
     }
 
     visitList(expr: E.List): Layout {
         //TODO: Add a larger clickable area to the list ruler.
-        const layoutHelper = new ExprLayoutHelper(
-            this.parentView,
-            this.childParams,
-        );
         const layout = vstack(
             THEME.lineSpacing,
-            expr.list.map(x => materialiseUnderlines(layoutHelper.layout(x))),
+            expr.list.map(x => materialiseUnderlines(this.layout(x))),
         );
         const ruler = (
-            <Line
+            <SvgLine
                 start={vec(3, 5)}
                 end={vec(3, layout.size.height)}
                 {...this.exprProps(expr)}
@@ -357,12 +365,7 @@ class ExprLayoutHelper implements ExprVisitor<Layout> {
     }
 
     visitCall(expr: E.Call): Layout {
-        const layoutHelper = new ExprLayoutHelper(
-            this.parentView,
-            this.childParams,
-        );
-
-        const args = expr.args.map(x => layoutHelper.layout(x));
+        const args = expr.args.map(this.layout, this);
         const inline = isCallInline(args);
         const inlineMargin = TextMetrics.global.measure("\xa0").width; // Non-breaking space.
 
