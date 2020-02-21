@@ -177,7 +177,8 @@ export default class ExprView extends PureComponent<
 
     private drawRect(expr: Expr, area: Area, colour: string) {
         const rect = this.findExprRect(expr, area);
-        assert(rect);
+        // This happens when an expression is removed.
+        if (rect == null) return null;
         return (
             <SvgRect
                 rect={rect.pad(THEME.selectionPaddingPx)}
@@ -245,8 +246,6 @@ interface TextProperties {
     colour?: string;
     title?: string;
 }
-
-export class LayoutNotSupported extends Error {}
 
 // See https://vanseodesign.com/web-design/svg-text-baseline-alignment/ for excellent discussion
 // on SVG text aligment properties.
