@@ -1,0 +1,12 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Launch Kale",
+            "type": "chrome",
+            "request": "launch",
+            "file": "${workspaceFolder}/index.html",
+            "webRoot": "${workspaceRoot}"
+        }
+    ]
+}
