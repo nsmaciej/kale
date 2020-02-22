@@ -2,7 +2,7 @@ import React, { ReactNode } from "react";
 
 import { Size, Vector, Rect } from "./geometry";
 import { Optional, max } from "./utils";
-import { Group } from "./components";
+import { SvgGroup } from "./components";
 import { Expr } from "./expr";
 
 export interface Underline {
@@ -43,7 +43,7 @@ export class Layout {
         this.nodes.splice(
             index,
             0,
-            <Group translate={origin}>{layout.nodes.flat()}</Group>,
+            <SvgGroup translate={origin}>{layout.nodes.flat()}</SvgGroup>,
         );
         for (const x of layout.underlines) {
             this.underlines.push({

@@ -61,7 +61,8 @@ export const HorizonstalStack = styled(Stack)<StackProps & LayoutProps>`
 type CustomSvgProps<Element, CustomProps> = CustomProps &
     Omit<SVGProps<Element>, keyof CustomProps>;
 
-export function Group({
+// Naming convention: generic svg components have the prefix Svg, bot established UI elements.
+export function SvgGroup({
     children,
     translate = Vector.zero,
 }: {

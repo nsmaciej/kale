@@ -8,7 +8,7 @@ import { Layout, hstack, vstack, Area } from "./layout";
 import { Expr, ExprVisitor } from "./expr";
 import * as E from "./expr";
 import TextMetrics from "./text_metrics";
-import { Group, UnderlineLine, SvgLine, SvgRect } from "./components";
+import { SvgGroup, UnderlineLine, SvgLine, SvgRect } from "./components";
 import THEME from "./theme";
 
 interface ExprViewProps {
@@ -110,9 +110,11 @@ export class DragAndDropSurface extends Component<{}, DragAndDropSurfaceState> {
                     xmlns="http://www.w3.org/2000/svg"
                     onMouseUp={this.dismissDrag.bind(this)}
                 >
-                    <Group translate={this.state.position.add(this.drag.delta)}>
+                    <SvgGroup
+                        translate={this.state.position.add(this.drag.delta)}
+                    >
                         {nodes}
-                    </Group>
+                    </SvgGroup>
                 </DragAndDropSurface.Svg>,
                 document.body,
             );
@@ -234,7 +236,7 @@ export default class ExprView extends PureComponent<
                 display="block"
             >
                 {layers}
-                <Group translate={groupShift}>{nodes}</Group>
+                <SvgGroup translate={groupShift}>{nodes}</SvgGroup>
             </svg>
         );
     }
