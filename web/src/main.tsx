@@ -40,6 +40,10 @@ body {
 div:focus {
     outline: none;
 }
+/* Nothing inside svgs should be selectable */
+svg * {
+    user-select: none;
+}
 `;
 
 interface EditorProps {

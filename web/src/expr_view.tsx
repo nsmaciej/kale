@@ -273,7 +273,6 @@ const Code = styled.text<{ cursor?: string }>`
     font-family: ${THEME.fontFamily};
     dominant-baseline: text-before-edge;
     cursor: default;
-    user-select: none;
 `;
 
 function useBind<A>(fn: (a: A) => void, arg: A): () => void {
