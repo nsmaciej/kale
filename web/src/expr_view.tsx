@@ -1,4 +1,10 @@
-import React, { PureComponent, Component, ReactNode } from "react";
+import React, {
+    PureComponent,
+    Component,
+    ReactNode,
+    useState,
+    useCallback,
+} from "react";
 import ReactDOM from "react-dom";
 import styled from "styled-components";
 
@@ -10,6 +16,7 @@ import * as E from "./expr";
 import TextMetrics from "./text_metrics";
 import { SvgGroup, UnderlineLine, SvgLine, SvgRect } from "./components";
 import THEME from "./theme";
+import { motion } from "framer-motion";
 
 interface ExprViewProps {
     expr: Expr;
@@ -259,6 +266,43 @@ const Code = styled.text<{ cursor?: string }>`
     user-select: none;
 `;
 
+function useBind<A>(fn: (a: A) => void, arg: A): () => void {
+    return useCallback(() => fn(arg), []);
+}
+
+function CreateCirlce() {
+    const [hover, setHover] = useState(false);
+    const r = THEME.createCircleR;
+    const maxR = THEME.createCircleMaxR;
+    const cx = r;
+    const cy = THEME.fontSizePx / 2 + 3;
+    return (
+        <>
+            <motion.circle
+                fill="none"
+                stroke={THEME.decorationColour}
+                strokeWidth={1}
+                animate={{ r: hover ? maxR : r }}
+                r={r}
+                cx={cx}
+                cy={cy}
+                transition={{ duration: 0.1 }}
+            />
+            <rect
+                // This rect represents the real hit-box of the circle.
+                fill="transparent"
+                strokeWidth="0"
+                width={maxR * 2}
+                height={maxR * 2}
+                y={cy - maxR}
+                x={cx - maxR}
+                onMouseEnter={useBind(setHover, true)}
+                onMouseLeave={useBind(setHover, false)}
+            />
+        </>
+    );
+}
+
 function materialiseUnderlines(parent: Layout) {
     const layout = parent.withNoUnderlines();
     const LINE_GAP = 3;
@@ -305,6 +349,13 @@ class ExprLayoutHelper implements ExprVisitor<Layout> {
         );
         layout.inline = true;
         return layout;
+    }
+
+    private layoutCreateCircle() {
+        return new Layout(
+            (<CreateCirlce />),
+            size(THEME.createCircleMaxR, THEME.fontSizePx),
+        );
     }
 
     private layoutComment(expr: Expr) {
@@ -372,16 +423,19 @@ class ExprLayoutHelper implements ExprVisitor<Layout> {
 
         const comment = this.layoutComment(expr);
         const fnName = this.layoutText(expr, expr.fn, { bold: !inline });
+        const createCirlce = this.layoutCreateCircle();
 
         let layout: Layout;
+        // Adding a comment makes a call non-inline but not bold.
         if (inline && expr.data.comment == null) {
-            layout = hstack(inlineMargin, fnName, args);
+            layout = hstack(inlineMargin, fnName, createCirlce, args);
             layout.isUnderlined = true;
             layout.inline = true;
         } else {
             layout = hstack(
                 THEME.lineSpacing,
                 fnName,
+                createCirlce,
                 vstack(THEME.lineSpacing, args.map(materialiseUnderlines)),
             );
         }

@@ -119,7 +119,7 @@ export function UnderlineLine(
         <SvgLine
             strokeWidth={0.5}
             shapeRendering="crsipEdges"
-            stroke={THEME.underlineColour}
+            stroke={THEME.decorationColour}
             {...props}
         />
     );

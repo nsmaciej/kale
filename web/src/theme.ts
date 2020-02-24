@@ -1,11 +1,10 @@
 export default {
     // Text.
-
     fontSizePx: 13,
     fontFamily: "iA Writer Quattro",
 
     // Interface and decoration colours.
-    underlineColour: "#6a6a6a",
+    decorationColour: "#6a6a6a",
     selectionColour: "#d0e8fc",
     highlightColour: "#eeeeee",
     refineHighlightColour: "#94bcff",
@@ -21,4 +20,7 @@ export default {
     selectionRadiusPx: 3,
     //TODO: This should be based on the current text size.
     lineSpacing: 8,
+    createCircleR: 2,
+    //TODO: This should be based on the current text size.
+    createCircleMaxR: 6,
 };
