@@ -18,17 +18,6 @@ import { SvgGroup, UnderlineLine, SvgLine, SvgRect } from "./components";
 import THEME from "./theme";
 import { motion } from "framer-motion";
 
-interface ExprViewProps {
-    expr: Expr;
-    frozen?: boolean;
-    selection?: Optional<Expr>;
-    onClick?: (expr: Expr) => void;
-}
-
-interface ExprViewState {
-    highlight: Optional<Expr>;
-}
-
 interface DragAndDropSurfaceContext {
     maybeStartDrag: (start: Vector, exprStart: Vector, expr: Expr) => void;
     dismissDrag: () => void;
@@ -136,6 +125,18 @@ export class DragAndDropSurface extends Component<{}, DragAndDropSurfaceState> {
     }
 }
 
+interface ExprViewProps {
+    expr: Expr;
+    frozen?: boolean;
+    selection?: Optional<Expr>;
+    onClick?: (expr: Expr) => void;
+    onClickCreateCircle?: (expr: Expr) => void;
+}
+
+interface ExprViewState {
+    highlight: Optional<Expr>;
+}
+
 // This needs to be a class component so we can nicely pass it to the layout helper.
 //TODO: Support a prop indicating if the view has focus. (Otherwise dim selection)
 export default class ExprView extends PureComponent<
@@ -147,6 +148,7 @@ export default class ExprView extends PureComponent<
 
     state: ExprViewState = { highlight: null };
 
+    // Generic click action passed on using the props.
     onClick(event: React.MouseEvent, expr: Expr) {
         event.stopPropagation();
         assert(this.context != null);
@@ -154,11 +156,19 @@ export default class ExprView extends PureComponent<
         this.props.onClick?.(expr);
     }
 
+    onClickCreateCircle(event: React.MouseEvent, expr: Expr) {
+        //TODO: Might make sense to have a better delegation mechanism.
+        event.stopPropagation();
+        this.props.onClickCreateCircle?.(expr);
+    }
+
+    // Chang the highlighted expr.
     onHover(event: React.MouseEvent, expr: Optional<Expr>) {
         event.stopPropagation();
         this.setState({ highlight: expr });
     }
 
+    // Handler for the mousedown event.
     maybeStartDrag(event: React.MouseEvent, expr: Expr) {
         assert(event.type == "mousedown");
         if (event.buttons != 1) return;
@@ -270,7 +280,7 @@ function useBind<A>(fn: (a: A) => void, arg: A): () => void {
     return useCallback(() => fn(arg), []);
 }
 
-function CreateCirlce() {
+function CreateCirlce({ onClick }: { onClick: (e: React.MouseEvent) => void }) {
     const [hover, setHover] = useState(false);
     const r = THEME.createCircleR;
     const maxR = THEME.createCircleMaxR;
@@ -290,6 +300,7 @@ function CreateCirlce() {
             />
             <rect
                 // This rect represents the real hit-box of the circle.
+                onClick={onClick}
                 fill="transparent"
                 strokeWidth="0"
                 width={maxR * 2}
@@ -351,9 +362,14 @@ class ExprLayoutHelper implements ExprVisitor<Layout> {
         return layout;
     }
 
-    private layoutCreateCircle() {
+    private layoutCreateCircle(expr: Expr) {
+        if (this.parentView?.props.frozen) return;
         return new Layout(
-            (<CreateCirlce />),
+            (
+                <CreateCirlce
+                    onClick={e => this.parentView?.onClickCreateCircle(e, expr)}
+                />
+            ),
             size(THEME.createCircleMaxR, THEME.fontSizePx),
         );
     }
@@ -423,7 +439,7 @@ class ExprLayoutHelper implements ExprVisitor<Layout> {
 
         const comment = this.layoutComment(expr);
         const fnName = this.layoutText(expr, expr.fn, { bold: !inline });
-        const createCirlce = this.layoutCreateCircle();
+        const createCirlce = this.layoutCreateCircle(expr);
 
         let layout: Layout;
         // Adding a comment makes a call non-inline but not bold.

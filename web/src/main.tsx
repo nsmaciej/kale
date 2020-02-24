@@ -73,6 +73,7 @@ class Editor extends Component<EditorProps & LayoutProps, EditorState> {
         // See https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values.
         switch (event.key) {
             case "Backspace":
+                //TODO: Select a sibling.
                 this.setState(state => {
                     if (state.selection == null) return state;
                     this.props.onRemovedExpr(state.selection);
@@ -87,6 +88,17 @@ class Editor extends Component<EditorProps & LayoutProps, EditorState> {
 
     private exprSelected = (selection: Expr) => {
         this.setState({ selection });
+    };
+
+    private createCircleClicked = (expr: Expr) => {
+        if (expr instanceof E.Call) {
+            const hole = new E.Hole();
+            const newExpr = new E.Call(expr.fn, [...expr.args, hole]);
+            this.setState(state => ({
+                selection: hole,
+                expr: state.expr?.replace(expr, newExpr),
+            }));
+        }
     };
 
     private clearSelection = () => {
@@ -109,6 +121,7 @@ class Editor extends Component<EditorProps & LayoutProps, EditorState> {
                     }
                     selection={this.state.selection}
                     onClick={this.exprSelected}
+                    onClickCreateCircle={this.createCircleClicked}
                 />
             </Editor.Container>
         );

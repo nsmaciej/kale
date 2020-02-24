@@ -61,6 +61,10 @@ export abstract class Expr {
         return found;
     }
 
+    replace(old: Expr, next: Expr) {
+        return this.filterMap(x => (x === old ? next : x));
+    }
+
     validate() {
         if (this.data.comment === "") throw new InvalidExpr(this);
         let seenIds = new Set<ExprId>();
