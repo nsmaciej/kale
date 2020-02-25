@@ -64,9 +64,9 @@ export class Rect {
 }
 
 export class Vec {
-    static readonly zero = new Vec(0, 0);
+    static readonly zero = new Vec(0);
 
-    constructor(readonly x: number, readonly y: number) {}
+    constructor(readonly x: number, readonly y = x) {}
 
     static fromPage(e: { pageX: number; pageY: number }) {
         return new Vec(e.pageX, e.pageY);

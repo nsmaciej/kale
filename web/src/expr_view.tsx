@@ -218,11 +218,13 @@ export default class ExprView extends PureComponent<
         );
 
         // Selection and highlight drawing logic.
+        const padding = new Vec(THEME.exprViewPaddingPx);
         const area = {
             expr: this.props.expr,
             children: areas,
-            rect: new Rect(THEME.selectionPaddingPx, size),
+            rect: new Rect(padding, size),
         };
+
         const highlight = this.state.highlight;
         const selection = this.props.selection;
         const highlightRect = this.drawRect(highlight, false, area);
@@ -231,7 +233,7 @@ export default class ExprView extends PureComponent<
             ? [highlightRect, selectionRect]
             : [selectionRect, highlightRect];
 
-        const { width, height } = size.pad(THEME.selectionPaddingPx.scale(2));
+        const { width, height } = size.pad(padding.scale(2));
         return (
             <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -242,9 +244,7 @@ export default class ExprView extends PureComponent<
                 display="block"
             >
                 {layers}
-                <SvgGroup translate={THEME.selectionPaddingPx}>
-                    {nodes}
-                </SvgGroup>
+                <SvgGroup translate={padding}>{nodes}</SvgGroup>
             </svg>
         );
     }

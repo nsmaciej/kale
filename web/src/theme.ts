@@ -11,22 +11,23 @@ export default {
     selectionStrokeColour: "#9fcbff",
     highlightStrokeColour: "#cecece",
     commentColour: "#16a831",
+    exprViewPaddingPx: 12,
 
     // Code colours.
     variableColour: "#248af0",
     literalColour: "#f59a11",
     holeColour: "#ff0000",
 
-    // This also needs to be large enough to allow bottom-most underlines to render.
+    // Selection and highlights.
     selectionPaddingPx: new Vec(5, 3),
     selectionRadiusPx: 3,
-    //TODO: This should be based on the current text size.
-    lineSpacingPx: 8,
+
+    // Create Circle.
     createCircleR: 2,
-    //TODO: This should be based on the current text size.
-    createCircleMaxR: 6,
-    lineGap: 3,
+    createCircleMaxR: 6, //TODO: This should be based on the current text size.
 
     // Layout.
     lineBreakPointPx: 300,
+    lineGap: 3,
+    lineSpacingPx: 8, //TODO: This should be based on the current text size.
 };

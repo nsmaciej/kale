@@ -110,7 +110,7 @@ function stack(column: boolean, margin: number, args: StackLayout) {
     for (const x of children) {
         // Do not use the margin for the first element.
         const pad = layout.size.isZero() ? 0 : margin;
-        const size = layout.size.pad(new Vec(pad, pad));
+        const size = layout.size.pad(new Vec(pad));
         const pos = column ? size.bottom_left : size.top_right;
         layout.place(pos, x);
     }

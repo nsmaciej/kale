@@ -57,7 +57,7 @@ interface EditorState {
 
 const ExprViewAppearance = css`
     border: 1px solid #f1f1f1;
-    border-radius: ${THEME.selectionRadiusPx}px;
+    border-radius: ${THEME.exprViewPaddingPx}px;
     background: #fbfbfb;
 `;
 
