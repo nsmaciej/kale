@@ -306,11 +306,13 @@ function CreateCirlce({ onClick }: { onClick: (e: React.MouseEvent) => void }) {
 
 function materialiseUnderlines(parent: Layout) {
     const layout = parent.withNoUnderlines();
-    const LINE_GAP = 3;
+    const gap = THEME.lineGap;
     for (const x of parent.underlines) {
-        const pos = new Vec(x.offset, parent.size.height + x.level * LINE_GAP);
+        const pos = new Vec(x.offset, parent.size.height + x.level * gap);
         layout.nodes.push(<UnderlineLine start={pos} end={pos.dx(x.length)} />);
     }
+    const height = max(parent.underlines.map(x => x.level)) * gap;
+    layout.size = layout.size.pad(new Vec(0, height));
     return layout;
 }
 

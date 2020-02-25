@@ -25,6 +25,7 @@ export default {
     createCircleR: 2,
     //TODO: This should be based on the current text size.
     createCircleMaxR: 6,
+    lineGap: 3,
 
     // Layout.
     lineBreakPointPx: 300,
