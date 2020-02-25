@@ -3,7 +3,7 @@ import ReactDOM from "react-dom";
 import styled from "styled-components";
 
 import { Optional, assert, max } from "./utils";
-import { size, vec, Vector, Rect } from "./geometry";
+import { Vec, Rect, Size } from "./geometry";
 import { Layout, hstack, vstack, Area } from "./layout";
 import { Expr, ExprId, ExprVisitor } from "./expr";
 import * as E from "./expr";
@@ -13,12 +13,12 @@ import THEME from "./theme";
 import { motion } from "framer-motion";
 
 interface DragAndDropSurfaceContext {
-    maybeStartDrag: (start: Vector, exprStart: Vector, expr: Expr) => void;
+    maybeStartDrag: (start: Vec, exprStart: Vec, expr: Expr) => void;
     dismissDrag: () => void;
 }
 
 interface DragAndDropSurfaceState {
-    position: Optional<Vector>;
+    position: Optional<Vec>;
 }
 
 // There are three states to a drag.
@@ -44,13 +44,13 @@ export class DragAndDropSurface extends Component<{}, DragAndDropSurfaceState> {
         maybeStartDrag: this.maybeStartDrag.bind(this),
     };
     private drag: Optional<{
-        start: Vector; // Where the maybe-drag started.
-        delta: Optional<Vector>; // How much to offset the expr when showing the drag.
-        exprStart: Vector; // Page space coordinates of the expr.
+        start: Vec; // Where the maybe-drag started.
+        delta: Optional<Vec>; // How much to offset the expr when showing the drag.
+        exprStart: Vec; // Page space coordinates of the expr.
         expr: Expr;
     }>;
 
-    private maybeStartDrag(start: Vector, exprStart: Vector, expr: Expr) {
+    private maybeStartDrag(start: Vec, exprStart: Vec, expr: Expr) {
         this.drag = { start, expr, exprStart, delta: null };
     }
 
@@ -62,13 +62,13 @@ export class DragAndDropSurface extends Component<{}, DragAndDropSurfaceState> {
 
     private onMouseMove = (event: MouseEvent) => {
         // Ensure left mouse button is held down.
-        if (event.buttons != 1 || this.drag == null) {
+        if (event.buttons !== 1 || this.drag == null) {
             this.dismissDrag();
             return;
         }
 
         const DRAG_THRESHOLD = 4; // Based on Windows default, DragHeight registry.
-        const position = Vector.fromPage(event);
+        const position = Vec.fromPage(event);
         if (this.drag.delta == null) {
             // Consider starting a drag.
             if (this.drag.start.distance(position) > DRAG_THRESHOLD) {
@@ -165,17 +165,17 @@ export default class ExprView extends PureComponent<
 
     // Handler for the mousedown event.
     maybeStartDrag(event: React.MouseEvent, expr: Expr) {
-        assert(event.type == "mousedown");
-        if (event.buttons != 1) return;
+        assert(event.type === "mousedown");
+        if (event.buttons !== 1) return;
         event.stopPropagation();
         assert(this.context != null);
         const rect = (event.target as SVGElement).getBoundingClientRect();
         this.context.maybeStartDrag(
-            Vector.fromPage(event),
+            Vec.fromPage(event),
             //TODO: This only really works well for the top-left element of an expr. For example
             // this doesn't work for functions with comments on top of them, since the offset is
             // relative to the function name instead of the whole expression.
-            Vector.fromBoundingRect(rect),
+            Vec.fromBoundingRect(rect),
             expr,
         );
     }
@@ -233,7 +233,7 @@ export default class ExprView extends PureComponent<
         const selection = this.props.selection;
         const highlightRect = this.drawRect(highlight, false, area);
         const selectionRect = this.drawRect(selection, true, area);
-        let layers = this.props.expr.withId(highlight)?.contains(selection)
+        const layers = this.props.expr.withId(highlight)?.contains(selection)
             ? [highlightRect, selectionRect]
             : [selectionRect, highlightRect];
 
@@ -314,7 +314,7 @@ function materialiseUnderlines(parent: Layout) {
     const layout = parent.withNoUnderlines();
     const LINE_GAP = 3;
     for (const x of parent.underlines) {
-        const pos = vec(x.offset, parent.size.height + x.level * LINE_GAP);
+        const pos = new Vec(x.offset, parent.size.height + x.level * LINE_GAP);
         layout.nodes.push(<UnderlineLine start={pos} end={pos.dx(x.length)} />);
     }
     return layout;
@@ -366,7 +366,7 @@ class ExprLayoutHelper implements ExprVisitor<Layout> {
                     onClick={e => this.parentView?.onClickCreateCircle(e, expr)}
                 />
             ),
-            size(THEME.createCircleMaxR, THEME.fontSizePx),
+            new Size(THEME.createCircleMaxR, THEME.fontSizePx),
         );
     }
 
@@ -393,15 +393,15 @@ class ExprLayoutHelper implements ExprVisitor<Layout> {
         );
         const ruler = (
             <SvgLine
-                start={vec(3, 5)}
-                end={vec(3, layout.size.height)}
+                start={new Vec(3, 5)}
+                end={new Vec(3, layout.size.height)}
                 {...this.exprProps(expr)}
             />
         );
         return vstack(
             THEME.lineSpacingPx,
             this.layoutComment(expr),
-            hstack(0, new Layout(ruler, size(10, 0)), layout),
+            hstack(0, new Layout(ruler, new Size(10, 0)), layout),
         );
     }
 

@@ -1,6 +1,6 @@
 import React, { ReactNode } from "react";
 
-import { Size, Vector, Rect } from "./geometry";
+import { Size, Vec, Rect } from "./geometry";
 import { Optional, max } from "./utils";
 import { SvgGroup } from "./components";
 import { Expr } from "./expr";
@@ -40,7 +40,7 @@ export class Layout {
         return layout;
     }
 
-    place(origin: Vector, layout: Layout, index = this.nodes.length) {
+    place(origin: Vec, layout: Layout, index = this.nodes.length) {
         this.size = this.size.extend(origin, layout.size);
         this.nodes.splice(
             index,
@@ -110,7 +110,7 @@ function stack(column: boolean, margin: number, args: StackLayout) {
     for (const x of children) {
         // Do not use the margin for the first element.
         const pad = layout.size.isZero() ? 0 : margin;
-        const size = layout.size.pad(new Vector(pad, pad));
+        const size = layout.size.pad(new Vec(pad, pad));
         const pos = column ? size.bottom_left : size.top_right;
         layout.place(pos, x);
     }

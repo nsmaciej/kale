@@ -1,4 +1,4 @@
-import { size, Size } from "./geometry";
+import { Size } from "./geometry";
 import THEME from "./theme";
 
 interface TextStyle {
@@ -55,13 +55,13 @@ export default class TextMetrics {
         const HEIGHT_FUDGE_FACTOR = 1.3;
         const height = THEME.fontSizePx * HEIGHT_FUDGE_FACTOR;
         if (key in this._metricsCache) {
-            return size(this._metricsCache[key], height);
+            return new Size(this._metricsCache[key], height);
         }
         this._textElement.textContent = text;
         this._textElement.style.fontWeight = bold ? "bold" : "normal";
         this._textElement.style.fontStyle = italic ? "italic" : "normal";
         const width = this._textElement.getComputedTextLength();
         this._metricsCache[key] = width;
-        return size(width, height);
+        return new Size(width, height);
     }
 }

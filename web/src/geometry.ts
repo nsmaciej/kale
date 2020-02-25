@@ -5,25 +5,25 @@ export class Size {
 
     constructor(readonly width: number, readonly height: number) {}
 
-    get bottom_left(): Vector {
-        return vec(0, this.height);
+    get bottom_left(): Vec {
+        return new Vec(0, this.height);
     }
-    get bottom_right(): Vector {
-        return vec(this.width, this.height);
+    get bottom_right(): Vec {
+        return new Vec(this.width, this.height);
     }
-    get top_right(): Vector {
-        return vec(this.width, 0);
+    get top_right(): Vec {
+        return new Vec(this.width, 0);
     }
 
-    pad({ x, y }: Vector) {
-        return size(this.width + x, this.height + y);
+    pad({ x, y }: Vec) {
+        return new Size(this.width + x, this.height + y);
     }
 
     isZero() {
-        return this.width == 0 && this.height == 0;
+        return this.width === 0 && this.height === 0;
     }
 
-    extend(offset: Vector, size: Size): Size {
+    extend(offset: Vec, size: Size): Size {
         return new Size(
             Math.max(this.width, offset.x + size.width),
             Math.max(this.height, offset.y + size.height),
@@ -32,7 +32,7 @@ export class Size {
 }
 
 export class Rect {
-    constructor(readonly origin: Vector, readonly size: Size) {}
+    constructor(readonly origin: Vec, readonly size: Size) {}
     get x() {
         return this.origin.x;
     }
@@ -46,64 +46,57 @@ export class Rect {
         return this.size.height;
     }
 
-    contains(point: Vector) {
+    contains(point: Vec) {
         const corner = this.size.bottom_right.add(this.origin);
         return this.origin.lt(point) && corner.gt(point);
     }
 
-    pad(d: Vector) {
+    pad(d: Vec) {
         return new Rect(this.origin.dy(-d.y).dx(-d.x), this.size.pad(d).pad(d));
     }
 
-    shift(offset: Vector) {
+    shift(offset: Vec) {
         return new Rect(this.origin.add(offset), this.size);
     }
 }
 
-export class Vector {
-    static readonly zero = new Vector(0, 0);
+export class Vec {
+    static readonly zero = new Vec(0, 0);
 
     constructor(readonly x: number, readonly y: number) {}
 
     static fromPage(e: { pageX: number; pageY: number }) {
-        return vec(e.pageX, e.pageY);
+        return new Vec(e.pageX, e.pageY);
     }
     static fromBoundingRect(rect: { left: number; top: number }) {
-        return vec(rect.left, rect.top);
+        return new Vec(rect.left, rect.top);
     }
 
-    difference(other: Vector) {
-        return vec(this.x - other.x, this.y - other.y);
+    difference(other: Vec) {
+        return new Vec(this.x - other.x, this.y - other.y);
     }
-    add(other: Vector) {
-        return vec(this.x + other.x, this.y + other.y);
+    add(other: Vec) {
+        return new Vec(this.x + other.x, this.y + other.y);
     }
 
-    lt(other: Vector) {
+    lt(other: Vec) {
         return this.x < other.x && this.y < other.y;
     }
-    gt(other: Vector) {
+    gt(other: Vec) {
         return this.x > other.x && this.y > other.y;
     }
 
     hypot() {
         return Math.hypot(this.x, this.y);
     }
-    distance(other: Vector) {
+    distance(other: Vec) {
         return this.difference(other).hypot();
     }
 
     dx(d: number) {
-        return vec(this.x + d, this.y);
+        return new Vec(this.x + d, this.y);
     }
     dy(d: number) {
-        return vec(this.x, this.y + d);
+        return new Vec(this.x, this.y + d);
     }
-}
-
-export function size(width: number, height: number) {
-    return new Size(width, height);
-}
-export function vec(x: number, y: number) {
-    return new Vector(x, y);
 }

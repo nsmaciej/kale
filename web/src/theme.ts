@@ -1,4 +1,4 @@
-import { Vector } from "./geometry";
+import { Vec } from "./geometry";
 
 export default {
     // Text.
@@ -18,7 +18,7 @@ export default {
     holeColour: "#ff0000",
 
     // This also needs to be large enough to allow bottom-most underlines to render.
-    selectionPaddingPx: new Vector(5, 3),
+    selectionPaddingPx: new Vec(5, 3),
     selectionRadiusPx: 3,
     //TODO: This should be based on the current text size.
     lineSpacingPx: 8,

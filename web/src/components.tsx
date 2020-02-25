@@ -1,7 +1,7 @@
 import React, { ReactNode, SVGProps } from "react";
 import styled from "styled-components";
 
-import { Vector, Rect } from "./geometry";
+import { Vec, Rect } from "./geometry";
 import THEME from "./theme";
 
 export interface LayoutProps {
@@ -64,17 +64,17 @@ type CustomSvgProps<Element, CustomProps> = CustomProps &
 // Naming convention: generic svg components have the prefix Svg, bot established UI elements.
 export function SvgGroup({
     children,
-    translate = Vector.zero,
+    translate = Vec.zero,
 }: {
     children: ReactNode;
-    translate?: Vector;
+    translate?: Vec;
 }) {
     return (
         <g transform={`translate(${translate.x} ${translate.y})`}>{children}</g>
     );
 }
 
-type LineProps = CustomSvgProps<SVGLineElement, { start: Vector; end: Vector }>;
+type LineProps = CustomSvgProps<SVGLineElement, { start: Vec; end: Vec }>;
 
 export function SvgLine({
     start,
