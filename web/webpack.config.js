@@ -12,6 +12,12 @@ module.exports = {
             },
         ],
     },
+    devServer: {
+        publicPath: "/dist/",
+        overlay: true,
+        watchContentBase: true,
+        quiet: true,
+    },
     resolve: {
         extensions: [".tsx", ".ts", ".js"],
     },
