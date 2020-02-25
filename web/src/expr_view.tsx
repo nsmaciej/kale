@@ -2,7 +2,7 @@ import React, { PureComponent, Component, useState, useCallback } from "react";
 import ReactDOM from "react-dom";
 import styled from "styled-components";
 
-import { Optional, assert, max } from "./utils";
+import { Optional, assert, max, assertSome } from "./utils";
 import { Vec, Rect, Size } from "./geometry";
 import { Layout, hstack, vstack, Area } from "./layout";
 import { Expr, ExprId, ExprVisitor } from "./expr";
@@ -93,18 +93,14 @@ export class DragAndDropSurface extends Component<{}, DragAndDropSurfaceState> {
 
         if (this.drag?.delta != null) {
             // drag.delta gets set when the drag starts proper.
-            assert(this.state.position != null);
+            const pos = assertSome(this.state.position).add(this.drag.delta);
             const { nodes } = new ExprLayoutHelper(null).layout(this.drag.expr);
             surface = ReactDOM.createPortal(
                 <DragAndDropSurface.Svg
                     xmlns="http://www.w3.org/2000/svg"
                     onMouseUp={this.dismissDrag.bind(this)}
                 >
-                    <SvgGroup
-                        translate={this.state.position.add(this.drag.delta)}
-                    >
-                        {nodes}
-                    </SvgGroup>
+                    <SvgGroup translate={pos}>{nodes}</SvgGroup>
                 </DragAndDropSurface.Svg>,
                 document.body,
             );
@@ -146,8 +142,7 @@ export default class ExprView extends PureComponent<
     // Generic click action passed on using the props.
     onClick(event: React.MouseEvent, expr: Expr) {
         event.stopPropagation();
-        assert(this.context != null);
-        this.context.dismissDrag();
+        assertSome(this.context).dismissDrag();
         this.props.onClick?.(expr.id);
     }
 
@@ -168,9 +163,8 @@ export default class ExprView extends PureComponent<
         assert(event.type === "mousedown");
         if (event.buttons !== 1) return;
         event.stopPropagation();
-        assert(this.context != null);
         const rect = (event.target as SVGElement).getBoundingClientRect();
-        this.context.maybeStartDrag(
+        assertSome(this.context).maybeStartDrag(
             Vec.fromPage(event),
             //TODO: This only really works well for the top-left element of an expr. For example
             // this doesn't work for functions with comments on top of them, since the offset is
@@ -237,7 +231,7 @@ export default class ExprView extends PureComponent<
             ? [highlightRect, selectionRect]
             : [selectionRect, highlightRect];
 
-        const { width, height } = size.pad(THEME.selectionPaddingPx);
+        const { width, height } = size.pad(THEME.selectionPaddingPx.scale(2));
         return (
             <svg
                 xmlns="http://www.w3.org/2000/svg"

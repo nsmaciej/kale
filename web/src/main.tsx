@@ -149,10 +149,9 @@ class Editor extends Component<EditorProps & LayoutProps, EditorState> {
     private createCircleClicked = (clickedId: ExprId) => {
         const clicked = this.state.expr?.withId(clickedId);
         if (clicked instanceof E.Call) {
-            const hole = new E.Hole();
             const newExpr = new E.Call(
                 clicked.fn,
-                [...clicked.args, hole],
+                clicked.args.concat(new E.Hole()),
                 clicked.data,
             );
             this.setState(({ selection, expr }) => ({
@@ -191,7 +190,6 @@ const ExprViewItem = styled.div`
     ${ExprViewAppearance}
     position: relative;
     padding: 0;
-    cursor: grab;
 `;
 
 function ExprViewList({
