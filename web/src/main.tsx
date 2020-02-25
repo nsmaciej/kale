@@ -7,11 +7,11 @@ import styled, {
 } from "styled-components";
 
 import * as E from "./expr";
-import { Expr } from "./expr";
+import { Expr, ExprId } from "./expr";
 import ExprView, { DragAndDropSurface } from "./expr_view";
 import SAMPLE_EXPR from "./sample";
 import TextMetrics from "./text_metrics";
-import { Optional } from "./utils";
+import { Optional, assert, assertSome } from "./utils";
 import THEME from "./theme";
 import {
     Box,
@@ -51,13 +51,13 @@ interface EditorProps {
 }
 
 interface EditorState {
-    expr: Optional<Expr>;
-    selection: Optional<Expr>;
+    expr: Expr;
+    selection: Optional<ExprId>;
 }
 
 const ExprViewAppearance = css`
     border: 1px solid #f1f1f1;
-    border-radius: ${THEME.selectionPaddingPx}px;
+    border-radius: ${THEME.selectionRadiusPx}px;
     background: #fbfbfb;
 `;
 
@@ -73,34 +73,92 @@ class Editor extends Component<EditorProps & LayoutProps, EditorState> {
         expr: SAMPLE_EXPR,
     };
 
+    private removeSelection(state: EditorState): EditorState {
+        const { selection, expr } = state;
+        if (selection == null) return state;
+        this.props.onRemovedExpr(assertSome(expr.withId(selection)));
+        const newExpr = expr.remove(selection);
+        const parent = expr.parentOf(selection);
+        // Check if the parent still exists. If not, select the grand-parent.
+        const newSelection = newExpr?.contains(parent?.id)
+            ? parent?.id
+            : expr.parentOf(parent?.id)?.id;
+        assert(
+            newSelection == null || newExpr?.contains(newSelection),
+            "Calculated new selection does not exist",
+        );
+        return {
+            expr: newExpr ?? new E.Hole(E.exprData("Double click me")),
+            selection: newSelection,
+        };
+    }
+
+    private selectParent(state: EditorState) {
+        return state.expr?.parentOf(state.selection)?.id;
+    }
+    private selectLeftSibling(state: EditorState) {
+        const siblings = state.expr.parentOf(state.selection)?.children() ?? [];
+        const ix = siblings?.findIndex(x => x.id === state.selection);
+        if (ix == null || ix === 0) return;
+        return siblings[ix - 1]?.id;
+    }
+    private selectRightSibling(state: EditorState) {
+        const siblings = state.expr.parentOf(state.selection)?.children() ?? [];
+        const ix = siblings?.findIndex(x => x.id === state.selection);
+        if (ix == null) return;
+        return siblings[ix + 1]?.id;
+    }
+    private selectFirstCHild(state: EditorState) {
+        return state.expr?.withId(state.selection)?.children()[0]?.id;
+    }
+
+    private setSelection(reducer: (state: EditorState) => Optional<ExprId>) {
+        this.setState(state => ({
+            selection:
+                state.selection == null
+                    ? state.expr.id
+                    : reducer(state) ?? state.selection,
+        }));
+    }
+
     private keyDown = (event: React.KeyboardEvent) => {
         // See https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values.
         switch (event.key) {
             case "Backspace":
-                //TODO: Select a sibling.
-                this.setState(state => {
-                    if (state.selection == null) return state;
-                    this.props.onRemovedExpr(state.selection);
-                    return {
-                        expr: state.expr?.remove(state.selection),
-                        selection: null,
-                    };
-                });
+                this.setState(this.removeSelection);
+                break;
+            case "h":
+                this.setSelection(this.selectParent);
+                break;
+            case "k":
+                this.setSelection(this.selectLeftSibling);
+                break;
+            case "j":
+                this.setSelection(this.selectRightSibling);
+                break;
+            case "l":
+                this.setSelection(this.selectFirstCHild);
                 break;
         }
     };
 
-    private exprSelected = (selection: Expr) => {
+    private exprSelected = (selection: ExprId) => {
         this.setState({ selection });
     };
 
-    private createCircleClicked = (expr: Expr) => {
-        if (expr instanceof E.Call) {
+    private createCircleClicked = (clickedId: ExprId) => {
+        const clicked = this.state.expr?.withId(clickedId);
+        if (clicked instanceof E.Call) {
             const hole = new E.Hole();
-            const newExpr = new E.Call(expr.fn, [...expr.args, hole]);
-            this.setState(state => ({
-                selection: hole,
-                expr: state.expr?.replace(expr, newExpr),
+            const newExpr = new E.Call(
+                clicked.fn,
+                [...clicked.args, hole],
+                clicked.data,
+            );
+            this.setState(({ selection, expr }) => ({
+                // Try to preserve the selection.
+                selection: selection === clickedId ? newExpr.id : selection,
+                expr: expr.replace(clickedId, newExpr),
             }));
         }
     };
@@ -119,10 +177,7 @@ class Editor extends Component<EditorProps & LayoutProps, EditorState> {
                 gridArea={this.props.gridArea}
             >
                 <ExprView
-                    expr={
-                        this.state.expr ??
-                        new E.Hole(E.exprData("Empty function"))
-                    }
+                    expr={this.state.expr}
                     selection={this.state.selection}
                     onClick={this.exprSelected}
                     onClickCreateCircle={this.createCircleClicked}

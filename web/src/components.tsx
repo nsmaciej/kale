@@ -94,22 +94,6 @@ export function SvgLine({
     );
 }
 
-export function SvgRect({
-    rect,
-    ...props
-}: CustomSvgProps<SVGRectElement, { rect: Rect }>) {
-    const { origin, size } = rect;
-    return (
-        <rect
-            x={origin.x}
-            y={origin.y}
-            width={size.width}
-            height={size.height}
-            {...props}
-        />
-    );
-}
-
 export function UnderlineLine(
     props: Omit<LineProps, "shapeRendering" | "stroke" | "strokeWidth">,
 ) {

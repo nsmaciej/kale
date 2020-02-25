@@ -25,6 +25,7 @@ export class Layout {
     expr: Optional<Expr>;
     areas: Area[] = [];
     isUnderlined = false;
+    inlineExprs = new Set<Expr>();
 
     constructor(node: ReactNode = null, size = Size.zero) {
         this.nodes = [node];
@@ -35,6 +36,7 @@ export class Layout {
         const layout = new Layout(this.nodes.slice(), this.size);
         layout.areas = this.areas;
         layout.expr = this.expr;
+        layout.inlineExprs = this.inlineExprs;
         return layout;
     }
 
@@ -45,6 +47,19 @@ export class Layout {
             0,
             <SvgGroup translate={origin}>{layout.nodes.flat()}</SvgGroup>,
         );
+
+        // Handle inline children.
+        if (layout.inline && layout.expr != null) {
+            this.inlineExprs.add(layout.expr);
+        }
+        if (layout.inlineExprs.size > 0) {
+            this.inlineExprs = new Set([
+                ...this.inlineExprs,
+                ...layout.inlineExprs,
+            ]);
+        }
+
+        // Handle underlines.
         for (const x of layout.underlines) {
             this.underlines.push({
                 level: x.level + +layout.isUnderlined,
@@ -59,6 +74,8 @@ export class Layout {
                 offset: origin.x,
             });
         }
+
+        // Handle hover/drop areas.
         if (layout.expr != null) {
             this.areas.push({
                 rect: new Rect(origin, layout.size),
@@ -92,7 +109,8 @@ function stack(column: boolean, margin: number, args: StackLayout) {
     const layout = new Layout();
     for (const x of children) {
         // Do not use the margin for the first element.
-        const size = layout.size.pad(layout.size.isZero() ? 0 : margin);
+        const pad = layout.size.isZero() ? 0 : margin;
+        const size = layout.size.pad(new Vector(pad, pad));
         const pos = column ? size.bottom_left : size.top_right;
         layout.place(pos, x);
     }

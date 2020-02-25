@@ -1,14 +1,16 @@
-import { filterMap, Optional, arrayEquals } from "./utils";
+import { filterMap, Optional, arrayEquals, assertSome } from "./utils";
 
 export type ExprId = number;
 
 export interface ExprData {
+    id: ExprId;
     comment?: string;
 }
 
+let GlobalExprId = 1;
 // Construct simple ExprData for sample Exprs. Not very exciting right now.
 export function exprData(comment?: string): ExprData {
-    return { comment };
+    return { comment, id: GlobalExprId++ };
 }
 
 export interface ExprVisitor<R = any> {
@@ -32,10 +34,10 @@ export class InvalidExpr extends Error {
 }
 
 export abstract class Expr {
-    private static serialExprId = 1;
-    //TODO: Maybe we don't even need an id.
-    readonly id: ExprId = Expr.serialExprId++;
     constructor(readonly data: ExprData) {}
+    get id() {
+        return this.data.id;
+    }
 
     protected abstract shallowValid(): boolean;
 
@@ -48,34 +50,65 @@ export abstract class Expr {
         throw new UnvisitableExpr(this);
     }
 
-    contains(expr: Expr) {
-        return this.some(x => x === expr);
+    contains(expr: Optional<ExprId>): boolean {
+        return this.withId(expr) != null;
     }
 
     some(fn: (expr: Expr) => boolean) {
-        let found = false;
-        this.filterMap(x => {
-            if (fn(x)) found = true;
-            return x;
+        return this.find(fn) != null;
+    }
+
+    withId(id: Optional<ExprId>): Optional<Expr> {
+        return id == null ? null : this.find(x => x.id === id);
+    }
+
+    replace(old: ExprId, next: Expr): Expr {
+        return assertSome(this.filterMap(x => (x.id === old ? next : x)));
+    }
+
+    find(predicate: (expr: Expr) => boolean): Optional<Expr> {
+        let found: Optional<Expr>;
+        this.forEach(x => {
+            if (found == null && predicate(x)) found = x;
         });
         return found;
     }
 
-    replace(old: Expr, next: Expr) {
-        return this.filterMap(x => (x === old ? next : x));
+    forEach(callback: (x: Expr) => void) {
+        this.filterMap(x => {
+            callback(x);
+            return x;
+        });
+    }
+
+    parentOf(id: Optional<ExprId>): Optional<Expr> {
+        if (id == null) return null;
+        return this.find(
+            x =>
+                (x instanceof Call && x.args.some(i => i.id === id)) ||
+                (x instanceof List && x.list.some(i => i.id === id)),
+        );
+    }
+
+    children(): readonly Expr[] {
+        if (this instanceof Call) return this.args;
+        if (this instanceof List) return this.list;
+        return [];
+    }
+
+    siblings(id: ExprId): readonly Expr[] {
+        return this.parentOf(id)?.children() ?? [];
     }
 
     validate() {
         if (this.data.comment === "") throw new InvalidExpr(this);
-        let seenIds = new Set<ExprId>();
-        const validator = new ExprFilterMap(x => {
+        const seenIds = new Set<ExprId>();
+        this.forEach(x => {
             if (seenIds.has(x.id) || !x.shallowValid()) {
                 throw new InvalidExpr(x);
             }
             seenIds.add(x.id);
-            return x;
         });
-        this.visit(validator);
         return this;
     }
 
@@ -83,8 +116,10 @@ export abstract class Expr {
         return this.visit(new ExprFilterMap(fn));
     }
 
-    remove(expr: Expr) {
-        return this.filterMap(x => (x === expr ? null : x));
+    remove(id: Optional<ExprId>) {
+        return id == null
+            ? null
+            : this.filterMap(x => (x.id === id ? null : x));
     }
 }
 

@@ -1,20 +1,14 @@
-import React, {
-    PureComponent,
-    Component,
-    ReactNode,
-    useState,
-    useCallback,
-} from "react";
+import React, { PureComponent, Component, useState, useCallback } from "react";
 import ReactDOM from "react-dom";
 import styled from "styled-components";
 
 import { Optional, assert, max } from "./utils";
 import { size, vec, Vector, Rect } from "./geometry";
 import { Layout, hstack, vstack, Area } from "./layout";
-import { Expr, ExprVisitor } from "./expr";
+import { Expr, ExprId, ExprVisitor } from "./expr";
 import * as E from "./expr";
 import TextMetrics from "./text_metrics";
-import { SvgGroup, UnderlineLine, SvgLine, SvgRect } from "./components";
+import { SvgGroup, UnderlineLine, SvgLine } from "./components";
 import THEME from "./theme";
 import { motion } from "framer-motion";
 
@@ -128,13 +122,14 @@ export class DragAndDropSurface extends Component<{}, DragAndDropSurfaceState> {
 interface ExprViewProps {
     expr: Expr;
     frozen?: boolean;
-    selection?: Optional<Expr>;
-    onClick?: (expr: Expr) => void;
-    onClickCreateCircle?: (expr: Expr) => void;
+    selection?: Optional<ExprId>;
+    onClick?: (expr: ExprId) => void;
+    onClickCreateCircle?: (expr: ExprId) => void;
 }
 
 interface ExprViewState {
-    highlight: Optional<Expr>;
+    highlight: Optional<ExprId>;
+    // animatingSelection: boolean;
 }
 
 // This needs to be a class component so we can nicely pass it to the layout helper.
@@ -153,19 +148,19 @@ export default class ExprView extends PureComponent<
         event.stopPropagation();
         assert(this.context != null);
         this.context.dismissDrag();
-        this.props.onClick?.(expr);
+        this.props.onClick?.(expr.id);
     }
 
     onClickCreateCircle(event: React.MouseEvent, expr: Expr) {
         //TODO: Might make sense to have a better delegation mechanism.
         event.stopPropagation();
-        this.props.onClickCreateCircle?.(expr);
+        this.props.onClickCreateCircle?.(expr.id);
     }
 
     // Chang the highlighted expr.
     onHover(event: React.MouseEvent, expr: Optional<Expr>) {
         event.stopPropagation();
-        this.setState({ highlight: expr });
+        this.setState({ highlight: expr?.id });
     }
 
     // Handler for the mousedown event.
@@ -185,8 +180,8 @@ export default class ExprView extends PureComponent<
         );
     }
 
-    private findExprRect(expr: Expr, area: Area): Optional<Rect> {
-        if (area.expr === expr) return area.rect;
+    private findExprRect(expr: ExprId, area: Area): Optional<Rect> {
+        if (area.expr.id === expr) return area.rect;
         for (const child of area.children) {
             const rect = this.findExprRect(expr, child);
             if (rect != null) return rect.shift(area.rect.origin);
@@ -194,55 +189,55 @@ export default class ExprView extends PureComponent<
         return null;
     }
 
-    private drawRect(expr: Expr, area: Area, colour: string) {
-        const rect = this.findExprRect(expr, area);
-        // This happens when an expression is removed.
-        if (rect == null) return null;
+    private drawRect(expr: Optional<ExprId>, isSelection: boolean, area: Area) {
+        if (expr == null) return;
+        const rect = this.findExprRect(expr, area)?.pad(
+            THEME.selectionPaddingPx,
+        );
+        if (rect == null) return; // This happens when an expression is removed.
         return (
-            <SvgRect
-                rect={rect.pad(THEME.selectionPaddingPx)}
+            <motion.rect
+                animate={{
+                    x: rect.x,
+                    y: rect.y,
+                    width: rect.width,
+                    height: rect.height,
+                }}
+                key={isSelection}
                 rx={THEME.selectionRadiusPx}
-                fill={colour}
+                fill={isSelection ? THEME.selectionColour : "none"}
+                initial={false}
+                stroke={
+                    isSelection
+                        ? THEME.selectionStrokeColour
+                        : THEME.highlightStrokeColour
+                }
+                strokeWidth={1}
+                transition={{ type: "tween", ease: "easeIn", duration: 0.1 }}
             />
         );
     }
 
     render() {
-        const padding = THEME.selectionPaddingPx;
-        const groupShift = vec(padding, padding);
-        const { nodes, size, areas } = materialiseUnderlines(
+        const { nodes, size, areas, inlineExprs } = materialiseUnderlines(
             new ExprLayoutHelper(this).layout(this.props.expr),
         );
-        const { width, height } = size.pad(padding * 2);
 
         // Selection and highlight drawing logic.
         const area = {
             expr: this.props.expr,
             children: areas,
-            rect: new Rect(groupShift, size),
+            rect: new Rect(THEME.selectionPaddingPx, size),
         };
         const highlight = this.state.highlight;
         const selection = this.props.selection;
-        let layers: ReactNode = null;
-        if (highlight != null && selection != null && highlight !== selection) {
-            // I don't like this code one bit. Might abstract it away at some point.
-            if (selection.contains(highlight)) {
-                layers = [
-                    this.drawRect(selection, area, THEME.selectionColour),
-                    this.drawRect(highlight, area, THEME.refineHighlightColour),
-                ];
-            } else {
-                layers = [
-                    this.drawRect(highlight, area, THEME.highlightColour),
-                    this.drawRect(selection, area, THEME.selectionColour),
-                ];
-            }
-        } else if (selection != null) {
-            layers = this.drawRect(selection, area, THEME.selectionColour);
-        } else if (highlight != null) {
-            layers = this.drawRect(highlight, area, THEME.highlightColour);
-        }
+        const highlightRect = this.drawRect(highlight, false, area);
+        const selectionRect = this.drawRect(selection, true, area);
+        let layers = this.props.expr.withId(highlight)?.contains(selection)
+            ? [highlightRect, selectionRect]
+            : [selectionRect, highlightRect];
 
+        const { width, height } = size.pad(THEME.selectionPaddingPx);
         return (
             <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -253,7 +248,9 @@ export default class ExprView extends PureComponent<
                 display="block"
             >
                 {layers}
-                <SvgGroup translate={groupShift}>{nodes}</SvgGroup>
+                <SvgGroup translate={THEME.selectionPaddingPx}>
+                    {nodes}
+                </SvgGroup>
             </svg>
         );
     }
@@ -391,7 +388,7 @@ class ExprLayoutHelper implements ExprVisitor<Layout> {
     visitList(expr: E.List): Layout {
         //TODO: Add a larger clickable area to the list ruler.
         const layout = vstack(
-            THEME.lineSpacing,
+            THEME.lineSpacingPx,
             expr.list.map(x => materialiseUnderlines(this.layout(x))),
         );
         const ruler = (
@@ -402,7 +399,7 @@ class ExprLayoutHelper implements ExprVisitor<Layout> {
             />
         );
         return vstack(
-            THEME.lineSpacing,
+            THEME.lineSpacingPx,
             this.layoutComment(expr),
             hstack(0, new Layout(ruler, size(10, 0)), layout),
         );
@@ -434,27 +431,29 @@ class ExprLayoutHelper implements ExprVisitor<Layout> {
     visitCall(expr: E.Call): Layout {
         const args = expr.args.map(this.layout, this);
         const inline = isCallInline(args);
-        const inlineMargin = TextMetrics.global.measure("\xa0").width; // Non-breaking space.
-
-        const comment = this.layoutComment(expr);
-        const fnName = this.layoutText(expr, expr.fn, { bold: !inline });
-        const createCirlce = this.layoutCreateCircle(expr);
+        const fnName = hstack(
+            THEME.createCircleMaxR,
+            this.layoutText(expr, expr.fn, { bold: !inline }),
+            this.layoutCreateCircle(expr),
+        );
 
         let layout: Layout;
         // Adding a comment makes a call non-inline but not bold.
         if (inline && expr.data.comment == null) {
-            layout = hstack(inlineMargin, fnName, createCirlce, args);
+            const inlineMarginPx = TextMetrics.global.measure("\xa0").width; // Non-breaking space.
+            layout = hstack(inlineMarginPx, fnName, args);
             layout.isUnderlined = true;
             layout.inline = true;
         } else {
             layout = hstack(
-                THEME.lineSpacing,
+                THEME.lineSpacingPx,
                 fnName,
-                createCirlce,
-                vstack(THEME.lineSpacing, args.map(materialiseUnderlines)),
+                vstack(THEME.lineSpacingPx, args.map(materialiseUnderlines)),
             );
         }
-        return vstack(THEME.lineSpacing, comment, layout);
+
+        const comment = this.layoutComment(expr);
+        return vstack(THEME.lineSpacingPx, comment, layout);
     }
 }
 
@@ -470,9 +469,8 @@ function isCallInline(args: readonly Layout[]): boolean {
         return true;
     }
     // Do we need a line break?
-    const LINE_BREAK_POINT = 200;
     const lineWidth = args.map(x => x.size.width).reduce((x, y) => x + y, 0);
-    if (lineWidth > LINE_BREAK_POINT && args.length > 0) {
+    if (lineWidth > THEME.lineBreakPointPx && args.length > 0) {
         return false;
     }
     // Is the expression too nested?

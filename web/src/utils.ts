@@ -2,6 +2,11 @@ export function assert(condition: any, message?: string): asserts condition {
     if (!condition) throw new Error(message);
 }
 
+export function assertSome<T>(value: Optional<T>): T {
+    assert(value != null);
+    return value;
+}
+
 // T or nullish. Can be checked using == null. See
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Equality_comparisons_and_sameness
 export type Optional<T> = T | undefined | null;

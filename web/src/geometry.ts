@@ -15,8 +15,8 @@ export class Size {
         return vec(this.width, 0);
     }
 
-    pad(d: number) {
-        return size(this.width + d, this.height + d);
+    pad({ x, y }: Vector) {
+        return size(this.width + x, this.height + y);
     }
 
     isZero() {
@@ -33,17 +33,26 @@ export class Size {
 
 export class Rect {
     constructor(readonly origin: Vector, readonly size: Size) {}
+    get x() {
+        return this.origin.x;
+    }
+    get y() {
+        return this.origin.y;
+    }
+    get width() {
+        return this.size.width;
+    }
+    get height() {
+        return this.size.height;
+    }
 
     contains(point: Vector) {
         const corner = this.size.bottom_right.add(this.origin);
         return this.origin.lt(point) && corner.gt(point);
     }
 
-    pad(amount: number) {
-        return new Rect(
-            this.origin.dy(-amount).dx(-amount),
-            this.size.pad(amount * 2),
-        );
+    pad(d: Vector) {
+        return new Rect(this.origin.dy(-d.y).dx(-d.x), this.size.pad(d).pad(d));
     }
 
     shift(offset: Vector) {
