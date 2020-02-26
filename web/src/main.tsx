@@ -31,6 +31,7 @@ const GlobalStyle = createGlobalStyle`
 body {
     font-family: "Asap", sans-serif;
     font-size: 14px;
+    color: #404040;
 }
 /* Hide the focus ring around focused divs */
 div:focus {
@@ -223,6 +224,10 @@ const Shortcut = styled.div`
     border-radius: 3px;
     box-shadow: 0 1px 0 rgba(12, 13, 14, 0.2), 0 0 0 2px #fff inset;
     white-space: nowrap;
+    margin: 0.1em;
+`;
+
+const ExprListShortcut = styled(Shortcut)`
     grid-column: shortcut;
     justify-self: right;
 `;
@@ -250,7 +255,9 @@ function ExprViewList({ exprs, gridArea, frozen, heading }: ExprViewListProps) {
                 <AnimatePresence>
                     {exprs.map(({ expr, shortcut }, i) => (
                         <React.Fragment key={expr.id}>
-                            {shortcut && <Shortcut>{shortcut}</Shortcut>}
+                            {shortcut && (
+                                <ExprListShortcut>{shortcut}</ExprListShortcut>
+                            )}
                             <ExprViewItem
                                 initial={{ opacity: 0.8, scale: 0.9 }}
                                 animate={{ opacity: 1, scale: 1 }}
@@ -321,6 +328,7 @@ class Kale extends Component<{}, KaleState> {
     };
 
     render() {
+        const S = Shortcut;
         return (
             <StyleSheetManager disableVendorPrefixes>
                 <DragAndDropSurface>
@@ -333,7 +341,12 @@ class Kale extends Component<{}, KaleState> {
                             justifyContent="space-between"
                         >
                             <Kale.Heading>Kale</Kale.Heading>
-                            <p>Press backspace to delete</p>
+                            <p>
+                                Press <S>backspace</S> to delete. Use <S>H</S>
+                                <S>J</S>
+                                <S>K</S>
+                                <S>L</S> to move around.
+                            </p>
                         </HorizonstalStack>
                         <ExprViewList
                             gridArea="toybox"
