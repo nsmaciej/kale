@@ -10,7 +10,7 @@ import SAMPLE_EXPR from "./sample";
 import TextMetrics from "./text_metrics";
 import { Optional, assert, assertSome } from "./utils";
 import THEME from "./theme";
-import { Box, HorizonstalStack, BoxProps } from "./components";
+import { Box, HorizonstalStack, BoxProps, Shortcut } from "./components";
 
 const GlobalStyle = createGlobalStyle`
 #main {
@@ -31,7 +31,7 @@ body {
     line-height: 1;
 }
 p {
-    line-height: 1.5;
+    line-height: 1.8;
 }
 /* Hide the focus ring around focused divs */
 div:focus {
@@ -235,21 +235,6 @@ const ExprViewItem = styled(motion.div)`
     ${ExprViewAppearance}
 `;
 
-// Ripped from Stack Overflow.
-const Shortcut = styled.div`
-    display: inline-block;
-    padding: 0.1em 0.3em;
-    line-height: 1.4;
-    color: #242729;
-    text-shadow: 0 1px 0 #fff;
-    background-color: #e1e3e5;
-    border: 1px solid #adb3b8;
-    border-radius: 3px;
-    box-shadow: 0 1px 0 rgba(12, 13, 14, 0.2), 0 0 0 2px #fff inset;
-    white-space: nowrap;
-    margin: 0.1em;
-`;
-
 const ExprListShortcut = styled(Shortcut)`
     grid-column: shortcut;
     justify-self: right;
@@ -351,7 +336,7 @@ class Kale extends Component<{}, KaleState> {
         return (
             <Kale.Help>
                 Use <S>H</S> <S>J</S> <S>K</S> <S>L</S> to move around. Fill in the blanks with{" "}
-                <S>Tab</S>. Use <S>Backspace</S> to Delete and <S>C</S> to Copy.{" "}
+                <S>Tab</S>. Use <S>Backspace</S> to Delete and <S>C</S> to Copy &mdash;{" "}
                 <b>Help is on the way!</b>
             </Kale.Help>
         );

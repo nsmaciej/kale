@@ -14,18 +14,7 @@ import {
 import { Vec, Rect } from "./geometry";
 import THEME from "./theme";
 
-type AlignTypes = "start" | "end" | "center" | "baseline" | "stretch" | "normal";
-
-type ContentAlignTypes = AlignTypes | "space-between" | "space-around" | "space-evenly";
-
-export interface StackProps {
-    gap?: number;
-    alignItems?: AlignTypes;
-    justifyContent?: ContentAlignTypes;
-}
-
 export type BoxProps = SpaceProps & GridProps & FlexboxProps & LayoutProps;
-
 export const Box = styled.div<BoxProps>`
     ${space}
     ${grid}
@@ -33,29 +22,37 @@ export const Box = styled.div<BoxProps>`
     ${layout}
 `;
 
-const Stack = styled(Box)<StackProps & BoxProps>`
-    display: flex;
-    overflow: auto;
-    align-items: ${p => p.alignItems ?? "normal"};
-    justify-content: ${p => p.justifyContent ?? "normal"};
-`;
-
 const getGap = (p: StackProps) => (p.gap ?? 0) / 2;
-
-export const VerticalStack = styled(Stack)`
+export interface StackProps extends BoxProps {
+    gap?: number;
+}
+export const VerticalStack = styled(Box)`
+    display: flex;
     flex-direction: column;
     margin: -${getGap}px 0;
     & > * {
         margin: ${getGap}px 0;
     }
 `;
-
-export const HorizonstalStack = styled(Stack)`
+export const HorizonstalStack = styled(Box)`
+    display: flex;
     flex-direction: row;
     margin: 0 -${getGap}px;
     & > * {
         margin: 0 ${getGap}px;
     }
+`;
+
+export const Shortcut = styled.kbd`
+    display: inline;
+    background-color: #eee;
+    border-radius: 3px;
+    border: 1px solid #cecece;
+    box-shadow: 0 1px 1px #6b6b6b33;
+    font-size: 0.85em;
+    padding: 2px 4px;
+    white-space: nowrap;
+    font-family: inherit;
 `;
 
 // A type for components that have custom props but pass everything else on.
@@ -74,7 +71,6 @@ export function SvgGroup({
 }
 
 type LineProps = CustomSvgProps<SVGLineElement, { start: Vec; end: Vec }>;
-
 export function SvgLine({ start, end, stroke = "#000000", ...props }: LineProps) {
     return <line x1={start.x} x2={end.x} y1={start.y} y2={end.y} stroke={stroke} {...props} />;
 }
