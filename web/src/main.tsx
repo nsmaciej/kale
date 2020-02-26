@@ -297,7 +297,7 @@ function ToyBox() {
 }
 
 function YankList({ exprs, onClearAll }: { exprs: ShortcutExpr[]; onClearAll: () => void }) {
-    //TODO: Make these editors inside of ExprViews.
+    //TODO: Make these editors inside of ExprViews (and make it not frozen).
     if (!exprs.length) return null;
     return (
         <Sidebar gridArea="yanklist">
@@ -305,7 +305,7 @@ function YankList({ exprs, onClearAll }: { exprs: ShortcutExpr[]; onClearAll: ()
                 <ExprListHeading>Work List</ExprListHeading>
                 <SubtleButton onClick={onClearAll}>Clear All</SubtleButton>
             </HorizonstalStack>
-            <ExprViewList frozen exprs={exprs} />
+            <ExprViewList frozen animate exprs={exprs} />
         </Sidebar>
     );
 }
