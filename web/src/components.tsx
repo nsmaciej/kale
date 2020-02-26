@@ -11,7 +11,7 @@ import {
     flexbox,
 } from "styled-system";
 
-import { Vec } from "./geometry";
+import { Vec, Rect } from "./geometry";
 import THEME from "./theme";
 
 type AlignTypes =
@@ -103,6 +103,13 @@ export function SvgLine({
             {...props}
         />
     );
+}
+
+export function SvgRect({
+    rect: { x, y, width, height },
+    ...props
+}: CustomSvgProps<SVGRectElement, { rect: Rect }>) {
+    return <rect {...{ x, y, width, height }} {...props} />;
 }
 
 export function UnderlineLine(

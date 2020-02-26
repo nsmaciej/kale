@@ -10,13 +10,16 @@ export default {
     selectionColour: "#edf5ff",
     selectionStrokeColour: "#9fcbff",
     highlightStrokeColour: "#cecece",
-    commentColour: "#16a831",
     exprViewPaddingPx: 12,
 
     // Code colours.
+    commentColour: "#00b508",
     variableColour: "#248af0",
-    literalColour: "#f59a11",
-    holeColour: "#ff0000",
+    literalColour: "#ef6c00",
+    holePillPadding: new Vec(10, 1),
+    holeStrokeColour: "#dcdcdc",
+    holeFillColour: "#f1f1f1",
+    holeColour: "#909090",
 
     // Selection and highlights.
     selectionPaddingPx: new Vec(3),

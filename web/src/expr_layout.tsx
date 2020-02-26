@@ -2,12 +2,12 @@ import React, { useState, useCallback } from "react";
 import styled from "styled-components";
 
 import { Optional, max } from "./utils";
-import { Vec, Size } from "./geometry";
+import { Vec, Size, Rect } from "./geometry";
 import { Layout, hstack, vstack, Area } from "./layout";
 import { Expr, ExprVisitor } from "./expr";
 import * as E from "./expr";
 import TextMetrics from "./text_metrics";
-import { UnderlineLine, SvgLine } from "./components";
+import { UnderlineLine, SvgLine, SvgRect } from "./components";
 import THEME from "./theme";
 import { motion } from "framer-motion";
 
@@ -16,15 +16,15 @@ interface TextProperties {
     bold?: boolean;
     colour?: string;
     title?: string;
+    offset?: Vec;
 }
 
 // See https://vanseodesign.com/web-design/svg-text-baseline-alignment/ for excellent discussion
 // on SVG text aligment properties.
-const Code = styled.text<{ cursor?: string }>`
+const Code = styled.text`
     font-size: ${THEME.fontSizePx}px;
     font-family: ${THEME.fontFamily};
     dominant-baseline: text-before-edge;
-    cursor: default;
 `;
 
 function useBind<A>(fn: (a: A) => void, arg: A): () => void {
@@ -106,7 +106,7 @@ export class ExprLayout implements ExprVisitor<Layout> {
     private layoutText(
         expr: Expr,
         text: string,
-        { italic, colour, title, bold }: TextProperties = {},
+        { italic, colour, title, bold, offset }: TextProperties = {},
     ) {
         const layout = new Layout(
             (
@@ -114,6 +114,8 @@ export class ExprLayout implements ExprVisitor<Layout> {
                     fill={colour}
                     fontStyle={italic ? "italic" : undefined}
                     fontWeight={bold ? "bold" : undefined}
+                    x={offset?.x}
+                    y={offset?.y}
                     {...this.exprProps(expr)}
                 >
                     {title && <title>{title}</title>}
@@ -190,10 +192,32 @@ export class ExprLayout implements ExprVisitor<Layout> {
     }
 
     visitHole(expr: E.Hole): Layout {
-        //TODO: Wrap this in a nice box or something.
-        return this.layoutText(expr, `<${expr.data.comment ?? "HOLE"}>`, {
+        const padding = THEME.holePillPadding;
+        const text = this.layoutText(expr, expr.data.comment ?? "?", {
             colour: THEME.holeColour,
+            offset: padding,
         });
+        let rect = new Rect(padding, text.size).pad(padding);
+        if (rect.width < rect.height) {
+            rect = rect.withSize(new Size(rect.height)); // Make the pill square.
+        }
+        const layout = new Layout(
+            (
+                <>
+                    <SvgRect
+                        rect={rect}
+                        rx={rect.height / 2}
+                        fill={THEME.holeFillColour}
+                        strokeWidth={1}
+                        stroke={THEME.holeStrokeColour}
+                    />
+                    {text.nodes}
+                </>
+            ),
+            rect.size,
+        );
+        layout.inline = true;
+        return layout;
     }
 
     visitCall(expr: E.Call): Layout {

@@ -40,6 +40,7 @@ div:focus {
 /* Nothing inside svgs should be selectable */
 svg * {
     user-select: none;
+    cursor: default;
 }
 h1 {
     font-weight: 700;

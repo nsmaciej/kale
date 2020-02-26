@@ -3,7 +3,7 @@
 export class Size {
     static readonly zero = new Size(0, 0);
 
-    constructor(readonly width: number, readonly height: number) {}
+    constructor(readonly width: number, readonly height = width) {}
 
     get bottom_left(): Vec {
         return new Vec(0, this.height);
@@ -45,6 +45,13 @@ export class Rect {
     get height() {
         return this.size.height;
     }
+    get atOrigin() {
+        return new Rect(Vec.zero, this.size.pad(this.origin.neg));
+    }
+
+    withSize(size: Size) {
+        return new Rect(this.origin, size);
+    }
 
     contains(point: Vec) {
         const corner = this.size.bottom_right.add(this.origin);
@@ -75,8 +82,12 @@ export class Vec {
         return new Vec(rect.left, rect.top);
     }
 
+    get neg() {
+        return new Vec(-this.x, -this.y);
+    }
+
     difference(other: Vec) {
-        return new Vec(this.x - other.x, this.y - other.y);
+        return this.add(other.neg);
     }
     add(other: Vec) {
         return new Vec(this.x + other.x, this.y + other.y);
