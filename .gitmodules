@@ -1,3 +1,6 @@
 [submodule "web/vendor/ia_fonts"]
 	path = web/vendor/ia_fonts
 	url = https://github.com/iaolo/iA-Fonts
+[submodule "web/vendor/asap_fonts"]
+	path = web/vendor/asap_fonts
+	url = https://github.com/Omnibus-Type/Asap
