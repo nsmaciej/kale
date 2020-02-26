@@ -2,7 +2,7 @@ import React, { ReactNode } from "react";
 
 import { Size, Vec, Rect } from "./geometry";
 import { Optional, max } from "./utils";
-import { SvgGroup } from "./components";
+import { SvgGroup } from "./expr_components";
 import { Expr } from "./expr";
 
 export interface Underline {

@@ -8,7 +8,7 @@ import { Vec, Rect } from "./geometry";
 import { Area } from "./layout";
 import { Expr, ExprId } from "./expr";
 import * as E from "./expr";
-import { SvgGroup } from "./components";
+import { SvgGroup } from "./expr_components";
 import THEME from "./theme";
 import { ExprLayout, materialiseUnderlines, ExprDelegate } from "./expr_layout";
 

@@ -7,7 +7,7 @@ import { Layout, hstack, vstack } from "./layout";
 import { Expr, ExprId, ExprVisitor } from "./expr";
 import * as E from "./expr";
 import TextMetrics from "./text_metrics";
-import { UnderlineLine, SvgLine, HitBox, HoverHitBox } from "./components";
+import { UnderlineLine, SvgLine, HitBox, HoverHitBox } from "./expr_components";
 import THEME from "./theme";
 import { motion } from "framer-motion";
 
