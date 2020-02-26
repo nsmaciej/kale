@@ -1,5 +1,5 @@
 import * as ReactDOM from "react-dom";
-import React, { Component } from "react";
+import React, { Component, Fragment } from "react";
 import styled, { StyleSheetManager, createGlobalStyle, css } from "styled-components";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -10,7 +10,7 @@ import SAMPLE_EXPR from "./sample";
 import TextMetrics from "./text_metrics";
 import { Optional, assert, assertSome } from "./utils";
 import THEME from "./theme";
-import { Box, HorizonstalStack, VerticalStack, BoxProps } from "./components";
+import { Box, HorizonstalStack, BoxProps } from "./components";
 
 const GlobalStyle = createGlobalStyle`
 #main {
@@ -76,6 +76,8 @@ class Editor extends Component<BoxProps & EditorProps, EditorState> {
         place-self: self-start;
     `;
 
+    private containerRef = React.createRef<HTMLDivElement>();
+
     state: EditorState = {
         selection: null,
         expr: SAMPLE_EXPR,
@@ -125,6 +127,7 @@ class Editor extends Component<BoxProps & EditorProps, EditorState> {
         if (ix === -1) return holes[0].id;
         return holes[(ix + 1) % holes.length].id;
     }
+
     private setSelection(reducer: (state: EditorState) => Optional<ExprId>) {
         this.setState(state => ({
             selection: state.selection == null ? state.expr.id : reducer(state) ?? state.selection,
@@ -134,9 +137,11 @@ class Editor extends Component<BoxProps & EditorProps, EditorState> {
     private keyDown = (event: React.KeyboardEvent) => {
         // See https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values.
         switch (event.key) {
+            // Deletion.
             case "Backspace":
                 this.setState(this.removeSelection);
                 break;
+            // Logical selection.
             case "h":
                 this.setSelection(Editor.selectParent);
                 break;
@@ -149,6 +154,13 @@ class Editor extends Component<BoxProps & EditorProps, EditorState> {
             case "l":
                 this.setSelection(Editor.selectFirstCHild);
                 break;
+            // Copy.
+            case "c":
+                //TODO: Is this safe? What if the state hasn't been flushed yet.
+                const selected = this.state.expr.withId(this.state.selection);
+                if (selected != null) this.props.onRemovedExpr(selected);
+                break;
+            // Blanks selection.
             case "Tab":
                 // When we press tab, we don't want the default "select root" behaviour.
                 this.setState(state => ({ selection: Editor.selectNextBlank(state) }));
@@ -179,14 +191,19 @@ class Editor extends Component<BoxProps & EditorProps, EditorState> {
         this.setState({ selection: null });
     };
 
+    componentDidMount() {
+        this.containerRef.current?.focus();
+    }
+
     render() {
         // As I understand it, svg viewBox is not a required property.
         return (
             <Editor.Container
                 onKeyDown={this.keyDown}
-                tabIndex={0}
+                tabIndex={-1}
                 onClick={this.clearSelection}
                 gridArea={this.props.gridArea}
+                ref={this.containerRef}
             >
                 <ExprView
                     expr={this.state.expr}
@@ -256,7 +273,7 @@ function ExprViewList({ exprs, gridArea, frozen, heading, animate }: ExprViewLis
     if (!exprs.length) return null;
     const renderItem = (expr: Expr, shortcut?: string) => (
         // This has to be a fragment. Otherwise the items won't layout in a grid.
-        <React.Fragment key={expr.id}>
+        <Fragment key={expr.id}>
             {shortcut && THEME.showingShortcuts && <ExprListShortcut>{shortcut}</ExprListShortcut>}
             <ExprViewItem
                 initial={animate && { opacity: 0.8, scale: 0.9 }}
@@ -266,7 +283,7 @@ function ExprViewList({ exprs, gridArea, frozen, heading, animate }: ExprViewLis
             >
                 <ExprView expr={expr} frozen={frozen} />
             </ExprViewItem>
-        </React.Fragment>
+        </Fragment>
     );
     return (
         <Box gridArea={gridArea}>
@@ -294,7 +311,7 @@ class Kale extends Component<{}, KaleState> {
             "toybox editor yanklist";
         grid-template-rows: min-content auto;
         grid-template-columns: max-content minmax(min-content, auto) max-content;
-        gap: 5px 40px;
+        gap: 20px 40px;
         padding: 25px 20px 0;
         height: 100%;
     `;
@@ -303,6 +320,10 @@ class Kale extends Component<{}, KaleState> {
         color: #0ba902;
         font-variant: small-caps;
         letter-spacing: 3px;
+    `;
+
+    private static readonly Help = styled.p`
+        max-width: 500px;
     `;
 
     private static readonly toyBox = [
@@ -325,8 +346,18 @@ class Kale extends Component<{}, KaleState> {
         });
     };
 
-    render() {
+    private static renderHelp() {
         const S = Shortcut;
+        return (
+            <Kale.Help>
+                Use <S>H</S> <S>J</S> <S>K</S> <S>L</S> to move around. Fill in the blanks with{" "}
+                <S>Tab</S>. Use <S>Backspace</S> to Delete and <S>C</S> to Copy.{" "}
+                <b>Help is on the way!</b>
+            </Kale.Help>
+        );
+    }
+
+    render() {
         return (
             <StyleSheetManager disableVendorPrefixes>
                 <DragAndDropSurface>
@@ -339,11 +370,7 @@ class Kale extends Component<{}, KaleState> {
                             justifyContent="space-between"
                         >
                             <Kale.Heading>Kale</Kale.Heading>
-                            <p style={{ textAlign: "right", maxWidth: "400px" }}>
-                                Press <S>backspace</S> to delete. Use <S>H</S> <S>J</S> <S>K</S>{" "}
-                                <S>L</S> to move around. Fill in the blanks with <S>Tab</S>.{" "}
-                                <b>Help is on the way!</b>
-                            </p>
+                            {Kale.renderHelp()}
                         </HorizonstalStack>
                         {THEME.showingToyBox && (
                             <ExprViewList
