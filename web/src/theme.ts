@@ -11,7 +11,7 @@ export default {
     selectionColour: "#edf5ff",
     selectionStrokeColour: "#9fcbff",
     highlightStrokeColour: "#cecece",
-    exprViewPaddingPx: 12,
+    exprViewPaddingPx: 8,
 
     // Code colours.
     commentColour: "#00b508",
