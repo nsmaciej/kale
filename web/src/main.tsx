@@ -32,6 +32,7 @@ body {
 }
 p {
     line-height: 1.8;
+    font-variant-numeric: oldstyle-nums;
 }
 /* Nothing inside svgs should be selectable */
 svg * {
