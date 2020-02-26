@@ -236,6 +236,7 @@ const ExprViewItem = styled(motion.div)`
 const ExprListShortcut = styled(Shortcut)`
     grid-column: shortcut;
     justify-self: right;
+    margin-top: ${THEME.exprViewPaddingPx / 2}px;
 `;
 
 const ExprList = styled.div`
@@ -272,7 +273,12 @@ function ExprViewList({ exprs, frozen, animate }: ExprViewListProps) {
 }
 
 const ExprListHeading = styled.h2`
-    margin-bottom: 20px;
+    margin-bottom: 10px;
+`;
+
+const Sidebar = styled(Box)`
+    overflow: auto;
+    padding: 2px; /* Otherwise hidden overflow cuts the shadows */
 `;
 
 const toyBoxExprs = [
@@ -284,10 +290,10 @@ const toyBoxExprs = [
 ];
 function ToyBox() {
     return (
-        <Box gridArea="toybox">
+        <Sidebar gridArea="toybox">
             <ExprListHeading>Blocks</ExprListHeading>
             <ExprViewList frozen exprs={toyBoxExprs} />
-        </Box>
+        </Sidebar>
     );
 }
 
@@ -295,13 +301,13 @@ function YankList({ exprs, onClearAll }: { exprs: ShortcutExpr[]; onClearAll: ()
     //TODO: Make these editors inside of ExprViews.
     if (!exprs.length) return null;
     return (
-        <Box gridArea="yanklist">
+        <Sidebar gridArea="yanklist">
             <HorizonstalStack>
                 <ExprListHeading>Work List</ExprListHeading>
                 <SubtleButton onClick={onClearAll}>Clear All</SubtleButton>
             </HorizonstalStack>
             <ExprViewList frozen exprs={exprs} />
-        </Box>
+        </Sidebar>
     );
 }
 
