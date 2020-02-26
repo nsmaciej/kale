@@ -48,6 +48,9 @@ export class Rect {
     get atOrigin() {
         return new Rect(Vec.zero, this.size.pad(this.origin.neg));
     }
+    get bottom_right() {
+        return this.origin.add(new Vec(this.width, this.height));
+    }
 
     withSize(size: Size) {
         return new Rect(this.origin, size);

@@ -1,4 +1,4 @@
-import React, { ReactNode, SVGProps } from "react";
+import React, { ReactNode, useState } from "react";
 import styled from "styled-components";
 import {
     SpaceProps,
@@ -60,7 +60,7 @@ export const HorizonstalStack = styled(Stack)`
 
 // A type for components that have custom props but pass everything else on.
 type CustomSvgProps<Element, CustomProps> = CustomProps &
-    Omit<SVGProps<Element>, keyof CustomProps>;
+    Omit<React.SVGProps<Element>, keyof CustomProps>;
 
 // Naming convention: generic svg components have the prefix Svg, bot established UI elements.
 export function SvgGroup({
@@ -81,9 +81,14 @@ export function SvgLine({ start, end, stroke = "#000000", ...props }: LineProps)
 
 export function SvgRect({
     rect: { x, y, width, height },
+    children,
     ...props
-}: CustomSvgProps<SVGRectElement, { rect: Rect }>) {
-    return <rect {...{ x, y, width, height }} {...props} />;
+}: CustomSvgProps<SVGRectElement, { rect: Rect }> & { children?: ReactNode }) {
+    return (
+        <rect {...{ x, y, width, height }} {...props}>
+            {children}
+        </rect>
+    );
 }
 
 export function UnderlineLine(props: Omit<LineProps, "shapeRendering" | "stroke" | "strokeWidth">) {
@@ -96,5 +101,57 @@ export function UnderlineLine(props: Omit<LineProps, "shapeRendering" | "stroke"
             stroke={THEME.decorationColour}
             {...props}
         />
+    );
+}
+
+interface HitBoxProps<C> extends React.DOMAttributes<SVGRectElement> {
+    children: C;
+    title?: string;
+    area: Rect;
+}
+
+export function HitBox({ children, area, title, ...rest }: HitBoxProps<ReactNode>) {
+    return (
+        <>
+            {children}
+            <SvgRect rect={area} fill="transparent" strokeWidth="0" {...rest}>
+                {title && <title>{title}</title>}
+            </SvgRect>
+        </>
+    );
+}
+
+// Same idea as above, but with function as children.
+export function HoverHitBox({
+    children,
+    area,
+    title,
+    onMouseEnter,
+    onMouseLeave,
+    ...rest
+}: HitBoxProps<(hover: boolean) => void>) {
+    const [hover, setHover] = useState(false);
+    const mouseEnter = (e: React.MouseEvent<SVGRectElement>) => {
+        setHover(true);
+        onMouseEnter?.(e);
+    };
+    const mouseLeave = (e: React.MouseEvent<SVGRectElement>) => {
+        setHover(false);
+        onMouseLeave?.(e);
+    };
+    return (
+        <>
+            {children(hover)}
+            <SvgRect
+                rect={area}
+                fill="transparent"
+                strokeWidth="0"
+                onMouseEnter={mouseEnter}
+                onMouseLeave={mouseLeave}
+                {...rest}
+            >
+                {title && <title>{title}</title>}
+            </SvgRect>
+        </>
     );
 }

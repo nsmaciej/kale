@@ -7,6 +7,7 @@ import { Optional, assert, assertSome } from "./utils";
 import { Vec, Rect } from "./geometry";
 import { Area } from "./layout";
 import { Expr, ExprId } from "./expr";
+import * as E from "./expr";
 import { SvgGroup } from "./components";
 import THEME from "./theme";
 import { ExprLayout, materialiseUnderlines, ExprDelegate } from "./expr_layout";
@@ -91,7 +92,9 @@ export class DragAndDropSurface extends Component<{}, DragAndDropSurfaceState> {
         if (this.drag?.delta != null) {
             // drag.delta gets set when the drag starts proper.
             const pos = assertSome(this.state.position).add(this.drag.delta);
-            const { nodes } = new ExprLayout(null).layout(this.drag.expr);
+            const { nodes } = new ExprLayout({
+                isFrozen: () => true,
+            }).layout(this.drag.expr);
             surface = ReactDOM.createPortal(
                 <DragAndDropSurface.Svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -173,6 +176,10 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
         return this.props.frozen ?? false;
     }
 
+    get selection() {
+        return this.props.selection;
+    }
+
     private findExprRect(expr: ExprId, area: Area): Optional<Rect> {
         if (area.expr.id === expr) return area.rect;
         for (const child of area.children) {
@@ -186,6 +193,7 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
         if (expr == null) return;
         const rect = this.findExprRect(expr, area)?.pad(THEME.selectionPaddingPx);
         if (rect == null) return; // This happens when an expression is removed.
+        const isHole = this.props.expr.withId(expr) instanceof E.Hole;
         return (
             <motion.rect
                 animate={{
@@ -193,6 +201,7 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
                     y: rect.y,
                     width: rect.width,
                     height: rect.height,
+                    opacity: isHole ? 0 : 1, // +!isHole
                 }}
                 key={+isSelection}
                 rx={THEME.selectionRadiusPx}

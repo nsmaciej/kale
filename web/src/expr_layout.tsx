@@ -1,13 +1,13 @@
-import React, { useState, useCallback } from "react";
+import React from "react";
 import styled from "styled-components";
 
 import { Optional, max } from "./utils";
 import { Vec, Size, Rect } from "./geometry";
-import { Layout, hstack, vstack, Area } from "./layout";
-import { Expr, ExprVisitor } from "./expr";
+import { Layout, hstack, vstack } from "./layout";
+import { Expr, ExprId, ExprVisitor } from "./expr";
 import * as E from "./expr";
 import TextMetrics from "./text_metrics";
-import { UnderlineLine, SvgLine, SvgRect } from "./components";
+import { UnderlineLine, SvgLine, HitBox, HoverHitBox } from "./components";
 import THEME from "./theme";
 import { motion } from "framer-motion";
 
@@ -27,43 +27,27 @@ const Code = styled.text`
     dominant-baseline: text-before-edge;
 `;
 
-function useBind<A>(fn: (a: A) => void, arg: A): () => void {
-    return useCallback(() => fn(arg), []);
-}
-
-function CreateCirlce({ onClick }: { onClick: (e: React.MouseEvent) => void }) {
-    const [hover, setHover] = useState(false);
+function CreateCircle({ onClick }: { onClick: (e: React.MouseEvent) => void }) {
     const r = THEME.createCircleR;
     const maxR = THEME.createCircleMaxR;
     const cx = r;
     const cy = THEME.fontSizePx / 2 + 3;
+    const rect = new Rect(new Vec(cx - maxR, cy - maxR), new Size(maxR * 2));
     return (
-        <>
-            <motion.circle
-                fill="none"
-                stroke={THEME.decorationColour}
-                strokeWidth={1}
-                animate={{ r: hover ? maxR : r }}
-                r={r}
-                cx={cx}
-                cy={cy}
-                transition={{ duration: 0.1 }}
-            />
-            <rect
-                // This rect represents the real hit-box of the circle.
-                onClick={onClick}
-                fill="transparent"
-                strokeWidth="0"
-                width={maxR * 2}
-                height={maxR * 2}
-                y={cy - maxR}
-                x={cx - maxR}
-                onMouseEnter={useBind(setHover, true)}
-                onMouseLeave={useBind(setHover, false)}
-            >
-                <title>New argument...</title>
-            </rect>
-        </>
+        <HoverHitBox area={rect} onClick={onClick} title="Add an argument...">
+            {mouseOver => (
+                <motion.circle
+                    fill="none"
+                    stroke={THEME.decorationColour}
+                    strokeWidth={1}
+                    animate={{ r: mouseOver ? maxR : r }}
+                    r={r}
+                    cx={cx}
+                    cy={cy}
+                    transition={{ duration: 0.1 }}
+                />
+            )}
+        </HoverHitBox>
     );
 }
 
@@ -80,11 +64,12 @@ export function materialiseUnderlines(parent: Layout) {
 }
 
 export interface ExprDelegate {
-    isFrozen(expr: Expr): boolean;
-    onHoverExpr(e: React.MouseEvent, expr: Optional<Expr>): void;
-    onClickExpr(e: React.MouseEvent, expr: Expr): void;
-    onClickCreateCircle(e: React.MouseEvent, expr: Expr): void;
-    onMouseDown(e: React.MouseEvent, expr: Expr): void;
+    isFrozen?(expr: Expr): boolean;
+    selection?: Optional<ExprId>; // Only checked by holes.
+    onHoverExpr?(e: React.MouseEvent, expr: Optional<Expr>): void;
+    onClickExpr?(e: React.MouseEvent, expr: Expr): void;
+    onClickCreateCircle?(e: React.MouseEvent, expr: Expr): void;
+    onMouseDown?(e: React.MouseEvent, expr: Expr): void;
 }
 
 export class ExprLayout implements ExprVisitor<Layout> {
@@ -92,10 +77,10 @@ export class ExprLayout implements ExprVisitor<Layout> {
 
     private exprProps(expr: Expr) {
         return {
-            onMouseEnter: (e: React.MouseEvent) => this.delegate?.onHoverExpr(e, expr),
-            onMouseLeave: (e: React.MouseEvent) => this.delegate?.onHoverExpr(e, null),
-            onClick: (e: React.MouseEvent) => this.delegate?.onClickExpr(e, expr),
-            onMouseDown: (e: React.MouseEvent) => this.delegate?.onMouseDown(e, expr),
+            onMouseEnter: (e: React.MouseEvent) => this.delegate?.onHoverExpr?.(e, expr),
+            onMouseLeave: (e: React.MouseEvent) => this.delegate?.onHoverExpr?.(e, null),
+            onClick: (e: React.MouseEvent) => this.delegate?.onClickExpr?.(e, expr),
+            onMouseDown: (e: React.MouseEvent) => this.delegate?.onMouseDown?.(e, expr),
         };
     }
 
@@ -125,9 +110,9 @@ export class ExprLayout implements ExprVisitor<Layout> {
     }
 
     private layoutCreateCircle(expr: Expr) {
-        if (this.delegate?.isFrozen(expr)) return;
+        if (this.delegate?.isFrozen?.(expr)) return;
         return new Layout(
-            (<CreateCirlce onClick={e => this.delegate?.onClickCreateCircle(e, expr)} />),
+            (<CreateCircle onClick={e => this.delegate?.onClickCreateCircle?.(e, expr)} />),
             new Size(THEME.createCircleMaxR, THEME.fontSizePx),
         );
     }
@@ -148,17 +133,15 @@ export class ExprLayout implements ExprVisitor<Layout> {
     }
 
     visitList(expr: E.List): Layout {
-        //TODO: Add a larger clickable area to the list ruler.
         const layout = vstack(
             THEME.lineSpacingPx,
             expr.list.map(x => materialiseUnderlines(this.layout(x))),
         );
+        const line = new Rect(new Vec(3, 5), new Size(0, layout.size.height - 5));
         const ruler = (
-            <SvgLine
-                start={new Vec(3, 5)}
-                end={new Vec(3, layout.size.height)}
-                {...this.exprProps(expr)}
-            />
+            <HitBox area={line.pad(new Vec(5))} {...this.exprProps(expr)}>
+                <SvgLine start={line.origin} end={line.bottom_right} />
+            </HitBox>
         );
         return vstack(
             THEME.lineSpacingPx,
@@ -192,18 +175,34 @@ export class ExprLayout implements ExprVisitor<Layout> {
         if (rect.width < rect.height) {
             rect = rect.withSize(new Size(rect.height)); // Make the pill square.
         }
+        const { x, y, width, height } = rect;
+        const selected = this.delegate?.selection === expr.id;
+        const pill = (mouseOver: boolean) => (
+            <motion.rect
+                {...{ width, height, x, y }}
+                animate={{
+                    fill: selected
+                        ? THEME.selectionColour
+                        : mouseOver
+                        ? THEME.holeFillColourHover
+                        : THEME.holeFillColour,
+                }}
+                initial={false}
+                rx={rect.height / 2}
+                strokeWidth={1}
+                stroke={selected ? THEME.selectionStrokeColour : THEME.holeStrokeColour}
+            />
+        );
         const layout = new Layout(
             (
-                <>
-                    <SvgRect
-                        rect={rect}
-                        rx={rect.height / 2}
-                        fill={THEME.holeFillColour}
-                        strokeWidth={1}
-                        stroke={THEME.holeStrokeColour}
-                    />
-                    {text.nodes}
-                </>
+                <HoverHitBox area={rect} {...this.exprProps(expr)}>
+                    {mouseOver => (
+                        <>
+                            {pill(mouseOver)}
+                            {text.nodes}
+                        </>
+                    )}
+                </HoverHitBox>
             ),
             rect.size,
         );

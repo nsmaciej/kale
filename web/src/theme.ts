@@ -19,6 +19,7 @@ export default {
     holePillPadding: new Vec(10, 1),
     holeStrokeColour: "#dcdcdc",
     holeFillColour: "#f1f1f1",
+    holeFillColourHover: "#dcdcdc", // Same as the stroke right now.
     holeColour: "#909090",
 
     // Selection and highlights.
@@ -33,4 +34,8 @@ export default {
     lineBreakPointPx: 300,
     lineGap: 3,
     lineSpacingPx: 8, //TODO: This should be based on the current text size.
+
+    // Settings.
+    showingShortcuts: true,
+    showingToyBox: true,
 };

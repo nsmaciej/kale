@@ -28,6 +28,10 @@ body {
     font-family: "Asap", sans-serif;
     font-size: 14px;
     color: #404040;
+    line-height: 1;
+}
+p {
+    line-height: 1.5;
 }
 /* Hide the focus ring around focused divs */
 div:focus {
@@ -144,10 +148,6 @@ class Editor extends Component<BoxProps & EditorProps, EditorState> {
         }
     };
 
-    private exprSelected = (selection: ExprId) => {
-        this.setState({ selection });
-    };
-
     private createCircleClicked = (clickedId: ExprId) => {
         const clicked = this.state.expr?.withId(clickedId);
         if (clicked instanceof E.Call) {
@@ -160,6 +160,9 @@ class Editor extends Component<BoxProps & EditorProps, EditorState> {
         }
     };
 
+    private exprSelected = (selection: ExprId) => {
+        this.setState({ selection });
+    };
     private clearSelection = () => {
         this.setState({ selection: null });
     };
@@ -190,6 +193,7 @@ interface ShortcutExpr {
 }
 
 interface ExprViewListProps {
+    animate?: boolean;
     exprs: ShortcutExpr[];
     frozen?: boolean;
     gridArea: string;
@@ -236,27 +240,27 @@ const ExprListHeading = styled.h2`
     margin-bottom: 20px;
 `;
 
-function ExprViewList({ exprs, gridArea, frozen, heading }: ExprViewListProps) {
+function ExprViewList({ exprs, gridArea, frozen, heading, animate }: ExprViewListProps) {
     if (!exprs.length) return null;
+    const renderItem = (expr: Expr, shortcut?: string) => (
+        // This has to be a fragment. Otherwise the items won't layout in a grid.
+        <React.Fragment key={expr.id}>
+            {shortcut && THEME.showingShortcuts && <ExprListShortcut>{shortcut}</ExprListShortcut>}
+            <ExprViewItem
+                initial={animate && { opacity: 0.8, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0.5 }}
+                transition={{ duration: 0.1, ease: "easeIn" }}
+            >
+                <ExprView expr={expr} frozen={frozen} />
+            </ExprViewItem>
+        </React.Fragment>
+    );
     return (
         <Box gridArea={gridArea}>
             <ExprListHeading>{heading}</ExprListHeading>
             <ExprList>
-                <AnimatePresence>
-                    {exprs.map(({ expr, shortcut }, i) => (
-                        <React.Fragment key={expr.id}>
-                            {shortcut && <ExprListShortcut>{shortcut}</ExprListShortcut>}
-                            <ExprViewItem
-                                initial={{ opacity: 0.8, scale: 0.9 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                exit={{ opacity: 0.5 }}
-                                transition={{ duration: 0.1, ease: "easeIn" }}
-                            >
-                                <ExprView expr={expr} frozen={frozen} />
-                            </ExprViewItem>
-                        </React.Fragment>
-                    ))}
-                </AnimatePresence>
+                <AnimatePresence>{exprs.map(x => renderItem(x.expr, x.shortcut))}</AnimatePresence>
             </ExprList>
         </Box>
     );
@@ -277,27 +281,22 @@ class Kale extends Component<{}, KaleState> {
             "nav nav nav"
             "toybox editor yanklist";
         grid-template-rows: min-content auto;
-        /* TODO: Still a lot of messing with these left */
         grid-template-columns: max-content minmax(min-content, auto) max-content;
-        gap: 20px 40px;
+        gap: 5px 40px;
         padding: 25px 20px 0;
         height: 100%;
     `;
 
     private static readonly Heading = styled.h1`
         color: #0ba902;
+        font-variant: small-caps;
+        letter-spacing: 3px;
     `;
 
     private static readonly toyBox = [
-        {
-            expr: new E.List([hole("first line"), hole("second line")]),
-            shortcut: "L",
-        },
-        {
-            expr: new E.Call("if", [hole("true branch"), hole("false branch")]),
-            shortcut: "C",
-        },
-        { expr: new E.Variable("variable"), shortcut: "V" },
+        { shortcut: "S", expr: new E.List([hole("first line"), hole("second line")]) },
+        { shortcut: "F", expr: new E.Call("if", [hole("true branch"), hole("false branch")]) },
+        { shortcut: "A", expr: new E.Variable("variable") },
         { expr: new E.Literal("a string", "str") },
         { expr: new E.Literal("42", "int") },
     ];
@@ -328,23 +327,28 @@ class Kale extends Component<{}, KaleState> {
                             justifyContent="space-between"
                         >
                             <Kale.Heading>Kale</Kale.Heading>
-                            <p>
-                                Press <S>backspace</S> to delete. Use <S>H</S>
-                                <S>J</S>
-                                <S>K</S>
+                            <p style={{ textAlign: "right" }}>
+                                Press <S>backspace</S> to delete. Use <S>H</S> <S>J</S> <S>K</S>
                                 <S>L</S> to move around.
+                                <br />
+                                <b>Help is on the way!</b>
                             </p>
                         </HorizonstalStack>
-                        <ExprViewList
-                            gridArea="toybox"
-                            exprs={Kale.toyBox}
-                            heading="Blocks"
-                            frozen
-                        />
+                        {THEME.showingToyBox && (
+                            <ExprViewList
+                                gridArea="toybox"
+                                exprs={Kale.toyBox}
+                                heading="Blocks"
+                                frozen
+                            />
+                        )}
                         <Editor gridArea="editor" onRemovedExpr={this.addToYankList} />
                         <ExprViewList
+                            //TODO: Add an "Clear All" button.
+                            //TODO: Make these editors inside of ExprViews.
                             gridArea="yanklist"
                             heading="Work List"
+                            animate
                             exprs={this.state.yankList}
                         />
                     </Kale.Container>
