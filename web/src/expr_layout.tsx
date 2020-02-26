@@ -183,7 +183,7 @@ export class ExprLayout implements ExprVisitor<Layout> {
                 animate={{
                     fill: selected
                         ? THEME.selectionColour
-                        : mouseOver
+                        : mouseOver && !this.delegate?.isFrozen?.(expr)
                         ? THEME.holeFillColourHover
                         : THEME.holeFillColour,
                 }}

@@ -168,7 +168,7 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
             // this doesn't work for functions with comments on top of them, since the offset is
             // relative to the function name instead of the whole expression.
             Vec.fromBoundingRect(rect),
-            expr,
+            this.props.frozen ? this.props.expr : expr,
         );
     }
 
@@ -208,7 +208,7 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
                 fill={isSelection ? THEME.selectionColour : "none"}
                 initial={false}
                 stroke={isSelection ? THEME.selectionStrokeColour : THEME.highlightStrokeColour}
-                strokeWidth={1}
+                strokeWidth={0.5}
                 transition={{ type: "tween", ease: "easeIn", duration: 0.1 }}
             />
         );
@@ -227,7 +227,8 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
             rect: new Rect(padding, size),
         };
 
-        const highlight = this.state.highlight;
+        // Note: A similar check has to be perfomed in expr_layout for holes.
+        const highlight = this.props.frozen ? null : this.state.highlight;
         const selection = this.props.selection;
         const highlightRect = this.drawRect(highlight, false, area);
         const selectionRect = this.drawRect(selection, true, area);
