@@ -25,7 +25,7 @@ const GlobalStyle = createGlobalStyle`
     box-sizing: border-box;
 }
 body {
-    font-family: "Asap", sans-serif;
+    font-family: "Nunito", sans-serif;
     font-size: 14px;
     color: #404040;
     line-height: 1;
@@ -42,11 +42,11 @@ h1, h2, h3 {
     user-select: none;
 }
 h1 {
-    font-weight: 700;
+    font-weight: 900;
     font-size: 25px;
 }
 h2, h3 {
-    font-weight: 600;
+    font-weight: 700;
     font-size: 20px;
 }
 `;
@@ -334,8 +334,7 @@ class Kale extends Component<{}, KaleState> {
 
     private static readonly Heading = styled.h1`
         color: #0ba902;
-        font-variant: small-caps;
-        letter-spacing: 3px;
+        letter-spacing: 2px;
     `;
 
     private static readonly Help = styled.p`
