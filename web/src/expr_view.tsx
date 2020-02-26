@@ -197,7 +197,7 @@ export default class ExprView extends PureComponent<
                     width: rect.width,
                     height: rect.height,
                 }}
-                key={isSelection}
+                key={+isSelection}
                 rx={THEME.selectionRadiusPx}
                 fill={isSelection ? THEME.selectionColour : "none"}
                 initial={false}
@@ -299,7 +299,9 @@ function CreateCirlce({ onClick }: { onClick: (e: React.MouseEvent) => void }) {
                 x={cx - maxR}
                 onMouseEnter={useBind(setHover, true)}
                 onMouseLeave={useBind(setHover, false)}
-            />
+            >
+                <title>New argument...</title>
+            </rect>
         </>
     );
 }

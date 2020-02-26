@@ -19,7 +19,7 @@ export default {
     holeColour: "#ff0000",
 
     // Selection and highlights.
-    selectionPaddingPx: new Vec(5, 3),
+    selectionPaddingPx: new Vec(3),
     selectionRadiusPx: 3,
 
     // Create Circle.

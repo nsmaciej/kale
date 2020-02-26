@@ -1,12 +1,18 @@
 import React, { ReactNode, SVGProps } from "react";
 import styled from "styled-components";
+import {
+    SpaceProps,
+    GridProps,
+    FlexboxProps,
+    LayoutProps,
+    grid,
+    space,
+    layout,
+    flexbox,
+} from "styled-system";
 
-import { Vec, Rect } from "./geometry";
+import { Vec } from "./geometry";
 import THEME from "./theme";
-
-export interface LayoutProps {
-    gridArea?: string;
-}
 
 type AlignTypes =
     | "start"
@@ -28,11 +34,16 @@ export interface StackProps {
     justifyContent?: ContentAlignTypes;
 }
 
-export const Box = styled.div<LayoutProps>`
-    ${p => p.gridArea && `grid-area: ${p.gridArea};`}
+export type BoxProps = SpaceProps & GridProps & FlexboxProps & LayoutProps;
+
+export const Box = styled.div<BoxProps>`
+    ${space}
+    ${grid}
+    ${flexbox}
+    ${layout}
 `;
 
-const Stack = styled(Box)<StackProps & LayoutProps>`
+const Stack = styled(Box)<StackProps & BoxProps>`
     display: flex;
     overflow: auto;
     align-items: ${p => p.alignItems ?? "normal"};
@@ -41,7 +52,7 @@ const Stack = styled(Box)<StackProps & LayoutProps>`
 
 const getGap = (p: StackProps) => (p.gap ?? 0) / 2;
 
-export const VerticalStack = styled(Stack)<StackProps & LayoutProps>`
+export const VerticalStack = styled(Stack)`
     flex-direction: column;
     margin: -${getGap}px 0;
     & > * {
@@ -49,7 +60,7 @@ export const VerticalStack = styled(Stack)<StackProps & LayoutProps>`
     }
 `;
 
-export const HorizonstalStack = styled(Stack)<StackProps & LayoutProps>`
+export const HorizonstalStack = styled(Stack)`
     flex-direction: row;
     margin: 0 -${getGap}px;
     & > * {

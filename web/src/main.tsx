@@ -5,6 +5,7 @@ import styled, {
     createGlobalStyle,
     css,
 } from "styled-components";
+import { AnimatePresence, motion } from "framer-motion";
 
 import * as E from "./expr";
 import { Expr, ExprId } from "./expr";
@@ -13,12 +14,7 @@ import SAMPLE_EXPR from "./sample";
 import TextMetrics from "./text_metrics";
 import { Optional, assert, assertSome } from "./utils";
 import THEME from "./theme";
-import {
-    Box,
-    HorizonstalStack,
-    VerticalStack,
-    LayoutProps,
-} from "./components";
+import { Box, HorizonstalStack, VerticalStack, BoxProps } from "./components";
 
 const GlobalStyle = createGlobalStyle`
 #main {
@@ -33,8 +29,8 @@ const GlobalStyle = createGlobalStyle`
     box-sizing: border-box;
 }
 body {
-    font-family: ${THEME.fontFamily}, sans-serif;
-    font-size: ${THEME.fontSizePx}px;
+    font-family: "Asap", sans-serif;
+    font-size: 14px;
 }
 /* Hide the focus ring around focused divs */
 div:focus {
@@ -43,6 +39,14 @@ div:focus {
 /* Nothing inside svgs should be selectable */
 svg * {
     user-select: none;
+}
+h1 {
+    font-weight: 700;
+    font-size: 25px;
+}
+h2, h3 {
+    font-weight: 600;
+    font-size: 20px;
 }
 `;
 
@@ -56,16 +60,18 @@ interface EditorState {
 }
 
 const ExprViewAppearance = css`
-    border: 1px solid #f1f1f1;
     border-radius: ${THEME.exprViewPaddingPx}px;
     background: #fbfbfb;
+    box-shadow: rgba(0, 0, 0, 0.05) 0px 0.5px 0px 0px,
+        rgba(0, 0, 0, 0.05) 0px 0px 0px 1px, rgba(0, 0, 0, 0.05) 0px 2px 4px 0px;
 `;
 
-class Editor extends Component<EditorProps & LayoutProps, EditorState> {
-    private static readonly Container = styled(Box)`
+class Editor extends Component<BoxProps & EditorProps, EditorState> {
+    private static readonly Container = styled(Box)<BoxProps>`
         ${ExprViewAppearance}
         padding: 10px 12px;
         overflow: auto;
+        place-self: self-start;
     `;
 
     state: EditorState = {
@@ -139,6 +145,7 @@ class Editor extends Component<EditorProps & LayoutProps, EditorState> {
             case "l":
                 this.setSelection(this.selectFirstCHild);
                 break;
+            //TODO: Add tab - go to next blank.
         }
     };
 
@@ -186,31 +193,82 @@ class Editor extends Component<EditorProps & LayoutProps, EditorState> {
     }
 }
 
-const ExprViewItem = styled.div`
+interface ShortcutExpr {
+    expr: Expr;
+    shortcut?: string;
+}
+
+interface ExprViewListProps {
+    exprs: ShortcutExpr[];
+    frozen?: boolean;
+    gridArea: string;
+    heading: string;
+}
+
+const ExprViewItem = styled(motion.div)`
+    grid-column: expr;
+    justify-self: left;
     ${ExprViewAppearance}
-    position: relative;
-    padding: 0;
 `;
 
-function ExprViewList({
-    exprs,
-    gridArea,
-    frozen,
-}: LayoutProps & { exprs: Expr[]; frozen?: boolean }) {
-    //TODO: Add floating headings.
+// Ripped from Stack Overflow.
+const Shortcut = styled.div`
+    display: inline-block;
+    padding: 0.1em 0.3em;
+    line-height: 1.4;
+    color: #242729;
+    text-shadow: 0 1px 0 #fff;
+    background-color: #e1e3e5;
+    border: 1px solid #adb3b8;
+    border-radius: 3px;
+    box-shadow: 0 1px 0 rgba(12, 13, 14, 0.2), 0 0 0 2px #fff inset;
+    white-space: nowrap;
+    grid-column: shortcut;
+    justify-self: right;
+`;
+
+const ExprList = styled.div`
+    display: grid;
+    grid-template-columns:
+        [shortcut] auto
+        [expr] min-content;
+    gap: 10px;
+    grid-auto-rows: min-content;
+    align-items: start;
+`;
+
+const ExprListHeading = styled.h2`
+    margin-bottom: 20px;
+`;
+
+function ExprViewList({ exprs, gridArea, frozen, heading }: ExprViewListProps) {
+    if (!exprs.length) return null;
     return (
-        <VerticalStack gridArea={gridArea} gap={10} alignItems="start">
-            {exprs.map((x, i) => (
-                <ExprViewItem key={i}>
-                    <ExprView expr={x} frozen={frozen} />
-                </ExprViewItem>
-            ))}
-        </VerticalStack>
+        <Box gridArea={gridArea}>
+            <ExprListHeading>{heading}</ExprListHeading>
+            <ExprList>
+                <AnimatePresence>
+                    {exprs.map(({ expr, shortcut }, i) => (
+                        <React.Fragment key={expr.id}>
+                            {shortcut && <Shortcut>{shortcut}</Shortcut>}
+                            <ExprViewItem
+                                initial={{ opacity: 0.8, scale: 0.9 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0.5 }}
+                                transition={{ duration: 0.1, ease: "easeIn" }}
+                            >
+                                <ExprView expr={expr} frozen={frozen} />
+                            </ExprViewItem>
+                        </React.Fragment>
+                    ))}
+                </AnimatePresence>
+            </ExprList>
+        </Box>
     );
 }
 
 interface KaleState {
-    yankList: Expr[];
+    yankList: ShortcutExpr[];
 }
 
 function hole(comment: string) {
@@ -224,32 +282,42 @@ class Kale extends Component<{}, KaleState> {
             "nav nav nav"
             "toybox editor yanklist";
         grid-template-rows: min-content auto;
-        grid-template-columns: minmax(200px, 1fr) 60% minmax(200px, 1fr);
-        grid-gap: 15px;
-        padding: 15px 15px 0;
+        /* TODO: Still a lot of messing with these left */
+        grid-template-columns: max-content minmax(min-content, auto) max-content;
+        gap: 20px 40px;
+        padding: 25px 20px 0;
         height: 100%;
     `;
 
     private static readonly Heading = styled.h1`
-        font-size: 20px;
         color: #0ba902;
     `;
 
     private static readonly toyBox = [
-        new E.List([hole("first line"), hole("second line")]),
-        new E.Call("if", [hole("true branch"), hole("false branch")]),
-        new E.Variable("variable"),
-        new E.Literal("a string", "str"),
-        new E.Literal("42", "int"),
+        {
+            expr: new E.List([hole("first line"), hole("second line")]),
+            shortcut: "L",
+        },
+        {
+            expr: new E.Call("if", [hole("true branch"), hole("false branch")]),
+            shortcut: "C",
+        },
+        { expr: new E.Variable("variable"), shortcut: "V" },
+        { expr: new E.Literal("a string", "str") },
+        { expr: new E.Literal("42", "int") },
     ];
 
     state: KaleState = { yankList: [] };
 
     private addToYankList = (expr: Expr) => {
         if (expr instanceof E.Hole) return;
-        this.setState(state => ({
-            yankList: state.yankList.concat([expr]),
-        }));
+        this.setState(({ yankList }) => {
+            const shortcut =
+                yankList.length > 9 ? undefined : yankList.length.toString();
+            return {
+                yankList: [{ expr, shortcut }, ...yankList],
+            };
+        });
     };
 
     render() {
@@ -270,6 +338,7 @@ class Kale extends Component<{}, KaleState> {
                         <ExprViewList
                             gridArea="toybox"
                             exprs={Kale.toyBox}
+                            heading="Blocks"
                             frozen
                         />
                         <Editor
@@ -278,6 +347,7 @@ class Kale extends Component<{}, KaleState> {
                         />
                         <ExprViewList
                             gridArea="yanklist"
+                            heading="Work List"
                             exprs={this.state.yankList}
                         />
                     </Kale.Container>
