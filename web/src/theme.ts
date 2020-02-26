@@ -4,6 +4,7 @@ export default {
     // Text.
     fontSizePx: 13,
     fontFamily: "iA Writer Quattro",
+    buttonTextColour: "#1b65f1",
 
     // Interface and decoration colours.
     decorationColour: "#6a6a6a",

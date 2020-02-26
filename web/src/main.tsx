@@ -10,7 +10,7 @@ import SAMPLE_EXPR from "./sample";
 import TextMetrics from "./text_metrics";
 import { Optional, assert, assertSome } from "./utils";
 import THEME from "./theme";
-import { Box, HorizonstalStack, BoxProps, Shortcut } from "./components";
+import { Box, HorizonstalStack, BoxProps, Shortcut, SubtleButton } from "./components";
 
 const GlobalStyle = createGlobalStyle`
 #main {
@@ -33,14 +33,13 @@ body {
 p {
     line-height: 1.8;
 }
-/* Hide the focus ring around focused divs */
-div:focus {
-    outline: none;
-}
 /* Nothing inside svgs should be selectable */
 svg * {
     user-select: none;
     cursor: default;
+}
+h1, h2, h3 {
+    user-select: none;
 }
 h1 {
     font-weight: 700;
@@ -74,6 +73,7 @@ class Editor extends Component<BoxProps & EditorProps, EditorState> {
         padding: 10px 12px;
         overflow: auto;
         place-self: self-start;
+        outline: none;
     `;
 
     private containerRef = React.createRef<HTMLDivElement>();
@@ -291,13 +291,15 @@ function ToyBox() {
     );
 }
 
-function YankList({ exprs }: { exprs: ShortcutExpr[] }) {
-    //TODO: Add an "Clear All" button.
+function YankList({ exprs, onClearAll }: { exprs: ShortcutExpr[]; onClearAll: () => void }) {
     //TODO: Make these editors inside of ExprViews.
     if (!exprs.length) return null;
     return (
         <Box gridArea="yanklist">
-            <ExprListHeading>Work List</ExprListHeading>
+            <HorizonstalStack>
+                <ExprListHeading>Work List</ExprListHeading>
+                <SubtleButton onClick={onClearAll}>Clear All</SubtleButton>
+            </HorizonstalStack>
             <ExprViewList frozen exprs={exprs} />
         </Box>
     );
@@ -346,6 +348,10 @@ class Kale extends Component<{}, KaleState> {
         });
     };
 
+    private clearYankList = () => {
+        this.setState({ yankList: [] });
+    };
+
     private static renderHelp() {
         const S = Shortcut;
         return (
@@ -363,18 +369,13 @@ class Kale extends Component<{}, KaleState> {
                 <DragAndDropSurface>
                     <GlobalStyle />
                     <Kale.Container>
-                        <HorizonstalStack
-                            gridArea="nav"
-                            gap={10}
-                            alignItems="baseline"
-                            justifyContent="space-between"
-                        >
+                        <HorizonstalStack gridArea="nav" gap={10}>
                             <Kale.Heading>Kale</Kale.Heading>
                             {Kale.renderHelp()}
                         </HorizonstalStack>
                         {THEME.showingToyBox && <ToyBox />}
                         <Editor gridArea="editor" onRemovedExpr={this.addToYankList} />
-                        <YankList exprs={this.state.yankList} />
+                        <YankList exprs={this.state.yankList} onClearAll={this.clearYankList} />
                     </Kale.Container>
                 </DragAndDropSurface>
             </StyleSheetManager>

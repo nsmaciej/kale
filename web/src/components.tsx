@@ -10,6 +10,8 @@ import {
     flexbox,
 } from "styled-system";
 
+import THEME from "./theme";
+
 export type BoxProps = SpaceProps & GridProps & FlexboxProps & LayoutProps;
 export const Box = styled.div<BoxProps>`
     ${space}
@@ -26,6 +28,8 @@ export const VerticalStack = styled(Box)`
     display: flex;
     flex-direction: column;
     margin: -${getGap}px 0;
+    align-items: baseline;
+    justify-content: space-between;
     & > * {
         margin: ${getGap}px 0;
     }
@@ -34,6 +38,8 @@ export const HorizonstalStack = styled(Box)`
     display: flex;
     flex-direction: row;
     margin: 0 -${getGap}px;
+    align-items: baseline;
+    justify-content: space-between;
     & > * {
         margin: 0 ${getGap}px;
     }
@@ -49,4 +55,17 @@ export const Shortcut = styled.kbd`
     padding: 2px 4px;
     white-space: nowrap;
     font-family: inherit;
+`;
+
+export const SubtleButton = styled.button`
+    font: inherit;
+    background: none;
+    border: none;
+    font-weight: 600;
+    color: ${THEME.buttonTextColour};
+    outline: none;
+    &:hover,
+    &:focus {
+        text-decoration: underline;
+    }
 `;
