@@ -15,31 +15,19 @@ export default class TextMetrics {
     static async loadGlobal(): Promise<void> {
         // Types provided by types/font_loading.d.ts
         await document.fonts.load(`${THEME.fontSizePx}px ${THEME.fontFamily}`);
-        await document.fonts.load(
-            `italic ${THEME.fontSizePx}px ${THEME.fontFamily}`,
-        );
-        await document.fonts.load(
-            `bold ${THEME.fontSizePx}px ${THEME.fontFamily}`,
-        );
-        await document.fonts.load(
-            `bold italic ${THEME.fontSizePx}px ${THEME.fontFamily}`,
-        );
+        await document.fonts.load(`italic ${THEME.fontSizePx}px ${THEME.fontFamily}`);
+        await document.fonts.load(`bold ${THEME.fontSizePx}px ${THEME.fontFamily}`);
+        await document.fonts.load(`bold italic ${THEME.fontSizePx}px ${THEME.fontFamily}`);
         TextMetrics.global = new TextMetrics();
     }
 
     constructor() {
-        const svg = document.createElementNS(
-            "http://www.w3.org/2000/svg",
-            "svg",
-        );
+        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
         // Note display none would cause the text to not render.
         svg.style.visibility = "hidden";
         svg.style.position = "absolute";
 
-        const text = document.createElementNS(
-            "http://www.w3.org/2000/svg",
-            "text",
-        );
+        const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
         text.style.fontFamily = THEME.fontFamily;
         text.style.fontSize = `${THEME.fontSizePx}px`;
         svg.appendChild(text);
@@ -47,10 +35,7 @@ export default class TextMetrics {
         document.body.appendChild(svg);
     }
 
-    measure(
-        text: string,
-        { bold = false, italic = false }: TextStyle = {},
-    ): Size {
+    measure(text: string, { bold = false, italic = false }: TextStyle = {}): Size {
         const key = [+bold, +italic, text].join("");
         const HEIGHT_FUDGE_FACTOR = 1.3;
         const height = THEME.fontSizePx * HEIGHT_FUDGE_FACTOR;

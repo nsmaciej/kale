@@ -117,9 +117,7 @@ export abstract class Expr {
     }
 
     remove(id: Optional<ExprId>) {
-        return id == null
-            ? null
-            : this.filterMap(x => (x.id === id ? null : x));
+        return id == null ? null : this.filterMap(x => (x.id === id ? null : x));
     }
 }
 
@@ -147,11 +145,7 @@ export class Literal extends Expr {
         //TODO: Check for valid literals.
         return !!this.content && !!this.type;
     }
-    constructor(
-        readonly content: string,
-        readonly type: string,
-        data = exprData(),
-    ) {
+    constructor(readonly content: string, readonly type: string, data = exprData()) {
         super(data);
     }
 }
@@ -161,11 +155,7 @@ export class Call extends Expr {
         //TODO: Verify reasonable function names.
         return !!this.fn;
     }
-    constructor(
-        readonly fn: string,
-        readonly args: readonly Expr[] = [],
-        data = exprData(),
-    ) {
+    constructor(readonly fn: string, readonly args: readonly Expr[] = [], data = exprData()) {
         super(data);
     }
 }

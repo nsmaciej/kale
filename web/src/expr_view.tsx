@@ -34,9 +34,7 @@ export class DragAndDropSurface extends Component<{}, DragAndDropSurfaceState> {
     `;
     state: DragAndDropSurfaceState = { position: null };
 
-    static readonly Context = React.createContext<
-        Optional<DragAndDropSurfaceContext>
-    >(null);
+    static readonly Context = React.createContext<Optional<DragAndDropSurfaceContext>>(null);
 
     private contextValue: DragAndDropSurfaceContext = {
         dismissDrag: this.dismissDrag.bind(this),
@@ -129,8 +127,7 @@ interface ExprViewState {
 
 // This needs to be a class component so we can nicely pass it to the layout helper.
 //TODO: Support a prop indicating if the view has focus. (Otherwise dim selection)
-export default class ExprView
-    extends PureComponent<ExprViewProps, ExprViewState>
+export default class ExprView extends PureComponent<ExprViewProps, ExprViewState>
     implements ExprDelegate {
     static contextType = DragAndDropSurface.Context;
     declare context: React.ContextType<typeof DragAndDropSurface.Context>;
@@ -187,9 +184,7 @@ export default class ExprView
 
     private drawRect(expr: Optional<ExprId>, isSelection: boolean, area: Area) {
         if (expr == null) return;
-        const rect = this.findExprRect(expr, area)?.pad(
-            THEME.selectionPaddingPx,
-        );
+        const rect = this.findExprRect(expr, area)?.pad(THEME.selectionPaddingPx);
         if (rect == null) return; // This happens when an expression is removed.
         return (
             <motion.rect
@@ -203,11 +198,7 @@ export default class ExprView
                 rx={THEME.selectionRadiusPx}
                 fill={isSelection ? THEME.selectionColour : "none"}
                 initial={false}
-                stroke={
-                    isSelection
-                        ? THEME.selectionStrokeColour
-                        : THEME.highlightStrokeColour
-                }
+                stroke={isSelection ? THEME.selectionStrokeColour : THEME.highlightStrokeColour}
                 strokeWidth={1}
                 transition={{ type: "tween", ease: "easeIn", duration: 0.1 }}
             />

@@ -42,21 +42,14 @@ export class Layout {
 
     place(origin: Vec, layout: Layout, index = this.nodes.length) {
         this.size = this.size.extend(origin, layout.size);
-        this.nodes.splice(
-            index,
-            0,
-            <SvgGroup translate={origin}>{layout.nodes.flat()}</SvgGroup>,
-        );
+        this.nodes.splice(index, 0, <SvgGroup translate={origin}>{layout.nodes.flat()}</SvgGroup>);
 
         // Handle inline children.
         if (layout.inline && layout.expr != null) {
             this.inlineExprs.add(layout.expr);
         }
         if (layout.inlineExprs.size > 0) {
-            this.inlineExprs = new Set([
-                ...this.inlineExprs,
-                ...layout.inlineExprs,
-            ]);
+            this.inlineExprs = new Set([...this.inlineExprs, ...layout.inlineExprs]);
         }
 
         // Handle underlines.
@@ -117,7 +110,5 @@ function stack(column: boolean, margin: number, args: StackLayout) {
     return layout;
 }
 
-export const hstack = (margin: number, ...children: StackLayout) =>
-    stack(false, margin, children);
-export const vstack = (margin: number, ...children: StackLayout) =>
-    stack(true, margin, children);
+export const hstack = (margin: number, ...children: StackLayout) => stack(false, margin, children);
+export const vstack = (margin: number, ...children: StackLayout) => stack(true, margin, children);

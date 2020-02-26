@@ -59,10 +59,7 @@ export class Rect {
     }
 
     pad(d: Vec) {
-        return new Rect(
-            this.origin.dy(-d.y).dx(-d.x),
-            this.size.pad(d.scale(2)),
-        );
+        return new Rect(this.origin.dy(-d.y).dx(-d.x), this.size.pad(d.scale(2)));
     }
 
     shift(offset: Vec) {

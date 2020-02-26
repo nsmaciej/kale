@@ -14,19 +14,9 @@ import {
 import { Vec, Rect } from "./geometry";
 import THEME from "./theme";
 
-type AlignTypes =
-    | "start"
-    | "end"
-    | "center"
-    | "baseline"
-    | "stretch"
-    | "normal";
+type AlignTypes = "start" | "end" | "center" | "baseline" | "stretch" | "normal";
 
-type ContentAlignTypes =
-    | AlignTypes
-    | "space-between"
-    | "space-around"
-    | "space-evenly";
+type ContentAlignTypes = AlignTypes | "space-between" | "space-around" | "space-evenly";
 
 export interface StackProps {
     gap?: number;
@@ -80,29 +70,13 @@ export function SvgGroup({
     children: ReactNode;
     translate?: Vec;
 }) {
-    return (
-        <g transform={`translate(${translate.x} ${translate.y})`}>{children}</g>
-    );
+    return <g transform={`translate(${translate.x} ${translate.y})`}>{children}</g>;
 }
 
 type LineProps = CustomSvgProps<SVGLineElement, { start: Vec; end: Vec }>;
 
-export function SvgLine({
-    start,
-    end,
-    stroke = "#000000",
-    ...props
-}: LineProps) {
-    return (
-        <line
-            x1={start.x}
-            x2={end.x}
-            y1={start.y}
-            y2={end.y}
-            stroke={stroke}
-            {...props}
-        />
-    );
+export function SvgLine({ start, end, stroke = "#000000", ...props }: LineProps) {
+    return <line x1={start.x} x2={end.x} y1={start.y} y2={end.y} stroke={stroke} {...props} />;
 }
 
 export function SvgRect({
@@ -112,9 +86,7 @@ export function SvgRect({
     return <rect {...{ x, y, width, height }} {...props} />;
 }
 
-export function UnderlineLine(
-    props: Omit<LineProps, "shapeRendering" | "stroke" | "strokeWidth">,
-) {
+export function UnderlineLine(props: Omit<LineProps, "shapeRendering" | "stroke" | "strokeWidth">) {
     // It took a while, but black, crispEdge, 0.5 stroke lines work well. They looks equally/ well
     // at full and half-pixel multiples; and look good on high-dpi screens.
     return (

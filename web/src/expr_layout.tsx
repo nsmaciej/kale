@@ -92,14 +92,10 @@ export class ExprLayout implements ExprVisitor<Layout> {
 
     private exprProps(expr: Expr) {
         return {
-            onMouseEnter: (e: React.MouseEvent) =>
-                this.delegate?.onHoverExpr(e, expr),
-            onMouseLeave: (e: React.MouseEvent) =>
-                this.delegate?.onHoverExpr(e, null),
-            onClick: (e: React.MouseEvent) =>
-                this.delegate?.onClickExpr(e, expr),
-            onMouseDown: (e: React.MouseEvent) =>
-                this.delegate?.onMouseDown(e, expr),
+            onMouseEnter: (e: React.MouseEvent) => this.delegate?.onHoverExpr(e, expr),
+            onMouseLeave: (e: React.MouseEvent) => this.delegate?.onHoverExpr(e, null),
+            onClick: (e: React.MouseEvent) => this.delegate?.onClickExpr(e, expr),
+            onMouseDown: (e: React.MouseEvent) => this.delegate?.onMouseDown(e, expr),
         };
     }
 
@@ -131,11 +127,7 @@ export class ExprLayout implements ExprVisitor<Layout> {
     private layoutCreateCircle(expr: Expr) {
         if (this.delegate?.isFrozen(expr)) return;
         return new Layout(
-            (
-                <CreateCirlce
-                    onClick={e => this.delegate?.onClickCreateCircle(e, expr)}
-                />
-            ),
+            (<CreateCirlce onClick={e => this.delegate?.onClickCreateCircle(e, expr)} />),
             new Size(THEME.createCircleMaxR, THEME.fontSizePx),
         );
     }
@@ -176,8 +168,7 @@ export class ExprLayout implements ExprVisitor<Layout> {
     }
 
     visitLiteral(expr: E.Literal): Layout {
-        const content =
-            expr.type === "str" ? `"${expr.content}"` : expr.content;
+        const content = expr.type === "str" ? `"${expr.content}"` : expr.content;
         return this.layoutText(expr, content, {
             title: expr.data.comment,
             colour: THEME.literalColour,

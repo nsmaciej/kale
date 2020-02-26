@@ -11,10 +11,7 @@ export function assertSome<T>(value: Optional<T>): T {
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Equality_comparisons_and_sameness
 export type Optional<T> = T | undefined | null;
 
-export function filterMap<T, R>(
-    array: readonly T[],
-    predicate: (element: T) => Optional<R>,
-) {
+export function filterMap<T, R>(array: readonly T[], predicate: (element: T) => Optional<R>) {
     const acc: R[] = [];
     for (const x of array) {
         const result = predicate(x);

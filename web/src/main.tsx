@@ -1,10 +1,6 @@
 import * as ReactDOM from "react-dom";
 import React, { Component } from "react";
-import styled, {
-    StyleSheetManager,
-    createGlobalStyle,
-    css,
-} from "styled-components";
+import styled, { StyleSheetManager, createGlobalStyle, css } from "styled-components";
 import { AnimatePresence, motion } from "framer-motion";
 
 import * as E from "./expr";
@@ -64,8 +60,8 @@ interface EditorState {
 const ExprViewAppearance = css`
     border-radius: ${THEME.exprViewPaddingPx}px;
     background: #fbfbfb;
-    box-shadow: rgba(0, 0, 0, 0.05) 0px 0.5px 0px 0px,
-        rgba(0, 0, 0, 0.05) 0px 0px 0px 1px, rgba(0, 0, 0, 0.05) 0px 2px 4px 0px;
+    box-shadow: rgba(0, 0, 0, 0.05) 0px 0.5px 0px 0px, rgba(0, 0, 0, 0.05) 0px 0px 0px 1px,
+        rgba(0, 0, 0, 0.05) 0px 2px 4px 0px;
 `;
 
 class Editor extends Component<BoxProps & EditorProps, EditorState> {
@@ -122,10 +118,7 @@ class Editor extends Component<BoxProps & EditorProps, EditorState> {
 
     private setSelection(reducer: (state: EditorState) => Optional<ExprId>) {
         this.setState(state => ({
-            selection:
-                state.selection == null
-                    ? state.expr.id
-                    : reducer(state) ?? state.selection,
+            selection: state.selection == null ? state.expr.id : reducer(state) ?? state.selection,
         }));
     }
 
@@ -158,11 +151,7 @@ class Editor extends Component<BoxProps & EditorProps, EditorState> {
     private createCircleClicked = (clickedId: ExprId) => {
         const clicked = this.state.expr?.withId(clickedId);
         if (clicked instanceof E.Call) {
-            const newExpr = new E.Call(
-                clicked.fn,
-                clicked.args.concat(new E.Hole()),
-                clicked.data,
-            );
+            const newExpr = new E.Call(clicked.fn, clicked.args.concat(new E.Hole()), clicked.data);
             this.setState(({ selection, expr }) => ({
                 // Try to preserve the selection.
                 selection: selection === clickedId ? newExpr.id : selection,
@@ -256,9 +245,7 @@ function ExprViewList({ exprs, gridArea, frozen, heading }: ExprViewListProps) {
                 <AnimatePresence>
                     {exprs.map(({ expr, shortcut }, i) => (
                         <React.Fragment key={expr.id}>
-                            {shortcut && (
-                                <ExprListShortcut>{shortcut}</ExprListShortcut>
-                            )}
+                            {shortcut && <ExprListShortcut>{shortcut}</ExprListShortcut>}
                             <ExprViewItem
                                 initial={{ opacity: 0.8, scale: 0.9 }}
                                 animate={{ opacity: 1, scale: 1 }}
@@ -320,8 +307,7 @@ class Kale extends Component<{}, KaleState> {
     private addToYankList = (expr: Expr) => {
         if (expr instanceof E.Hole) return;
         this.setState(({ yankList }) => {
-            const shortcut =
-                yankList.length > 9 ? undefined : yankList.length.toString();
+            const shortcut = yankList.length > 9 ? undefined : yankList.length.toString();
             return {
                 yankList: [{ expr, shortcut }, ...yankList],
             };
@@ -355,10 +341,7 @@ class Kale extends Component<{}, KaleState> {
                             heading="Blocks"
                             frozen
                         />
-                        <Editor
-                            gridArea="editor"
-                            onRemovedExpr={this.addToYankList}
-                        />
+                        <Editor gridArea="editor" onRemovedExpr={this.addToYankList} />
                         <ExprViewList
                             gridArea="yanklist"
                             heading="Work List"

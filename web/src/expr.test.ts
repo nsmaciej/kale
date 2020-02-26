@@ -1,12 +1,4 @@
-import {
-    Hole,
-    List,
-    Call,
-    Variable,
-    InvalidExpr,
-    exprData,
-    Literal,
-} from "./expr";
+import { Hole, List, Call, Variable, InvalidExpr, exprData, Literal } from "./expr";
 import SAMPLE_EXPR from "./sample";
 
 const foo = new Variable("foo");
@@ -52,9 +44,7 @@ describe("remove", () => {
 describe("validate", () => {
     test("rejects duplicate ids", () => {
         expect(() => new List([foo, foo]).validate()).toThrow(InvalidExpr);
-        expect(() => new Call("foo", [foo, foo]).validate()).toThrow(
-            InvalidExpr,
-        );
+        expect(() => new Call("foo", [foo, foo]).validate()).toThrow(InvalidExpr);
     });
 
     test("rejects empty comments", () => {
