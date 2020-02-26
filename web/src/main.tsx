@@ -101,25 +101,30 @@ class Editor extends Component<BoxProps & EditorProps, EditorState> {
         };
     }
 
-    private selectParent(state: EditorState) {
-        return state.expr?.parentOf(state.selection)?.id;
+    private static selectParent(state: EditorState) {
+        return state.expr.parentOf(state.selection)?.id;
     }
-    private selectLeftSibling(state: EditorState) {
-        const siblings = state.expr.parentOf(state.selection)?.children() ?? [];
+    private static selectLeftSibling(state: EditorState) {
+        const siblings = state.expr.siblings(state.selection);
         const ix = siblings?.findIndex(x => x.id === state.selection);
-        if (ix == null || ix === 0) return;
+        if (ix == null || ix <= 0) return;
         return siblings[ix - 1]?.id;
     }
-    private selectRightSibling(state: EditorState) {
-        const siblings = state.expr.parentOf(state.selection)?.children() ?? [];
+    private static selectRightSibling(state: EditorState) {
+        const siblings = state.expr.siblings(state.selection);
         const ix = siblings?.findIndex(x => x.id === state.selection);
         if (ix == null) return;
         return siblings[ix + 1]?.id;
     }
-    private selectFirstCHild(state: EditorState) {
-        return state.expr?.withId(state.selection)?.children()[0]?.id;
+    private static selectFirstCHild(state: EditorState) {
+        return state.expr.withId(state.selection)?.children()[0]?.id;
     }
-
+    private static selectNextBlank(state: EditorState) {
+        const holes = state.expr.findAll(x => x instanceof E.Hole);
+        const ix = holes.findIndex(x => x.id === state.selection);
+        if (ix === -1) return holes[0].id;
+        return holes[(ix + 1) % holes.length].id;
+    }
     private setSelection(reducer: (state: EditorState) => Optional<ExprId>) {
         this.setState(state => ({
             selection: state.selection == null ? state.expr.id : reducer(state) ?? state.selection,
@@ -133,19 +138,26 @@ class Editor extends Component<BoxProps & EditorProps, EditorState> {
                 this.setState(this.removeSelection);
                 break;
             case "h":
-                this.setSelection(this.selectParent);
+                this.setSelection(Editor.selectParent);
                 break;
             case "k":
-                this.setSelection(this.selectLeftSibling);
+                this.setSelection(Editor.selectLeftSibling);
                 break;
             case "j":
-                this.setSelection(this.selectRightSibling);
+                this.setSelection(Editor.selectRightSibling);
                 break;
             case "l":
-                this.setSelection(this.selectFirstCHild);
+                this.setSelection(Editor.selectFirstCHild);
                 break;
-            //TODO: Add tab - go to next blank.
+            case "Tab":
+                // When we press tab, we don't want the default "select root" behaviour.
+                this.setState(state => ({ selection: Editor.selectNextBlank(state) }));
+                break;
+            default:
+                console.log("Can't handle", event.key);
+                return;
         }
+        event.preventDefault();
     };
 
     private createCircleClicked = (clickedId: ExprId) => {
@@ -327,10 +339,9 @@ class Kale extends Component<{}, KaleState> {
                             justifyContent="space-between"
                         >
                             <Kale.Heading>Kale</Kale.Heading>
-                            <p style={{ textAlign: "right" }}>
-                                Press <S>backspace</S> to delete. Use <S>H</S> <S>J</S> <S>K</S>
-                                <S>L</S> to move around.
-                                <br />
+                            <p style={{ textAlign: "right", maxWidth: "400px" }}>
+                                Press <S>backspace</S> to delete. Use <S>H</S> <S>J</S> <S>K</S>{" "}
+                                <S>L</S> to move around. Fill in the blanks with <S>Tab</S>.{" "}
                                 <b>Help is on the way!</b>
                             </p>
                         </HorizonstalStack>

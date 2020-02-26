@@ -74,6 +74,14 @@ export abstract class Expr {
         return found;
     }
 
+    findAll(test: (expr: Expr) => boolean): Expr[] {
+        const result: Expr[] = [];
+        this.forEach(x => {
+            if (test(x)) result.push(x);
+        });
+        return result;
+    }
+
     forEach(callback: (x: Expr) => void) {
         this.filterMap(x => {
             callback(x);
@@ -96,7 +104,7 @@ export abstract class Expr {
         return [];
     }
 
-    siblings(id: ExprId): readonly Expr[] {
+    siblings(id: Optional<ExprId>): readonly Expr[] {
         return this.parentOf(id)?.children() ?? [];
     }
 
