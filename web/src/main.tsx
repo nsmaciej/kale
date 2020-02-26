@@ -225,8 +225,6 @@ interface ExprViewListProps {
     animate?: boolean;
     exprs: ShortcutExpr[];
     frozen?: boolean;
-    gridArea: string;
-    heading: string;
 }
 
 const ExprViewItem = styled(motion.div)`
@@ -250,11 +248,7 @@ const ExprList = styled.div`
     align-items: start;
 `;
 
-const ExprListHeading = styled.h2`
-    margin-bottom: 20px;
-`;
-
-function ExprViewList({ exprs, gridArea, frozen, heading, animate }: ExprViewListProps) {
+function ExprViewList({ exprs, frozen, animate }: ExprViewListProps) {
     if (!exprs.length) return null;
     const renderItem = (expr: Expr, shortcut?: string) => (
         // This has to be a fragment. Otherwise the items won't layout in a grid.
@@ -271,11 +265,40 @@ function ExprViewList({ exprs, gridArea, frozen, heading, animate }: ExprViewLis
         </Fragment>
     );
     return (
-        <Box gridArea={gridArea}>
-            <ExprListHeading>{heading}</ExprListHeading>
-            <ExprList>
-                <AnimatePresence>{exprs.map(x => renderItem(x.expr, x.shortcut))}</AnimatePresence>
-            </ExprList>
+        <ExprList>
+            <AnimatePresence>{exprs.map(x => renderItem(x.expr, x.shortcut))}</AnimatePresence>
+        </ExprList>
+    );
+}
+
+const ExprListHeading = styled.h2`
+    margin-bottom: 20px;
+`;
+
+const toyBoxExprs = [
+    { shortcut: "S", expr: new E.List([hole("first line"), hole("second line")]) },
+    { shortcut: "F", expr: new E.Call("if", [hole("true branch"), hole("false branch")]) },
+    { shortcut: "A", expr: new E.Variable("variable") },
+    { expr: new E.Literal("a string", "str") },
+    { expr: new E.Literal("42", "int") },
+];
+function ToyBox() {
+    return (
+        <Box gridArea="toybox">
+            <ExprListHeading>Blocks</ExprListHeading>
+            <ExprViewList frozen exprs={toyBoxExprs} />
+        </Box>
+    );
+}
+
+function YankList({ exprs }: { exprs: ShortcutExpr[] }) {
+    //TODO: Add an "Clear All" button.
+    //TODO: Make these editors inside of ExprViews.
+    if (!exprs.length) return null;
+    return (
+        <Box gridArea="yanklist">
+            <ExprListHeading>Work List</ExprListHeading>
+            <ExprViewList frozen exprs={exprs} />
         </Box>
     );
 }
@@ -310,14 +333,6 @@ class Kale extends Component<{}, KaleState> {
     private static readonly Help = styled.p`
         max-width: 500px;
     `;
-
-    private static readonly toyBox = [
-        { shortcut: "S", expr: new E.List([hole("first line"), hole("second line")]) },
-        { shortcut: "F", expr: new E.Call("if", [hole("true branch"), hole("false branch")]) },
-        { shortcut: "A", expr: new E.Variable("variable") },
-        { expr: new E.Literal("a string", "str") },
-        { expr: new E.Literal("42", "int") },
-    ];
 
     state: KaleState = { yankList: [] };
 
@@ -357,23 +372,9 @@ class Kale extends Component<{}, KaleState> {
                             <Kale.Heading>Kale</Kale.Heading>
                             {Kale.renderHelp()}
                         </HorizonstalStack>
-                        {THEME.showingToyBox && (
-                            <ExprViewList
-                                gridArea="toybox"
-                                exprs={Kale.toyBox}
-                                heading="Blocks"
-                                frozen
-                            />
-                        )}
+                        {THEME.showingToyBox && <ToyBox />}
                         <Editor gridArea="editor" onRemovedExpr={this.addToYankList} />
-                        <ExprViewList
-                            //TODO: Add an "Clear All" button.
-                            //TODO: Make these editors inside of ExprViews.
-                            gridArea="yanklist"
-                            heading="Work List"
-                            animate
-                            exprs={this.state.yankList}
-                        />
+                        <YankList exprs={this.state.yankList} />
                     </Kale.Container>
                 </DragAndDropSurface>
             </StyleSheetManager>
