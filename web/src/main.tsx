@@ -8,7 +8,7 @@ import { Expr } from "./expr";
 import ExprView, { DragAndDropSurface } from "./expr_view";
 import TextMetrics from "./text_metrics";
 import THEME from "./theme";
-import { Box, HorizonstalStack, Shortcut, SubtleButton } from "./components";
+import { Box, Stack, Shortcut, SubtleButton } from "./components";
 import Editor from "./editor";
 
 const GlobalStyle = createGlobalStyle`
@@ -43,8 +43,12 @@ h1 {
     font-weight: 900;
     font-size: 25px;
 }
-h2, h3 {
+h2 {
     font-weight: 700;
+    font-size: 20px;
+}
+h3 {
+    font-weight: 500;
     font-size: 20px;
 }
 `;
@@ -131,12 +135,12 @@ function HistoryList({ exprs, onClearAll }: { exprs: Expr[]; onClearAll: () => v
     }));
     return (
         <Box gridArea="history" overflow="auto">
-            <HorizonstalStack gap={10} alignItems="baseline">
+            <Stack vertical gap={10} alignItems="baseline">
                 <h2>History</h2>
                 <SubtleButton onClick={onClearAll} disabled={history.length === 0}>
                     Clear All
                 </SubtleButton>
-            </HorizonstalStack>
+            </Stack>
             <ExprViewList frozen animate exprs={history} fallback="Nothing here yet." />
         </Box>
     );
@@ -204,18 +208,28 @@ class Kale extends Component<{}, KaleState> {
                     <DragAndDropSurface>
                         <GlobalStyle />
                         <Kale.Container>
-                            <HorizonstalStack
+                            <Stack
                                 gridArea="nav"
                                 gap={10}
                                 alignItems="center"
+                                justifyContent="space-between"
                                 paddingBottom={15}
                                 borderBottom="1px solid #e4e4e4"
                             >
                                 <Kale.Heading>Kale</Kale.Heading>
                                 {Kale.renderHelp()}
-                            </HorizonstalStack>
+                            </Stack>
                             {THEME.showingToyBox && <ToyBox />}
-                            <Editor gridArea="editor" onRemovedExpr={this.addToHistory} />
+                            <Stack vertical gridArea="editor" overflow="auto" gap={20}>
+                                <div>
+                                    <h3>Sample 1</h3>
+                                    <Editor onRemovedExpr={this.addToHistory} />
+                                </div>
+                                <div>
+                                    <h3>Sample 2</h3>
+                                    <Editor onRemovedExpr={this.addToHistory} />
+                                </div>
+                            </Stack>
                             <HistoryList
                                 exprs={this.state.history}
                                 onClearAll={this.clearHistory}

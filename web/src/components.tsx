@@ -23,30 +23,19 @@ export const Box = styled.div<BoxProps>`
     ${border}
 `;
 
-const getGap = (p: StackProps) => p.gap ?? 0;
+const getSide = (p: StackProps) => "margin-" + (p.vertical ? "bottom" : "right");
 export interface StackProps extends BoxProps {
     gap?: number;
+    vertical?: boolean;
 }
-export const VerticalStack = styled(Box)`
+export const Stack = styled(Box)`
     display: flex;
-    flex-direction: column;
-    justify-content: space-between;
+    flex-direction: ${p => (p.vertical ? "column" : "row")};
     & > *:last-child {
-        margin-bottom: 0;
+        ${getSide}: 0;
     }
     & > * {
-        margin-bottom: ${getGap}px;
-    }
-`;
-export const HorizonstalStack = styled(Box)`
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    & > *:last-child {
-        margin-right: 0;
-    }
-    & > * {
-        margin-right: ${getGap}px;
+        ${getSide}: ${p => p.gap ?? 0}px;
     }
 `;
 

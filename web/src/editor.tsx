@@ -4,7 +4,7 @@ import styled from "styled-components";
 import * as E from "./expr";
 import { Expr, ExprId } from "./expr";
 import ExprView from "./expr_view";
-import SAMPLE_EXPR from "./sample";
+import { SAMPLE_1 } from "./sample";
 import { Optional, assert, assertSome } from "./utils";
 import { Box, BoxProps } from "./components";
 
@@ -20,7 +20,6 @@ interface EditorState {
 
 export default class Editor extends Component<BoxProps & EditorProps, EditorState> {
     private static readonly Container = styled(Box)`
-        overflow: auto;
         outline: none;
     `;
 
@@ -29,7 +28,7 @@ export default class Editor extends Component<BoxProps & EditorProps, EditorStat
     state: EditorState = {
         selection: null,
         focused: true,
-        expr: SAMPLE_EXPR,
+        expr: SAMPLE_1,
     };
 
     private static removeSelection(state: EditorState, props: EditorProps) {

@@ -1,5 +1,5 @@
 import { Blank, List, Call, Variable, InvalidExpr, exprData, Literal } from "./expr";
-import SAMPLE_EXPR from "./sample";
+import { SAMPLE_1 } from "./sample";
 
 const foo = new Variable("foo");
 const bar = new Variable("bar");
@@ -34,9 +34,9 @@ describe("remove", () => {
     });
 
     test("works on complex expressions", () => {
-        const print = (SAMPLE_EXPR.args[1] as List).list[0] as Call;
+        const print = (SAMPLE_1.args[1] as List).list[0] as Call;
         expect(print.fn).toBe("print");
-        const r = SAMPLE_EXPR.remove(print.id) as Call;
+        const r = SAMPLE_1.remove(print.id) as Call;
         expect(r.args[1]).toBeInstanceOf(Literal);
     });
 });
