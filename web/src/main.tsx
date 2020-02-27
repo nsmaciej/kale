@@ -301,7 +301,7 @@ function YankList({ exprs, onClearAll }: { exprs: ShortcutExpr[]; onClearAll: ()
     if (!exprs.length) return null;
     return (
         <Sidebar gridArea="yanklist">
-            <HorizonstalStack>
+            <HorizonstalStack gap={10}>
                 <ExprListHeading>Work List</ExprListHeading>
                 <SubtleButton onClick={onClearAll}>Clear All</SubtleButton>
             </HorizonstalStack>
@@ -311,7 +311,7 @@ function YankList({ exprs, onClearAll }: { exprs: ShortcutExpr[]; onClearAll: ()
 }
 
 interface KaleState {
-    yankList: ShortcutExpr[];
+    yankList: Expr[];
 }
 
 function hole(comment: string) {
@@ -344,12 +344,10 @@ class Kale extends Component<{}, KaleState> {
 
     private addToYankList = (expr: Expr) => {
         if (expr instanceof E.Hole) return;
-        this.setState(({ yankList }) => {
-            const shortcut = yankList.length > 9 ? undefined : yankList.length.toString();
-            return {
-                yankList: [{ expr, shortcut }, ...yankList],
-            };
-        });
+        this.setState(({ yankList }) => ({
+            // Remove duplicate ids.
+            yankList: [expr, ...yankList.filter(x => x.id !== expr.id)],
+        }));
     };
 
     private clearYankList = () => {
@@ -368,6 +366,10 @@ class Kale extends Component<{}, KaleState> {
     }
 
     render() {
+        const yankList: ShortcutExpr[] = this.state.yankList.map((x, i) => ({
+            shortcut: i < 10 ? i.toString() : undefined,
+            expr: x,
+        }));
         return (
             <StyleSheetManager disableVendorPrefixes>
                 <DragAndDropSurface>
@@ -379,7 +381,7 @@ class Kale extends Component<{}, KaleState> {
                         </HorizonstalStack>
                         {THEME.showingToyBox && <ToyBox />}
                         <Editor gridArea="editor" onRemovedExpr={this.addToYankList} />
-                        <YankList exprs={this.state.yankList} onClearAll={this.clearYankList} />
+                        <YankList exprs={yankList} onClearAll={this.clearYankList} />
                     </Kale.Container>
                 </DragAndDropSurface>
             </StyleSheetManager>
