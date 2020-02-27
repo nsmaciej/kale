@@ -17,7 +17,7 @@ export interface ExprVisitor<R = any> {
     visitList(expr: List): R;
     visitLiteral(expr: Literal): R;
     visitVariable(expr: Variable): R;
-    visitHole(expr: Hole): R;
+    visitBlank(expr: Blank): R;
     visitCall(expr: Call): R;
 }
 
@@ -45,7 +45,7 @@ export abstract class Expr {
         if (this instanceof List) return visitor.visitList(this);
         else if (this instanceof Variable) return visitor.visitVariable(this);
         else if (this instanceof Literal) return visitor.visitLiteral(this);
-        else if (this instanceof Hole) return visitor.visitHole(this);
+        else if (this instanceof Blank) return visitor.visitBlank(this);
         else if (this instanceof Call) return visitor.visitCall(this);
         throw new UnvisitableExpr(this);
     }
@@ -168,7 +168,7 @@ export class Call extends Expr {
     }
 }
 
-export class Hole extends Expr {
+export class Blank extends Expr {
     shallowValid() {
         return true;
     }
@@ -194,7 +194,7 @@ class ExprFilterMap implements ExprVisitor<Optional<Expr>> {
     visitVariable(expr: Variable): Optional<Expr> {
         return this.fn(expr);
     }
-    visitHole(expr: Hole): Optional<Expr> {
+    visitBlank(expr: Blank): Optional<Expr> {
         return this.fn(expr);
     }
     visitCall(expr: Call): Optional<Expr> {

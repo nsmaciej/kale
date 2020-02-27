@@ -65,7 +65,7 @@ export function materialiseUnderlines(parent: Layout) {
 
 export interface ExprDelegate {
     isFrozen?(expr: Expr): boolean;
-    selection?: Optional<ExprId>; // Only checked by holes.
+    selection?: Optional<ExprId>; // Only checked by blanks.
     onHoverExpr?(e: React.MouseEvent, expr: Optional<Expr>): void;
     onClickExpr?(e: React.MouseEvent, expr: Expr): void;
     onClickCreateCircle?(e: React.MouseEvent, expr: Expr): void;
@@ -165,10 +165,10 @@ export class ExprLayout implements ExprVisitor<Layout> {
         });
     }
 
-    visitHole(expr: E.Hole): Layout {
-        const padding = THEME.holePillPadding;
+    visitBlank(expr: E.Blank): Layout {
+        const padding = THEME.blankPillPadding;
         const text = this.layoutText(expr, expr.data.comment ?? "?", {
-            colour: THEME.holeColour,
+            colour: THEME.blankTextColour,
             offset: padding,
         });
         let rect = new Rect(padding, text.size).pad(padding);
@@ -184,13 +184,13 @@ export class ExprLayout implements ExprVisitor<Layout> {
                     fill: selected
                         ? THEME.selectionColour
                         : mouseOver && !this.delegate?.isFrozen?.(expr)
-                        ? THEME.holeFillColourHover
-                        : THEME.holeFillColour,
+                        ? THEME.blankFillColourHover
+                        : THEME.blankFillColour,
                 }}
                 initial={false}
                 rx={rect.height / 2}
                 strokeWidth={1}
-                stroke={selected ? THEME.selectionStrokeColour : THEME.holeStrokeColour}
+                stroke={selected ? THEME.selectionStrokeColour : THEME.blankStrokeColour}
             />
         );
         const layout = new Layout(

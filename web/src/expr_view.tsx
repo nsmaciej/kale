@@ -193,7 +193,7 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
         if (expr == null) return;
         const rect = this.findExprRect(expr, area)?.pad(THEME.selectionPaddingPx);
         if (rect == null) return; // This happens when an expression is removed.
-        const isHole = this.props.expr.withId(expr) instanceof E.Hole;
+        const isHole = this.props.expr.withId(expr) instanceof E.Blank;
         return (
             <motion.rect
                 animate={{
@@ -227,7 +227,7 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
             rect: new Rect(padding, size),
         };
 
-        // Note: A similar check has to be perfomed in expr_layout for holes.
+        // Note: A similar check has to be perfomed in expr_layout for blanks.
         const highlight = this.props.frozen ? null : this.state.highlight;
         const selection = this.props.selection;
         const highlightRect = this.drawRect(highlight, false, area);

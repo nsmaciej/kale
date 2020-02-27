@@ -97,7 +97,7 @@ class Editor extends Component<BoxProps & EditorProps, EditorState> {
             "Calculated new selection does not exist",
         );
         return {
-            expr: newExpr ?? new E.Hole(E.exprData("Double click me")),
+            expr: newExpr ?? new E.Blank(E.exprData("Double click me")),
             selection: newSelection,
         };
     }
@@ -121,10 +121,10 @@ class Editor extends Component<BoxProps & EditorProps, EditorState> {
         return state.expr.withId(state.selection)?.children()[0]?.id;
     }
     private static selectNextBlank(state: EditorState) {
-        const holes = state.expr.findAll(x => x instanceof E.Hole);
-        const ix = holes.findIndex(x => x.id === state.selection);
-        if (ix === -1) return holes[0].id;
-        return holes[(ix + 1) % holes.length].id;
+        const blanks = state.expr.findAll(x => x instanceof E.Blank);
+        const ix = blanks.findIndex(x => x.id === state.selection);
+        if (ix === -1) return blanks[0].id;
+        return blanks[(ix + 1) % blanks.length].id;
     }
 
     private setSelection(reducer: (state: EditorState) => Optional<ExprId>) {
@@ -177,7 +177,7 @@ class Editor extends Component<BoxProps & EditorProps, EditorState> {
     private createSiblingBlank = (clickedId: ExprId) => {
         const clicked = this.state.expr?.withId(clickedId);
         if (clicked instanceof E.Call) {
-            const blank = new E.Hole();
+            const blank = new E.Blank();
             const newExpr = new E.Call(clicked.fn, clicked.args.concat(blank), clicked.data);
             this.setState(({ selection, expr }) => ({
                 // Try to preserve the selection.
@@ -285,8 +285,8 @@ const Sidebar = styled(Box)`
 `;
 
 const toyBoxExprs = [
-    { shortcut: "S", expr: new E.List([hole("first line"), hole("second line")]) },
-    { shortcut: "F", expr: new E.Call("if", [hole("true branch"), hole("false branch")]) },
+    { shortcut: "S", expr: new E.List([blank("first line"), blank("second line")]) },
+    { shortcut: "F", expr: new E.Call("if", [blank("true branch"), blank("false branch")]) },
     { shortcut: "A", expr: new E.Variable("variable") },
     { expr: new E.Literal("a string", "str") },
     { expr: new E.Literal("42", "int") },
@@ -318,8 +318,8 @@ interface KaleState {
     yankList: Expr[];
 }
 
-function hole(comment: string) {
-    return new E.Hole(E.exprData(comment));
+function blank(comment: string) {
+    return new E.Blank(E.exprData(comment));
 }
 
 class Kale extends Component<{}, KaleState> {
@@ -341,13 +341,13 @@ class Kale extends Component<{}, KaleState> {
     `;
 
     private static readonly Help = styled.p`
-        max-width: 500px;
+        max-width: 600px;
     `;
 
     state: KaleState = { yankList: [] };
 
     private addToYankList = (expr: Expr) => {
-        if (expr instanceof E.Hole) return;
+        if (expr instanceof E.Blank) return;
         this.setState(({ yankList }) => ({
             // Remove duplicate ids.
             yankList: [expr, ...yankList.filter(x => x.id !== expr.id)],
@@ -363,8 +363,8 @@ class Kale extends Component<{}, KaleState> {
         return (
             <Kale.Help>
                 Use <S>H</S> <S>J</S> <S>K</S> <S>L</S> to move around. Fill in the blanks with{" "}
-                <S>Tab</S>. Use <S>Backspace</S> to Delete and <S>C</S> to Copy &mdash;{" "}
-                <b>Help is on the way!</b>
+                <S>Tab</S>. Use <S>Backspace</S> to Delete and <S>C</S> to Copy. Create blanks with
+                the circular buttons or <S>A</S> &mdash; <b>Help is on the way!</b>
             </Kale.Help>
         );
     }

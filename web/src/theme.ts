@@ -17,11 +17,11 @@ export default {
     commentColour: "#00b508",
     variableColour: "#248af0",
     literalColour: "#ef6c00",
-    holePillPadding: new Vec(10, 1),
-    holeStrokeColour: "#dcdcdc",
-    holeFillColour: "#f1f1f1",
-    holeFillColourHover: "#dcdcdc", // Same as the stroke right now.
-    holeColour: "#909090",
+    blankPillPadding: new Vec(10, 1),
+    blankStrokeColour: "#dcdcdc",
+    blankFillColour: "#f1f1f1",
+    blankFillColourHover: "#dcdcdc", // Same as the stroke right now.
+    blankTextColour: "#909090",
 
     // Selection and highlights.
     selectionPaddingPx: new Vec(3),

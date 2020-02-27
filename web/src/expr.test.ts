@@ -1,4 +1,4 @@
-import { Hole, List, Call, Variable, InvalidExpr, exprData, Literal } from "./expr";
+import { Blank, List, Call, Variable, InvalidExpr, exprData, Literal } from "./expr";
 import SAMPLE_EXPR from "./sample";
 
 const foo = new Variable("foo");
@@ -7,7 +7,7 @@ const baz = new Variable("bar");
 
 describe("remove", () => {
     test("returns null if replacing this", () => {
-        const expr = new Hole();
+        const expr = new Blank();
         expect(expr.remove(expr.id)).toBeNull();
     });
 
@@ -48,7 +48,7 @@ describe("validate", () => {
     });
 
     test("rejects empty comments", () => {
-        expect(() => new Hole(exprData("")).validate()).toThrow(InvalidExpr);
+        expect(() => new Blank(exprData("")).validate()).toThrow(InvalidExpr);
     });
 
     test("rejects empty lists", () => {
