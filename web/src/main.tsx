@@ -372,26 +372,28 @@ class Kale extends Component<{}, KaleState> {
 
     render() {
         return (
-            <StyleSheetManager disableVendorPrefixes>
-                <DragAndDropSurface>
-                    <GlobalStyle />
-                    <Kale.Container>
-                        <HorizonstalStack
-                            gridArea="nav"
-                            gap={10}
-                            alignItems="center"
-                            paddingBottom={15}
-                            borderBottom="1px solid #e4e4e4"
-                        >
-                            <Kale.Heading>Kale</Kale.Heading>
-                            {Kale.renderHelp()}
-                        </HorizonstalStack>
-                        {THEME.showingToyBox && <ToyBox />}
-                        <Editor gridArea="editor" onRemovedExpr={this.addToYankList} />
-                        <YankList exprs={this.state.yankList} onClearAll={this.clearYankList} />
-                    </Kale.Container>
-                </DragAndDropSurface>
-            </StyleSheetManager>
+            <React.StrictMode>
+                <StyleSheetManager disableVendorPrefixes>
+                    <DragAndDropSurface>
+                        <GlobalStyle />
+                        <Kale.Container>
+                            <HorizonstalStack
+                                gridArea="nav"
+                                gap={10}
+                                alignItems="center"
+                                paddingBottom={15}
+                                borderBottom="1px solid #e4e4e4"
+                            >
+                                <Kale.Heading>Kale</Kale.Heading>
+                                {Kale.renderHelp()}
+                            </HorizonstalStack>
+                            {THEME.showingToyBox && <ToyBox />}
+                            <Editor gridArea="editor" onRemovedExpr={this.addToYankList} />
+                            <YankList exprs={this.state.yankList} onClearAll={this.clearYankList} />
+                        </Kale.Container>
+                    </DragAndDropSurface>
+                </StyleSheetManager>
+            </React.StrictMode>
         );
     }
 }
