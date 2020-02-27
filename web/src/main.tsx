@@ -135,7 +135,7 @@ function HistoryList({ exprs, onClearAll }: { exprs: Expr[]; onClearAll: () => v
     }));
     return (
         <Box gridArea="history" overflow="auto">
-            <Stack vertical gap={10} alignItems="baseline">
+            <Stack gap={10} alignItems="baseline" justifyContent="space-between">
                 <h2>History</h2>
                 <SubtleButton onClick={onClearAll} disabled={history.length === 0}>
                     Clear All
