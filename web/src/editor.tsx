@@ -121,6 +121,7 @@ export default class Editor extends Component<BoxProps & EditorProps, EditorStat
             // Blank insertion.
             case "a":
                 if (this.state.selection) this.createSiblingBlank(this.state.selection);
+                break;
             default:
                 console.log("Did not handle", event.key);
                 return;
@@ -159,7 +160,7 @@ export default class Editor extends Component<BoxProps & EditorProps, EditorStat
         return (
             <Editor.Container
                 onKeyDown={this.keyDown}
-                tabIndex={-1}
+                tabIndex={0}
                 onClick={this.clearSelection}
                 gridArea={this.props.gridArea}
                 ref={this.containerRef}
