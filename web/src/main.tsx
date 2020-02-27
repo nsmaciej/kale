@@ -164,6 +164,9 @@ class Editor extends Component<BoxProps & EditorProps, EditorState> {
                 // When we press tab, we don't want the default "select root" behaviour.
                 this.setState(state => ({ selection: Editor.selectNextBlank(state) }));
                 break;
+            // Blank insertion.
+            case "a":
+                if (this.state.selection) this.createSiblingBlank(this.state.selection);
             default:
                 console.log("Can't handle", event.key);
                 return;
@@ -171,13 +174,14 @@ class Editor extends Component<BoxProps & EditorProps, EditorState> {
         event.preventDefault();
     };
 
-    private createCircleClicked = (clickedId: ExprId) => {
+    private createSiblingBlank = (clickedId: ExprId) => {
         const clicked = this.state.expr?.withId(clickedId);
         if (clicked instanceof E.Call) {
-            const newExpr = new E.Call(clicked.fn, clicked.args.concat(new E.Hole()), clicked.data);
+            const blank = new E.Hole();
+            const newExpr = new E.Call(clicked.fn, clicked.args.concat(blank), clicked.data);
             this.setState(({ selection, expr }) => ({
                 // Try to preserve the selection.
-                selection: selection === clickedId ? newExpr.id : selection,
+                selection: blank.id,
                 expr: expr.replace(clickedId, newExpr),
             }));
         }
@@ -208,7 +212,7 @@ class Editor extends Component<BoxProps & EditorProps, EditorState> {
                     expr={this.state.expr}
                     selection={this.state.selection}
                     onClick={this.exprSelected}
-                    onClickCreateCircle={this.createCircleClicked}
+                    onClickCreateCircle={this.createSiblingBlank}
                 />
             </Editor.Container>
         );
@@ -302,7 +306,7 @@ function YankList({ exprs, onClearAll }: { exprs: ShortcutExpr[]; onClearAll: ()
     return (
         <Sidebar gridArea="yanklist">
             <HorizonstalStack gap={10}>
-                <ExprListHeading>Work List</ExprListHeading>
+                <ExprListHeading>Clipboard History</ExprListHeading>
                 <SubtleButton onClick={onClearAll}>Clear All</SubtleButton>
             </HorizonstalStack>
             <ExprViewList frozen animate exprs={exprs} />
