@@ -123,27 +123,27 @@ function ToyBox() {
     );
 }
 
-function YankList({ exprs, onClearAll }: { exprs: Expr[]; onClearAll: () => void }) {
+function HistoryList({ exprs, onClearAll }: { exprs: Expr[]; onClearAll: () => void }) {
     //TODO: Make these editors inside of ExprViews (and make it not frozen).
-    const yankList = exprs.map((x, i) => ({
+    const history = exprs.map((x, i) => ({
         shortcut: i < 10 ? i.toString() : undefined,
         expr: x,
     }));
     return (
-        <Box gridArea="yanklist" overflow="auto">
+        <Box gridArea="history" overflow="auto">
             <HorizonstalStack gap={10} alignItems="baseline">
-                <h2>Clipboard History</h2>
-                <SubtleButton onClick={onClearAll} disabled={yankList.length === 0}>
+                <h2>History</h2>
+                <SubtleButton onClick={onClearAll} disabled={history.length === 0}>
                     Clear All
                 </SubtleButton>
             </HorizonstalStack>
-            <ExprViewList frozen animate exprs={yankList} fallback="Nothing here yet." />
+            <ExprViewList frozen animate exprs={history} fallback="Nothing here yet." />
         </Box>
     );
 }
 
 interface KaleState {
-    yankList: Expr[];
+    history: Expr[];
 }
 
 function blank(comment: string) {
@@ -155,7 +155,7 @@ class Kale extends Component<{}, KaleState> {
         display: grid;
         grid-template-areas:
             "nav nav nav"
-            "toybox editor yanklist";
+            "toybox editor history";
         grid-template-rows: min-content auto;
         grid-template-columns: max-content minmax(min-content, auto) max-content;
         gap: 20px 40px;
@@ -172,18 +172,18 @@ class Kale extends Component<{}, KaleState> {
         max-width: 600px;
     `;
 
-    state: KaleState = { yankList: [] };
+    state: KaleState = { history: [] };
 
-    private readonly addToYankList = (expr: Expr) => {
+    private readonly addToHistory = (expr: Expr) => {
         if (expr instanceof E.Blank) return;
-        this.setState(({ yankList }) => ({
+        this.setState(({ history }) => ({
             // Remove duplicate ids.
-            yankList: [expr, ...yankList.filter(x => x.id !== expr.id)],
+            history: [expr, ...history.filter(x => x.id !== expr.id)],
         }));
     };
 
-    private readonly clearYankList = () => {
-        this.setState({ yankList: [] });
+    private readonly clearHistory = () => {
+        this.setState({ history: [] });
     };
 
     private static renderHelp() {
@@ -215,8 +215,11 @@ class Kale extends Component<{}, KaleState> {
                                 {Kale.renderHelp()}
                             </HorizonstalStack>
                             {THEME.showingToyBox && <ToyBox />}
-                            <Editor gridArea="editor" onRemovedExpr={this.addToYankList} />
-                            <YankList exprs={this.state.yankList} onClearAll={this.clearYankList} />
+                            <Editor gridArea="editor" onRemovedExpr={this.addToHistory} />
+                            <HistoryList
+                                exprs={this.state.history}
+                                onClearAll={this.clearHistory}
+                            />
                         </Kale.Container>
                     </DragAndDropSurface>
                 </StyleSheetManager>
