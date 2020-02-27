@@ -4,20 +4,23 @@ import {
     GridProps,
     FlexboxProps,
     LayoutProps,
+    BorderProps,
     grid,
     space,
     layout,
     flexbox,
+    border,
 } from "styled-system";
 
 import THEME from "./theme";
 
-export type BoxProps = SpaceProps & GridProps & FlexboxProps & LayoutProps;
+export type BoxProps = SpaceProps & GridProps & FlexboxProps & LayoutProps & BorderProps;
 export const Box = styled.div<BoxProps>`
     ${space}
     ${grid}
     ${flexbox}
     ${layout}
+    ${border}
 `;
 
 const getGap = (p: StackProps) => p.gap ?? 0;
@@ -27,7 +30,6 @@ export interface StackProps extends BoxProps {
 export const VerticalStack = styled(Box)`
     display: flex;
     flex-direction: column;
-    align-items: baseline;
     justify-content: space-between;
     & > *:last-child {
         margin-bottom: 0;
@@ -39,7 +41,6 @@ export const VerticalStack = styled(Box)`
 export const HorizonstalStack = styled(Box)`
     display: flex;
     flex-direction: row;
-    align-items: baseline;
     justify-content: space-between;
     & > *:last-child {
         margin-right: 0;

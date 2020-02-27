@@ -304,7 +304,7 @@ function YankList({ exprs, onClearAll }: { exprs: Expr[]; onClearAll: () => void
     }));
     return (
         <Box gridArea="yanklist" overflow="auto">
-            <HorizonstalStack gap={10}>
+            <HorizonstalStack gap={10} alignItems="baseline">
                 <h2>Clipboard History</h2>
                 <SubtleButton onClick={onClearAll} disabled={yankList.length === 0}>
                     Clear All
@@ -332,7 +332,7 @@ class Kale extends Component<{}, KaleState> {
         grid-template-rows: min-content auto;
         grid-template-columns: max-content minmax(min-content, auto) max-content;
         gap: 20px 40px;
-        padding: 25px 20px 0;
+        padding: 15px 20px 0;
         height: 100%;
     `;
 
@@ -376,7 +376,13 @@ class Kale extends Component<{}, KaleState> {
                 <DragAndDropSurface>
                     <GlobalStyle />
                     <Kale.Container>
-                        <HorizonstalStack gridArea="nav" gap={10}>
+                        <HorizonstalStack
+                            gridArea="nav"
+                            gap={10}
+                            alignItems="center"
+                            paddingBottom={15}
+                            borderBottom="1px solid #e4e4e4"
+                        >
                             <Kale.Heading>Kale</Kale.Heading>
                             {Kale.renderHelp()}
                         </HorizonstalStack>
