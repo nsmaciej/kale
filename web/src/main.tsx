@@ -61,17 +61,9 @@ interface EditorState {
     selection: Optional<ExprId>;
 }
 
-const ExprViewAppearance = css`
-    border: 1px solid #dfe1e5;
-    border-radius: ${THEME.exprViewPaddingPx}px;
-`;
-
 class Editor extends Component<BoxProps & EditorProps, EditorState> {
-    private static readonly Container = styled(Box)<BoxProps>`
-        ${ExprViewAppearance}
-        padding: 10px 12px;
+    private static readonly Container = styled(Box)`
         overflow: auto;
-        place-self: self-start;
         outline: none;
     `;
 
@@ -228,12 +220,14 @@ interface ExprViewListProps {
     animate?: boolean;
     exprs: ShortcutExpr[];
     frozen?: boolean;
+    fallback?: string;
 }
 
 const ExprViewItem = styled(motion.div)`
     grid-column: expr;
     justify-self: left;
-    ${ExprViewAppearance}
+    border: 1px solid #dfe1e5;
+    border-radius: ${THEME.exprViewPaddingPx}px;
 `;
 
 const ExprListShortcut = styled(Shortcut)`
@@ -252,8 +246,7 @@ const ExprList = styled.div`
     align-items: start;
 `;
 
-function ExprViewList({ exprs, frozen, animate }: ExprViewListProps) {
-    if (!exprs.length) return null;
+function ExprViewList({ exprs, frozen, animate, fallback }: ExprViewListProps) {
     const renderItem = (expr: Expr, shortcut?: string) => (
         // This has to be a fragment. Otherwise the items won't layout in a grid.
         <Fragment key={expr.id}>
@@ -261,7 +254,6 @@ function ExprViewList({ exprs, frozen, animate }: ExprViewListProps) {
             <ExprViewItem
                 initial={animate && { opacity: 0.8, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0.5 }}
                 transition={{ duration: 0.1, ease: "easeIn" }}
             >
                 <ExprView expr={expr} frozen={frozen} />
@@ -269,9 +261,10 @@ function ExprViewList({ exprs, frozen, animate }: ExprViewListProps) {
         </Fragment>
     );
     return (
-        <ExprList>
-            <AnimatePresence>{exprs.map(x => renderItem(x.expr, x.shortcut))}</AnimatePresence>
-        </ExprList>
+        <>
+            <ExprList>{exprs.map(x => renderItem(x.expr, x.shortcut))}</ExprList>
+            {exprs.length === 0 && <p>{fallback}</p>}
+        </>
     );
 }
 
@@ -300,16 +293,21 @@ function ToyBox() {
     );
 }
 
-function YankList({ exprs, onClearAll }: { exprs: ShortcutExpr[]; onClearAll: () => void }) {
+function YankList({ exprs, onClearAll }: { exprs: Expr[]; onClearAll: () => void }) {
     //TODO: Make these editors inside of ExprViews (and make it not frozen).
-    if (!exprs.length) return null;
+    const yankList = exprs.map((x, i) => ({
+        shortcut: i < 10 ? i.toString() : undefined,
+        expr: x,
+    }));
     return (
         <Sidebar gridArea="yanklist">
             <HorizonstalStack gap={10}>
                 <ExprListHeading>Clipboard History</ExprListHeading>
-                <SubtleButton onClick={onClearAll}>Clear All</SubtleButton>
+                <SubtleButton onClick={onClearAll} disabled={yankList.length === 0}>
+                    Clear All
+                </SubtleButton>
             </HorizonstalStack>
-            <ExprViewList frozen animate exprs={exprs} />
+            <ExprViewList frozen animate exprs={yankList} fallback="Nothing here yet." />
         </Sidebar>
     );
 }
@@ -370,10 +368,6 @@ class Kale extends Component<{}, KaleState> {
     }
 
     render() {
-        const yankList: ShortcutExpr[] = this.state.yankList.map((x, i) => ({
-            shortcut: i < 10 ? i.toString() : undefined,
-            expr: x,
-        }));
         return (
             <StyleSheetManager disableVendorPrefixes>
                 <DragAndDropSurface>
@@ -385,7 +379,7 @@ class Kale extends Component<{}, KaleState> {
                         </HorizonstalStack>
                         {THEME.showingToyBox && <ToyBox />}
                         <Editor gridArea="editor" onRemovedExpr={this.addToYankList} />
-                        <YankList exprs={yankList} onClearAll={this.clearYankList} />
+                        <YankList exprs={this.state.yankList} onClearAll={this.clearYankList} />
                     </Kale.Container>
                 </DragAndDropSurface>
             </StyleSheetManager>

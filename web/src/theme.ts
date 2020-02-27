@@ -5,6 +5,7 @@ export default {
     fontSizePx: 13,
     fontFamily: "iA Writer Quattro",
     buttonTextColour: "#1b65f1",
+    disabledButtonTextColour: "#d8d8d8",
 
     // Interface and decoration colours.
     decorationColour: "#6a6a6a",
@@ -19,7 +20,7 @@ export default {
     literalColour: "#ef6c00",
     blankPillPadding: new Vec(10, 1),
     blankStrokeColour: "#dcdcdc",
-    blankFillColour: "#f1f1f1",
+    blankFillColour: "#f7f7f7",
     blankFillColourHover: "#dcdcdc", // Same as the stroke right now.
     blankTextColour: "#909090",
 

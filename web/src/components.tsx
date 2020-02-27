@@ -64,8 +64,13 @@ export const SubtleButton = styled.button`
     font-weight: 600;
     color: ${THEME.buttonTextColour};
     outline: none;
+    transition: color 0.1s;
     &:hover,
     &:focus {
         text-decoration: underline;
+    }
+    &:disabled {
+        color: ${THEME.disabledButtonTextColour};
+        text-decoration: none !important;
     }
 `;
