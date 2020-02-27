@@ -1,16 +1,15 @@
 import * as ReactDOM from "react-dom";
 import React, { Component, Fragment } from "react";
 import styled, { StyleSheetManager, createGlobalStyle, css } from "styled-components";
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 
 import * as E from "./expr";
-import { Expr, ExprId } from "./expr";
+import { Expr } from "./expr";
 import ExprView, { DragAndDropSurface } from "./expr_view";
-import SAMPLE_EXPR from "./sample";
 import TextMetrics from "./text_metrics";
-import { Optional, assert, assertSome } from "./utils";
 import THEME from "./theme";
-import { Box, HorizonstalStack, BoxProps, Shortcut, SubtleButton } from "./components";
+import { Box, HorizonstalStack, Shortcut, SubtleButton } from "./components";
+import Editor from "./editor";
 
 const GlobalStyle = createGlobalStyle`
 #main {
@@ -50,178 +49,6 @@ h2, h3 {
 }
 `;
 
-interface EditorProps {
-    onRemovedExpr: (expr: Expr) => void;
-}
-
-interface EditorState {
-    expr: Expr;
-    focused: boolean;
-    selection: Optional<ExprId>;
-}
-
-class Editor extends Component<BoxProps & EditorProps, EditorState> {
-    private static readonly Container = styled(Box)`
-        overflow: auto;
-        outline: none;
-    `;
-
-    private containerRef = React.createRef<HTMLDivElement>();
-
-    state: EditorState = {
-        selection: null,
-        focused: true,
-        expr: SAMPLE_EXPR,
-    };
-
-    private static removeSelection(state: EditorState, props: EditorProps) {
-        const { selection, expr, focused } = state;
-        if (selection == null) return state;
-        props.onRemovedExpr(assertSome(expr.withId(selection)));
-        const newExpr = expr.remove(selection);
-        const parent = expr.parentOf(selection);
-        // Check if the parent still exists. If not, select the grand-parent.
-        const newSelection = newExpr?.contains(parent?.id)
-            ? parent?.id
-            : expr.parentOf(parent?.id)?.id;
-        assert(
-            newSelection == null || newExpr?.contains(newSelection),
-            "Calculated new selection does not exist",
-        );
-        return {
-            focused, // Sadly TS insists on this.
-            expr: newExpr ?? new E.Blank(E.exprData("Double click me")),
-            selection: newSelection,
-        };
-    }
-
-    private static selectParent(state: EditorState) {
-        return state.expr.parentOf(state.selection)?.id;
-    }
-
-    private static selectLeftSibling(state: EditorState) {
-        const siblings = state.expr.siblings(state.selection);
-        const ix = siblings?.findIndex(x => x.id === state.selection);
-        if (ix == null || ix <= 0) return;
-        return siblings[ix - 1]?.id;
-    }
-
-    private static selectRightSibling(state: EditorState) {
-        const siblings = state.expr.siblings(state.selection);
-        const ix = siblings?.findIndex(x => x.id === state.selection);
-        if (ix == null) return;
-        return siblings[ix + 1]?.id;
-    }
-
-    private static selectFirstCHild(state: EditorState) {
-        return state.expr.withId(state.selection)?.children()[0]?.id;
-    }
-
-    private static selectNextBlank(state: EditorState) {
-        const blanks = state.expr.findAll(x => x instanceof E.Blank);
-        const ix = blanks.findIndex(x => x.id === state.selection);
-        if (ix === -1) return blanks[0].id;
-        return blanks[(ix + 1) % blanks.length].id;
-    }
-
-    private setSelection(reducer: (state: EditorState) => Optional<ExprId>) {
-        this.setState(state => ({
-            selection: state.selection == null ? state.expr.id : reducer(state) ?? state.selection,
-        }));
-    }
-
-    private readonly keyDown = (event: React.KeyboardEvent) => {
-        // See https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values.
-        switch (event.key) {
-            // Deletion.
-            case "Backspace":
-                this.setState(Editor.removeSelection);
-                break;
-            // Logical selection.
-            case "h":
-                this.setSelection(Editor.selectParent);
-                break;
-            case "k":
-                this.setSelection(Editor.selectLeftSibling);
-                break;
-            case "j":
-                this.setSelection(Editor.selectRightSibling);
-                break;
-            case "l":
-                this.setSelection(Editor.selectFirstCHild);
-                break;
-            // Copy.
-            case "c":
-                //TODO: Is this safe? What if the state hasn't been flushed yet.
-                const selected = this.state.expr.withId(this.state.selection);
-                if (selected != null) this.props.onRemovedExpr(selected);
-                break;
-            // Blanks selection.
-            case "Tab":
-                // When we press tab, we don't want the default "select root" behaviour.
-                this.setState(state => ({ selection: Editor.selectNextBlank(state) }));
-                break;
-            // Blank insertion.
-            case "a":
-                if (this.state.selection) this.createSiblingBlank(this.state.selection);
-            default:
-                console.log("Did not handle", event.key);
-                return;
-        }
-        event.preventDefault();
-    };
-
-    private readonly createSiblingBlank = (clickedId: ExprId) => {
-        const clicked = this.state.expr?.withId(clickedId);
-        if (clicked instanceof E.Call) {
-            const blank = new E.Blank();
-            const newExpr = new E.Call(clicked.fn, clicked.args.concat(blank), clicked.data);
-            this.setState(({ selection, expr }) => ({
-                // Try to preserve the selection.
-                selection: blank.id,
-                expr: expr.replace(clickedId, newExpr),
-            }));
-        }
-    };
-
-    private readonly exprSelected = (selection: ExprId) => {
-        this.setState({ selection });
-    };
-    private readonly clearSelection = () => {
-        this.setState({ selection: null });
-    };
-
-    private readonly focusChanged = () => {
-        this.setState({ focused: document.activeElement?.id === "editor" });
-    };
-    componentDidMount() {
-        this.containerRef.current?.focus();
-    }
-
-    render() {
-        return (
-            <Editor.Container
-                onKeyDown={this.keyDown}
-                tabIndex={-1}
-                onClick={this.clearSelection}
-                gridArea={this.props.gridArea}
-                ref={this.containerRef}
-                onBlur={this.focusChanged}
-                onFocus={this.focusChanged}
-                id="editor"
-            >
-                <ExprView
-                    expr={this.state.expr}
-                    selection={this.state.selection}
-                    focused={this.state.focused}
-                    onClick={this.exprSelected}
-                    onClickCreateCircle={this.createSiblingBlank}
-                />
-            </Editor.Container>
-        );
-    }
-}
-
 interface ShortcutExpr {
     expr: Expr;
     shortcut?: string;
@@ -234,7 +61,7 @@ interface ExprViewListProps {
     fallback?: string;
 }
 
-const ExprViewItem = styled(motion.div)`
+const ExprListItem = styled(motion.div)`
     grid-column: expr;
     justify-self: left;
     border: 1px solid #dfe1e5;
@@ -263,13 +90,13 @@ function ExprViewList({ exprs, frozen, animate, fallback }: ExprViewListProps) {
         // This has to be a fragment. Otherwise the items won't layout in a grid.
         <Fragment key={expr.id}>
             {shortcut && THEME.showingShortcuts && <ExprListShortcut>{shortcut}</ExprListShortcut>}
-            <ExprViewItem
+            <ExprListItem
                 initial={animate && { opacity: 0.8, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.1, ease: "easeIn" }}
             >
                 <ExprView expr={expr} frozen={frozen} />
-            </ExprViewItem>
+            </ExprListItem>
         </Fragment>
     );
     return (
