@@ -20,28 +20,32 @@ export const Box = styled.div<BoxProps>`
     ${layout}
 `;
 
-const getGap = (p: StackProps) => (p.gap ?? 0) / 2;
+const getGap = (p: StackProps) => p.gap ?? 0;
 export interface StackProps extends BoxProps {
     gap?: number;
 }
 export const VerticalStack = styled(Box)`
     display: flex;
     flex-direction: column;
-    margin: -${getGap}px 0;
     align-items: baseline;
     justify-content: space-between;
+    & > *:last-child {
+        margin-bottom: 0;
+    }
     & > * {
-        margin: ${getGap}px 0;
+        margin-bottom: ${getGap}px;
     }
 `;
 export const HorizonstalStack = styled(Box)`
     display: flex;
     flex-direction: row;
-    margin: 0 -${getGap}px;
     align-items: baseline;
     justify-content: space-between;
+    & > *:last-child {
+        margin-right: 0;
+    }
     & > * {
-        margin: 0 ${getGap}px;
+        margin-right: ${getGap}px;
     }
 `;
 

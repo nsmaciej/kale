@@ -66,6 +66,7 @@ export function materialiseUnderlines(parent: Layout) {
 export interface ExprDelegate {
     isFrozen?(expr: Expr): boolean;
     selection?: Optional<ExprId>; // Only checked by blanks.
+    focused?: boolean;
     onHoverExpr?(e: React.MouseEvent, expr: Optional<Expr>): void;
     onClickExpr?(e: React.MouseEvent, expr: Expr): void;
     onClickCreateCircle?(e: React.MouseEvent, expr: Expr): void;
@@ -181,8 +182,12 @@ export class ExprLayout implements ExprVisitor<Layout> {
             <motion.rect
                 {...{ width, height, x, y }}
                 animate={{
+                    // Here we recreate the selection rect colouring logic.
+                    //TODO: Find a more modular way.
                     fill: selected
-                        ? THEME.selectionColour
+                        ? this.delegate?.focused
+                            ? THEME.selectionColour
+                            : THEME.blurredSelectionColour
                         : mouseOver && !this.delegate?.isFrozen?.(expr)
                         ? THEME.blankFillColourHover
                         : THEME.blankFillColour,

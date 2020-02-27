@@ -25,10 +25,8 @@ const GlobalStyle = createGlobalStyle`
     box-sizing: border-box;
 }
 body {
-    font-family: "Nunito", sans-serif;
-    font-size: 14px;
+    font: 14px/1 "Nunito", sans-serif;
     color: #404040;
-    line-height: 1;
 }
 p {
     line-height: 1.8;
@@ -58,6 +56,7 @@ interface EditorProps {
 
 interface EditorState {
     expr: Expr;
+    focused: boolean;
     selection: Optional<ExprId>;
 }
 
@@ -71,13 +70,14 @@ class Editor extends Component<BoxProps & EditorProps, EditorState> {
 
     state: EditorState = {
         selection: null,
+        focused: true,
         expr: SAMPLE_EXPR,
     };
 
-    private removeSelection(state: EditorState): EditorState {
-        const { selection, expr } = state;
+    private static removeSelection(state: EditorState, props: EditorProps) {
+        const { selection, expr, focused } = state;
         if (selection == null) return state;
-        this.props.onRemovedExpr(assertSome(expr.withId(selection)));
+        props.onRemovedExpr(assertSome(expr.withId(selection)));
         const newExpr = expr.remove(selection);
         const parent = expr.parentOf(selection);
         // Check if the parent still exists. If not, select the grand-parent.
@@ -89,6 +89,7 @@ class Editor extends Component<BoxProps & EditorProps, EditorState> {
             "Calculated new selection does not exist",
         );
         return {
+            focused, // Sadly TS insists on this.
             expr: newExpr ?? new E.Blank(E.exprData("Double click me")),
             selection: newSelection,
         };
@@ -97,21 +98,25 @@ class Editor extends Component<BoxProps & EditorProps, EditorState> {
     private static selectParent(state: EditorState) {
         return state.expr.parentOf(state.selection)?.id;
     }
+
     private static selectLeftSibling(state: EditorState) {
         const siblings = state.expr.siblings(state.selection);
         const ix = siblings?.findIndex(x => x.id === state.selection);
         if (ix == null || ix <= 0) return;
         return siblings[ix - 1]?.id;
     }
+
     private static selectRightSibling(state: EditorState) {
         const siblings = state.expr.siblings(state.selection);
         const ix = siblings?.findIndex(x => x.id === state.selection);
         if (ix == null) return;
         return siblings[ix + 1]?.id;
     }
+
     private static selectFirstCHild(state: EditorState) {
         return state.expr.withId(state.selection)?.children()[0]?.id;
     }
+
     private static selectNextBlank(state: EditorState) {
         const blanks = state.expr.findAll(x => x instanceof E.Blank);
         const ix = blanks.findIndex(x => x.id === state.selection);
@@ -125,12 +130,12 @@ class Editor extends Component<BoxProps & EditorProps, EditorState> {
         }));
     }
 
-    private keyDown = (event: React.KeyboardEvent) => {
+    private readonly keyDown = (event: React.KeyboardEvent) => {
         // See https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values.
         switch (event.key) {
             // Deletion.
             case "Backspace":
-                this.setState(this.removeSelection);
+                this.setState(Editor.removeSelection);
                 break;
             // Logical selection.
             case "h":
@@ -160,13 +165,13 @@ class Editor extends Component<BoxProps & EditorProps, EditorState> {
             case "a":
                 if (this.state.selection) this.createSiblingBlank(this.state.selection);
             default:
-                console.log("Can't handle", event.key);
+                console.log("Did not handle", event.key);
                 return;
         }
         event.preventDefault();
     };
 
-    private createSiblingBlank = (clickedId: ExprId) => {
+    private readonly createSiblingBlank = (clickedId: ExprId) => {
         const clicked = this.state.expr?.withId(clickedId);
         if (clicked instanceof E.Call) {
             const blank = new E.Blank();
@@ -179,19 +184,21 @@ class Editor extends Component<BoxProps & EditorProps, EditorState> {
         }
     };
 
-    private exprSelected = (selection: ExprId) => {
+    private readonly exprSelected = (selection: ExprId) => {
         this.setState({ selection });
     };
-    private clearSelection = () => {
+    private readonly clearSelection = () => {
         this.setState({ selection: null });
     };
 
+    private readonly focusChanged = () => {
+        this.setState({ focused: document.activeElement?.id === "editor" });
+    };
     componentDidMount() {
         this.containerRef.current?.focus();
     }
 
     render() {
-        // As I understand it, svg viewBox is not a required property.
         return (
             <Editor.Container
                 onKeyDown={this.keyDown}
@@ -199,10 +206,14 @@ class Editor extends Component<BoxProps & EditorProps, EditorState> {
                 onClick={this.clearSelection}
                 gridArea={this.props.gridArea}
                 ref={this.containerRef}
+                onBlur={this.focusChanged}
+                onFocus={this.focusChanged}
+                id="editor"
             >
                 <ExprView
                     expr={this.state.expr}
                     selection={this.state.selection}
+                    focused={this.state.focused}
                     onClick={this.exprSelected}
                     onClickCreateCircle={this.createSiblingBlank}
                 />
@@ -244,6 +255,7 @@ const ExprList = styled.div`
     gap: 10px;
     grid-auto-rows: min-content;
     align-items: start;
+    margin: 20px 0 40px;
 `;
 
 function ExprViewList({ exprs, frozen, animate, fallback }: ExprViewListProps) {
@@ -261,21 +273,12 @@ function ExprViewList({ exprs, frozen, animate, fallback }: ExprViewListProps) {
         </Fragment>
     );
     return (
-        <>
-            <ExprList>{exprs.map(x => renderItem(x.expr, x.shortcut))}</ExprList>
+        <ExprList>
             {exprs.length === 0 && <p>{fallback}</p>}
-        </>
+            {exprs.map(x => renderItem(x.expr, x.shortcut))}
+        </ExprList>
     );
 }
-
-const ExprListHeading = styled.h2`
-    margin-bottom: 10px;
-`;
-
-const Sidebar = styled(Box)`
-    overflow: auto;
-    padding: 2px; /* Otherwise hidden overflow cuts the shadows */
-`;
 
 const toyBoxExprs = [
     { shortcut: "S", expr: new E.List([blank("first line"), blank("second line")]) },
@@ -286,10 +289,10 @@ const toyBoxExprs = [
 ];
 function ToyBox() {
     return (
-        <Sidebar gridArea="toybox">
-            <ExprListHeading>Blocks</ExprListHeading>
+        <Box gridArea="toybox" overflow="auto">
+            <h2>Blocks</h2>
             <ExprViewList frozen exprs={toyBoxExprs} />
-        </Sidebar>
+        </Box>
     );
 }
 
@@ -300,15 +303,15 @@ function YankList({ exprs, onClearAll }: { exprs: Expr[]; onClearAll: () => void
         expr: x,
     }));
     return (
-        <Sidebar gridArea="yanklist">
+        <Box gridArea="yanklist" overflow="auto">
             <HorizonstalStack gap={10}>
-                <ExprListHeading>Clipboard History</ExprListHeading>
+                <h2>Clipboard History</h2>
                 <SubtleButton onClick={onClearAll} disabled={yankList.length === 0}>
                     Clear All
                 </SubtleButton>
             </HorizonstalStack>
             <ExprViewList frozen animate exprs={yankList} fallback="Nothing here yet." />
-        </Sidebar>
+        </Box>
     );
 }
 
@@ -344,7 +347,7 @@ class Kale extends Component<{}, KaleState> {
 
     state: KaleState = { yankList: [] };
 
-    private addToYankList = (expr: Expr) => {
+    private readonly addToYankList = (expr: Expr) => {
         if (expr instanceof E.Blank) return;
         this.setState(({ yankList }) => ({
             // Remove duplicate ids.
@@ -352,7 +355,7 @@ class Kale extends Component<{}, KaleState> {
         }));
     };
 
-    private clearYankList = () => {
+    private readonly clearYankList = () => {
         this.setState({ yankList: [] });
     };
 

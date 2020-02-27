@@ -58,7 +58,7 @@ export class DragAndDropSurface extends Component<{}, DragAndDropSurfaceState> {
         if (this.state.position != null) this.setState({ position: null });
     }
 
-    private onMouseMove = (event: MouseEvent) => {
+    private readonly onMouseMove = (event: MouseEvent) => {
         // Ensure left mouse button is held down.
         if (event.buttons !== 1 || this.drag == null) {
             this.dismissDrag();
@@ -118,6 +118,7 @@ export class DragAndDropSurface extends Component<{}, DragAndDropSurfaceState> {
 interface ExprViewProps {
     expr: Expr;
     frozen?: boolean;
+    focused?: boolean;
     selection?: Optional<ExprId>;
     onClick?: (expr: ExprId) => void;
     onClickCreateCircle?: (expr: ExprId) => void;
@@ -129,7 +130,6 @@ interface ExprViewState {
 }
 
 // This needs to be a class component so we can nicely pass it to the layout helper.
-//TODO: Support a prop indicating if the view has focus. (Otherwise dim selection)
 export default class ExprView extends PureComponent<ExprViewProps, ExprViewState>
     implements ExprDelegate {
     static contextType = DragAndDropSurface.Context;
@@ -179,6 +179,9 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
     get selection() {
         return this.props.selection;
     }
+    get focused() {
+        return this.props.focused;
+    }
 
     private findExprRect(expr: ExprId, area: Area): Optional<Rect> {
         if (area.expr.id === expr) return area.rect;
@@ -189,10 +192,17 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
         return null;
     }
 
+    private readonly stopPropagation = (e: React.SyntheticEvent) => {
+        e.stopPropagation();
+    };
+
     private drawRect(expr: Optional<ExprId>, isSelection: boolean, area: Area) {
         if (expr == null) return;
+        if (!isSelection && !this.props.focused) return;
+
         const rect = this.findExprRect(expr, area)?.pad(THEME.selectionPaddingPx);
         if (rect == null) return; // This happens when an expression is removed.
+
         const isHole = this.props.expr.withId(expr) instanceof E.Blank;
         return (
             <motion.rect
@@ -205,8 +215,16 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
                 }}
                 key={+isSelection}
                 rx={THEME.selectionRadiusPx}
-                fill={isSelection ? THEME.selectionColour : "none"}
+                fill={
+                    isSelection
+                        ? this.props.focused
+                            ? THEME.selectionColour
+                            : THEME.blurredSelectionColour
+                        : "none"
+                }
                 initial={false}
+                // Clicking on the selection doesn't pass through.
+                onClick={this.stopPropagation}
                 stroke={isSelection ? THEME.selectionStrokeColour : THEME.highlightStrokeColour}
                 strokeWidth={0.5}
                 transition={{ type: "tween", ease: "easeIn", duration: 0.1 }}

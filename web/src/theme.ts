@@ -10,6 +10,7 @@ export default {
     // Interface and decoration colours.
     decorationColour: "#6a6a6a",
     selectionColour: "#edf5ff",
+    blurredSelectionColour: "#fcfdff",
     selectionStrokeColour: "#9fcbff",
     highlightStrokeColour: "#cecece",
     exprViewPaddingPx: 8,
