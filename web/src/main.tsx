@@ -114,6 +114,9 @@ function ExprViewList({ exprs, frozen, animate, fallback }: ExprViewListProps) {
     );
 }
 
+function blank(comment: string) {
+    return new E.Blank(E.exprData(comment));
+}
 const toyBoxExprs = [
     { shortcut: "S", expr: new E.List([blank("first line"), blank("second line")]) },
     { shortcut: "F", expr: new E.Call("if", [blank("true branch"), blank("false branch")]) },
@@ -151,11 +154,6 @@ function ClipboardList() {
 
 interface KaleState {
     openEditors: string[];
-    history: Expr[];
-}
-
-function blank(comment: string) {
-    return new E.Blank(E.exprData(comment));
 }
 
 class Kale extends Component<{}, KaleState> {
@@ -180,7 +178,7 @@ class Kale extends Component<{}, KaleState> {
         max-width: 600px;
     `;
 
-    state: KaleState = { history: [], openEditors: ["Sample 1", "Sample 2", "Sample 1"] };
+    state: KaleState = { openEditors: ["Sample 1", "Sample 2", "Sample 1"] };
 
     private static renderHelp() {
         const S = Shortcut;
