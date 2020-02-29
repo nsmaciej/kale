@@ -4,7 +4,7 @@ import * as E from "./expr";
 import Expr, { ExprId } from "./expr";
 import ExprView from "./expr_view";
 import { Optional, assert, assertSome } from "./utils";
-import { Clipboard, Workspace, ClipboardValue, WorkspaceProvider } from "./workspace";
+import { Clipboard, Workspace, ClipboardValue, WorkspaceValue } from "./workspace";
 
 interface EditorState {
     focused: boolean;
@@ -12,7 +12,7 @@ interface EditorState {
 }
 
 interface EditorProps {
-    workspace: WorkspaceProvider;
+    workspace: WorkspaceValue;
     clipboard: ClipboardValue;
     topLevelName: string;
 }
@@ -33,7 +33,7 @@ class Editor extends Component<EditorProps, EditorState> {
     }
 
     private get expr() {
-        return this.props.workspace.topLevel(this.props.topLevelName);
+        return this.props.workspace.getTopLevel(this.props.topLevelName);
     }
 
     private copySelectionToClipboard() {

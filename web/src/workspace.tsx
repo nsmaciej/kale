@@ -4,15 +4,21 @@ import Expr from "./expr";
 import * as E from "./expr";
 import * as Samples from "./sample";
 
-export const Workspace = React.createContext<Optional<WorkspaceProvider>>(null);
+export const Workspace = React.createContext<Optional<WorkspaceValue>>(null);
 
-interface WorkspaceState {
+export interface WorkspaceValue {
     topLevel: { [name: string]: Expr };
+    getTopLevel(name: string): Expr;
+    removeTopLevel(name: string): void;
+    setTopLevel(name: string, update: (expr: Expr) => Expr): void;
 }
 
-export class WorkspaceProvider extends Component<{}, WorkspaceState> {
-    state: WorkspaceState = {
+export class WorkspaceProvider extends Component<{}, WorkspaceValue> {
+    state: WorkspaceValue = {
         topLevel: { "Sample 1": Samples.SAMPLE_1, "Sample 2": Samples.SAMPLE_2 },
+        removeTopLevel: this.removeTopLevel.bind(this),
+        setTopLevel: this.setTopLevel.bind(this),
+        getTopLevel: this.getTopLevel.bind(this),
     };
 
     removeTopLevel(name: string) {
@@ -29,12 +35,12 @@ export class WorkspaceProvider extends Component<{}, WorkspaceState> {
         }));
     }
 
-    topLevel(name: string): Expr {
+    getTopLevel(name: string): Expr {
         return this.state.topLevel[name] ?? new E.Blank(E.exprData(`${name} not found`));
     }
 
     render() {
-        return <Workspace.Provider value={this}>{this.props.children}</Workspace.Provider>;
+        return <Workspace.Provider value={this.state}>{this.props.children}</Workspace.Provider>;
     }
 }
 

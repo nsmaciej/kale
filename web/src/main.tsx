@@ -180,7 +180,7 @@ class Kale extends Component<{}, KaleState> {
         max-width: 600px;
     `;
 
-    state: KaleState = { history: [], openEditors: ["Sample 1", "Sample 2", "Sample 2"] };
+    state: KaleState = { history: [], openEditors: ["Sample 1", "Sample 2", "Sample 1"] };
 
     private static renderHelp() {
         const S = Shortcut;
@@ -214,7 +214,7 @@ class Kale extends Component<{}, KaleState> {
                                         {Kale.renderHelp()}
                                     </Stack>
                                     {THEME.showingToyBox && <ToyBox />}
-                                    <Stack vertical gridArea="editor" overflow="auto" gap={20}>
+                                    <Stack vertical gridArea="editor" overflow="auto" gap={40}>
                                         {this.state.openEditors.map(topLevelName => (
                                             <div>
                                                 <h3>{topLevelName}</h3>
