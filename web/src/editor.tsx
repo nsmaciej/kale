@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { Component, useState, ReactNode } from "react";
 import styled from "styled-components";
 
 import * as E from "./expr";
@@ -8,20 +8,28 @@ import { SAMPLE_1 } from "./sample";
 import { Optional, assert, assertSome } from "./utils";
 import { Box, BoxProps } from "./components";
 
-interface EditorProps {
-    onRemovedExpr: (expr: Expr) => void;
-}
-
 interface EditorState {
     expr: Expr;
     focused: boolean;
     selection: Optional<ExprId>;
 }
 
-export default class Editor extends Component<BoxProps & EditorProps, EditorState> {
-    private static readonly Container = styled(Box)`
-        outline: none;
-    `;
+interface ClipboardValue {
+    clipboard: Expr[];
+    setClipboard: React.Dispatch<React.SetStateAction<Expr[]>>;
+}
+
+export const ClipboardContext = React.createContext<Optional<ClipboardValue>>(null);
+
+export function Clipboard({ children }: { children: ReactNode }) {
+    const [clipboard, setClipboard] = useState<Expr[]>([]);
+    const value = { clipboard, setClipboard };
+    return <ClipboardContext.Provider value={value}>{children}</ClipboardContext.Provider>;
+}
+
+export default class Editor extends Component<{}, EditorState> {
+    static contextType = ClipboardContext;
+    declare context: React.ContextType<typeof ClipboardContext>;
 
     private containerRef = React.createRef<HTMLDivElement>();
 
@@ -31,10 +39,16 @@ export default class Editor extends Component<BoxProps & EditorProps, EditorStat
         expr: SAMPLE_1,
     };
 
-    private static removeSelection(state: EditorState, props: EditorProps) {
+    private addToClipboard(expr: Expr) {
+        return assertSome(this.context).setClipboard(clipboard => {
+            if (expr instanceof E.Blank) return clipboard;
+            return [expr, ...clipboard.filter(x => x.id !== expr.id)]; // Remove duplicate ids.
+        });
+    }
+
+    private static removeSelection(state: EditorState) {
         const { selection, expr, focused } = state;
         if (selection == null) return state;
-        props.onRemovedExpr(assertSome(expr.withId(selection)));
         const newExpr = expr.remove(selection);
         const parent = expr.parentOf(selection);
         // Check if the parent still exists. If not, select the grand-parent.
@@ -92,6 +106,8 @@ export default class Editor extends Component<BoxProps & EditorProps, EditorStat
         switch (event.key) {
             // Deletion.
             case "Backspace":
+                const toDelete = this.state.expr.withId(this.state.selection);
+                if (toDelete != null) this.addToClipboard(toDelete);
                 this.setState(Editor.removeSelection);
                 break;
             // Logical selection.
@@ -109,13 +125,12 @@ export default class Editor extends Component<BoxProps & EditorProps, EditorStat
                 break;
             // Copy.
             case "c":
-                //TODO: Is this safe? What if the state hasn't been flushed yet.
-                const selected = this.state.expr.withId(this.state.selection);
-                if (selected != null) this.props.onRemovedExpr(selected);
+                const toCopy = this.state.expr.withId(this.state.selection);
+                if (toCopy != null) this.addToClipboard(toCopy);
                 break;
             // Blanks selection.
             case "Tab":
-                // When we press tab, we don't want the default "select root" behaviour.
+                // We don't want the default "select root" behaviour of setSelection.
                 this.setState(state => ({ selection: Editor.selectNextBlank(state) }));
                 break;
             // Blank insertion.
@@ -157,11 +172,10 @@ export default class Editor extends Component<BoxProps & EditorProps, EditorStat
 
     render() {
         return (
-            <Editor.Container
+            <div
                 onKeyDown={this.keyDown}
                 tabIndex={0}
                 onClick={this.clearSelection}
-                gridArea={this.props.gridArea}
                 ref={this.containerRef}
                 onBlur={this.focusChanged}
                 onFocus={this.focusChanged}
@@ -174,7 +188,7 @@ export default class Editor extends Component<BoxProps & EditorProps, EditorStat
                     onClick={this.exprSelected}
                     onClickCreateCircle={this.createSiblingBlank}
                 />
-            </Editor.Container>
+            </div>
         );
     }
 }

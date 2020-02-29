@@ -1,5 +1,5 @@
 import * as ReactDOM from "react-dom";
-import React, { Component, Fragment } from "react";
+import React, { Component, Fragment, useContext } from "react";
 import styled, { StyleSheetManager, createGlobalStyle, css } from "styled-components";
 import { motion } from "framer-motion";
 
@@ -9,7 +9,8 @@ import ExprView, { DragAndDropSurface } from "./expr_view";
 import TextMetrics from "./text_metrics";
 import THEME from "./theme";
 import { Box, Stack, Shortcut, SubtleButton } from "./components";
-import Editor from "./editor";
+import Editor, { Clipboard, ClipboardContext } from "./editor";
+import { assertSome } from "./utils";
 
 const GlobalStyle = createGlobalStyle`
 #main {
@@ -22,6 +23,7 @@ const GlobalStyle = createGlobalStyle`
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    outline: 0;
 }
 body {
     font: 14px/1 "Nunito", sans-serif;
@@ -127,9 +129,9 @@ function ToyBox() {
     );
 }
 
-function HistoryList({ exprs, onClearAll }: { exprs: Expr[]; onClearAll: () => void }) {
-    //TODO: Make these editors inside of ExprViews (and make it not frozen).
-    const history = exprs.map((x, i) => ({
+function ClipboardList() {
+    const { clipboard, setClipboard } = assertSome(useContext(ClipboardContext));
+    const history = clipboard.map((x, i) => ({
         shortcut: i < 10 ? i.toString() : undefined,
         expr: x,
     }));
@@ -137,7 +139,7 @@ function HistoryList({ exprs, onClearAll }: { exprs: Expr[]; onClearAll: () => v
         <Box gridArea="history" overflow="auto">
             <Stack gap={10} alignItems="baseline" justifyContent="space-between">
                 <h2>History</h2>
-                <SubtleButton onClick={onClearAll} disabled={history.length === 0}>
+                <SubtleButton onClick={_ => setClipboard([])} disabled={history.length === 0}>
                     Clear All
                 </SubtleButton>
             </Stack>
@@ -206,35 +208,34 @@ class Kale extends Component<{}, KaleState> {
             <React.StrictMode>
                 <StyleSheetManager disableVendorPrefixes>
                     <DragAndDropSurface>
-                        <GlobalStyle />
-                        <Kale.Container>
-                            <Stack
-                                gridArea="nav"
-                                gap={10}
-                                alignItems="center"
-                                justifyContent="space-between"
-                                paddingBottom={15}
-                                borderBottom="1px solid #e4e4e4"
-                            >
-                                <Kale.Heading>Kale</Kale.Heading>
-                                {Kale.renderHelp()}
-                            </Stack>
-                            {THEME.showingToyBox && <ToyBox />}
-                            <Stack vertical gridArea="editor" overflow="auto" gap={20}>
-                                <div>
-                                    <h3>Sample 1</h3>
-                                    <Editor onRemovedExpr={this.addToHistory} />
-                                </div>
-                                <div>
-                                    <h3>Sample 2</h3>
-                                    <Editor onRemovedExpr={this.addToHistory} />
-                                </div>
-                            </Stack>
-                            <HistoryList
-                                exprs={this.state.history}
-                                onClearAll={this.clearHistory}
-                            />
-                        </Kale.Container>
+                        <Clipboard>
+                            <GlobalStyle />
+                            <Kale.Container>
+                                <Stack
+                                    gridArea="nav"
+                                    gap={10}
+                                    alignItems="center"
+                                    justifyContent="space-between"
+                                    paddingBottom={15}
+                                    borderBottom="1px solid #e4e4e4"
+                                >
+                                    <Kale.Heading>Kale</Kale.Heading>
+                                    {Kale.renderHelp()}
+                                </Stack>
+                                {THEME.showingToyBox && <ToyBox />}
+                                <Stack vertical gridArea="editor" overflow="auto" gap={20}>
+                                    <div>
+                                        <h3>Sample 1</h3>
+                                        <Editor />
+                                    </div>
+                                    <div>
+                                        <h3>Sample 2</h3>
+                                        <Editor />
+                                    </div>
+                                </Stack>
+                                <ClipboardList />
+                            </Kale.Container>
+                        </Clipboard>
                     </DragAndDropSurface>
                 </StyleSheetManager>
             </React.StrictMode>
