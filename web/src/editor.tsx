@@ -42,7 +42,7 @@ class Editor extends Component<EditorProps, EditorState> {
         this.props.clipboard.setClipboard(clipboard => {
             if (this.expr instanceof E.Blank) return clipboard;
             // Remove duplicate ids.
-            return [selected, ...clipboard.filter(x => x.id !== this.expr.id)];
+            return [selected, ...clipboard.filter(x => x.id !== selected.id)];
         });
         return true;
     }
