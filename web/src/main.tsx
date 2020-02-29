@@ -1,17 +1,13 @@
 import * as ReactDOM from "react-dom";
-import React, { Component, Fragment, useContext } from "react";
-import styled, { StyleSheetManager, createGlobalStyle, css } from "styled-components";
-import { motion } from "framer-motion";
+import React, { Component } from "react";
+import styled, { StyleSheetManager, createGlobalStyle } from "styled-components";
 
-import * as E from "./expr";
-import Expr from "./expr";
-import ExprView, { DragAndDropSurface } from "./expr_view";
+import { DragAndDropSurface } from "./expr_view";
 import TextMetrics from "./text_metrics";
 import THEME from "./theme";
-import { Box, Stack, Shortcut, SubtleButton } from "./components";
-import InnerEditor from "./editor";
-import { assertSome } from "./utils";
-import { WorkspaceProvider, ClipboardProvider, Clipboard } from "./workspace";
+import { Box, Stack, Shortcut } from "./components";
+import { WorkspaceProvider, ClipboardProvider } from "./workspace";
+import { ToyBox, ClipboardList, EditorStack } from "./panes";
 
 const GlobalStyle = createGlobalStyle`
 #main {
@@ -56,107 +52,18 @@ h3 {
 }
 `;
 
-interface ShortcutExpr {
-    expr: Expr;
-    shortcut?: string;
-}
-
-interface ExprViewListProps {
-    animate?: boolean;
-    exprs: ShortcutExpr[];
-    frozen?: boolean;
-    fallback?: string;
-}
-
-const ExprListItem = styled(motion.div)`
-    grid-column: expr;
-    justify-self: left;
-    border: 1px solid #dfe1e5;
-    border-radius: ${THEME.exprViewPaddingPx}px;
-`;
-
-const ExprListShortcut = styled(Shortcut)`
-    grid-column: shortcut;
-    justify-self: right;
-    margin-top: ${THEME.exprViewPaddingPx / 2}px;
-`;
-
-const ExprList = styled.div`
-    display: grid;
-    grid-template-columns:
-        [shortcut] auto
-        [expr] min-content;
-    gap: 10px;
-    grid-auto-rows: min-content;
-    align-items: start;
-    margin: 20px 0 40px;
-`;
-
-function ExprViewList({ exprs, frozen, animate, fallback }: ExprViewListProps) {
-    const renderItem = (expr: Expr, shortcut?: string) => (
-        // This has to be a fragment. Otherwise the items won't layout in a grid.
-        <Fragment key={expr.id}>
-            {shortcut && THEME.showingShortcuts && <ExprListShortcut>{shortcut}</ExprListShortcut>}
-            <ExprListItem
-                initial={animate && { opacity: 0.8, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.1, ease: "easeIn" }}
-            >
-                <ExprView expr={expr} frozen={frozen} />
-            </ExprListItem>
-        </Fragment>
-    );
+function Help() {
+    const S = Shortcut;
     return (
-        <ExprList>
-            {exprs.length === 0 && <p>{fallback}</p>}
-            {exprs.map(x => renderItem(x.expr, x.shortcut))}
-        </ExprList>
+        <p style={{ maxWidth: "600px" }}>
+            Use <S>H</S> <S>J</S> <S>K</S> <S>L</S> to move around. Fill in the blanks with{" "}
+            <S>Tab</S>. Use <S>Backspace</S> to Delete and <S>C</S> to Copy. Create blanks with the
+            circular buttons or <S>A</S> &mdash; <b>Help is on the way!</b>
+        </p>
     );
 }
 
-function blank(comment: string) {
-    return new E.Blank(E.exprData(comment));
-}
-const toyBoxExprs = [
-    { shortcut: "S", expr: new E.List([blank("first line"), blank("second line")]) },
-    { shortcut: "F", expr: new E.Call("if", [blank("true branch"), blank("false branch")]) },
-    { shortcut: "A", expr: new E.Variable("variable") },
-    { expr: new E.Literal("a string", "str") },
-    { expr: new E.Literal("42", "int") },
-];
-function ToyBox() {
-    return (
-        <Box gridArea="toybox" overflow="auto">
-            <h2>Blocks</h2>
-            <ExprViewList frozen exprs={toyBoxExprs} />
-        </Box>
-    );
-}
-
-function ClipboardList() {
-    const { clipboard, setClipboard } = assertSome(useContext(Clipboard));
-    const history = clipboard.map((x, i) => ({
-        shortcut: i < 10 ? i.toString() : undefined,
-        expr: x,
-    }));
-    return (
-        <Box gridArea="history" overflow="auto">
-            <Stack gap={10} alignItems="baseline" justifyContent="space-between">
-                <h2>History</h2>
-                <SubtleButton onClick={_ => setClipboard([])} disabled={history.length === 0}>
-                    Clear All
-                </SubtleButton>
-            </Stack>
-            <ExprViewList frozen animate exprs={history} fallback="Nothing here yet." />
-        </Box>
-    );
-}
-
-interface KaleState {
-    openEditors: string[];
-}
-
-class Kale extends Component<{}, KaleState> {
+class Kale extends Component {
     private static readonly Container = styled.div`
         display: grid;
         grid-template-areas:
@@ -173,23 +80,6 @@ class Kale extends Component<{}, KaleState> {
         color: #0ba902;
         letter-spacing: 2px;
     `;
-
-    private static readonly Help = styled.p`
-        max-width: 600px;
-    `;
-
-    state: KaleState = { openEditors: ["Sample 1", "Sample 2", "Sample 1"] };
-
-    private static renderHelp() {
-        const S = Shortcut;
-        return (
-            <Kale.Help>
-                Use <S>H</S> <S>J</S> <S>K</S> <S>L</S> to move around. Fill in the blanks with{" "}
-                <S>Tab</S>. Use <S>Backspace</S> to Delete and <S>C</S> to Copy. Create blanks with
-                the circular buttons or <S>A</S> &mdash; <b>Help is on the way!</b>
-            </Kale.Help>
-        );
-    }
 
     render() {
         return (
@@ -209,17 +99,11 @@ class Kale extends Component<{}, KaleState> {
                                         borderBottom="1px solid #e4e4e4"
                                     >
                                         <Kale.Heading>Kale</Kale.Heading>
-                                        {Kale.renderHelp()}
+                                        <Help />
                                     </Stack>
+
                                     {THEME.showingToyBox && <ToyBox />}
-                                    <Stack vertical gridArea="editor" overflow="auto" gap={40}>
-                                        {this.state.openEditors.map(topLevelName => (
-                                            <div>
-                                                <h3>{topLevelName}</h3>
-                                                <InnerEditor topLevelName={topLevelName} />
-                                            </div>
-                                        ))}
-                                    </Stack>
+                                    <EditorStack />
                                     <ClipboardList />
                                 </Kale.Container>
                             </ClipboardProvider>

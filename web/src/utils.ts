@@ -30,3 +30,7 @@ export function arrayEquals<T>(lhs: readonly T[], rhs: readonly T[]) {
 export function max(list: readonly number[]) {
     return list.reduce((a, b) => Math.max(a, b), 0);
 }
+
+export function removeIndex<T>(array: readonly T[], ix: number): T[] {
+    return [...array.slice(0, ix), ...array.slice(ix + 1)];
+}
