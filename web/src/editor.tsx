@@ -134,8 +134,7 @@ export default class Editor extends Component<BoxProps & EditorProps, EditorStat
         if (clicked instanceof E.Call) {
             const blank = new E.Blank();
             const newExpr = new E.Call(clicked.fn, clicked.args.concat(blank), clicked.data);
-            this.setState(({ selection, expr }) => ({
-                // Try to preserve the selection.
+            this.setState(({ expr }) => ({
                 selection: blank.id,
                 expr: expr.replace(clickedId, newExpr),
             }));
