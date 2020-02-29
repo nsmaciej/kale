@@ -33,7 +33,7 @@ export class InvalidExpr extends Error {
     }
 }
 
-export abstract class Expr {
+export default abstract class Expr {
     constructor(readonly data: ExprData) {}
     get id() {
         return this.data.id;

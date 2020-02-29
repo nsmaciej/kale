@@ -4,7 +4,7 @@ import styled from "styled-components";
 import { Optional, max } from "./utils";
 import { Vec, Size, Rect } from "./geometry";
 import { Layout, hstack, vstack } from "./layout";
-import { Expr, ExprId, ExprVisitor } from "./expr";
+import Expr, { ExprId, ExprVisitor } from "./expr";
 import * as E from "./expr";
 import TextMetrics from "./text_metrics";
 import { UnderlineLine, SvgLine, HitBox, HoverHitBox } from "./expr_components";

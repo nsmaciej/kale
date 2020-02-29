@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import { Optional, assert, assertSome } from "./utils";
 import { Vec, Rect } from "./geometry";
 import { Area } from "./layout";
-import { Expr, ExprId } from "./expr";
+import Expr, { ExprId } from "./expr";
 import * as E from "./expr";
 import { SvgGroup } from "./expr_components";
 import THEME from "./theme";

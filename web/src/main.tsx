@@ -4,13 +4,14 @@ import styled, { StyleSheetManager, createGlobalStyle, css } from "styled-compon
 import { motion } from "framer-motion";
 
 import * as E from "./expr";
-import { Expr } from "./expr";
+import Expr from "./expr";
 import ExprView, { DragAndDropSurface } from "./expr_view";
 import TextMetrics from "./text_metrics";
 import THEME from "./theme";
 import { Box, Stack, Shortcut, SubtleButton } from "./components";
-import Editor, { Clipboard, ClipboardContext } from "./editor";
+import InnerEditor from "./editor";
 import { assertSome } from "./utils";
+import { WorkspaceProvider, ClipboardProvider, Clipboard } from "./workspace";
 
 const GlobalStyle = createGlobalStyle`
 #main {
@@ -130,7 +131,7 @@ function ToyBox() {
 }
 
 function ClipboardList() {
-    const { clipboard, setClipboard } = assertSome(useContext(ClipboardContext));
+    const { clipboard, setClipboard } = assertSome(useContext(Clipboard));
     const history = clipboard.map((x, i) => ({
         shortcut: i < 10 ? i.toString() : undefined,
         expr: x,
@@ -149,6 +150,7 @@ function ClipboardList() {
 }
 
 interface KaleState {
+    openEditors: string[];
     history: Expr[];
 }
 
@@ -178,19 +180,7 @@ class Kale extends Component<{}, KaleState> {
         max-width: 600px;
     `;
 
-    state: KaleState = { history: [] };
-
-    private readonly addToHistory = (expr: Expr) => {
-        if (expr instanceof E.Blank) return;
-        this.setState(({ history }) => ({
-            // Remove duplicate ids.
-            history: [expr, ...history.filter(x => x.id !== expr.id)],
-        }));
-    };
-
-    private readonly clearHistory = () => {
-        this.setState({ history: [] });
-    };
+    state: KaleState = { history: [], openEditors: ["Sample 1", "Sample 2", "Sample 2"] };
 
     private static renderHelp() {
         const S = Shortcut;
@@ -208,34 +198,34 @@ class Kale extends Component<{}, KaleState> {
             <React.StrictMode>
                 <StyleSheetManager disableVendorPrefixes>
                     <DragAndDropSurface>
-                        <Clipboard>
-                            <GlobalStyle />
-                            <Kale.Container>
-                                <Stack
-                                    gridArea="nav"
-                                    gap={10}
-                                    alignItems="center"
-                                    justifyContent="space-between"
-                                    paddingBottom={15}
-                                    borderBottom="1px solid #e4e4e4"
-                                >
-                                    <Kale.Heading>Kale</Kale.Heading>
-                                    {Kale.renderHelp()}
-                                </Stack>
-                                {THEME.showingToyBox && <ToyBox />}
-                                <Stack vertical gridArea="editor" overflow="auto" gap={20}>
-                                    <div>
-                                        <h3>Sample 1</h3>
-                                        <Editor />
-                                    </div>
-                                    <div>
-                                        <h3>Sample 2</h3>
-                                        <Editor />
-                                    </div>
-                                </Stack>
-                                <ClipboardList />
-                            </Kale.Container>
-                        </Clipboard>
+                        <WorkspaceProvider>
+                            <ClipboardProvider>
+                                <GlobalStyle />
+                                <Kale.Container>
+                                    <Stack
+                                        gridArea="nav"
+                                        gap={10}
+                                        alignItems="center"
+                                        justifyContent="space-between"
+                                        paddingBottom={15}
+                                        borderBottom="1px solid #e4e4e4"
+                                    >
+                                        <Kale.Heading>Kale</Kale.Heading>
+                                        {Kale.renderHelp()}
+                                    </Stack>
+                                    {THEME.showingToyBox && <ToyBox />}
+                                    <Stack vertical gridArea="editor" overflow="auto" gap={20}>
+                                        {this.state.openEditors.map(topLevelName => (
+                                            <div>
+                                                <h3>{topLevelName}</h3>
+                                                <InnerEditor topLevelName={topLevelName} />
+                                            </div>
+                                        ))}
+                                    </Stack>
+                                    <ClipboardList />
+                                </Kale.Container>
+                            </ClipboardProvider>
+                        </WorkspaceProvider>
                     </DragAndDropSurface>
                 </StyleSheetManager>
             </React.StrictMode>
