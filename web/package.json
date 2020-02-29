@@ -14,6 +14,7 @@
         "framer-motion": "^1.8.4",
         "react": "^16.13.0",
         "react-dom": "^16.13.0",
+        "react-icons": "^3.9.0",
         "styled-components": "^5.0.1",
         "styled-system": "^5.1.5"
     },
