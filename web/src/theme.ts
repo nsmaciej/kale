@@ -1,4 +1,4 @@
-import { Vec } from "./geometry";
+import { Vec } from "geometry";
 import { assert } from "utils";
 
 export const DefaultTheme = {

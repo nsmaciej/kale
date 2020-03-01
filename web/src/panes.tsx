@@ -3,14 +3,14 @@ import styled from "styled-components";
 import { motion } from "framer-motion";
 import { AiOutlineClose, AiOutlinePushpin, AiFillPushpin } from "react-icons/ai";
 
-import * as E from "./expr";
-import Expr from "./expr";
-import ExprView from "./expr_view";
-import THEME from "./theme";
-import { Box, Stack, Shortcut, SubtleButton } from "./components";
-import InnerEditor from "./editor";
-import { assertSome, removeIndex, replaceIndex } from "./utils";
-import { Clipboard } from "./workspace";
+import * as E from "expr";
+import Expr from "expr";
+import ExprView from "expr_view";
+import THEME from "theme";
+import { Box, Stack, Shortcut, SubtleButton } from "components";
+import InnerEditor from "editor";
+import { assertSome, removeIndex, replaceIndex } from "utils";
+import { Clipboard } from "workspace";
 
 interface ShortcutExpr {
     expr: Expr;

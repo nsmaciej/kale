@@ -36,7 +36,7 @@ export function SvgRect({
 }
 
 export function UnderlineLine(props: Omit<LineProps, "shapeRendering" | "stroke" | "strokeWidth">) {
-    // It took a while, but black, crispEdge, 0.5 stroke lines work well. They looks equally/ well
+    // It took a while, but black, crispEdge, 0.5 stroke lines work well. They looks equally well
     // at full and half-pixel multiples; and look good on high-dpi screens.
     return (
         <SvgLine

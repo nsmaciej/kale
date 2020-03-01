@@ -1,8 +1,9 @@
 import React, { ReactNode, Component, useState } from "react";
-import { Optional } from "./utils";
-import Expr from "./expr";
-import * as E from "./expr";
-import * as Samples from "./sample";
+
+import { Optional } from "utils";
+import Expr from "expr";
+import * as E from "expr";
+import * as Samples from "sample";
 
 type TopLevel = { [name: string]: Expr };
 

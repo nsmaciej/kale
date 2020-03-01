@@ -2,12 +2,12 @@ import * as ReactDOM from "react-dom";
 import React, { Component } from "react";
 import styled, { StyleSheetManager, createGlobalStyle } from "styled-components";
 
-import { DragAndDropSurface } from "./expr_view";
-import TextMetrics from "./text_metrics";
-import THEME from "./theme";
-import { Box, Stack, Shortcut } from "./components";
-import { WorkspaceProvider, ClipboardProvider } from "./workspace";
-import { ToyBox, ClipboardList, EditorStack } from "./panes";
+import { DragAndDropSurface } from "expr_view";
+import TextMetrics from "text_metrics";
+import THEME from "theme";
+import { Box, Stack, Shortcut } from "components";
+import { WorkspaceProvider, ClipboardProvider } from "workspace";
+import { ToyBox, ClipboardList, EditorStack } from "panes";
 
 const GlobalStyle = createGlobalStyle`
 #main {

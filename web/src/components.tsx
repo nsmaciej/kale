@@ -12,7 +12,7 @@ import {
     border,
 } from "styled-system";
 
-import THEME from "./theme";
+import THEME from "theme";
 
 export type BoxProps = SpaceProps & GridProps & FlexboxProps & LayoutProps & BorderProps;
 export const Box = styled.div<BoxProps>`

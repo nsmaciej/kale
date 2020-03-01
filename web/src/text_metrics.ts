@@ -1,5 +1,5 @@
-import { Size } from "./geometry";
-import THEME from "./theme";
+import { Size } from "geometry";
+import THEME from "theme";
 
 interface TextStyle {
     bold?: boolean;

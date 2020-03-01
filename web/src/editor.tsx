@@ -1,10 +1,10 @@
 import React, { Component, useContext } from "react";
 
-import * as E from "./expr";
-import Expr, { ExprId } from "./expr";
-import ExprView from "./expr_view";
-import { Optional, assert, assertSome, removeIndex, replaceIndex, insertIndex } from "./utils";
-import { Clipboard, Workspace, ClipboardValue, WorkspaceValue } from "./workspace";
+import * as E from "expr";
+import Expr, { ExprId } from "expr";
+import ExprView from "expr_view";
+import { Optional, assert, assertSome, removeIndex, replaceIndex, insertIndex } from "utils";
+import { Clipboard, Workspace, ClipboardValue, WorkspaceValue } from "workspace";
 
 interface EditorState {
     focused: boolean;

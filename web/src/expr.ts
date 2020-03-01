@@ -1,4 +1,4 @@
-import { filterMap, Optional, arrayEquals, assertSome } from "./utils";
+import { filterMap, Optional, arrayEquals, assertSome } from "utils";
 
 export type ExprId = number;
 

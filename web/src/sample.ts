@@ -1,4 +1,4 @@
-import { Call, List, Blank, Literal, Variable, exprData } from "./expr";
+import { Call, List, Blank, Literal, Variable, exprData } from "expr";
 
 const sample1 = new Call(
     "if",

@@ -1,5 +1,5 @@
-import { Blank, List, Call, Variable, InvalidExpr, exprData, Literal } from "./expr";
-import { SAMPLE_1 } from "./sample";
+import { Blank, List, Call, Variable, InvalidExpr, exprData, Literal } from "expr";
+import { SAMPLE_1 } from "sample";
 
 const foo = new Variable("foo");
 const bar = new Variable("bar");
