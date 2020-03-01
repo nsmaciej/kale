@@ -8,7 +8,7 @@ import { Clipboard, Workspace, ClipboardValue, WorkspaceValue } from "./workspac
 
 interface EditorState {
     focused: boolean;
-    selection: Optional<ExprId>;
+    selection: ExprId;
     foldingComments: boolean;
 }
 
@@ -26,16 +26,13 @@ class Editor extends Component<EditorProps, EditorState> {
     private containerRef = React.createRef<HTMLDivElement>();
 
     state: EditorState = {
-        selection: null,
-        focused: true,
+        selection: this.expr.id,
+        focused: this.props.stealFocus ?? false,
         foldingComments: false,
     };
 
-    private update(updater: (expr: Expr) => Optional<Expr>) {
-        this.props.workspace.setTopLevel(
-            this.props.topLevelName,
-            expr => updater(expr) ?? new E.Blank(E.exprData("Double click me")),
-        );
+    private update(updater: (expr: Expr) => Expr) {
+        this.props.workspace.setTopLevel(this.props.topLevelName, expr => updater(expr));
     }
 
     private get expr() {
@@ -44,7 +41,7 @@ class Editor extends Component<EditorProps, EditorState> {
 
     private addToClipboard(expr: Expr) {
         this.props.clipboard.setClipboard(clipboard => {
-            if (this.expr instanceof E.Blank) return clipboard;
+            if (expr instanceof E.Blank) return clipboard;
             // Remove duplicate ids.
             return [{ expr, pinned: false }, ...clipboard.filter(x => x.expr.id !== expr.id)];
         });
@@ -52,27 +49,16 @@ class Editor extends Component<EditorProps, EditorState> {
     }
 
     private addSelectionToClipboard() {
-        const selection = this.expr.withId(this.state.selection);
-        if (selection != null) this.addToClipboard(selection);
+        const selected = this.expr.withId(this.state.selection);
+        if (selected) this.addToClipboard(selected);
     }
 
     private removeSelection() {
-        const sel = this.state.selection;
-        if (sel == null) return;
         this.update(expr => {
-            const newExpr = expr.remove(sel);
-            if (newExpr == null) return null;
-            const parent = expr.parentOf(sel);
-            // Check if the parent still exists. If not, select the grand-parent.
-            // This happens when deletion purges a single-expr list.
-            const newSelection = newExpr.contains(parent?.id)
-                ? parent?.id
-                : expr.parentOf(parent?.id)?.id;
-            assert(
-                newSelection == null || newExpr?.contains(newSelection),
-                "Calculated new selection does not exist",
-            );
-            this.setState({ selection: newSelection });
+            const oldParent = expr.parentOf(this.state.selection)?.id;
+            const newExpr =
+                expr.remove(this.state.selection) ?? new E.Blank(E.exprData("Double click me"));
+            this.setState({ selection: oldParent ?? expr.parentOf(oldParent)?.id ?? newExpr.id });
             return newExpr;
         });
     }
@@ -106,10 +92,7 @@ class Editor extends Component<EditorProps, EditorState> {
 
     private setSelection(reducer: (expr: Expr, sel: ExprId) => Optional<ExprId>) {
         this.setState(state => ({
-            selection:
-                state.selection == null
-                    ? this.expr.id
-                    : reducer(this.expr, state.selection) ?? state.selection,
+            selection: reducer(this.expr, state.selection) ?? state.selection,
         }));
     }
 
@@ -148,7 +131,7 @@ class Editor extends Component<EditorProps, EditorState> {
                 break;
             // Blank insertion.
             case "a":
-                if (this.state.selection) this.createChildBlank(this.state.selection);
+                this.createChildBlank(this.state.selection);
                 break;
             case "i":
                 this.createSiblingBlank();
@@ -159,17 +142,14 @@ class Editor extends Component<EditorProps, EditorState> {
                 break;
             default:
                 // From clipboard history.
-                if (this.state.selection != null && key >= "0" && key <= "9") {
+                if (key >= "0" && key <= "9") {
                     const ix = parseInt(key);
                     const clipboard = this.props.clipboard.clipboard;
-                    const selectedId = this.state.selection;
-                    const selected = this.expr.withId(selectedId);
+                    const sel = this.state.selection;
+                    const selected = this.expr.withId(sel);
                     if (ix < clipboard.length) {
                         this.update(expr =>
-                            expr.replace(
-                                selectedId,
-                                clipboard[ix].expr.resetIds().replaceId(selectedId),
-                            ),
+                            expr.replace(sel, clipboard[ix].expr.resetIds().replaceId(sel)),
                         );
                         this.props.clipboard.setClipboard(xs =>
                             xs[ix].pinned ? xs : removeIndex(xs, ix),
@@ -230,9 +210,6 @@ class Editor extends Component<EditorProps, EditorState> {
     private readonly exprSelected = (selection: ExprId) => {
         this.setState({ selection });
     };
-    private readonly clearSelection = () => {
-        this.setState({ selection: null });
-    };
 
     private readonly focusChanged = () => {
         this.setState({ focused: document.activeElement?.id === "editor" });
@@ -246,7 +223,6 @@ class Editor extends Component<EditorProps, EditorState> {
             <div
                 onKeyDown={this.keyDown}
                 tabIndex={0}
-                onClick={this.clearSelection}
                 ref={this.containerRef}
                 onBlur={this.focusChanged}
                 onFocus={this.focusChanged}
