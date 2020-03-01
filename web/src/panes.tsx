@@ -124,7 +124,7 @@ export function EditorStack() {
                             onClick={_ => setEditors(xs => removeIndex(xs, i))}
                         />
                     </Stack>
-                    <InnerEditor topLevelName={topLevelName} />
+                    <InnerEditor topLevelName={topLevelName} stealFocus={i === 0} />
                 </div>
             ))}
         </Stack>

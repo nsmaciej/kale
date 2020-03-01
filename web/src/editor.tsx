@@ -12,6 +12,7 @@ interface EditorState {
 }
 
 interface EditorWrapperProps {
+    stealFocus?: boolean;
     topLevelName: string;
 }
 
@@ -77,7 +78,7 @@ class Editor extends Component<EditorProps, EditorState> {
 
     private static selectLeftSibling(expr: Expr, sel: ExprId) {
         const [siblings, ix] = expr.siblings(sel);
-        if (ix == null || ix == 0) return;
+        if (ix == null || ix === 0) return;
         return siblings[ix - 1]?.id;
     }
 
@@ -221,7 +222,7 @@ class Editor extends Component<EditorProps, EditorState> {
         this.setState({ focused: document.activeElement?.id === "editor" });
     };
     componentDidMount() {
-        this.containerRef.current?.focus();
+        if (this.props.stealFocus) this.containerRef.current?.focus();
     }
 
     render() {
@@ -247,10 +248,10 @@ class Editor extends Component<EditorProps, EditorState> {
     }
 }
 
-export default function EditorWrapper({ topLevelName }: EditorWrapperProps) {
+export default function EditorWrapper(props: EditorWrapperProps) {
     return (
         <Editor
-            topLevelName={topLevelName}
+            {...props}
             workspace={assertSome(useContext(Workspace))}
             clipboard={assertSome(useContext(Clipboard))}
         />
