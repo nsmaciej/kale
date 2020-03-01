@@ -49,6 +49,7 @@ export const Shortcut = styled.kbd`
     padding: 2px 4px;
     white-space: nowrap;
     font-family: inherit;
+    font-variant-numeric: normal;
 `;
 
 export const SubtleButton = styled.button`

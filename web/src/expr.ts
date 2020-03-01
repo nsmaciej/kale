@@ -58,8 +58,29 @@ export default abstract class Expr {
         return this.find(fn) != null;
     }
 
+    // Find a sub-expr with an id.
     withId(id: Optional<ExprId>): Optional<Expr> {
         return id == null ? null : this.find(x => x.id === id);
+    }
+
+    assignToData(value: Partial<ExprData>): Expr {
+        const newData = { ...this.data, ...value };
+        if (this instanceof List) return new List(this.list, newData);
+        else if (this instanceof Variable) new Variable(this.name, newData);
+        else if (this instanceof Literal) return new Literal(this.content, this.type, newData);
+        else if (this instanceof Blank) return new Blank(newData);
+        else if (this instanceof Call) return new Call(this.fn, this.args, newData);
+        throw new UnvisitableExpr(this);
+    }
+
+    // Give each sub-expr a fresh id.
+    resetIds() {
+        return this.filterMap(x => x.replaceId(GlobalExprId++))!;
+    }
+
+    // Replace the id of the current expr.
+    replaceId(id: ExprId): Expr {
+        return this.assignToData({ id });
     }
 
     replace(old: ExprId, next: Expr): Expr {
@@ -104,8 +125,10 @@ export default abstract class Expr {
         return [];
     }
 
-    siblings(id: Optional<ExprId>): readonly Expr[] {
-        return this.parentOf(id)?.children() ?? [];
+    siblings(id: Optional<ExprId>): [readonly Expr[], Optional<number>] {
+        const siblings = this.parentOf(id)?.children() ?? [];
+        const index = siblings.findIndex(x => x.id === id);
+        return [siblings, index < 0 ? null : index];
     }
 
     validate() {

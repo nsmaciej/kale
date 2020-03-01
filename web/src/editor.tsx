@@ -3,7 +3,7 @@ import React, { Component, useContext } from "react";
 import * as E from "./expr";
 import Expr, { ExprId } from "./expr";
 import ExprView from "./expr_view";
-import { Optional, assert, assertSome } from "./utils";
+import { Optional, assert, assertSome, removeIndex, replaceIndex, insertIndex } from "./utils";
 import { Clipboard, Workspace, ClipboardValue, WorkspaceValue } from "./workspace";
 
 interface EditorState {
@@ -73,15 +73,13 @@ class Editor extends Component<EditorProps, EditorState> {
     }
 
     private static selectLeftSibling(expr: Expr, sel: ExprId) {
-        const siblings = expr.siblings(sel);
-        const ix = siblings?.findIndex(x => x.id === sel);
-        if (ix == null || ix <= 0) return;
+        const [siblings, ix] = expr.siblings(sel);
+        if (ix == null || ix == 0) return;
         return siblings[ix - 1]?.id;
     }
 
     private static selectRightSibling(expr: Expr, sel: ExprId) {
-        const siblings = expr.siblings(sel);
-        const ix = siblings?.findIndex(x => x.id === sel);
+        const [siblings, ix] = expr.siblings(sel);
         if (ix == null) return;
         return siblings[ix + 1]?.id;
     }
@@ -107,8 +105,9 @@ class Editor extends Component<EditorProps, EditorState> {
     }
 
     private readonly keyDown = (event: React.KeyboardEvent) => {
+        const key = event.key;
         // See https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values.
-        switch (event.key) {
+        switch (key) {
             // Deletion.
             case "Backspace":
                 this.copySelectionToClipboard();
@@ -140,23 +139,65 @@ class Editor extends Component<EditorProps, EditorState> {
                 break;
             // Blank insertion.
             case "a":
-                if (this.state.selection) this.createSiblingBlank(this.state.selection);
+                if (this.state.selection) this.createChildBlank(this.state.selection);
+                break;
+            case "i":
+                this.createSiblingBlank();
                 break;
             default:
-                console.log("Did not handle", event.key);
-                return;
+                // From clipboard history.
+                if (this.state.selection != null && key >= "0" && key <= "9") {
+                    const ix = parseInt(key);
+                    const clipboard = this.props.clipboard.clipboard;
+                    const selection = this.state.selection;
+                    if (ix < clipboard.length) {
+                        this.update(expr =>
+                            expr.replace(selection, clipboard[ix].resetIds().replaceId(selection)),
+                        );
+                        this.props.clipboard.setClipboard(xs => removeIndex(xs, ix));
+                    }
+                } else {
+                    console.log("Did not handle", event.key);
+                    return; // Do not prevent the early default below.
+                }
         }
         event.preventDefault();
     };
 
-    private readonly createSiblingBlank = (clickedId: ExprId) => {
-        const clicked = this.expr.withId(clickedId);
-        if (clicked instanceof E.Call) {
-            const blank = new E.Blank();
-            const newExpr = new E.Call(clicked.fn, clicked.args.concat(blank), clicked.data);
-            this.update(expr => expr.replace(clickedId, newExpr));
-            this.setState({ selection: blank.id });
+    private createSiblingBlank() {
+        const siblingId = this.state.selection;
+        if (siblingId == null) return;
+
+        const parent = this.expr.parentOf(siblingId);
+        const blank = new E.Blank();
+
+        let next: Expr;
+        if (parent instanceof E.Call) {
+            const ix = parent.args.findIndex(x => x.id === siblingId);
+            next = new E.Call(parent.fn, insertIndex(parent.args, ix, blank), parent.data);
+        } else if (parent instanceof E.List) {
+            const ix = parent.list.findIndex(x => x.id === siblingId);
+            next = new E.List(insertIndex(parent.list, ix, blank), parent.data);
+        } else {
+            return; // Bail out early.
         }
+        this.update(expr => expr.replace(parent.id, next));
+        this.setState({ selection: blank.id });
+    }
+
+    private readonly createChildBlank = (parentId: ExprId) => {
+        const parent = this.expr.withId(parentId);
+        const blank = new E.Blank();
+        let next: Expr;
+        if (parent instanceof E.Call) {
+            next = new E.Call(parent.fn, parent.args.concat(blank), parent.data);
+        } else if (parent instanceof E.List) {
+            next = new E.List(parent.list.concat(blank), parent.data);
+        } else {
+            return; // Bail out early.
+        }
+        this.update(expr => expr.replace(parentId, next));
+        this.setState({ selection: blank.id });
     };
 
     private readonly exprSelected = (selection: ExprId) => {
@@ -189,7 +230,7 @@ class Editor extends Component<EditorProps, EditorState> {
                     selection={this.state.selection}
                     focused={this.state.focused}
                     onClick={this.exprSelected}
-                    onClickCreateCircle={this.createSiblingBlank}
+                    onClickCreateCircle={this.createChildBlank}
                 />
             </div>
         );

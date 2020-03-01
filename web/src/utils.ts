@@ -31,6 +31,16 @@ export function max(list: readonly number[]) {
     return list.reduce((a, b) => Math.max(a, b), 0);
 }
 
+export function insertIndex<T>(array: readonly T[], ix: number, item: T): T[] {
+    return array.slice(0, ix + 1).concat(item, array.slice(ix + 1));
+}
+
 export function removeIndex<T>(array: readonly T[], ix: number): T[] {
-    return [...array.slice(0, ix), ...array.slice(ix + 1)];
+    return array.slice(0, ix).concat(array.slice(ix + 1));
+}
+
+export function replaceIndex<T>(array: readonly T[], ix: number, item: T): T[] {
+    const r = array.slice();
+    r[ix] = item;
+    return r;
 }

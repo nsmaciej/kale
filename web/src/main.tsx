@@ -55,10 +55,11 @@ h3 {
 function Help() {
     const S = Shortcut;
     return (
-        <p style={{ maxWidth: "600px" }}>
+        <p style={{ maxWidth: "700px" }}>
             Use <S>H</S> <S>J</S> <S>K</S> <S>L</S> to move around. Fill in the blanks with{" "}
             <S>Tab</S>. Use <S>Backspace</S> to Delete and <S>C</S> to Copy. Create blanks with the
-            circular buttons or <S>A</S> &mdash; <b>Help is on the way!</b>
+            circular buttons or <S>A</S> or <S>I</S>. Paste items from history using <S>0</S>-
+            <S>9</S> &mdash; <b>Help is on the way!</b>
         </p>
     );
 }
