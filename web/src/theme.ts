@@ -20,8 +20,8 @@ const THEME = {
     blanks: {
         padding: new Vec(10, 1),
         stroke: "#dcdcdc",
-        fill: "#f7f7f7",
-        fillHover: "#dcdcdc", // Same as the stroke right now.
+        fill: "#fdfdfd",
+        fillHover: "#efefef",
         textColour: "#909090",
     },
 

@@ -212,7 +212,13 @@ export class ExprLayout implements ExprVisitor<Layout> {
                 initial={false}
                 rx={rect.height / 2}
                 strokeWidth={1}
-                stroke={selected ? THEME.selection.stroke : THEME.blanks.stroke}
+                stroke={
+                    selected
+                        ? this.delegate?.focused
+                            ? THEME.selection.stroke
+                            : THEME.selection.blurredStroke
+                        : THEME.blanks.stroke
+                }
             />
         );
         const layout = new Layout(
