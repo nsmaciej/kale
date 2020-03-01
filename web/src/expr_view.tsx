@@ -196,10 +196,6 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
         return null;
     }
 
-    private readonly stopPropagation = (e: React.SyntheticEvent) => {
-        e.stopPropagation();
-    };
-
     private drawRect(expr: Optional<ExprId>, isSelection: boolean, area: Area) {
         if (expr == null) return;
         if (!isSelection && !this.props.focused) return;
@@ -227,8 +223,6 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
                         : "none"
                 }
                 initial={false}
-                // Clicking on the selection doesn't pass through.
-                onClick={this.stopPropagation}
                 stroke={
                     isSelection
                         ? this.props.focused
