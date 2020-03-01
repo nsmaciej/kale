@@ -40,12 +40,7 @@ class Editor extends Component<EditorProps, EditorState> {
     }
 
     private addToClipboard(expr: Expr) {
-        this.props.clipboard.setClipboard(clipboard => {
-            if (expr instanceof E.Blank) return clipboard;
-            // Remove duplicate ids.
-            return [{ expr, pinned: false }, ...clipboard.filter(x => x.expr.id !== expr.id)];
-        });
-        return true;
+        this.props.clipboard.add({ expr, pinned: false });
     }
 
     private addSelectionToClipboard() {
@@ -107,17 +102,23 @@ class Editor extends Component<EditorProps, EditorState> {
         }));
     }
 
+    private replaceSelection(next: Expr) {
+        const sel = this.state.selection;
+        this.update(expr => expr.replace(sel, next.resetIds().replaceId(sel)));
+    }
+
     private readonly keyDown = (event: React.KeyboardEvent) => {
         const key = event.key;
         // See https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values.
         switch (key) {
             // Deletion.
             case "Backspace":
-                this.addSelectionToClipboard();
                 this.removeSelection();
                 break;
-            case "d":
-                this.removeSelection();
+            case "r":
+                this.addSelectionToClipboard();
+                this.replaceSelection(new E.Blank());
+                break;
             // Logical selection.
             case "h":
                 this.setSelection(Editor.selectParent);
@@ -158,16 +159,9 @@ class Editor extends Component<EditorProps, EditorState> {
                 if (key >= "0" && key <= "9") {
                     const ix = parseInt(key);
                     const clipboard = this.props.clipboard.clipboard;
-                    const sel = this.state.selection;
-                    const selected = this.expr.withId(sel);
                     if (ix < clipboard.length) {
-                        this.update(expr =>
-                            expr.replace(sel, clipboard[ix].expr.resetIds().replaceId(sel)),
-                        );
-                        this.props.clipboard.setClipboard(xs =>
-                            xs[ix].pinned ? xs : removeIndex(xs, ix),
-                        );
-                        if (selected) this.addToClipboard(selected);
+                        this.replaceSelection(clipboard[ix].expr);
+                        this.props.clipboard.use(clipboard[ix].expr.id);
                     }
                 } else {
                     console.log("Did not handle", event.key);
@@ -178,10 +172,8 @@ class Editor extends Component<EditorProps, EditorState> {
     };
 
     private createSiblingBlank() {
-        const siblingId = this.state.selection;
-        if (siblingId == null) return;
-
-        const parent = this.expr.parentOf(siblingId);
+        const sel = this.state.selection;
+        const parent = this.expr.parentOf(sel);
         const blank = new E.Blank();
 
         // Special case: wrap the expr in a list.
@@ -193,10 +185,10 @@ class Editor extends Component<EditorProps, EditorState> {
 
         let next: Expr;
         if (parent instanceof E.Call) {
-            const ix = parent.args.findIndex(x => x.id === siblingId);
+            const ix = parent.args.findIndex(x => x.id === sel);
             next = new E.Call(parent.fn, insertIndex(parent.args, ix, blank), parent.data);
         } else if (parent instanceof E.List) {
-            const ix = parent.list.findIndex(x => x.id === siblingId);
+            const ix = parent.list.findIndex(x => x.id === sel);
             next = new E.List(insertIndex(parent.list, ix, blank), parent.data);
         } else {
             return; // Bail out early.

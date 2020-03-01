@@ -1,21 +1,20 @@
-import React, { ReactNode, Component, useState } from "react";
+import React, { Component } from "react";
 
-import { Optional } from "utils";
-import Expr from "expr";
+import { Optional, partition } from "utils";
+import Expr, { ExprId } from "expr";
 import * as E from "expr";
 import * as Samples from "sample";
 
 type TopLevel = { [name: string]: Expr };
 
 export type WorkspaceValue = WorkspaceProvider["state"];
-
 export const Workspace = React.createContext<Optional<WorkspaceValue>>(null);
 export class WorkspaceProvider extends Component<{}, WorkspaceProvider["state"]> {
     state = {
         topLevel: { "Sample 1": Samples.SAMPLE_1, "Sample 2": Samples.SAMPLE_2 } as TopLevel,
         removeTopLevel: (name: string) => {
-            this.setState(({ topLevel }) => {
-                const cloned = Object.assign({}, topLevel);
+            this.setState(state => {
+                const cloned = Object.assign({}, state.topLevel);
                 delete cloned[name];
                 return { topLevel: cloned };
             });
@@ -35,21 +34,52 @@ export class WorkspaceProvider extends Component<{}, WorkspaceProvider["state"]>
     }
 }
 
-type SetState<S> = React.Dispatch<React.SetStateAction<S>>;
-
 interface ClipboardEntry {
     pinned: boolean;
     expr: Expr;
 }
 
-export interface ClipboardValue {
-    clipboard: ClipboardEntry[];
-    setClipboard: SetState<ClipboardEntry[]>;
-}
-
+export type ClipboardValue = ClipboardProvider["state"];
 export const Clipboard = React.createContext<Optional<ClipboardValue>>(null);
-export function ClipboardProvider({ children }: { children: ReactNode }) {
-    const [clipboard, setClipboard] = useState<ClipboardEntry[]>([]);
-    const value = { clipboard, setClipboard };
-    return <Clipboard.Provider value={value}>{children}</Clipboard.Provider>;
+export class ClipboardProvider extends Component<{}, ClipboardProvider["state"]> {
+    private update(update: (clipboard: ClipboardEntry[]) => ClipboardEntry[]) {
+        this.setState(state => ({
+            clipboard: update(state.clipboard),
+        }));
+    }
+    state = {
+        clipboard: [] as ClipboardEntry[],
+        add: (entry: ClipboardEntry) => {
+            this.update(clipboard => {
+                if (entry.expr instanceof E.Blank) return clipboard;
+                // This expression is pinned.
+                if (clipboard.some(x => x.expr.id === entry.expr.id && x.pinned)) return clipboard;
+                // Remove duplicate ids.
+                const newClipboard = clipboard.filter(x => x.expr.id !== entry.expr.id);
+                const [pinned, notPinned] = partition(newClipboard, x => x.pinned);
+                return [...pinned, { expr: entry.expr, pinned: false }, ...notPinned];
+            });
+        },
+        use: (expr: ExprId) => {
+            // Possibly remove an entry if it isn't pinned.
+            this.update(clipboard => clipboard.filter(x => x.pinned || x.expr.id !== expr));
+        },
+        clear: () => {
+            this.update(clipboard => clipboard.filter(x => x.pinned));
+        },
+        canBeCleared: () => {
+            for (const entry of this.state.clipboard) {
+                if (!entry.pinned) return true;
+            }
+            return false;
+        },
+        togglePinned: (expr: ExprId) => {
+            this.update(clipboard =>
+                clipboard.map(x => (x.expr.id === expr ? { expr: x.expr, pinned: !x.pinned } : x)),
+            );
+        },
+    };
+    render() {
+        return <Clipboard.Provider value={this.state}>{this.props.children}</Clipboard.Provider>;
+    }
 }

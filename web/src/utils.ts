@@ -44,3 +44,13 @@ export function replaceIndex<T>(array: readonly T[], ix: number, item: T): T[] {
     r[ix] = item;
     return r;
 }
+
+export function partition<T>(array: readonly T[], test: (value: T) => boolean): [T[], T[]] {
+    const left = [];
+    const right = [];
+    for (const x of array) {
+        if (test(x)) left.push(x);
+        else right.push(x);
+    }
+    return [left, right];
+}

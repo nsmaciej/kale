@@ -12,19 +12,6 @@ import InnerEditor from "editor";
 import { assertSome, removeIndex, replaceIndex } from "utils";
 import { Clipboard } from "workspace";
 
-interface ShortcutExpr {
-    expr: Expr;
-    shortcut?: string;
-}
-
-interface ExprViewListProps {
-    animate?: boolean;
-    exprs: ShortcutExpr[];
-    frozen?: boolean;
-    fallback?: string;
-    extras?: (expr: Expr, index: number) => ReactNode;
-}
-
 const ExprListItem = styled(motion.div)`
     grid-column: expr;
     justify-self: left;
@@ -54,25 +41,46 @@ const Extras = styled.div`
     margin: ${THEME.exprViewPaddingPx}px !important;
 `;
 
-function ExprViewList({ exprs, frozen, animate, fallback, extras }: ExprViewListProps) {
-    const renderItem = (expr: Expr, ix: number, shortcut?: string) => (
+interface ShortcutExpr {
+    expr: Expr;
+    shortcut?: string;
+}
+
+interface ExprViewListProps<E> {
+    animate?: boolean;
+    items: E[];
+    frozen?: boolean;
+    fallback?: string;
+    extras?: (item: E) => ReactNode;
+}
+
+function ExprViewList<E extends ShortcutExpr>({
+    items,
+    frozen,
+    animate,
+    fallback,
+    extras,
+}: ExprViewListProps<E>) {
+    const renderItem = (item: E) => (
         // This has to be a fragment. Otherwise the items won't layout in a grid.
-        <Fragment key={expr.id}>
-            {shortcut && THEME.showingShortcuts && <ExprListShortcut>{shortcut}</ExprListShortcut>}
+        <Fragment key={item.expr.id}>
+            {item.shortcut && THEME.showingShortcuts && (
+                <ExprListShortcut>{item.shortcut}</ExprListShortcut>
+            )}
             <ExprListItem
                 initial={animate && { opacity: 0.8, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.1, ease: "easeIn" }}
             >
-                <ExprView expr={expr} frozen={frozen} />
-                {extras && <Extras>{extras(expr, ix)}</Extras>}
+                <ExprView expr={item.expr} frozen={frozen} />
+                {extras && <Extras>{extras(item)}</Extras>}
             </ExprListItem>
         </Fragment>
     );
     return (
         <ExprList>
-            {exprs.length === 0 && <p>{fallback}</p>}
-            {exprs.map((x, i) => renderItem(x.expr, i, x.shortcut))}
+            {items.length === 0 && <p>{fallback}</p>}
+            {items.map(renderItem)}
         </ExprList>
     );
 }
@@ -93,42 +101,33 @@ export function ToyBox() {
     return (
         <Box gridArea="toybox" overflow="auto">
             <h2>Blocks</h2>
-            <ExprViewList frozen exprs={toyBoxExprs} />
+            <ExprViewList frozen items={toyBoxExprs} />
         </Box>
     );
 }
 
 export function ClipboardList() {
-    const { clipboard, setClipboard } = assertSome(useContext(Clipboard));
-    const history = clipboard.map((x, i) => ({
+    const clipboard = assertSome(useContext(Clipboard));
+    const history = clipboard.clipboard.map((x, i) => ({
+        ...x,
         shortcut: i < 10 ? i.toString() : undefined,
-        expr: x.expr,
     }));
     return (
         <Box gridArea="history" overflow="auto">
             <Stack gap={10} alignItems="baseline" justifyContent="space-between">
                 <h2>History</h2>
-                <SubtleButton onClick={_ => setClipboard([])} disabled={history.length === 0}>
+                <SubtleButton onClick={_ => clipboard.clear()} disabled={!clipboard.canBeCleared()}>
                     Clear All
                 </SubtleButton>
             </Stack>
             <ExprViewList
                 frozen
                 animate
-                exprs={history}
+                items={history}
                 fallback="Nothing here yet."
-                extras={(expr, ix) => (
-                    <SubtleButton
-                        onClick={_ =>
-                            setClipboard(clipboard =>
-                                replaceIndex(clipboard, ix, {
-                                    expr,
-                                    pinned: !clipboard[ix].pinned,
-                                }),
-                            )
-                        }
-                    >
-                        {clipboard[ix].pinned ? <AiFillPushpin /> : <AiOutlinePushpin />}
+                extras={item => (
+                    <SubtleButton onClick={_ => clipboard.togglePinned(item.expr.id)}>
+                        {item.pinned ? <AiFillPushpin /> : <AiOutlinePushpin />}
                     </SubtleButton>
                 )}
             />
