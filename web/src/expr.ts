@@ -66,7 +66,7 @@ export default abstract class Expr {
     assignToData(value: Partial<ExprData>): Expr {
         const newData = { ...this.data, ...value };
         if (this instanceof List) return new List(this.list, newData);
-        else if (this instanceof Variable) new Variable(this.name, newData);
+        else if (this instanceof Variable) return new Variable(this.name, newData);
         else if (this instanceof Literal) return new Literal(this.content, this.type, newData);
         else if (this instanceof Blank) return new Blank(newData);
         else if (this instanceof Call) return new Call(this.fn, this.args, newData);

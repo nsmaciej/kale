@@ -11,10 +11,13 @@ interface EditorState {
     selection: Optional<ExprId>;
 }
 
-interface EditorProps {
+interface EditorWrapperProps {
+    topLevelName: string;
+}
+
+interface EditorProps extends EditorWrapperProps {
     workspace: WorkspaceValue;
     clipboard: ClipboardValue;
-    topLevelName: string;
 }
 
 class Editor extends Component<EditorProps, EditorState> {
@@ -171,6 +174,13 @@ class Editor extends Component<EditorProps, EditorState> {
         const parent = this.expr.parentOf(siblingId);
         const blank = new E.Blank();
 
+        // Special case: wrap the expr in a list.
+        if (parent == null) {
+            this.update(expr => new E.List([expr, blank]));
+            this.setState({ selection: blank.id });
+            return;
+        }
+
         let next: Expr;
         if (parent instanceof E.Call) {
             const ix = parent.args.findIndex(x => x.id === siblingId);
@@ -237,7 +247,7 @@ class Editor extends Component<EditorProps, EditorState> {
     }
 }
 
-export default function EditorWrapper({ topLevelName }: { topLevelName: string }) {
+export default function EditorWrapper({ topLevelName }: EditorWrapperProps) {
     return (
         <Editor
             topLevelName={topLevelName}
