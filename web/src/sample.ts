@@ -40,6 +40,8 @@ const sample2 = new Call("object", [
     new Variable("name"),
     new Literal("age", "symbol"),
     new Literal("42", "int"),
+    new Literal("long", "symbol"),
+    new Literal("48557177334.32", "int"),
 ]);
 
 export const SAMPLE_1 = sample1.validate();

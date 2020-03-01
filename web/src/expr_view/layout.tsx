@@ -170,6 +170,9 @@ export class ExprLayout implements ExprVisitor<Layout> {
         let content = expr.content;
         if (expr.type == "str") content = `"${expr.content}"`;
         else if (expr.type == "symbol") content = expr.content + ":";
+        else if (expr.type == "int") {
+            content = new Intl.NumberFormat().format(parseFloat(expr.content));
+        }
 
         return this.layoutText(expr, content, {
             title: expr.data.comment,
