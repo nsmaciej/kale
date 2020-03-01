@@ -121,6 +121,7 @@ interface ExprViewProps {
     frozen?: boolean;
     focused?: boolean;
     selection?: Optional<ExprId>;
+    foldComments?: boolean;
     onClick?: (expr: ExprId) => void;
     onClickCreateCircle?: (expr: ExprId) => void;
 }
@@ -182,6 +183,9 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
     }
     get focused() {
         return this.props.focused;
+    }
+    get foldComments() {
+        return this.props.foldComments;
     }
 
     private findExprRect(expr: ExprId, area: Area): Optional<Rect> {

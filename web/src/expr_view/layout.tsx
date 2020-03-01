@@ -18,6 +18,7 @@ interface TextProperties {
     colour?: string;
     title?: string;
     offset?: Vec;
+    commentIndicator?: boolean;
 }
 
 // See https://vanseodesign.com/web-design/svg-text-baseline-alignment/ for excellent discussion
@@ -26,6 +27,13 @@ const Code = styled.text`
     font-size: ${THEME.fontSizePx}px;
     font-family: ${THEME.fontFamily};
     dominant-baseline: text-before-edge;
+`;
+
+const CommentIndicator = styled.tspan`
+    baseline-shift: super;
+    fill: ${THEME.commentColour};
+    font-size: ${THEME.fontSizePx * 0.6}px;
+    font-weight: normal;
 `;
 
 function CreateCircle({ onClick }: { onClick: (e: React.MouseEvent) => void }) {
@@ -68,6 +76,7 @@ export interface ExprDelegate {
     isFrozen?(expr: Expr): boolean;
     selection?: Optional<ExprId>; // Only checked by blanks.
     focused?: boolean;
+    foldComments?: boolean;
     onHoverExpr?(e: React.MouseEvent, expr: Optional<Expr>): void;
     onClickExpr?(e: React.MouseEvent, expr: Expr): void;
     onClickCreateCircle?(e: React.MouseEvent, expr: Expr): void;
@@ -89,7 +98,7 @@ export class ExprLayout implements ExprVisitor<Layout> {
     private layoutText(
         expr: Expr,
         text: string,
-        { italic, colour, title, bold, offset }: TextProperties = {},
+        { italic, colour, title, bold, offset, commentIndicator }: TextProperties = {},
     ) {
         const layout = new Layout(
             (
@@ -103,6 +112,7 @@ export class ExprLayout implements ExprVisitor<Layout> {
                 >
                     {title && <title>{title}</title>}
                     {text}
+                    {commentIndicator && <CommentIndicator>?</CommentIndicator>}
                 </Code>
             ),
             TextMetrics.global.measure(text, { italic, bold }),
@@ -120,7 +130,7 @@ export class ExprLayout implements ExprVisitor<Layout> {
     }
 
     private layoutComment(expr: Expr) {
-        if (expr.data.comment == null) return null;
+        if (expr.data.comment == null || this.delegate?.foldComments) return null;
         return this.layoutText(expr, expr.data.comment, {
             italic: true,
             colour: THEME.commentColour,
@@ -161,12 +171,14 @@ export class ExprLayout implements ExprVisitor<Layout> {
             title: expr.data.comment,
             colour: THEME.literalColour,
             italic: expr.type === "symbol",
+            commentIndicator: expr.data.comment != null,
         });
     }
 
     visitVariable(expr: E.Variable): Layout {
         return this.layoutText(expr, expr.name, {
             title: expr.data.comment,
+            commentIndicator: expr.data.comment != null,
             colour: THEME.variableColour,
         });
     }
@@ -225,7 +237,10 @@ export class ExprLayout implements ExprVisitor<Layout> {
         const inline = isCallInline(args);
         const fnName = hstack(
             THEME.createCircleMaxR,
-            this.layoutText(expr, expr.fn, { bold: !inline }),
+            this.layoutText(expr, expr.fn, {
+                bold: !inline,
+                commentIndicator: expr.data.comment != null && this.delegate?.foldComments,
+            }),
             this.layoutCreateCircle(expr),
         );
 

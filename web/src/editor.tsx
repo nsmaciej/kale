@@ -9,6 +9,7 @@ import { Clipboard, Workspace, ClipboardValue, WorkspaceValue } from "./workspac
 interface EditorState {
     focused: boolean;
     selection: Optional<ExprId>;
+    foldingComments: boolean;
 }
 
 interface EditorWrapperProps {
@@ -27,6 +28,7 @@ class Editor extends Component<EditorProps, EditorState> {
     state: EditorState = {
         selection: null,
         focused: true,
+        foldingComments: false,
     };
 
     private update(updater: (expr: Expr) => Optional<Expr>) {
@@ -148,6 +150,10 @@ class Editor extends Component<EditorProps, EditorState> {
             case "i":
                 this.createSiblingBlank();
                 break;
+            // Folding.
+            case "#":
+                this.setState(state => ({ foldingComments: !state.foldingComments }));
+                break;
             default:
                 // From clipboard history.
                 if (this.state.selection != null && key >= "0" && key <= "9") {
@@ -242,6 +248,7 @@ class Editor extends Component<EditorProps, EditorState> {
                     focused={this.state.focused}
                     onClick={this.exprSelected}
                     onClickCreateCircle={this.createChildBlank}
+                    foldComments={this.state.foldingComments}
                 />
             </div>
         );
