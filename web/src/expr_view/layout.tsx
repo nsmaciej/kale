@@ -37,8 +37,8 @@ const CommentIndicator = styled.tspan`
 `;
 
 function CreateCircle({ onClick }: { onClick: (e: React.MouseEvent) => void }) {
-    const r = THEME.createCircleR;
-    const maxR = THEME.createCircleMaxR;
+    const r = THEME.createCircle.radius;
+    const maxR = THEME.createCircle.maxRadius;
     const cx = r;
     const cy = THEME.fontSizePx / 2 + 3;
     const rect = new Rect(new Vec(cx - maxR, cy - maxR), new Size(maxR * 2));
@@ -125,7 +125,7 @@ export class ExprLayout implements ExprVisitor<Layout> {
         if (this.delegate?.isFrozen?.(expr)) return;
         return new Layout(
             (<CreateCircle onClick={e => this.delegate?.onClickCreateCircle?.(e, expr)} />),
-            new Size(THEME.createCircleMaxR, THEME.fontSizePx),
+            new Size(THEME.createCircle.maxRadius, THEME.fontSizePx),
         );
     }
 
@@ -184,9 +184,9 @@ export class ExprLayout implements ExprVisitor<Layout> {
     }
 
     visitBlank(expr: E.Blank): Layout {
-        const padding = THEME.blankPillPadding;
+        const padding = THEME.blanks.padding;
         const text = this.layoutText(expr, expr.data.comment ?? "?", {
-            colour: THEME.blankTextColour,
+            colour: THEME.blanks.textColour,
             offset: padding,
         });
         let rect = new Rect(padding, text.size).pad(padding);
@@ -206,13 +206,13 @@ export class ExprLayout implements ExprVisitor<Layout> {
                             ? THEME.selection.fill
                             : THEME.selection.blurredFill
                         : mouseOver && !this.delegate?.isFrozen?.(expr)
-                        ? THEME.blankFillColourHover
-                        : THEME.blankFillColour,
+                        ? THEME.blanks.fillHover
+                        : THEME.blanks.fill,
                 }}
                 initial={false}
                 rx={rect.height / 2}
                 strokeWidth={1}
-                stroke={selected ? THEME.selection.stroke : THEME.blankStrokeColour}
+                stroke={selected ? THEME.selection.stroke : THEME.blanks.stroke}
             />
         );
         const layout = new Layout(
@@ -236,7 +236,7 @@ export class ExprLayout implements ExprVisitor<Layout> {
         const args = expr.args.map(this.layout, this);
         const inline = isCallInline(args);
         const fnName = hstack(
-            THEME.createCircleMaxR,
+            THEME.createCircle.maxRadius,
             this.layoutText(expr, expr.fn, {
                 bold: !inline,
                 commentIndicator: expr.data.comment != null && this.delegate?.foldComments,

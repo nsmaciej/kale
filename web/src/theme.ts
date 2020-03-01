@@ -10,18 +10,20 @@ const THEME = {
 
     // Interface and decoration colours.
     decorationColour: "#6a6a6a",
-    highlightStrokeColour: "#cecece",
+    highlightStroke: "#cecece",
     exprViewPaddingPx: 8,
 
     // Code colours.
     commentColour: "#00b508",
     variableColour: "#248af0",
     literalColour: "#ef6c00",
-    blankPillPadding: new Vec(10, 1),
-    blankStrokeColour: "#dcdcdc",
-    blankFillColour: "#f7f7f7",
-    blankFillColourHover: "#dcdcdc", // Same as the stroke right now.
-    blankTextColour: "#909090",
+    blanks: {
+        padding: new Vec(10, 1),
+        stroke: "#dcdcdc",
+        fill: "#f7f7f7",
+        fillHover: "#dcdcdc", // Same as the stroke right now.
+        textColour: "#909090",
+    },
 
     // Selection and highlights.
     selection: {
@@ -34,8 +36,10 @@ const THEME = {
     },
 
     // Create Circle.
-    createCircleR: 2,
-    createCircleMaxR: 6, //TODO: This should be based on the current text size.
+    createCircle: {
+        radius: 2,
+        maxRadius: 6, //TODO: This should be based on the current text size.
+    },
 
     // Layout.
     lineBreakPointPx: 300,

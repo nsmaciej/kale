@@ -235,7 +235,7 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
                         ? this.props.focused
                             ? THEME.selection.stroke
                             : THEME.selection.blurredStroke
-                        : THEME.highlightStrokeColour
+                        : THEME.highlightStroke
                 }
                 strokeWidth={0.5}
                 transition={{ type: "tween", ease: "easeIn", duration: 0.1 }}
