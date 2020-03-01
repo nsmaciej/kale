@@ -110,6 +110,11 @@ export function ClipboardList() {
     );
 }
 
+const EditorHeading = styled.h2`
+    margin-left: ${THEME.exprViewPaddingPx}px;
+    font-variant-numeric: oldstyle-nums;
+`;
+
 export function EditorStack() {
     const [editors, setEditors] = useState<string[]>(["Sample 1", "Sample 2", "Sample 1"]);
     return (
@@ -118,7 +123,7 @@ export function EditorStack() {
             {editors.map((topLevelName, i) => (
                 <div>
                     <Stack alignItems="center" gap={5}>
-                        <h3>{topLevelName}</h3>
+                        <EditorHeading>{topLevelName}</EditorHeading>
                         <IoIosClose
                             color={THEME.buttonTextColour}
                             onClick={_ => setEditors(xs => removeIndex(xs, i))}

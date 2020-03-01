@@ -46,10 +46,6 @@ h2 {
     font-weight: 700;
     font-size: 20px;
 }
-h3 {
-    font-weight: 500;
-    font-size: 20px;
-}
 `;
 
 function Help() {
