@@ -55,10 +55,21 @@ class Editor extends Component<EditorProps, EditorState> {
 
     private removeSelection() {
         this.update(expr => {
+            const [siblings, ix] = expr.siblings(this.state.selection);
             const oldParent = expr.parentOf(this.state.selection)?.id;
             const newExpr =
                 expr.remove(this.state.selection) ?? new E.Blank(E.exprData("Double click me"));
-            this.setState({ selection: oldParent ?? expr.parentOf(oldParent)?.id ?? newExpr.id });
+            const closestSibling = ix == null ? null : siblings[ix + 1]?.id ?? siblings[ix - 1]?.id;
+            this.setState({
+                selection:
+                    // Try to select our right sibling, or left sibling.
+                    closestSibling ??
+                    // Otherwise our parent, or its parent if it gets deleted (by list pruning).
+                    oldParent ??
+                    expr.parentOf(oldParent)?.id ??
+                    // Otherwise the new root.
+                    newExpr.id,
+            });
             return newExpr;
         });
     }
