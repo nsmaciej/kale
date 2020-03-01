@@ -42,15 +42,18 @@ class Editor extends Component<EditorProps, EditorState> {
         return this.props.workspace.getTopLevel(this.props.topLevelName);
     }
 
-    private copySelectionToClipboard() {
-        const selected = this.expr.withId(this.state.selection);
-        if (selected == null) return false;
+    private addToClipboard(expr: Expr) {
         this.props.clipboard.setClipboard(clipboard => {
             if (this.expr instanceof E.Blank) return clipboard;
             // Remove duplicate ids.
-            return [selected, ...clipboard.filter(x => x.id !== selected.id)];
+            return [expr, ...clipboard.filter(x => x.id !== expr.id)];
         });
         return true;
+    }
+
+    private addSelectionToClipboard() {
+        const selection = this.expr.withId(this.state.selection);
+        if (selection != null) this.addToClipboard(selection);
     }
 
     private removeSelection() {
@@ -116,7 +119,7 @@ class Editor extends Component<EditorProps, EditorState> {
         switch (key) {
             // Deletion.
             case "Backspace":
-                this.copySelectionToClipboard();
+                this.addSelectionToClipboard();
                 this.removeSelection();
                 break;
             // Logical selection.
@@ -134,7 +137,7 @@ class Editor extends Component<EditorProps, EditorState> {
                 break;
             // Copy.
             case "c":
-                this.copySelectionToClipboard();
+                this.addSelectionToClipboard();
                 break;
             // Blanks selection.
             case "Tab":
@@ -159,12 +162,17 @@ class Editor extends Component<EditorProps, EditorState> {
                 if (this.state.selection != null && key >= "0" && key <= "9") {
                     const ix = parseInt(key);
                     const clipboard = this.props.clipboard.clipboard;
-                    const selection = this.state.selection;
+                    const selectedId = this.state.selection;
+                    const selected = this.expr.withId(selectedId);
                     if (ix < clipboard.length) {
                         this.update(expr =>
-                            expr.replace(selection, clipboard[ix].resetIds().replaceId(selection)),
+                            expr.replace(
+                                selectedId,
+                                clipboard[ix].resetIds().replaceId(selectedId),
+                            ),
                         );
                         this.props.clipboard.setClipboard(xs => removeIndex(xs, ix));
+                        if (selected) this.addToClipboard(selected);
                     }
                 } else {
                     console.log("Did not handle", event.key);
