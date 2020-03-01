@@ -105,6 +105,8 @@ class Editor extends Component<EditorProps, EditorState> {
                 this.addSelectionToClipboard();
                 this.removeSelection();
                 break;
+            case "d":
+                this.removeSelection();
             // Logical selection.
             case "h":
                 this.setSelection(Editor.selectParent);

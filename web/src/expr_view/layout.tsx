@@ -62,7 +62,7 @@ function CreateCircle({ onClick }: { onClick: (e: React.MouseEvent) => void }) {
 
 export function materialiseUnderlines(theme: ThemeType, parent: Layout) {
     const layout = parent.withNoUnderlines();
-    const gap = theme.lineGap;
+    const gap = theme.underlineSpacingPx;
     parent.underlines.forEach((x, i) => {
         const pos = new Vec(x.offset, parent.size.height + x.level * gap);
         layout.nodes.push(<UnderlineLine start={pos} end={pos.dx(x.length)} key={"U" + i} />);

@@ -128,7 +128,6 @@ interface ExprViewProps {
 
 interface ExprViewState {
     highlight: Optional<ExprId>;
-    // animatingSelection: boolean;
 }
 
 // This needs to be a class component so we can nicely pass it to the layout helper.

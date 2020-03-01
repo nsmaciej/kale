@@ -53,9 +53,9 @@ function Help() {
     return (
         <p style={{ maxWidth: "800px" }}>
             Use <S>H</S> <S>J</S> <S>K</S> <S>L</S> to move around. Fill in the blanks with{" "}
-            <S>Tab</S>. Use <S>Backspace</S> to Delete and <S>C</S> to Copy. Create blanks with the
-            circular buttons or <S>A</S> or <S>I</S>. Paste items from history using <S>0</S>-
-            <S>9</S>. Fold comments with <S>#</S> &mdash; <b>Help is on the way!</b>
+            <S>Tab</S>. Use <S>Backspace</S> or <S>D</S> to Delete and <S>C</S> to Copy. Create
+            blanks with the circular buttons or <S>A</S> or <S>I</S>. Paste items from history using{" "}
+            <S>0</S>-<S>9</S>. Fold comments with <S>#</S> &mdash; <b>Help is on the way!</b>
         </p>
     );
 }

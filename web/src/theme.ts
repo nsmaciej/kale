@@ -43,7 +43,7 @@ export const DefaultTheme = {
 
     // Layout.
     lineBreakPointPx: 300,
-    lineGap: 3,
+    underlineSpacingPx: 3,
     lineSpacingPx: 8, //TODO: This should be based on the current text size.
 
     // Settings.
