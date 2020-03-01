@@ -1,7 +1,7 @@
-import React, { Fragment, useContext, useState } from "react";
+import React, { Fragment, useContext, useState, ReactNode } from "react";
 import styled from "styled-components";
 import { motion } from "framer-motion";
-import { IoIosClose } from "react-icons/io";
+import { AiOutlineClose, AiOutlinePushpin, AiFillPushpin } from "react-icons/ai";
 
 import * as E from "./expr";
 import Expr from "./expr";
@@ -9,7 +9,7 @@ import ExprView from "./expr_view";
 import THEME from "./theme";
 import { Box, Stack, Shortcut, SubtleButton } from "./components";
 import InnerEditor from "./editor";
-import { assertSome, removeIndex } from "./utils";
+import { assertSome, removeIndex, replaceIndex } from "./utils";
 import { Clipboard } from "./workspace";
 
 interface ShortcutExpr {
@@ -22,6 +22,7 @@ interface ExprViewListProps {
     exprs: ShortcutExpr[];
     frozen?: boolean;
     fallback?: string;
+    extras?: (expr: Expr, index: number) => ReactNode;
 }
 
 const ExprListItem = styled(motion.div)`
@@ -29,6 +30,7 @@ const ExprListItem = styled(motion.div)`
     justify-self: left;
     border: 1px solid #dfe1e5;
     border-radius: ${THEME.exprViewPaddingPx}px;
+    display: flex;
 `;
 
 const ExprListShortcut = styled(Shortcut)`
@@ -48,8 +50,12 @@ const ExprList = styled.div`
     margin: 20px 0 40px;
 `;
 
-function ExprViewList({ exprs, frozen, animate, fallback }: ExprViewListProps) {
-    const renderItem = (expr: Expr, shortcut?: string) => (
+const Extras = styled.div`
+    margin: ${THEME.exprViewPaddingPx}px !important;
+`;
+
+function ExprViewList({ exprs, frozen, animate, fallback, extras }: ExprViewListProps) {
+    const renderItem = (expr: Expr, ix: number, shortcut?: string) => (
         // This has to be a fragment. Otherwise the items won't layout in a grid.
         <Fragment key={expr.id}>
             {shortcut && THEME.showingShortcuts && <ExprListShortcut>{shortcut}</ExprListShortcut>}
@@ -59,13 +65,14 @@ function ExprViewList({ exprs, frozen, animate, fallback }: ExprViewListProps) {
                 transition={{ duration: 0.1, ease: "easeIn" }}
             >
                 <ExprView expr={expr} frozen={frozen} />
+                {extras && <Extras>{extras(expr, ix)}</Extras>}
             </ExprListItem>
         </Fragment>
     );
     return (
         <ExprList>
             {exprs.length === 0 && <p>{fallback}</p>}
-            {exprs.map(x => renderItem(x.expr, x.shortcut))}
+            {exprs.map((x, i) => renderItem(x.expr, i, x.shortcut))}
         </ExprList>
     );
 }
@@ -95,7 +102,7 @@ export function ClipboardList() {
     const { clipboard, setClipboard } = assertSome(useContext(Clipboard));
     const history = clipboard.map((x, i) => ({
         shortcut: i < 10 ? i.toString() : undefined,
-        expr: x,
+        expr: x.expr,
     }));
     return (
         <Box gridArea="history" overflow="auto">
@@ -105,7 +112,26 @@ export function ClipboardList() {
                     Clear All
                 </SubtleButton>
             </Stack>
-            <ExprViewList frozen animate exprs={history} fallback="Nothing here yet." />
+            <ExprViewList
+                frozen
+                animate
+                exprs={history}
+                fallback="Nothing here yet."
+                extras={(expr, ix) => (
+                    <SubtleButton
+                        onClick={_ =>
+                            setClipboard(clipboard =>
+                                replaceIndex(clipboard, ix, {
+                                    expr,
+                                    pinned: !clipboard[ix].pinned,
+                                }),
+                            )
+                        }
+                    >
+                        {clipboard[ix].pinned ? <AiFillPushpin /> : <AiOutlinePushpin />}
+                    </SubtleButton>
+                )}
+            />
         </Box>
     );
 }
@@ -124,7 +150,7 @@ export function EditorStack() {
                 <div>
                     <Stack alignItems="center" gap={5}>
                         <EditorHeading>{topLevelName}</EditorHeading>
-                        <IoIosClose
+                        <AiOutlineClose
                             color={THEME.buttonTextColour}
                             onClick={_ => setEditors(xs => removeIndex(xs, i))}
                         />

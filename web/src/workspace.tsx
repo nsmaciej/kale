@@ -36,14 +36,19 @@ export class WorkspaceProvider extends Component<{}, WorkspaceProvider["state"]>
 
 type SetState<S> = React.Dispatch<React.SetStateAction<S>>;
 
+interface ClipboardEntry {
+    pinned: boolean;
+    expr: Expr;
+}
+
 export interface ClipboardValue {
-    clipboard: Expr[];
-    setClipboard: SetState<Expr[]>;
+    clipboard: ClipboardEntry[];
+    setClipboard: SetState<ClipboardEntry[]>;
 }
 
 export const Clipboard = React.createContext<Optional<ClipboardValue>>(null);
 export function ClipboardProvider({ children }: { children: ReactNode }) {
-    const [clipboard, setClipboard] = useState<Expr[]>([]);
+    const [clipboard, setClipboard] = useState<ClipboardEntry[]>([]);
     const value = { clipboard, setClipboard };
     return <Clipboard.Provider value={value}>{children}</Clipboard.Provider>;
 }

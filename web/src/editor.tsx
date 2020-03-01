@@ -46,7 +46,7 @@ class Editor extends Component<EditorProps, EditorState> {
         this.props.clipboard.setClipboard(clipboard => {
             if (this.expr instanceof E.Blank) return clipboard;
             // Remove duplicate ids.
-            return [expr, ...clipboard.filter(x => x.id !== expr.id)];
+            return [{ expr, pinned: false }, ...clipboard.filter(x => x.expr.id !== expr.id)];
         });
         return true;
     }
@@ -168,10 +168,12 @@ class Editor extends Component<EditorProps, EditorState> {
                         this.update(expr =>
                             expr.replace(
                                 selectedId,
-                                clipboard[ix].resetIds().replaceId(selectedId),
+                                clipboard[ix].expr.resetIds().replaceId(selectedId),
                             ),
                         );
-                        this.props.clipboard.setClipboard(xs => removeIndex(xs, ix));
+                        this.props.clipboard.setClipboard(xs =>
+                            xs[ix].pinned ? xs : removeIndex(xs, ix),
+                        );
                         if (selected) this.addToClipboard(selected);
                     }
                 } else {
