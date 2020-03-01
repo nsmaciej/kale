@@ -147,7 +147,8 @@ export function EditorStack() {
         <Stack vertical gridArea="editor" overflow="auto" gap={40}>
             {editors.length === 0 && <p>No editors open</p>}
             {editors.map((topLevelName, i) => (
-                <div>
+                //TODO: Don't use i as the key.
+                <div key={i}>
                     <Stack alignItems="center" gap={5}>
                         <EditorHeading>{topLevelName}</EditorHeading>
                         <AiOutlineClose

@@ -1,7 +1,7 @@
 import { Vec } from "./geometry";
 import { assert } from "utils";
 
-const THEME = {
+export const DefaultTheme = {
     // Text.
     fontSizePx: 13,
     fontFamily: "iA Writer Quattro",
@@ -51,8 +51,11 @@ const THEME = {
     showingToyBox: true,
 };
 
-// The main padding needs to be greather than the selection padding.
-assert(THEME.exprViewPaddingPx >= THEME.selection.paddingPx.x);
-assert(THEME.exprViewPaddingPx >= THEME.selection.paddingPx.y);
+//TODO: Get rid of this.
+export default DefaultTheme;
 
-export default THEME;
+// The main padding needs to be greather than the selection padding.
+assert(DefaultTheme.exprViewPaddingPx >= DefaultTheme.selection.paddingPx.x);
+assert(DefaultTheme.exprViewPaddingPx >= DefaultTheme.selection.paddingPx.y);
+
+export type ThemeType = typeof DefaultTheme;

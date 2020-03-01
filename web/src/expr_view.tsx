@@ -93,7 +93,7 @@ export class DragAndDropSurface extends Component<{}, DragAndDropSurfaceState> {
         if (this.drag?.delta != null) {
             // drag.delta gets set when the drag starts proper.
             const pos = assertSome(this.state.position).add(this.drag.delta);
-            const { nodes } = new ExprLayout({
+            const { nodes } = new ExprLayout(THEME, {
                 isFrozen: () => true,
             }).layout(this.drag.expr);
             surface = ReactDOM.createPortal(
@@ -245,7 +245,8 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
 
     render() {
         const { nodes, size, areas, inlineExprs } = materialiseUnderlines(
-            new ExprLayout(this).layout(this.props.expr),
+            THEME,
+            new ExprLayout(THEME, this).layout(this.props.expr),
         );
 
         // Selection and highlight drawing logic.

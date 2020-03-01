@@ -27,6 +27,8 @@ export class Layout {
     isUnderlined = false;
     inlineExprs = new Set<Expr>();
 
+    // Important: The node passed here should have a key, otherwise it might end up in a list, and
+    // React will complain. A safe key is '0'.
     constructor(node: ReactNode = null, size = Size.zero) {
         this.nodes = [node];
         this.size = size;
@@ -42,7 +44,18 @@ export class Layout {
 
     place(origin: Vec, layout: Layout, index = this.nodes.length) {
         this.size = this.size.extend(origin, layout.size);
-        this.nodes.splice(index, 0, <SvgGroup translate={origin}>{layout.nodes.flat()}</SvgGroup>);
+        this.nodes.splice(
+            index,
+            0,
+            <SvgGroup
+                translate={origin}
+                // The logic is as follows: Either this is some random layout, in which case we let
+                // React be inefficent, or it's an expr layout.
+                key={layout.expr == null ? this.nodes.length : "E" + layout.expr.id}
+            >
+                {layout.nodes.flat()}
+            </SvgGroup>,
+        );
 
         // Handle inline children.
         if (layout.inline && layout.expr != null) {
