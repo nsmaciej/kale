@@ -3,14 +3,15 @@ import ReactDOM from "react-dom";
 import styled from "styled-components";
 import { motion } from "framer-motion";
 
-import { Optional, assert, assertSome } from "./utils";
-import { Vec, Rect } from "./geometry";
-import { Area } from "./layout";
-import Expr, { ExprId } from "./expr";
-import * as E from "./expr";
-import { SvgGroup } from "./expr_components";
-import THEME from "./theme";
-import { ExprLayout, materialiseUnderlines, ExprDelegate } from "./expr_layout";
+import { Optional, assert, assertSome } from "utils";
+import { Vec, Rect } from "geometry";
+import Expr, { ExprId } from "expr";
+import * as E from "expr";
+import THEME from "theme";
+
+import { Area } from "expr_view/core";
+import { ExprLayout, materialiseUnderlines, ExprDelegate } from "expr_view/layout";
+import { SvgGroup } from "expr_view/components";
 
 interface DragAndDropSurfaceContext {
     maybeStartDrag: (start: Vec, exprStart: Vec, expr: Expr) => void;

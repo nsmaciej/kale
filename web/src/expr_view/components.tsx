@@ -1,7 +1,7 @@
 import React, { ReactNode, useState } from "react";
 
-import { Vec, Rect } from "./geometry";
-import THEME from "./theme";
+import { Vec, Rect } from "geometry";
+import THEME from "theme";
 
 // A type for components that have custom props but pass everything else on.
 type CustomSvgProps<Element, CustomProps> = CustomProps &
