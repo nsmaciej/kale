@@ -1,21 +1,21 @@
 const path = require("path");
 
 module.exports = {
-    entry: "./src/main.tsx",
+    context: path.resolve(__dirname, "src"),
+    entry: "./main.tsx",
     devtool: "source-map",
     module: {
         rules: [
             {
                 test: /\.tsx?$/,
                 use: "ts-loader",
-                exclude: /node_modules/,
             },
         ],
     },
     devServer: {
         publicPath: "/dist/",
         overlay: true,
-        watchContentBase: true,
+        hot: true,
         quiet: true,
     },
     resolve: {

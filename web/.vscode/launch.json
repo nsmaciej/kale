@@ -5,8 +5,8 @@
             "name": "Launch Kale",
             "type": "chrome",
             "request": "launch",
-            "file": "${workspaceFolder}/index.html",
-            "webRoot": "${workspaceRoot}"
+            "url": "http://localhost:8080/",
+            "webRoot": "${workspaceFolder}/src"
         }
     ]
 }
