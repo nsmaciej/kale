@@ -153,10 +153,14 @@ export class ExprLayout implements ExprVisitor<Layout> {
     }
 
     visitLiteral(expr: E.Literal): Layout {
-        const content = expr.type === "str" ? `"${expr.content}"` : expr.content;
+        let content = expr.content;
+        if (expr.type == "str") content = `"${expr.content}"`;
+        else if (expr.type == "symbol") content = expr.content + ":";
+
         return this.layoutText(expr, content, {
             title: expr.data.comment,
             colour: THEME.literalColour,
+            italic: expr.type === "symbol",
         });
     }
 
