@@ -10,9 +10,6 @@ const THEME = {
 
     // Interface and decoration colours.
     decorationColour: "#6a6a6a",
-    selectionColour: "#edf5ff",
-    blurredSelectionColour: "#fcfdff",
-    selectionStrokeColour: "#9fcbff",
     highlightStrokeColour: "#cecece",
     exprViewPaddingPx: 8,
 
@@ -27,8 +24,14 @@ const THEME = {
     blankTextColour: "#909090",
 
     // Selection and highlights.
-    selectionPaddingPx: new Vec(3),
-    selectionRadiusPx: 3,
+    selection: {
+        paddingPx: new Vec(3),
+        radiusPx: 3,
+        blurredFill: "#fcfdff",
+        blurredStroke: "#d7e9ff",
+        fill: "#edf5ff",
+        stroke: "#9fcbff",
+    },
 
     // Create Circle.
     createCircleR: 2,
@@ -45,7 +48,7 @@ const THEME = {
 };
 
 // The main padding needs to be greather than the selection padding.
-assert(THEME.exprViewPaddingPx >= THEME.selectionPaddingPx.x);
-assert(THEME.exprViewPaddingPx >= THEME.selectionPaddingPx.y);
+assert(THEME.exprViewPaddingPx >= THEME.selection.paddingPx.x);
+assert(THEME.exprViewPaddingPx >= THEME.selection.paddingPx.y);
 
 export default THEME;

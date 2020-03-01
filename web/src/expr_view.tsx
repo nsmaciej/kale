@@ -205,7 +205,7 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
         if (expr == null) return;
         if (!isSelection && !this.props.focused) return;
 
-        const rect = this.findExprRect(expr, area)?.pad(THEME.selectionPaddingPx);
+        const rect = this.findExprRect(expr, area)?.pad(THEME.selection.paddingPx);
         if (rect == null) return; // This happens when an expression is removed.
 
         const isHole = this.props.expr.withId(expr) instanceof E.Blank;
@@ -219,18 +219,24 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
                     opacity: isHole ? 0 : 1, // +!isHole
                 }}
                 key={+isSelection}
-                rx={THEME.selectionRadiusPx}
+                rx={THEME.selection.radiusPx}
                 fill={
                     isSelection
                         ? this.props.focused
-                            ? THEME.selectionColour
-                            : THEME.blurredSelectionColour
+                            ? THEME.selection.fill
+                            : THEME.selection.blurredFill
                         : "none"
                 }
                 initial={false}
                 // Clicking on the selection doesn't pass through.
                 onClick={this.stopPropagation}
-                stroke={isSelection ? THEME.selectionStrokeColour : THEME.highlightStrokeColour}
+                stroke={
+                    isSelection
+                        ? this.props.focused
+                            ? THEME.selection.stroke
+                            : THEME.selection.blurredStroke
+                        : THEME.highlightStrokeColour
+                }
                 strokeWidth={0.5}
                 transition={{ type: "tween", ease: "easeIn", duration: 0.1 }}
             />

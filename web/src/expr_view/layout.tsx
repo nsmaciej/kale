@@ -203,8 +203,8 @@ export class ExprLayout implements ExprVisitor<Layout> {
                     //TODO: Find a more modular way.
                     fill: selected
                         ? this.delegate?.focused
-                            ? THEME.selectionColour
-                            : THEME.blurredSelectionColour
+                            ? THEME.selection.fill
+                            : THEME.selection.blurredFill
                         : mouseOver && !this.delegate?.isFrozen?.(expr)
                         ? THEME.blankFillColourHover
                         : THEME.blankFillColour,
@@ -212,7 +212,7 @@ export class ExprLayout implements ExprVisitor<Layout> {
                 initial={false}
                 rx={rect.height / 2}
                 strokeWidth={1}
-                stroke={selected ? THEME.selectionStrokeColour : THEME.blankStrokeColour}
+                stroke={selected ? THEME.selection.stroke : THEME.blankStrokeColour}
             />
         );
         const layout = new Layout(
