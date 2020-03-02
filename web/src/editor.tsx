@@ -108,14 +108,27 @@ class Editor extends Component<EditorProps, EditorState> {
     }
 
     private readonly keyDown = (event: React.KeyboardEvent) => {
+        // Do not handle modifier keys.
+        if (event.ctrlKey || event.altKey || event.metaKey) return;
         const key = event.key;
         // See https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values.
         switch (key) {
             // Deletion.
             case "Backspace":
+                // Just delete.
                 this.removeSelection();
                 break;
             case "r":
+                // Intend to replace (delete with blank).
+                this.replaceSelection(new E.Blank());
+                break;
+            case "m":
+                // Intend to move.
+                this.addSelectionToClipboard();
+                this.removeSelection();
+                break;
+            case "s":
+                // Intend to shuffle (move with blank).
                 this.addSelectionToClipboard();
                 this.replaceSelection(new E.Blank());
                 break;
