@@ -109,6 +109,6 @@ class Kale extends Component {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-    await TextMetrics.loadGlobal();
+    await TextMetrics.loadGlobal(THEME);
     ReactDOM.render(<Kale />, document.getElementById("main"));
 });

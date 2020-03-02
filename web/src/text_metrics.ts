@@ -1,5 +1,5 @@
 import { Size } from "geometry";
-import THEME from "theme";
+import { KaleTheme } from "theme";
 
 interface TextStyle {
     bold?: boolean;
@@ -12,24 +12,24 @@ export default class TextMetrics {
     private readonly _metricsCache: { [content: string]: number } = {};
     private readonly _textElement: SVGTextElement;
 
-    static async loadGlobal(): Promise<void> {
+    static async loadGlobal(theme: KaleTheme): Promise<void> {
         // Types provided by types/font_loading.d.ts
-        await document.fonts.load(`${THEME.fontSizePx}px ${THEME.fontFamily}`);
-        await document.fonts.load(`italic ${THEME.fontSizePx}px ${THEME.fontFamily}`);
-        await document.fonts.load(`bold ${THEME.fontSizePx}px ${THEME.fontFamily}`);
-        await document.fonts.load(`bold italic ${THEME.fontSizePx}px ${THEME.fontFamily}`);
-        TextMetrics.global = new TextMetrics();
+        await document.fonts.load(`${theme.fontSizePx}px ${theme.fontFamily}`);
+        await document.fonts.load(`italic ${theme.fontSizePx}px ${theme.fontFamily}`);
+        await document.fonts.load(`bold ${theme.fontSizePx}px ${theme.fontFamily}`);
+        await document.fonts.load(`bold italic ${theme.fontSizePx}px ${theme.fontFamily}`);
+        TextMetrics.global = new TextMetrics(theme);
     }
 
-    constructor() {
+    constructor(private readonly theme: KaleTheme) {
         const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
         // Note display none would cause the text to not render.
         svg.style.visibility = "hidden";
         svg.style.position = "absolute";
 
         const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-        text.style.fontFamily = THEME.fontFamily;
-        text.style.fontSize = `${THEME.fontSizePx}px`;
+        text.style.fontFamily = this.theme.fontFamily;
+        text.style.fontSize = `${this.theme.fontSizePx}px`;
         svg.appendChild(text);
         this._textElement = text;
         document.body.appendChild(svg);
@@ -38,7 +38,7 @@ export default class TextMetrics {
     measure(text: string, { bold = false, italic = false }: TextStyle = {}): Size {
         const key = [+bold, +italic, text].join("");
         const HEIGHT_FUDGE_FACTOR = 1.3;
-        const height = THEME.fontSizePx * HEIGHT_FUDGE_FACTOR;
+        const height = this.theme.fontSizePx * HEIGHT_FUDGE_FACTOR;
         if (key in this._metricsCache) {
             return new Size(this._metricsCache[key], height);
         }
