@@ -63,6 +63,11 @@ export default abstract class Expr {
         return id == null ? null : this.find(x => x.id === id);
     }
 
+    update(id: Optional<ExprId>, update: (expr: Expr) => Optional<Expr>): Optional<Expr> {
+        if (id == null) return this;
+        return this.filterMap(x => (x.id === id ? update(x) : x));
+    }
+
     assignToData(value: Partial<ExprData>): Expr {
         const newData = { ...this.data, ...value };
         if (this instanceof List) return new List(this.list, newData);
@@ -83,8 +88,8 @@ export default abstract class Expr {
         return this.assignToData({ id });
     }
 
-    replace(old: ExprId, next: Expr): Expr {
-        return assertSome(this.filterMap(x => (x.id === old ? next : x)));
+    replace(old: Optional<ExprId>, next: Expr): Expr {
+        return assertSome(this.update(old, _ => next));
     }
 
     find(predicate: (expr: Expr) => boolean): Optional<Expr> {
@@ -147,8 +152,8 @@ export default abstract class Expr {
         return this.visit(new ExprFilterMap(fn));
     }
 
-    remove(id: Optional<ExprId>) {
-        return id == null ? null : this.filterMap(x => (x.id === id ? null : x));
+    remove(id: Optional<ExprId>): Optional<Expr> {
+        return this.update(id, _ => null);
     }
 }
 
