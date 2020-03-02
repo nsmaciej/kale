@@ -63,4 +63,11 @@ export default DefaultTheme;
 assert(DefaultTheme.exprViewPaddingPx >= DefaultTheme.selection.paddingPx.x);
 assert(DefaultTheme.exprViewPaddingPx >= DefaultTheme.selection.paddingPx.y);
 
-export type ThemeType = typeof DefaultTheme;
+export type KaleTheme = typeof DefaultTheme;
+
+// Augument the DefaultTheme type.
+// See: https://github.com/styled-components/styled-components-website/issues/447
+// and DefaultTheme comments for more.
+declare module "styled-components" {
+    export interface DefaultTheme extends KaleTheme {}
+}

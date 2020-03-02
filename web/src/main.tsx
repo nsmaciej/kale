@@ -1,6 +1,6 @@
 import * as ReactDOM from "react-dom";
 import React, { Component } from "react";
-import styled, { StyleSheetManager, createGlobalStyle } from "styled-components";
+import styled, { ThemeProvider, StyleSheetManager, createGlobalStyle } from "styled-components";
 
 import { DragAndDropSurface } from "expr_view";
 import TextMetrics from "text_metrics";
@@ -76,30 +76,32 @@ class Kale extends Component {
         return (
             <React.StrictMode>
                 <StyleSheetManager disableVendorPrefixes>
-                    <DragAndDropSurface>
-                        <WorkspaceProvider>
-                            <ClipboardProvider>
-                                <GlobalStyle />
-                                <Kale.Container>
-                                    <Stack
-                                        gridArea="nav"
-                                        gap={10}
-                                        alignItems="center"
-                                        justifyContent="space-between"
-                                        paddingBottom={15}
-                                        borderBottom={`1px solid ${THEME.grey}`}
-                                    >
-                                        <Kale.Heading>Kale</Kale.Heading>
-                                        <Help />
-                                    </Stack>
+                    <ThemeProvider theme={THEME}>
+                        <DragAndDropSurface>
+                            <WorkspaceProvider>
+                                <ClipboardProvider>
+                                    <GlobalStyle />
+                                    <Kale.Container>
+                                        <Stack
+                                            gridArea="nav"
+                                            gap={10}
+                                            alignItems="center"
+                                            justifyContent="space-between"
+                                            paddingBottom={15}
+                                            borderBottom={`1px solid ${THEME.grey}`}
+                                        >
+                                            <Kale.Heading>Kale</Kale.Heading>
+                                            <Help />
+                                        </Stack>
 
-                                    {THEME.showingToyBox && <ToyBox />}
-                                    <EditorStack />
-                                    <ClipboardList />
-                                </Kale.Container>
-                            </ClipboardProvider>
-                        </WorkspaceProvider>
-                    </DragAndDropSurface>
+                                        {THEME.showingToyBox && <ToyBox />}
+                                        <EditorStack />
+                                        <ClipboardList />
+                                    </Kale.Container>
+                                </ClipboardProvider>
+                            </WorkspaceProvider>
+                        </DragAndDropSurface>
+                    </ThemeProvider>
                 </StyleSheetManager>
             </React.StrictMode>
         );

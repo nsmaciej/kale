@@ -1,8 +1,8 @@
 import React from "react";
-import styled from "styled-components";
+import styled, { useTheme } from "styled-components";
 import { motion } from "framer-motion";
 
-import THEME, { ThemeType } from "theme";
+import { KaleTheme } from "theme";
 import { Optional, max } from "utils";
 import { Vec, Size, Rect } from "geometry";
 import Expr, { ExprId, ExprVisitor } from "expr";
@@ -24,30 +24,31 @@ interface TextProperties {
 // See https://vanseodesign.com/web-design/svg-text-baseline-alignment/ for excellent discussion
 // on SVG text aligment properties.
 const Code = styled.text`
-    font-size: ${THEME.fontSizePx}px;
-    font-family: ${THEME.fontFamily};
+    font-size: ${p => p.theme.fontSizePx}px;
+    font-family: ${p => p.theme.fontFamily};
     dominant-baseline: text-before-edge;
 `;
 
 const CommentIndicator = styled.tspan`
     baseline-shift: super;
-    fill: ${THEME.commentColour};
-    font-size: ${THEME.fontSizePx * 0.6}px;
+    fill: ${p => p.theme.commentColour};
+    font-size: ${p => p.theme.fontSizePx * 0.6}px;
     font-weight: normal;
 `;
 
 function CreateCircle({ onClick }: { onClick: (e: React.MouseEvent) => void }) {
-    const r = THEME.createCircle.radius;
-    const maxR = THEME.createCircle.maxRadius;
+    const theme = useTheme();
+    const r = theme.createCircle.radius;
+    const maxR = theme.createCircle.maxRadius;
     const cx = r;
-    const cy = THEME.fontSizePx / 2 + 3;
+    const cy = theme.fontSizePx / 2 + 3;
     const rect = new Rect(new Vec(cx - maxR, cy - maxR), new Size(maxR * 2));
     return (
         <HoverHitBox area={rect} onClick={onClick} title="Add an argument...">
             {mouseOver => (
                 <motion.circle
                     fill="none"
-                    stroke={THEME.decorationColour}
+                    stroke={theme.decorationColour}
                     strokeWidth={1}
                     animate={{ r: mouseOver ? maxR : r }}
                     r={r}
@@ -73,7 +74,7 @@ function setAreasHeightInPlace(areas: Area[], height: number) {
     }
 }
 
-function materialiseUnderlines(theme: ThemeType, parent: Layout) {
+function materialiseUnderlines(theme: KaleTheme, parent: Layout) {
     const layout = parent.withNoUnderlines();
     const gap = theme.underlineSpacingPx;
     parent.underlines.forEach((x, i) => {
@@ -92,7 +93,7 @@ interface LayoutState {
 
 class ExprLayout implements ExprVisitor<Layout> {
     constructor(
-        private readonly t: ThemeType,
+        private readonly t: KaleTheme,
         private readonly props: LayoutProps,
         private readonly state: LayoutState = { hasDisabledParent: false },
     ) {}
@@ -304,7 +305,7 @@ class ExprLayout implements ExprVisitor<Layout> {
     }
 }
 
-function isCallInline(theme: ThemeType, args: readonly Layout[]): boolean {
+function isCallInline(theme: KaleTheme, args: readonly Layout[]): boolean {
     if (args.length === 0) {
         return true;
     }
@@ -337,6 +338,6 @@ export interface LayoutProps {
     foldComments?: boolean;
 }
 
-export function layoutExpr(theme: ThemeType, expr: Expr, props: LayoutProps): Layout {
+export function layoutExpr(theme: KaleTheme, expr: Expr, props: LayoutProps): Layout {
     return materialiseUnderlines(theme, new ExprLayout(theme, props).layout(expr));
 }
