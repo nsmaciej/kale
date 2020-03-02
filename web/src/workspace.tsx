@@ -74,9 +74,13 @@ export class ClipboardProvider extends Component<{}, ClipboardProvider["state"]>
             return false;
         },
         togglePinned: (expr: ExprId) => {
-            this.update(clipboard =>
-                clipboard.map(x => (x.expr.id === expr ? { expr: x.expr, pinned: !x.pinned } : x)),
-            );
+            this.update(clipboard => {
+                const newClipboard = clipboard.map(x =>
+                    x.expr.id === expr ? { expr: x.expr, pinned: !x.pinned } : x,
+                );
+                const [pinned, notPinned] = partition(newClipboard, x => x.pinned);
+                return [...pinned, ...notPinned];
+            });
         },
     };
     render() {
