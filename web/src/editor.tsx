@@ -178,6 +178,15 @@ class Editor extends Component<EditorProps, EditorState> {
             case "#":
                 this.setState(state => ({ foldingComments: !state.foldingComments }));
                 break;
+            // Comments.
+            case "q":
+                const sel = this.state.selection;
+                const selected = this.expr.withId(sel);
+                if (selected != null) {
+                    const comment = prompt("Comment?", selected.data.comment) ?? undefined;
+                    this.update(expr => expr.assignToDataWithId(sel, { comment }));
+                }
+                break;
             default:
                 // From clipboard history.
                 if (key >= "0" && key <= "9") {

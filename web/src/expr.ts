@@ -79,6 +79,10 @@ export default abstract class Expr {
         throw new UnvisitableExpr(this);
     }
 
+    assignToDataWithId(id: Optional<ExprId>, value: Partial<ExprData>): Expr {
+        return assertSome(this.update(id, x => x.assignToData(value)));
+    }
+
     // Give each sub-expr a fresh id.
     resetIds() {
         return this.filterMap(x => x.replaceId(GlobalExprId++))!;

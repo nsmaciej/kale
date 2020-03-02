@@ -292,7 +292,8 @@ export class ExprLayout implements ExprVisitor<Layout> {
 
         let layout: Layout;
         // Adding a comment makes a call non-inline but not bold.
-        if (inline && expr.data.comment == null) {
+        //TODO: Don't do this if we are in a list.
+        if (inline && (expr.data.comment == null || this.delegate?.foldComments)) {
             const inlineMarginPx = TextMetrics.global.measure("\xa0").width; // Non-breaking space.
             layout = hstack(inlineMarginPx, fnName, args);
             layout.isUnderlined = true;
