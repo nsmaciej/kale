@@ -73,7 +73,7 @@ function setAreasHeightInPlace(areas: Area[], height: number) {
     }
 }
 
-export function materialiseUnderlines(theme: ThemeType, parent: Layout) {
+function materialiseUnderlines(theme: ThemeType, parent: Layout) {
     const layout = parent.withNoUnderlines();
     const gap = theme.underlineSpacingPx;
     parent.underlines.forEach((x, i) => {
@@ -86,34 +86,24 @@ export function materialiseUnderlines(theme: ThemeType, parent: Layout) {
     return layout;
 }
 
-export interface ExprDelegate {
-    isFrozen?(expr: Expr): boolean;
-    selection?: Optional<ExprId>; // Only checked by blanks.
-    focused?: boolean;
-    foldComments?: boolean;
-    onHoverExpr?(e: React.MouseEvent, expr: Optional<Expr>): void;
-    onClickExpr?(e: React.MouseEvent, expr: Expr): void;
-    onClickCreateCircle?(e: React.MouseEvent, expr: Expr): void;
-    onMouseDown?(e: React.MouseEvent, expr: Expr): void;
-}
-
-interface ExprLayoutProps {
+interface LayoutState {
     hasDisabledParent: boolean;
 }
 
-export class ExprLayout implements ExprVisitor<Layout> {
+class ExprLayout implements ExprVisitor<Layout> {
     constructor(
         private readonly t: ThemeType,
-        private readonly delegate: Optional<ExprDelegate>,
-        private readonly props: ExprLayoutProps = { hasDisabledParent: false },
+        private readonly props: LayoutProps,
+        private readonly state: LayoutState = { hasDisabledParent: false },
     ) {}
 
     private exprProps(expr: Expr) {
+        type E = React.MouseEvent;
         return {
-            onMouseEnter: (e: React.MouseEvent) => this.delegate?.onHoverExpr?.(e, expr),
-            onMouseLeave: (e: React.MouseEvent) => this.delegate?.onHoverExpr?.(e, null),
-            onClick: (e: React.MouseEvent) => this.delegate?.onClickExpr?.(e, expr),
-            onMouseDown: (e: React.MouseEvent) => this.delegate?.onMouseDown?.(e, expr),
+            onMouseEnter: (e: E) => this.props.onHoverExpr?.(e, expr),
+            onMouseLeave: (e: E) => this.props.onHoverExpr?.(e, null),
+            onClick: (e: E) => this.props.onClickExpr?.(e, expr),
+            onMouseDown: (e: E) => this.props.onMouseDown?.(e, expr),
         };
     }
 
@@ -122,7 +112,7 @@ export class ExprLayout implements ExprVisitor<Layout> {
         text: string,
         { italic, colour, title, bold, offset, commentIndicator }: TextProperties = {},
     ) {
-        const disabled = expr.data.disabled || this.props.hasDisabledParent;
+        const disabled = expr.data.disabled || this.state.hasDisabledParent;
         const layout = new Layout(
             (
                 <Code
@@ -146,15 +136,15 @@ export class ExprLayout implements ExprVisitor<Layout> {
     }
 
     private layoutCreateCircle(expr: Expr) {
-        if (this.delegate?.isFrozen?.(expr)) return;
+        if (this.props.frozen) return;
         return new Layout(
-            (<CreateCircle onClick={e => this.delegate?.onClickCreateCircle?.(e, expr)} key={0} />),
+            (<CreateCircle onClick={e => this.props.onClickCreateCircle?.(e, expr)} key={0} />),
             new Size(this.t.createCircle.maxRadius, this.t.fontSizePx),
         );
     }
 
     private layoutComment(expr: Expr) {
-        if (expr.data.comment == null || this.delegate?.foldComments) return null;
+        if (expr.data.comment == null || this.props.foldComments) return null;
         return this.layoutText(expr, expr.data.comment, {
             italic: true,
             colour: this.t.commentColour,
@@ -169,8 +159,8 @@ export class ExprLayout implements ExprVisitor<Layout> {
     }
 
     private layoutInner(parent: Expr, expr: Expr) {
-        return new ExprLayout(this.t, this.delegate, {
-            hasDisabledParent: this.props.hasDisabledParent || parent.data.disabled,
+        return new ExprLayout(this.t, this.props, {
+            hasDisabledParent: this.state.hasDisabledParent || parent.data.disabled,
         }).layout(expr);
     }
 
@@ -181,7 +171,7 @@ export class ExprLayout implements ExprVisitor<Layout> {
         );
         const line = new Rect(new Vec(3, 5), new Size(0, layout.size.height - 5));
         // Only thing outside layoutText checking this.
-        const disabled = expr.data.disabled || this.props.hasDisabledParent;
+        const disabled = expr.data.disabled || this.state.hasDisabledParent;
         const ruler = (
             <HitBox area={line.pad(new Vec(5))} {...this.exprProps(expr)} key={0}>
                 <SvgLine
@@ -233,7 +223,7 @@ export class ExprLayout implements ExprVisitor<Layout> {
             rect = rect.withSize(new Size(rect.height)); // Make the pill square.
         }
         const { x, y, width, height } = rect;
-        const selected = this.delegate?.selection === expr.id;
+        const selected = this.props.selection === expr.id;
         const pill = (mouseOver: boolean) => (
             <motion.rect
                 {...{ width, height, x, y }}
@@ -241,10 +231,10 @@ export class ExprLayout implements ExprVisitor<Layout> {
                     // Here we recreate the selection rect colouring logic.
                     //TODO: Find a more modular way.
                     fill: selected
-                        ? this.delegate?.focused
+                        ? this.props.focused
                             ? this.t.selection.fill
                             : this.t.selection.blurredFill
-                        : mouseOver && !this.delegate?.isFrozen?.(expr)
+                        : mouseOver && !this.props.frozen
                         ? this.t.blanks.fillHover
                         : this.t.blanks.fill,
                 }}
@@ -253,7 +243,7 @@ export class ExprLayout implements ExprVisitor<Layout> {
                 strokeWidth={1}
                 stroke={
                     selected
-                        ? this.delegate?.focused
+                        ? this.props.focused
                             ? this.t.selection.stroke
                             : this.t.selection.blurredStroke
                         : this.t.blanks.stroke
@@ -284,7 +274,7 @@ export class ExprLayout implements ExprVisitor<Layout> {
             this.t.createCircle.maxRadius,
             this.layoutText(expr, expr.fn, {
                 bold: !inline,
-                commentIndicator: expr.data.comment != null && this.delegate?.foldComments,
+                commentIndicator: expr.data.comment != null && this.props.foldComments,
                 colour: this.t.callColour,
             }),
             this.layoutCreateCircle(expr),
@@ -293,7 +283,7 @@ export class ExprLayout implements ExprVisitor<Layout> {
         let layout: Layout;
         // Adding a comment makes a call non-inline but not bold.
         //TODO: Don't do this if we are in a list.
-        if (inline && (expr.data.comment == null || this.delegate?.foldComments)) {
+        if (inline && (expr.data.comment == null || this.props.foldComments)) {
             const inlineMarginPx = TextMetrics.global.measure("\xa0").width; // Non-breaking space.
             layout = hstack(inlineMarginPx, fnName, args);
             layout.isUnderlined = true;
@@ -334,4 +324,19 @@ function isCallInline(theme: ThemeType, args: readonly Layout[]): boolean {
     const underlinesHeight = max(args.map(x => x.underlinesHeight()));
     const MAX_NESTING_LEVEL = 3;
     return underlinesHeight < MAX_NESTING_LEVEL;
+}
+
+export interface LayoutProps {
+    onHoverExpr?(e: React.MouseEvent, expr: Optional<Expr>): void;
+    onClickExpr?(e: React.MouseEvent, expr: Expr): void;
+    onClickCreateCircle?(e: React.MouseEvent, expr: Expr): void;
+    onMouseDown?(e: React.MouseEvent, expr: Expr): void;
+    frozen?: boolean;
+    focused?: boolean;
+    selection?: Optional<ExprId>;
+    foldComments?: boolean;
+}
+
+export function layoutExpr(theme: ThemeType, expr: Expr, props: LayoutProps): Layout {
+    return materialiseUnderlines(theme, new ExprLayout(theme, props).layout(expr));
 }

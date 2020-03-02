@@ -10,7 +10,7 @@ import * as E from "expr";
 import THEME from "theme";
 
 import { Area } from "expr_view/core";
-import { ExprLayout, materialiseUnderlines, ExprDelegate } from "expr_view/layout";
+import { layoutExpr } from "expr_view/layout";
 import { SvgGroup } from "expr_view/components";
 
 interface DragAndDropSurfaceContext {
@@ -93,9 +93,7 @@ export class DragAndDropSurface extends Component<{}, DragAndDropSurfaceState> {
         if (this.drag?.delta != null) {
             // drag.delta gets set when the drag starts proper.
             const pos = assertSome(this.state.position).add(this.drag.delta);
-            const { nodes } = new ExprLayout(THEME, {
-                isFrozen: () => true,
-            }).layout(this.drag.expr);
+            const { nodes } = layoutExpr(THEME, this.drag.expr, { frozen: true });
             surface = ReactDOM.createPortal(
                 <DragAndDropSurface.Svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -131,8 +129,7 @@ interface ExprViewState {
 }
 
 // This needs to be a class component so we can nicely pass it to the layout helper.
-export default class ExprView extends PureComponent<ExprViewProps, ExprViewState>
-    implements ExprDelegate {
+export default class ExprView extends PureComponent<ExprViewProps, ExprViewState> {
     static contextType = DragAndDropSurface.Context;
     declare context: React.ContextType<typeof DragAndDropSurface.Context>;
 
@@ -171,20 +168,6 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
             Vec.fromBoundingRect(rect),
             this.props.frozen ? this.props.expr : expr,
         );
-    }
-
-    isFrozen(_expr: Expr) {
-        return this.props.frozen ?? false;
-    }
-
-    get selection() {
-        return this.props.selection;
-    }
-    get focused() {
-        return this.props.focused;
-    }
-    get foldComments() {
-        return this.props.foldComments;
     }
 
     private findExprRect(expr: ExprId, area: Area): Optional<Rect> {
@@ -237,10 +220,16 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
     }
 
     render() {
-        const { nodes, size, areas, inlineExprs } = materialiseUnderlines(
-            THEME,
-            new ExprLayout(THEME, this).layout(this.props.expr),
-        );
+        const { nodes, size, areas, inlineExprs } = layoutExpr(THEME, this.props.expr, {
+            frozen: this.props.frozen,
+            focused: this.props.focused,
+            selection: this.props.selection,
+            foldComments: this.props.foldComments,
+            onHoverExpr: this.onHoverExpr.bind(this),
+            onClickCreateCircle: this.onClickCreateCircle.bind(this),
+            onClickExpr: this.onClickExpr.bind(this),
+            onMouseDown: this.onMouseDown.bind(this),
+        });
 
         // Selection and highlight drawing logic.
         const padding = new Vec(THEME.exprViewPaddingPx);
