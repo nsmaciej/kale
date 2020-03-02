@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, createRef, useMemo } from "react";
 import styled from "styled-components";
 import { AiOutlinePlusCircle } from "react-icons/ai";
 
@@ -65,20 +65,31 @@ export default function EditorSuggestions({ onCreateEditor }: NewEditorInputProp
     const [selection, setSelection] = useState(0);
     const workspace = assertSome(useContext(Workspace));
     const [focus, bindFocus] = useFocus();
+    const inputRef = createRef<HTMLInputElement>();
 
-    const suggestions: Suggestion[] = Object.keys(workspace.topLevel)
-        .filter(x => x.toLowerCase().includes(value.toLowerCase()))
-        .slice(0, 5)
-        .map(x => ({ name: x, create: false }));
-    const fullMatch = workspace.topLevel.hasOwnProperty(value);
-    if (value && !fullMatch) suggestions.push({ name: value, create: true });
+    const suggestions = useMemo(() => {
+        const r = Object.keys(workspace.topLevel)
+            .filter(x => x.toLowerCase().includes(value.toLowerCase()))
+            .slice(0, 5)
+            .map(x => ({ name: x, create: false }));
+        const fullMatch = workspace.topLevel.hasOwnProperty(value);
+        if (value && !fullMatch) {
+            r.push({ name: value, create: true });
+        }
+        return r as Suggestion[];
+    }, [value, workspace.topLevel]);
+
+    function selectEditor(name: string) {
+        onCreateEditor(name);
+        inputRef.current?.blur();
+        setValue("");
+        setSelection(0);
+    }
 
     function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
         switch (e.key) {
             case "Enter":
-                onCreateEditor(suggestions[selection].name);
-                (e.target as HTMLElement).blur();
-                setValue("");
+                selectEditor(suggestions[selection].name);
                 break;
             case "ArrowDown":
                 setSelection(x => (x + 1) % suggestions.length);
@@ -94,8 +105,8 @@ export default function EditorSuggestions({ onCreateEditor }: NewEditorInputProp
     }
 
     function onChange(e: React.ChangeEvent<HTMLInputElement>) {
-        setSelection(0);
         setValue(e.target.value);
+        setSelection(0);
     }
 
     function renderSuggestions() {
@@ -105,7 +116,8 @@ export default function EditorSuggestions({ onCreateEditor }: NewEditorInputProp
                 {suggestions.map((x, i) => (
                     <EditorInputSuggestion
                         key={x.name}
-                        onClick={_ => onCreateEditor(x.name)}
+                        onMouseDown={e => e.preventDefault()} // Don't blur.
+                        onClick={_ => selectEditor(x.name)}
                         selected={i == selection}
                     >
                         {x.create && <AiOutlinePlusCircle />}
@@ -120,6 +132,7 @@ export default function EditorSuggestions({ onCreateEditor }: NewEditorInputProp
         <>
             <EditorInput
                 {...bindFocus}
+                ref={inputRef}
                 value={value}
                 placeholder="Open an editor&hellip;"
                 spellCheck={false}
