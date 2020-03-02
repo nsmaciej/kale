@@ -52,6 +52,7 @@ interface ShortcutExpr {
 
 interface ExprViewListProps<E> {
     animate?: boolean;
+    small?: boolean;
     items: E[];
     frozen?: boolean;
     fallback?: ReactNode;
@@ -63,6 +64,7 @@ function ExprViewList<E extends ShortcutExpr>({
     frozen,
     animate,
     fallback,
+    small,
     extras,
 }: ExprViewListProps<E>) {
     const theme = useTheme();
@@ -77,7 +79,7 @@ function ExprViewList<E extends ShortcutExpr>({
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.1, ease: "easeIn" }}
             >
-                <ExprView expr={item.expr} frozen={frozen} theme={theme} />
+                <ExprView expr={item.expr} frozen={frozen} theme={theme} scale={small ? 0.6 : 1} />
                 {extras && <Extras>{extras(item)}</Extras>}
             </ExprListItem>
         </Fragment>
@@ -130,6 +132,7 @@ export function ClipboardList() {
             <ExprViewList
                 frozen
                 animate
+                small
                 items={history}
                 fallback={
                     <NonIdealText>

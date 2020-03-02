@@ -130,6 +130,7 @@ interface ExprViewProps {
     onClick?: (expr: ExprId) => void;
     onClickCreateCircle?: (expr: ExprId) => void;
     theme: KaleTheme;
+    scale?: number;
 }
 
 interface ExprViewState {
@@ -262,14 +263,16 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
             : [selectionRect, highlightRect];
 
         const { width, height } = size.pad(padding.scale(2));
+        const scale = this.props.scale ?? 1;
         return (
             <svg
                 xmlns="http://www.w3.org/2000/svg"
-                width={width}
-                height={height}
+                width={width * scale}
+                height={height * scale}
                 // SVGs are inline by default, this leads to a scourge of invisible space
                 // characters. Make it a block instead.
                 display="block"
+                viewBox={`0 0 ${width} ${height}`}
             >
                 {layers}
                 <SvgGroup translate={padding}>{nodes}</SvgGroup>
