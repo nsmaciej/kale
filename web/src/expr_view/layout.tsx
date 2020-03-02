@@ -281,17 +281,17 @@ class ExprLayout implements ExprVisitor<Layout> {
             this.layoutCreateCircle(expr),
         );
 
+        const inlineMarginPx = TextMetrics.global.measure("\xa0").width; // Non-breaking space.
         let layout: Layout;
         // Adding a comment makes a call non-inline but not bold.
         //TODO: Don't do this if we are in a list.
         if (inline && (expr.data.comment == null || this.props.foldComments)) {
-            const inlineMarginPx = TextMetrics.global.measure("\xa0").width; // Non-breaking space.
             layout = hstack(inlineMarginPx, fnName, args);
             layout.isUnderlined = true;
             layout.inline = true;
         } else {
             layout = hstack(
-                this.t.lineSpacingPx,
+                inlineMarginPx,
                 fnName,
                 vstack(
                     this.t.lineSpacingPx,

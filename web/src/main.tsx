@@ -1,5 +1,5 @@
 import * as ReactDOM from "react-dom";
-import React, { Component } from "react";
+import React from "react";
 import styled, { ThemeProvider, StyleSheetManager, createGlobalStyle } from "styled-components";
 
 import { DragAndDropSurface } from "expr_view";
