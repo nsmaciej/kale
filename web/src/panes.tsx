@@ -82,7 +82,7 @@ function ExprViewList<E extends ShortcutExpr>({
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.1, ease: "easeIn" }}
             >
-                <ExprView expr={item.expr} frozen={frozen} />
+                <ExprView expr={item.expr} frozen={frozen} theme={theme} />
                 {extras && <Extras>{extras(item)}</Extras>}
             </ExprListItem>
         </Fragment>
@@ -108,6 +108,8 @@ const toyBoxExprs = [
 ];
 
 export function ToyBox() {
+    const theme = useTheme();
+    if (!theme.showingToyBox) return null;
     return (
         <Box gridArea="toybox" overflow="auto">
             <PaneHeading>Blocks</PaneHeading>

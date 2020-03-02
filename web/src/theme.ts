@@ -56,9 +56,6 @@ export const DefaultTheme = {
     showingToyBox: true,
 };
 
-//TODO: Get rid of this.
-export default DefaultTheme;
-
 // The main padding needs to be greather than the selection padding.
 assert(DefaultTheme.exprViewPaddingPx >= DefaultTheme.selection.paddingPx.x);
 assert(DefaultTheme.exprViewPaddingPx >= DefaultTheme.selection.paddingPx.y);

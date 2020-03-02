@@ -1,13 +1,13 @@
 import React, { PureComponent, Component } from "react";
 import ReactDOM from "react-dom";
-import styled from "styled-components";
+import styled, { ThemeConsumer } from "styled-components";
 import { motion } from "framer-motion";
 
 import { Optional, assert, assertSome } from "utils";
 import { Vec, Rect } from "geometry";
 import Expr, { ExprId } from "expr";
 import * as E from "expr";
-import THEME from "theme";
+import { KaleTheme } from "theme";
 
 import { Area } from "expr_view/core";
 import { layoutExpr } from "expr_view/layout";
@@ -87,19 +87,26 @@ export class DragAndDropSurface extends Component<{}, DragAndDropSurfaceState> {
         document.removeEventListener("mousemove", this.onMouseMove);
     }
 
+    renderExpr(expr: Expr) {
+        return (
+            <ThemeConsumer>
+                {theme => layoutExpr(theme, expr, { frozen: true }).nodes}
+            </ThemeConsumer>
+        );
+    }
+
     render() {
         let surface: React.ReactNode;
 
         if (this.drag?.delta != null) {
             // drag.delta gets set when the drag starts proper.
             const pos = assertSome(this.state.position).add(this.drag.delta);
-            const { nodes } = layoutExpr(THEME, this.drag.expr, { frozen: true });
             surface = ReactDOM.createPortal(
                 <DragAndDropSurface.Svg
                     xmlns="http://www.w3.org/2000/svg"
                     onMouseUp={this.dismissDrag.bind(this)}
                 >
-                    <SvgGroup translate={pos}>{nodes}</SvgGroup>
+                    <SvgGroup translate={pos}>{this.renderExpr(this.drag.expr)}</SvgGroup>
                 </DragAndDropSurface.Svg>,
                 document.body,
             );
@@ -122,6 +129,7 @@ interface ExprViewProps {
     foldComments?: boolean;
     onClick?: (expr: ExprId) => void;
     onClickCreateCircle?: (expr: ExprId) => void;
+    theme: KaleTheme;
 }
 
 interface ExprViewState {
@@ -134,6 +142,10 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
     declare context: React.ContextType<typeof DragAndDropSurface.Context>;
 
     state: ExprViewState = { highlight: null };
+
+    get theme() {
+        return this.props.theme;
+    }
 
     // Generic click action passed on using the props.
     onClickExpr(event: React.MouseEvent, expr: Expr) {
@@ -183,7 +195,7 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
         if (expr == null) return;
         if (!isSelection && !this.props.focused) return;
 
-        const rect = this.findExprRect(expr, area)?.pad(THEME.selection.paddingPx);
+        const rect = this.findExprRect(expr, area)?.pad(this.theme.selection.paddingPx);
         if (rect == null) return; // This happens when an expression is removed.
 
         const isHole = this.props.expr.withId(expr) instanceof E.Blank;
@@ -197,21 +209,21 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
                     opacity: isHole ? 0 : 1, // +!isHole
                 }}
                 key={+isSelection}
-                rx={THEME.selection.radiusPx}
+                rx={this.theme.selection.radiusPx}
                 fill={
                     isSelection
                         ? this.props.focused
-                            ? THEME.selection.fill
-                            : THEME.selection.blurredFill
+                            ? this.theme.selection.fill
+                            : this.theme.selection.blurredFill
                         : "none"
                 }
                 initial={false}
                 stroke={
                     isSelection
                         ? this.props.focused
-                            ? THEME.selection.stroke
-                            : THEME.selection.blurredStroke
-                        : THEME.highlightStroke
+                            ? this.theme.selection.stroke
+                            : this.theme.selection.blurredStroke
+                        : this.theme.highlightStroke
                 }
                 strokeWidth={0.5}
                 transition={{ type: "tween", ease: "easeIn", duration: 0.1 }}
@@ -220,7 +232,7 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
     }
 
     render() {
-        const { nodes, size, areas, inlineExprs } = layoutExpr(THEME, this.props.expr, {
+        const { nodes, size, areas, inlineExprs } = layoutExpr(this.theme, this.props.expr, {
             frozen: this.props.frozen,
             focused: this.props.focused,
             selection: this.props.selection,
@@ -232,7 +244,7 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
         });
 
         // Selection and highlight drawing logic.
-        const padding = new Vec(THEME.exprViewPaddingPx);
+        const padding = new Vec(this.theme.exprViewPaddingPx);
         const area = {
             expr: this.props.expr,
             children: areas,

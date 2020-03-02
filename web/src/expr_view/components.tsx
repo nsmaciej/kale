@@ -1,7 +1,7 @@
 import React, { ReactNode, useState } from "react";
 
 import { Vec, Rect } from "geometry";
-import THEME from "theme";
+import { useTheme } from "styled-components";
 
 // A type for components that have custom props but pass everything else on.
 type CustomSvgProps<Element, CustomProps> = CustomProps &
@@ -38,11 +38,12 @@ export function SvgRect({
 export function UnderlineLine(props: Omit<LineProps, "shapeRendering" | "stroke" | "strokeWidth">) {
     // It took a while, but black, crispEdge, 0.5 stroke lines work well. They looks equally well
     // at full and half-pixel multiples; and look good on high-dpi screens.
+    const theme = useTheme();
     return (
         <SvgLine
             strokeWidth={0.5}
             shapeRendering="crsipEdges"
-            stroke={THEME.decorationColour}
+            stroke={theme.decorationColour}
             {...props}
         />
     );

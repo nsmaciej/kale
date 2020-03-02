@@ -4,7 +4,7 @@ import styled, { ThemeProvider, StyleSheetManager, createGlobalStyle } from "sty
 
 import { DragAndDropSurface } from "expr_view";
 import TextMetrics from "text_metrics";
-import THEME from "theme";
+import { DefaultTheme } from "theme";
 import { Stack, Shortcut } from "components";
 import { WorkspaceProvider, ClipboardProvider } from "workspace";
 import { ToyBox, ClipboardList, EditorStack } from "panes";
@@ -40,6 +40,33 @@ h1, h2, h3 {
 }
 `;
 
+const Container = styled.div`
+    display: grid;
+    grid-template-areas:
+        "nav nav nav"
+        "toybox editor history";
+    grid-template-rows: min-content auto;
+    grid-template-columns: max-content minmax(min-content, auto) max-content;
+    gap: 20px 40px;
+    padding: 15px 20px 0;
+    height: 100%;
+`;
+
+const HeaderStack = styled(Stack)`
+    grid-area: nav;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 15px;
+    border-bottom: 1px solid ${p => p.theme.grey};
+`;
+
+const MainHeading = styled.h1`
+    font-weight: 900;
+    font-size: 25px;
+    color: #0ba902;
+    letter-spacing: 2px;
+`;
+
 function Help() {
     const S = Shortcut;
     return (
@@ -52,63 +79,40 @@ function Help() {
     );
 }
 
-class Kale extends Component {
-    private static readonly Container = styled.div`
-        display: grid;
-        grid-template-areas:
-            "nav nav nav"
-            "toybox editor history";
-        grid-template-rows: min-content auto;
-        grid-template-columns: max-content minmax(min-content, auto) max-content;
-        gap: 20px 40px;
-        padding: 15px 20px 0;
-        height: 100%;
-    `;
+function Kale() {
+    return (
+        <Container>
+            <HeaderStack>
+                <MainHeading>Kale</MainHeading>
+                <Help />
+            </HeaderStack>
+            <ToyBox />
+            <EditorStack />
+            <ClipboardList />
+        </Container>
+    );
+}
 
-    private static readonly Heading = styled.h1`
-        font-weight: 900;
-        font-size: 25px;
-        color: #0ba902;
-        letter-spacing: 2px;
-    `;
-
-    render() {
-        return (
-            <React.StrictMode>
-                <StyleSheetManager disableVendorPrefixes>
-                    <ThemeProvider theme={THEME}>
-                        <DragAndDropSurface>
-                            <WorkspaceProvider>
-                                <ClipboardProvider>
-                                    <GlobalStyle />
-                                    <Kale.Container>
-                                        <Stack
-                                            gridArea="nav"
-                                            gap={10}
-                                            alignItems="center"
-                                            justifyContent="space-between"
-                                            paddingBottom={15}
-                                            borderBottom={`1px solid ${THEME.grey}`}
-                                        >
-                                            <Kale.Heading>Kale</Kale.Heading>
-                                            <Help />
-                                        </Stack>
-
-                                        {THEME.showingToyBox && <ToyBox />}
-                                        <EditorStack />
-                                        <ClipboardList />
-                                    </Kale.Container>
-                                </ClipboardProvider>
-                            </WorkspaceProvider>
-                        </DragAndDropSurface>
-                    </ThemeProvider>
-                </StyleSheetManager>
-            </React.StrictMode>
-        );
-    }
+function App() {
+    return (
+        <React.StrictMode>
+            <StyleSheetManager disableVendorPrefixes>
+                <ThemeProvider theme={DefaultTheme}>
+                    <DragAndDropSurface>
+                        <WorkspaceProvider>
+                            <ClipboardProvider>
+                                <GlobalStyle />
+                                <Kale />
+                            </ClipboardProvider>
+                        </WorkspaceProvider>
+                    </DragAndDropSurface>
+                </ThemeProvider>
+            </StyleSheetManager>
+        </React.StrictMode>
+    );
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-    await TextMetrics.loadGlobal(THEME);
-    ReactDOM.render(<Kale />, document.getElementById("main"));
+    await TextMetrics.loadGlobal(DefaultTheme);
+    ReactDOM.render(<App />, document.getElementById("main"));
 });

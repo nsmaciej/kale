@@ -1,10 +1,12 @@
 import React, { Component, useContext } from "react";
+import { useTheme } from "styled-components";
 
 import * as E from "expr";
 import Expr, { ExprId } from "expr";
 import ExprView from "expr_view";
-import { Optional, assert, assertSome, removeIndex, replaceIndex, insertIndex } from "utils";
+import { Optional, assertSome, insertIndex } from "utils";
 import { Clipboard, Workspace, ClipboardValue, WorkspaceValue } from "workspace";
+import { KaleTheme } from "theme";
 
 interface EditorState {
     focused: boolean;
@@ -20,6 +22,7 @@ interface EditorWrapperProps {
 interface EditorProps extends EditorWrapperProps {
     workspace: WorkspaceValue;
     clipboard: ClipboardValue;
+    theme: KaleTheme;
 }
 
 class Editor extends Component<EditorProps, EditorState> {
@@ -273,6 +276,7 @@ class Editor extends Component<EditorProps, EditorState> {
                     onClick={this.exprSelected}
                     onClickCreateCircle={this.createChildBlank}
                     foldComments={this.state.foldingComments}
+                    theme={this.props.theme}
                 />
             </div>
         );
@@ -285,6 +289,7 @@ export default function EditorWrapper(props: EditorWrapperProps) {
             {...props}
             workspace={assertSome(useContext(Workspace))}
             clipboard={assertSome(useContext(Clipboard))}
+            theme={assertSome(useTheme())}
         />
     );
 }
