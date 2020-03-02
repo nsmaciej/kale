@@ -12,8 +12,6 @@ import {
     border,
 } from "styled-system";
 
-import THEME from "theme";
-
 export type BoxProps = SpaceProps & GridProps & FlexboxProps & LayoutProps & BorderProps;
 export const Box = styled.div<BoxProps>`
     ${space}
@@ -57,7 +55,7 @@ export const SubtleButton = styled.button`
     background: none;
     border: none;
     font-weight: 600;
-    color: ${THEME.clickableColour};
+    color: ${p => p.theme.clickableColour};
     outline: none;
     transition: color 0.1s;
     &:hover,
@@ -65,12 +63,12 @@ export const SubtleButton = styled.button`
         text-decoration: underline;
     }
     &:disabled {
-        color: ${THEME.disabledExprColour};
+        color: ${p => p.theme.disabledExprColour};
         text-decoration: none !important;
     }
 `;
 
 export const NonIdealText = styled.p`
     text-align: center;
-    color: ${THEME.subtleTextColour};
+    color: ${p => p.theme.subtleTextColour};
 `;

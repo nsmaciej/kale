@@ -1,12 +1,11 @@
 import React, { Fragment, useContext, useState, ReactNode } from "react";
-import styled, { css } from "styled-components";
+import styled, { css, useTheme } from "styled-components";
 import { motion } from "framer-motion";
 import { AiOutlineClose, AiOutlinePushpin, AiFillPushpin } from "react-icons/ai";
 
 import * as E from "expr";
 import Expr from "expr";
 import ExprView from "expr_view";
-import THEME from "theme";
 import { Box, Stack, Shortcut, SubtleButton, NonIdealText } from "components";
 import InnerEditor from "editor";
 import { assertSome, removeIndex } from "utils";
@@ -26,14 +25,14 @@ const ExprListItem = styled(motion.div)`
     grid-column: expr;
     justify-self: left;
     border: 1px solid #dfe1e5;
-    border-radius: ${THEME.exprViewPaddingPx}px;
+    border-radius: ${p => p.theme.exprViewPaddingPx}px;
     display: flex;
 `;
 
 const ExprListShortcut = styled(Shortcut)`
     grid-column: shortcut;
     justify-self: right;
-    margin-top: ${THEME.exprViewPaddingPx / 2}px;
+    margin-top: ${p => p.theme.exprViewPaddingPx / 2}px;
 `;
 
 const ExprList = styled.div`
@@ -48,7 +47,7 @@ const ExprList = styled.div`
 `;
 
 const Extras = styled.div`
-    margin: ${THEME.exprViewPaddingPx}px !important;
+    margin: ${p => p.theme.exprViewPaddingPx}px !important;
 `;
 
 interface ShortcutExpr {
@@ -71,10 +70,11 @@ function ExprViewList<E extends ShortcutExpr>({
     fallback,
     extras,
 }: ExprViewListProps<E>) {
+    const theme = useTheme();
     const renderItem = (item: E) => (
         // This has to be a fragment. Otherwise the items won't layout in a grid.
         <Fragment key={item.expr.id}>
-            {item.shortcut && THEME.showingShortcuts && (
+            {item.shortcut && theme.showingShortcuts && (
                 <ExprListShortcut>{item.shortcut}</ExprListShortcut>
             )}
             <ExprListItem
@@ -152,24 +152,26 @@ export function ClipboardList() {
 }
 
 const EditorHeading = styled(PaneHeading)`
-    margin-left: ${THEME.exprViewPaddingPx}px;
+    margin-left: ${p => p.theme.exprViewPaddingPx}px;
 `;
 
 const EditorInput = styled.input`
     border: 0;
     font: inherit;
     color: inherit;
-    margin-left: ${THEME.exprViewPaddingPx}px;
-    border-bottom: 1px solid ${THEME.grey};
+    margin-left: ${p => p.theme.exprViewPaddingPx}px;
+    border-bottom: 1px solid ${p => p.theme.grey};
     ${PaneHeadingStyle}
     width: 400px;
     &:focus {
-        border-bottom: 1px solid ${THEME.clickableColour};
+        border-bottom: 1px solid ${p => p.theme.clickableColour};
     }
 `;
 
 export function EditorStack() {
+    const theme = useTheme();
     const [editors, setEditors] = useState<string[]>(["Sample 1", "Sample 2", "Sample 1"]);
+
     const onKeyDown = (e: React.KeyboardEvent) => {
         if (e.key == "Enter") {
             e.preventDefault();
@@ -191,7 +193,7 @@ export function EditorStack() {
                     <Stack alignItems="center" gap={5}>
                         <EditorHeading>{topLevelName}</EditorHeading>
                         <AiOutlineClose
-                            color={THEME.clickableColour}
+                            color={theme.clickableColour}
                             onClick={_ => setEditors(xs => removeIndex(xs, i))}
                         />
                     </Stack>
