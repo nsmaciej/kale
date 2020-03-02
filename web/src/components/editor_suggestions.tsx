@@ -25,7 +25,7 @@ const EditorInputPopover = styled(Stack)`
     background: #ffffff;
     border-radius: 0 0 ${p => p.theme.borderRadiusPx}px ${p => p.theme.borderRadiusPx}px;
     box-shadow: 0 0 0 1px #10161a1a, 0 2px 4px #10161a33, 0 8px 24px #10161a33;
-    padding: 8px 4px;
+    padding: 6px;
 `;
 
 const EditorInputSuggestion = styled.div<{ selected: boolean }>`
@@ -44,7 +44,7 @@ const EditorInputSuggestion = styled.div<{ selected: boolean }>`
     color: ${p => (p.selected ? "white" : "black")};
 `;
 
-interface EditorSuggestionsProps {
+interface NewEditorInputProps {
     onCreateEditor: (topLevel: string) => void;
 }
 
@@ -55,7 +55,7 @@ function useFocus() {
     return [focus, { onFocus, onBlur }];
 }
 
-export default function EditorSuggestions({ onCreateEditor }: EditorSuggestionsProps) {
+export default function EditorSuggestions({ onCreateEditor }: NewEditorInputProps) {
     const [value, setValue] = useState("");
     const [selection, setSelection] = useState(0);
     const workspace = assertSome(useContext(Workspace));
@@ -95,7 +95,7 @@ export default function EditorSuggestions({ onCreateEditor }: EditorSuggestionsP
     function renderSuggestions() {
         if (!suggestions.length) return;
         return (
-            <EditorInputPopover vertical>
+            <EditorInputPopover vertical gap={1}>
                 {suggestions.map((x, i) => (
                     <EditorInputSuggestion
                         key={x}

@@ -11,7 +11,7 @@ export const DefaultTheme = {
     disabledColour: "#d8d8d8",
     grey: "#e4e4e4",
     clickableColour: "#1b65f1",
-    borderRadiusPx: 3,
+    borderRadiusPx: 4,
 
     // Interface and decoration colours.
     decorationColour: "#6a6a6a",
