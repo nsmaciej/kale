@@ -57,7 +57,7 @@ export const SubtleButton = styled.button`
     background: none;
     border: none;
     font-weight: 600;
-    color: ${THEME.buttonTextColour};
+    color: ${THEME.clickableColour};
     outline: none;
     transition: color 0.1s;
     &:hover,
@@ -65,7 +65,12 @@ export const SubtleButton = styled.button`
         text-decoration: underline;
     }
     &:disabled {
-        color: ${THEME.disabledButtonTextColour};
+        color: ${THEME.disabledExprColour};
         text-decoration: none !important;
     }
+`;
+
+export const NonIdealText = styled.p`
+    text-align: center;
+    color: ${THEME.subtleTextColour};
 `;

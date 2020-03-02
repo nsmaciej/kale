@@ -1,5 +1,5 @@
 import React, { Fragment, useContext, useState, ReactNode } from "react";
-import styled from "styled-components";
+import styled, { css } from "styled-components";
 import { motion } from "framer-motion";
 import { AiOutlineClose, AiOutlinePushpin, AiFillPushpin } from "react-icons/ai";
 
@@ -7,10 +7,20 @@ import * as E from "expr";
 import Expr from "expr";
 import ExprView from "expr_view";
 import THEME from "theme";
-import { Box, Stack, Shortcut, SubtleButton } from "components";
+import { Box, Stack, Shortcut, SubtleButton, NonIdealText } from "components";
 import InnerEditor from "editor";
-import { assertSome, removeIndex, replaceIndex } from "utils";
+import { assertSome, removeIndex } from "utils";
 import { Clipboard } from "workspace";
+
+const PaneHeadingStyle = css`
+    font-weight: 700;
+    font-size: 20px;
+    font-variant-numeric: oldstyle-nums;
+`;
+
+const PaneHeading = styled.h2`
+    ${PaneHeadingStyle}
+`;
 
 const ExprListItem = styled(motion.div)`
     grid-column: expr;
@@ -50,7 +60,7 @@ interface ExprViewListProps<E> {
     animate?: boolean;
     items: E[];
     frozen?: boolean;
-    fallback?: string;
+    fallback?: ReactNode;
     extras?: (item: E) => ReactNode;
 }
 
@@ -79,7 +89,7 @@ function ExprViewList<E extends ShortcutExpr>({
     );
     return (
         <ExprList>
-            {items.length === 0 && <p>{fallback}</p>}
+            {items.length === 0 && fallback}
             {items.map(renderItem)}
         </ExprList>
     );
@@ -100,7 +110,7 @@ const toyBoxExprs = [
 export function ToyBox() {
     return (
         <Box gridArea="toybox" overflow="auto">
-            <h2>Blocks</h2>
+            <PaneHeading>Blocks</PaneHeading>
             <ExprViewList frozen items={toyBoxExprs} />
         </Box>
     );
@@ -115,7 +125,7 @@ export function ClipboardList() {
     return (
         <Box gridArea="history" overflow="auto">
             <Stack gap={10} alignItems="baseline" justifyContent="space-between">
-                <h2>History</h2>
+                <PaneHeading>History</PaneHeading>
                 <SubtleButton onClick={_ => clipboard.clear()} disabled={!clipboard.canBeCleared()}>
                     Clear All
                 </SubtleButton>
@@ -124,7 +134,13 @@ export function ClipboardList() {
                 frozen
                 animate
                 items={history}
-                fallback="Nothing here yet."
+                fallback={
+                    <NonIdealText>
+                        Nothing here yet.
+                        <br />
+                        Use <Shortcut>C</Shortcut> to copy something
+                    </NonIdealText>
+                }
                 extras={item => (
                     <SubtleButton onClick={_ => clipboard.togglePinned(item.expr.id)}>
                         {item.pinned ? <AiFillPushpin /> : <AiOutlinePushpin />}
@@ -135,15 +151,39 @@ export function ClipboardList() {
     );
 }
 
-const EditorHeading = styled.h2`
+const EditorHeading = styled(PaneHeading)`
     margin-left: ${THEME.exprViewPaddingPx}px;
-    font-variant-numeric: oldstyle-nums;
+`;
+
+const EditorInput = styled.input`
+    border: 0;
+    font: inherit;
+    color: inherit;
+    margin-left: ${THEME.exprViewPaddingPx}px;
+    border-bottom: 1px solid ${THEME.grey};
+    ${PaneHeadingStyle}
+    width: 400px;
+    &:focus {
+        border-bottom: 1px solid ${THEME.clickableColour};
+    }
 `;
 
 export function EditorStack() {
     const [editors, setEditors] = useState<string[]>(["Sample 1", "Sample 2", "Sample 1"]);
+    const onKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key == "Enter") {
+            e.preventDefault();
+            e.stopPropagation();
+            alert((e.target as HTMLInputElement | null)?.value);
+        }
+    };
     return (
         <Stack vertical gridArea="editor" overflow="auto" gap={40}>
+            <EditorInput
+                placeholder="Open an editor&hellip;"
+                spellCheck={false}
+                onKeyDown={onKeyDown}
+            />
             {editors.length === 0 && <p>No editors open</p>}
             {editors.map((topLevelName, i) => (
                 //TODO: Don't use i as the key.
@@ -151,7 +191,7 @@ export function EditorStack() {
                     <Stack alignItems="center" gap={5}>
                         <EditorHeading>{topLevelName}</EditorHeading>
                         <AiOutlineClose
-                            color={THEME.buttonTextColour}
+                            color={THEME.disabledColour}
                             onClick={_ => setEditors(xs => removeIndex(xs, i))}
                         />
                     </Stack>

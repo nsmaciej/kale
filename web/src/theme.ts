@@ -5,15 +5,17 @@ export const DefaultTheme = {
     // Text.
     fontSizePx: 13,
     fontFamily: "iA Writer Quattro",
-    buttonTextColour: "#1b65f1",
-    disabledButtonTextColour: "#d8d8d8",
+    subtleTextColour: "#7b7b7b",
+    disabledColour: "#d8d8d8",
+    grey: "#e4e4e4",
+    clickableColour: "#1b65f1",
 
     // Interface and decoration colours.
     decorationColour: "#6a6a6a",
     listRulerStroke: "#000000",
     highlightStroke: "#cecece",
     exprViewPaddingPx: 8,
-    disabledColour: "#cccccc",
+    disabledExprColour: "#cccccc",
 
     // Code colours.
     callColour: "#000000",

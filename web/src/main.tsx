@@ -38,14 +38,6 @@ svg * {
 h1, h2, h3 {
     user-select: none;
 }
-h1 {
-    font-weight: 900;
-    font-size: 25px;
-}
-h2 {
-    font-weight: 700;
-    font-size: 20px;
-}
 `;
 
 function Help() {
@@ -74,6 +66,8 @@ class Kale extends Component {
     `;
 
     private static readonly Heading = styled.h1`
+        font-weight: 900;
+        font-size: 25px;
         color: #0ba902;
         letter-spacing: 2px;
     `;
@@ -93,7 +87,7 @@ class Kale extends Component {
                                         alignItems="center"
                                         justifyContent="space-between"
                                         paddingBottom={15}
-                                        borderBottom="1px solid #e4e4e4"
+                                        borderBottom={`1px solid ${THEME.grey}`}
                                     >
                                         <Kale.Heading>Kale</Kale.Heading>
                                         <Help />

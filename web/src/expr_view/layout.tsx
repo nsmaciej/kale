@@ -112,7 +112,7 @@ export class ExprLayout implements ExprVisitor<Layout> {
         const layout = new Layout(
             (
                 <Code
-                    fill={disabled ? this.t.disabledColour : colour}
+                    fill={disabled ? this.t.disabledExprColour : colour}
                     fontStyle={italic ? "italic" : undefined}
                     fontWeight={bold ? "bold" : undefined}
                     x={offset?.x}
@@ -173,7 +173,7 @@ export class ExprLayout implements ExprVisitor<Layout> {
                 <SvgLine
                     start={line.origin}
                     end={line.bottom_right}
-                    stroke={disabled ? this.t.disabledColour : this.t.listRulerStroke}
+                    stroke={disabled ? this.t.disabledExprColour : this.t.listRulerStroke}
                 />
             </HitBox>
         );
