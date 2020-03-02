@@ -55,23 +55,28 @@ function useFocus() {
     return [focus, { onFocus, onBlur }];
 }
 
+interface Suggestion {
+    name: string;
+    create: boolean;
+}
+
 export default function EditorSuggestions({ onCreateEditor }: NewEditorInputProps) {
     const [value, setValue] = useState("");
     const [selection, setSelection] = useState(0);
     const workspace = assertSome(useContext(Workspace));
     const [focus, bindFocus] = useFocus();
 
-    const suggestions = Object.keys(workspace.topLevel)
+    const suggestions: Suggestion[] = Object.keys(workspace.topLevel)
         .filter(x => x.toLowerCase().includes(value.toLowerCase()))
-        .slice(0, 5);
+        .slice(0, 5)
+        .map(x => ({ name: x, create: false }));
     const fullMatch = workspace.topLevel.hasOwnProperty(value);
-    const showCreate = value && !fullMatch;
-    if (showCreate) suggestions.push(value);
+    if (value && !fullMatch) suggestions.push({ name: value, create: true });
 
     function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
         switch (e.key) {
             case "Enter":
-                onCreateEditor(suggestions[selection]);
+                onCreateEditor(suggestions[selection].name);
                 (e.target as HTMLElement).blur();
                 setValue("");
                 break;
@@ -87,6 +92,7 @@ export default function EditorSuggestions({ onCreateEditor }: NewEditorInputProp
         e.preventDefault();
         e.stopPropagation();
     }
+
     function onChange(e: React.ChangeEvent<HTMLInputElement>) {
         setSelection(0);
         setValue(e.target.value);
@@ -98,12 +104,12 @@ export default function EditorSuggestions({ onCreateEditor }: NewEditorInputProp
             <EditorInputPopover vertical gap={1}>
                 {suggestions.map((x, i) => (
                     <EditorInputSuggestion
-                        key={x}
-                        onClick={_ => onCreateEditor(x)}
+                        key={x.name}
+                        onClick={_ => onCreateEditor(x.name)}
                         selected={i == selection}
                     >
-                        {showCreate && i == suggestions.length - 1 && <AiOutlinePlusCircle />}
-                        {x}
+                        {x.create && <AiOutlinePlusCircle />}
+                        {x.create ? `Create "${x.name}"` : x.name}
                     </EditorInputSuggestion>
                 ))}
             </EditorInputPopover>
