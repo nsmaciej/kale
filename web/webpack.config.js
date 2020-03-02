@@ -17,6 +17,7 @@ module.exports = {
         overlay: true,
         hot: true,
         quiet: true,
+        open: true,
     },
     resolve: {
         modules: [path.resolve(__dirname, "src"), "node_modules"],
