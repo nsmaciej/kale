@@ -25,7 +25,10 @@ export class WorkspaceProvider extends Component<{}, WorkspaceProvider["state"]>
             }));
         },
         getTopLevel: (name: string): Expr => {
-            return this.state.topLevel[name] ?? new E.Blank(E.exprData(`${name} not found`));
+            if (this.state.topLevel.hasOwnProperty(name)) return this.state.topLevel[name];
+            const blank = new E.Blank();
+            this.state.setTopLevel(name, _ => blank);
+            return blank;
         },
     };
 
