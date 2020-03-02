@@ -10,17 +10,20 @@ export const DefaultTheme = {
 
     // Interface and decoration colours.
     decorationColour: "#6a6a6a",
+    listRulerStroke: "#000000",
     highlightStroke: "#cecece",
     exprViewPaddingPx: 8,
+    disabledColour: "#cccccc",
 
     // Code colours.
+    callColour: "#000000",
     commentColour: "#00b508",
     variableColour: "#248af0",
     literalColour: "#ef6c00",
     blanks: {
         padding: new Vec(10, 1),
         stroke: "#dcdcdc",
-        fill: "#fdfdfd",
+        fill: "#f7f7f7",
         fillHover: "#efefef",
         textColour: "#909090",
     },

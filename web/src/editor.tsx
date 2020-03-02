@@ -114,7 +114,7 @@ class Editor extends Component<EditorProps, EditorState> {
         // See https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values.
         switch (key) {
             // Deletion.
-            case "Backspace":
+            case "d":
                 // Just delete.
                 this.removeSelection();
                 break;
@@ -162,6 +162,17 @@ class Editor extends Component<EditorProps, EditorState> {
                 break;
             case "i":
                 this.createSiblingBlank();
+                break;
+            // Disabling.
+            case "/":
+                this.update(expr =>
+                    assertSome(
+                        expr.update(this.state.selection, x => {
+                            if (x instanceof E.Blank) return x;
+                            return x.assignToData({ disabled: !x.data.disabled });
+                        }),
+                    ),
+                );
                 break;
             // Folding.
             case "#":

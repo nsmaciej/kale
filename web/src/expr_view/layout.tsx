@@ -83,10 +83,15 @@ export interface ExprDelegate {
     onMouseDown?(e: React.MouseEvent, expr: Expr): void;
 }
 
+interface ExprLayoutProps {
+    hasDisabledParent: boolean;
+}
+
 export class ExprLayout implements ExprVisitor<Layout> {
     constructor(
-        private readonly theme: ThemeType,
+        private readonly t: ThemeType,
         private readonly delegate: Optional<ExprDelegate>,
+        private readonly props: ExprLayoutProps = { hasDisabledParent: false },
     ) {}
 
     private exprProps(expr: Expr) {
@@ -103,10 +108,11 @@ export class ExprLayout implements ExprVisitor<Layout> {
         text: string,
         { italic, colour, title, bold, offset, commentIndicator }: TextProperties = {},
     ) {
+        const disabled = expr.data.disabled || this.props.hasDisabledParent;
         const layout = new Layout(
             (
                 <Code
-                    fill={colour}
+                    fill={disabled ? this.t.disabledColour : colour}
                     fontStyle={italic ? "italic" : undefined}
                     fontWeight={bold ? "bold" : undefined}
                     x={offset?.x}
@@ -129,7 +135,7 @@ export class ExprLayout implements ExprVisitor<Layout> {
         if (this.delegate?.isFrozen?.(expr)) return;
         return new Layout(
             (<CreateCircle onClick={e => this.delegate?.onClickCreateCircle?.(e, expr)} key={0} />),
-            new Size(this.theme.createCircle.maxRadius, this.theme.fontSizePx),
+            new Size(this.t.createCircle.maxRadius, this.t.fontSizePx),
         );
     }
 
@@ -137,7 +143,7 @@ export class ExprLayout implements ExprVisitor<Layout> {
         if (expr.data.comment == null || this.delegate?.foldComments) return null;
         return this.layoutText(expr, expr.data.comment, {
             italic: true,
-            colour: this.theme.commentColour,
+            colour: this.t.commentColour,
         });
     }
 
@@ -148,19 +154,31 @@ export class ExprLayout implements ExprVisitor<Layout> {
         return layout;
     }
 
+    private layoutInner(parent: Expr, expr: Expr) {
+        return new ExprLayout(this.t, this.delegate, {
+            hasDisabledParent: this.props.hasDisabledParent || parent.data.disabled,
+        }).layout(expr);
+    }
+
     visitList(expr: E.List): Layout {
         const layout = vstack(
-            this.theme.lineSpacingPx,
-            expr.list.map(x => materialiseUnderlines(this.theme, this.layout(x))),
+            this.t.lineSpacingPx,
+            expr.list.map(x => materialiseUnderlines(this.t, this.layoutInner(expr, x))),
         );
         const line = new Rect(new Vec(3, 5), new Size(0, layout.size.height - 5));
+        // Only thing outside layoutText checking this.
+        const disabled = expr.data.disabled || this.props.hasDisabledParent;
         const ruler = (
             <HitBox area={line.pad(new Vec(5))} {...this.exprProps(expr)} key={0}>
-                <SvgLine start={line.origin} end={line.bottom_right} />
+                <SvgLine
+                    start={line.origin}
+                    end={line.bottom_right}
+                    stroke={disabled ? this.t.disabledColour : this.t.listRulerStroke}
+                />
             </HitBox>
         );
         return vstack(
-            this.theme.lineSpacingPx,
+            this.t.lineSpacingPx,
             this.layoutComment(expr),
             hstack(0, new Layout(ruler, new Size(10, 0)), layout),
         );
@@ -176,7 +194,7 @@ export class ExprLayout implements ExprVisitor<Layout> {
 
         return this.layoutText(expr, content, {
             title: expr.data.comment,
-            colour: this.theme.literalColour,
+            colour: this.t.literalColour,
             italic: expr.type === "symbol",
             commentIndicator: expr.data.comment != null,
         });
@@ -186,14 +204,14 @@ export class ExprLayout implements ExprVisitor<Layout> {
         return this.layoutText(expr, expr.name, {
             title: expr.data.comment,
             commentIndicator: expr.data.comment != null,
-            colour: this.theme.variableColour,
+            colour: this.t.variableColour,
         });
     }
 
     visitBlank(expr: E.Blank): Layout {
-        const padding = this.theme.blanks.padding;
+        const padding = this.t.blanks.padding;
         const text = this.layoutText(expr, expr.data.comment ?? "?", {
-            colour: this.theme.blanks.textColour,
+            colour: this.t.blanks.textColour,
             offset: padding,
         });
         let rect = new Rect(padding, text.size).pad(padding);
@@ -210,11 +228,11 @@ export class ExprLayout implements ExprVisitor<Layout> {
                     //TODO: Find a more modular way.
                     fill: selected
                         ? this.delegate?.focused
-                            ? this.theme.selection.fill
-                            : this.theme.selection.blurredFill
+                            ? this.t.selection.fill
+                            : this.t.selection.blurredFill
                         : mouseOver && !this.delegate?.isFrozen?.(expr)
-                        ? this.theme.blanks.fillHover
-                        : this.theme.blanks.fill,
+                        ? this.t.blanks.fillHover
+                        : this.t.blanks.fill,
                 }}
                 initial={false}
                 rx={rect.height / 2}
@@ -222,9 +240,9 @@ export class ExprLayout implements ExprVisitor<Layout> {
                 stroke={
                     selected
                         ? this.delegate?.focused
-                            ? this.theme.selection.stroke
-                            : this.theme.selection.blurredStroke
-                        : this.theme.blanks.stroke
+                            ? this.t.selection.stroke
+                            : this.t.selection.blurredStroke
+                        : this.t.blanks.stroke
                 }
             />
         );
@@ -246,13 +264,14 @@ export class ExprLayout implements ExprVisitor<Layout> {
     }
 
     visitCall(expr: E.Call): Layout {
-        const args = expr.args.map(this.layout, this);
-        const inline = isCallInline(this.theme, args);
+        const args = expr.args.map(x => this.layoutInner(expr, x), this);
+        const inline = isCallInline(this.t, args);
         const fnName = hstack(
-            this.theme.createCircle.maxRadius,
+            this.t.createCircle.maxRadius,
             this.layoutText(expr, expr.fn, {
                 bold: !inline,
                 commentIndicator: expr.data.comment != null && this.delegate?.foldComments,
+                colour: this.t.callColour,
             }),
             this.layoutCreateCircle(expr),
         );
@@ -266,17 +285,17 @@ export class ExprLayout implements ExprVisitor<Layout> {
             layout.inline = true;
         } else {
             layout = hstack(
-                this.theme.lineSpacingPx,
+                this.t.lineSpacingPx,
                 fnName,
                 vstack(
-                    this.theme.lineSpacingPx,
-                    args.map(x => materialiseUnderlines(this.theme, x)),
+                    this.t.lineSpacingPx,
+                    args.map(x => materialiseUnderlines(this.t, x)),
                 ),
             );
         }
 
         const comment = this.layoutComment(expr);
-        return vstack(this.theme.lineSpacingPx, comment, layout);
+        return vstack(this.t.lineSpacingPx, comment, layout);
     }
 }
 

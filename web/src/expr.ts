@@ -5,12 +5,13 @@ export type ExprId = number;
 export interface ExprData {
     id: ExprId;
     comment?: string;
+    disabled: boolean;
 }
 
 let GlobalExprId = 1;
 // Construct simple ExprData for sample Exprs. Not very exciting right now.
 export function exprData(comment?: string): ExprData {
-    return { comment, id: GlobalExprId++ };
+    return { comment, id: GlobalExprId++, disabled: false };
 }
 
 export interface ExprVisitor<R = any> {
@@ -198,7 +199,8 @@ export class Call extends Expr {
 
 export class Blank extends Expr {
     shallowValid() {
-        return true;
+        // Blanks should never be disabled.
+        return !this.data.disabled;
     }
     constructor(data = exprData()) {
         super(data);
