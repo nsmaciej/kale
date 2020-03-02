@@ -163,7 +163,7 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
     // Chang the highlighted expr.
     onHoverExpr(event: React.MouseEvent, expr: Optional<Expr>) {
         event.stopPropagation();
-        this.setState({ highlight: expr?.id });
+        if (!this.props.frozen) this.setState({ highlight: expr?.id });
     }
 
     // Handler for the mousedown event.
@@ -235,7 +235,8 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
         const { nodes, size, areas, inlineExprs } = layoutExpr(this.theme, this.props.expr, {
             frozen: this.props.frozen,
             focused: this.props.focused,
-            selection: this.props.selection,
+            // Only the blank cares about selection.
+            selection: this.props.expr instanceof E.Blank ? this.props.selection : undefined,
             foldComments: this.props.foldComments,
             onHoverExpr: this.onHoverExpr.bind(this),
             onClickCreateCircle: this.onClickCreateCircle.bind(this),
