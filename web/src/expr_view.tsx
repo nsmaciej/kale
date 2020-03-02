@@ -235,8 +235,7 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
         const { nodes, size, areas, inlineExprs } = layoutExpr(this.theme, this.props.expr, {
             frozen: this.props.frozen,
             focused: this.props.focused,
-            // Only the blank cares about selection.
-            selection: this.props.expr instanceof E.Blank ? this.props.selection : undefined,
+            selection: this.props.selection,
             foldComments: this.props.foldComments,
             onHoverExpr: this.onHoverExpr.bind(this),
             onClickCreateCircle: this.onClickCreateCircle.bind(this),

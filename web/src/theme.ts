@@ -6,9 +6,12 @@ export const DefaultTheme = {
     fontSizePx: 13,
     fontFamily: "iA Writer Quattro",
     subtleTextColour: "#7b7b7b",
+
+    // Generic colours.
     disabledColour: "#d8d8d8",
     grey: "#e4e4e4",
     clickableColour: "#1b65f1",
+    borderRadiusPx: 3,
 
     // Interface and decoration colours.
     decorationColour: "#6a6a6a",

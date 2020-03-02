@@ -1,4 +1,4 @@
-import styled from "styled-components";
+import styled, { css } from "styled-components";
 import {
     SpaceProps,
     GridProps,
@@ -71,4 +71,10 @@ export const SubtleButton = styled.button`
 export const NonIdealText = styled.p`
     text-align: center;
     color: ${p => p.theme.subtleTextColour};
+`;
+
+export const EditorHeadingStyle = css`
+    font-weight: 700;
+    font-size: 20px;
+    font-variant-numeric: oldstyle-nums;
 `;

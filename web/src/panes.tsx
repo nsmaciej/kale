@@ -1,24 +1,19 @@
 import React, { Fragment, useContext, useState, ReactNode } from "react";
-import styled, { css, useTheme } from "styled-components";
+import styled, { useTheme } from "styled-components";
 import { motion } from "framer-motion";
 import { AiOutlineClose, AiOutlinePushpin, AiFillPushpin } from "react-icons/ai";
 
 import * as E from "expr";
 import Expr from "expr";
 import ExprView from "expr_view";
-import { Box, Stack, Shortcut, SubtleButton, NonIdealText } from "components";
+import { Box, Stack, Shortcut, SubtleButton, NonIdealText, EditorHeadingStyle } from "components";
 import InnerEditor from "editor";
 import { assertSome, removeIndex } from "utils";
 import { Clipboard } from "workspace";
-
-const PaneHeadingStyle = css`
-    font-weight: 700;
-    font-size: 20px;
-    font-variant-numeric: oldstyle-nums;
-`;
+import EditorSuggestions from "components/editor_suggestions";
 
 const PaneHeading = styled.h2`
-    ${PaneHeadingStyle}
+    ${EditorHeadingStyle}
 `;
 
 const ExprListItem = styled(motion.div)`
@@ -157,38 +152,19 @@ const EditorHeading = styled(PaneHeading)`
     margin-left: ${p => p.theme.exprViewPaddingPx}px;
 `;
 
-const EditorInput = styled.input`
-    border: 0;
-    font: inherit;
-    color: inherit;
+const EditorInputWrapper = styled.div`
     margin-left: ${p => p.theme.exprViewPaddingPx}px;
-    border-bottom: 1px solid ${p => p.theme.grey};
-    ${PaneHeadingStyle}
-    width: 400px;
-    &:focus {
-        border-bottom: 1px solid ${p => p.theme.clickableColour};
-    }
 `;
 
 export function EditorStack() {
     const theme = useTheme();
     const [editors, setEditors] = useState<string[]>(["Sample 1", "Sample 2", "Sample 1"]);
-
-    const onKeyDown = (e: React.KeyboardEvent) => {
-        if (e.key == "Enter") {
-            e.preventDefault();
-            e.stopPropagation();
-            alert((e.target as HTMLInputElement | null)?.value);
-        }
-    };
     return (
         <Stack vertical gridArea="editor" overflow="auto" gap={40}>
-            <EditorInput
-                placeholder="Open an editor&hellip;"
-                spellCheck={false}
-                onKeyDown={onKeyDown}
-            />
             {editors.length === 0 && <p>No editors open</p>}
+            <EditorInputWrapper>
+                <EditorSuggestions onCreateEditor={x => setEditors(editors => [x, ...editors])} />
+            </EditorInputWrapper>
             {editors.map((topLevelName, i) => (
                 //TODO: Don't use i as the key.
                 <div key={i}>
