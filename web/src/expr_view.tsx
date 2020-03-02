@@ -248,6 +248,7 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
             expr: this.props.expr,
             children: areas,
             rect: new Rect(padding, size),
+            inline: false,
         };
 
         // Note: A similar check has to be perfomed in expr_layout for blanks.

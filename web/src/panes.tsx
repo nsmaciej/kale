@@ -191,7 +191,7 @@ export function EditorStack() {
                     <Stack alignItems="center" gap={5}>
                         <EditorHeading>{topLevelName}</EditorHeading>
                         <AiOutlineClose
-                            color={THEME.disabledColour}
+                            color={THEME.clickableColour}
                             onClick={_ => setEditors(xs => removeIndex(xs, i))}
                         />
                     </Stack>

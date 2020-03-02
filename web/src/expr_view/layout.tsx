@@ -9,7 +9,7 @@ import Expr, { ExprId, ExprVisitor } from "expr";
 import * as E from "expr";
 import TextMetrics from "text_metrics";
 
-import { Layout, hstack, vstack } from "expr_view/core";
+import { Layout, hstack, vstack, Area } from "expr_view/core";
 import { UnderlineLine, SvgLine, HitBox, HoverHitBox } from "expr_view/components";
 
 interface TextProperties {
@@ -60,6 +60,19 @@ function CreateCircle({ onClick }: { onClick: (e: React.MouseEvent) => void }) {
     );
 }
 
+// This lets all inline child areas have the same height, preventing
+// the selection and highlight rects from overlapping with the lines.
+// This is a limitation of the layout engine, we do not yet know how
+// many underlines an expr will have until higher up in call stack,
+// so we just set the height here, now that we know for sure.
+function setAreasHeightInPlace(areas: Area[], height: number) {
+    for (const area of areas) {
+        if (!area.inline) continue;
+        area.rect = area.rect.withSize(new Size(area.rect.size.width, height));
+        setAreasHeightInPlace(area.children, height);
+    }
+}
+
 export function materialiseUnderlines(theme: ThemeType, parent: Layout) {
     const layout = parent.withNoUnderlines();
     const gap = theme.underlineSpacingPx;
@@ -69,6 +82,7 @@ export function materialiseUnderlines(theme: ThemeType, parent: Layout) {
     });
     const height = max(parent.underlines.map(x => x.level)) * gap;
     layout.size = layout.size.pad(new Vec(0, height));
+    setAreasHeightInPlace(layout.areas, layout.size.height);
     return layout;
 }
 

@@ -15,6 +15,8 @@ export interface Area {
     rect: Rect;
     expr: Expr;
     children: Area[];
+    // Needed for setAreasHeightInPlace. See its comment.
+    inline: boolean;
 }
 
 export class Layout {
@@ -87,12 +89,14 @@ export class Layout {
                 rect: new Rect(origin, layout.size),
                 expr: layout.expr,
                 children: layout.areas,
+                inline: layout.inline,
             });
         } else {
             // Adopt the areas.
-            const orphans = layout.areas.map(({ rect, expr, children }) => ({
+            const orphans = layout.areas.map(({ rect, expr, children, inline }) => ({
                 expr,
                 children,
+                inline,
                 rect: rect.shift(origin),
             }));
             this.areas.push(...orphans);
