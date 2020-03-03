@@ -158,7 +158,7 @@ const EditorHeading = styled(PaneHeading)`
     margin-left: ${p => p.theme.exprViewPaddingPx}px;
 `;
 
-const EditorHeader = styled(Stack)`
+const EditorHeader = styled(Stack).attrs({ gap: 5 })`
     position: sticky;
     top: 0;
     background: #ffffff;
@@ -202,7 +202,7 @@ export function EditorStack() {
                             transition={{ duration: 0.1, ease: "easeIn" }}
                             positionTransition={{ duration: 0.1, ease: "easeIn" }}
                         >
-                            <EditorHeader gap={5}>
+                            <EditorHeader>
                                 <EditorHeading>{editor.topLevel}</EditorHeading>
                                 <AiOutlineClose
                                     color={theme.clickableColour}

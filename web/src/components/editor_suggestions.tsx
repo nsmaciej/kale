@@ -23,7 +23,7 @@ const EditorInput = styled.input`
     position: relative;
 `;
 
-const EditorInputPopover = styled(Stack)`
+const EditorInputPopover = styled(Stack).attrs({ gap: 1, vertical: true })`
     width: 400px; /* TODO: Remove this - shouldn't be needed but doesn't work without this */
     position: absolute;
     background: #ffffff;
@@ -117,7 +117,7 @@ export default function EditorSuggestions({ onCreateEditor }: NewEditorInputProp
     function renderSuggestions() {
         if (!suggestions.length) return;
         return (
-            <EditorInputPopover vertical gap={1}>
+            <EditorInputPopover>
                 {suggestions.map((x, i) => (
                     <EditorInputSuggestion
                         key={x.name}
