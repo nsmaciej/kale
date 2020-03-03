@@ -6,6 +6,10 @@ import { Stack, EditorHeadingStyle } from "components";
 import { assertSome } from "utils";
 import { Workspace } from "workspace";
 
+const Container = styled.div`
+    display: relative;
+`;
+
 const EditorInput = styled.input`
     border: 0;
     font: inherit;
@@ -26,6 +30,7 @@ const EditorInputPopover = styled(Stack)`
     border-radius: 0 0 ${p => p.theme.borderRadiusPx}px ${p => p.theme.borderRadiusPx}px;
     box-shadow: 0 0 0 1px #10161a1a, 0 2px 4px #10161a33, 0 8px 24px #10161a33;
     padding: 6px;
+    z-index: 1000;
 `;
 
 const EditorInputSuggestion = styled.div<{ selected: boolean }>`
@@ -129,7 +134,7 @@ export default function EditorSuggestions({ onCreateEditor }: NewEditorInputProp
     }
 
     return (
-        <>
+        <Container>
             <EditorInput
                 {...bindFocus}
                 ref={inputRef}
@@ -140,6 +145,6 @@ export default function EditorSuggestions({ onCreateEditor }: NewEditorInputProp
                 onChange={onChange}
             />
             {focus && renderSuggestions()}
-        </>
+        </Container>
     );
 }

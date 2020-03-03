@@ -1,12 +1,12 @@
 import React, { Fragment, useContext, useState, ReactNode } from "react";
 import styled, { useTheme } from "styled-components";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { AiOutlineClose, AiOutlinePushpin, AiFillPushpin } from "react-icons/ai";
 
 import * as E from "expr";
 import Expr from "expr";
 import ExprView from "expr_view";
-import { Box, Stack, Shortcut, SubtleButton, NonIdealText, EditorHeadingStyle } from "components";
+import { Box, Stack, SubtleButton, NonIdealText, EditorHeadingStyle, Shortcut } from "components";
 import InnerEditor from "editor";
 import { assertSome, removeIndex } from "utils";
 import { Clipboard } from "workspace";
@@ -158,32 +158,69 @@ const EditorHeading = styled(PaneHeading)`
     margin-left: ${p => p.theme.exprViewPaddingPx}px;
 `;
 
-const EditorInputWrapper = styled.div`
-    margin-left: ${p => p.theme.exprViewPaddingPx}px;
+const EditorHeader = styled(Stack)`
+    position: sticky;
+    top: 0;
+    background: #ffffff;
+    padding: 15px 0 5px;
+    border-bottom: 1px solid ${p => p.theme.grey};
 `;
+
+interface Editor {
+    id: number;
+    topLevel: string;
+}
+
+let GlobalEditorId = 1;
 
 export function EditorStack() {
     const theme = useTheme();
-    const [editors, setEditors] = useState<string[]>(["Sample 1", "Sample 2", "Sample 1"]);
+    const [editors, setEditors] = useState<Editor[]>([
+        { topLevel: "Sample 1", id: GlobalEditorId++ },
+        { topLevel: "Sample 1", id: GlobalEditorId++ },
+    ]);
     return (
-        <Stack vertical gridArea="editor" overflow="auto" gap={40}>
-            {editors.length === 0 && <p>No editors open</p>}
-            <EditorInputWrapper>
-                <EditorSuggestions onCreateEditor={x => setEditors(xs => [x, ...xs])} />
-            </EditorInputWrapper>
-            {editors.map((topLevelName, i) => (
-                //TODO: Don't use i as the key.
-                <div key={i}>
-                    <Stack alignItems="center" gap={5}>
-                        <EditorHeading>{topLevelName}</EditorHeading>
-                        <AiOutlineClose
-                            color={theme.clickableColour}
-                            onClick={() => setEditors(xs => removeIndex(xs, i))}
-                        />
-                    </Stack>
-                    <InnerEditor topLevelName={topLevelName} stealFocus={i === 0} />
-                </div>
-            ))}
-        </Stack>
+        <Box
+            gridArea="editor"
+            display="flex"
+            flexDirection="column"
+            height="100%"
+            alignItems="start"
+        >
+            <Stack gap={10} alignItems="center">
+                <Shortcut>O</Shortcut>
+                <EditorSuggestions
+                    onCreateEditor={topLevel =>
+                        setEditors(xs => [{ topLevel, id: GlobalEditorId++ }, ...xs])
+                    }
+                />
+            </Stack>
+            {editors.length === 0 && <NonIdealText>No editors open</NonIdealText>}
+            <Box overflow="auto" flex="1 1 1px">
+                <AnimatePresence>
+                    {editors.map((editor, i) => (
+                        <motion.div
+                            key={editor.id}
+                            initial={false}
+                            exit={{ opacity: 0, scale: 0 }}
+                            style={{ alignSelf: "start" }}
+                            transition={{ duration: 0.1, ease: "easeIn" }}
+                            positionTransition={{ duration: 0.1, ease: "easeIn" }}
+                        >
+                            <EditorHeader gap={5}>
+                                <EditorHeading>{editor.topLevel}</EditorHeading>
+                                <AiOutlineClose
+                                    color={theme.clickableColour}
+                                    onClick={() => setEditors(xs => removeIndex(xs, i))}
+                                />
+                            </EditorHeader>
+                            <Box marginTop={10} marginBottom={20}>
+                                <InnerEditor topLevelName={editor.topLevel} stealFocus={i === 0} />
+                            </Box>
+                        </motion.div>
+                    ))}
+                </AnimatePresence>
+            </Box>
+        </Box>
     );
 }

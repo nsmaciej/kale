@@ -5,35 +5,44 @@ import {
     FlexboxProps,
     LayoutProps,
     BorderProps,
+    PositionProps,
     grid,
     space,
     layout,
     flexbox,
     border,
+    position,
 } from "styled-system";
 
-export type BoxProps = SpaceProps & GridProps & FlexboxProps & LayoutProps & BorderProps;
+export type BoxProps = SpaceProps &
+    GridProps &
+    FlexboxProps &
+    LayoutProps &
+    BorderProps &
+    PositionProps;
 export const Box = styled.div<BoxProps>`
     ${space}
     ${grid}
     ${flexbox}
     ${layout}
     ${border}
+    ${position}
 `;
 
-const getSide = (p: StackProps) => "margin-" + (p.vertical ? "bottom" : "right");
 export interface StackProps extends BoxProps {
     gap?: number;
     vertical?: boolean;
 }
+
+const getSide = (p: StackProps) => "margin-" + (p.vertical ? "bottom" : "right");
 export const Stack = styled(Box)`
     display: flex;
-    flex-direction: ${p => (p.vertical ? "column" : "row")};
+    flex-direction: ${(p: StackProps) => (p.vertical ? "column" : "row")};
     & > *:last-child {
         ${getSide}: 0;
     }
     & > * {
-        ${getSide}: ${p => p.gap ?? 0}px;
+        ${getSide}: ${(p: StackProps) => p.gap ?? 0}px;
     }
 `;
 

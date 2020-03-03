@@ -50,6 +50,7 @@ const Container = styled.div`
     gap: 20px 40px;
     padding: 15px 20px 0;
     height: 100%;
+    position: relative;
 `;
 
 const HeaderStack = styled(Stack)`
