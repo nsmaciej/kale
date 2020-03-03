@@ -164,6 +164,7 @@ const EditorHeader = styled(Stack)`
     background: #ffffff;
     padding: 15px 0 5px;
     border-bottom: 1px solid ${p => p.theme.grey};
+    align-items: center;
 `;
 
 interface Editor {
@@ -180,13 +181,7 @@ export function EditorStack() {
         { topLevel: "Sample 1", id: GlobalEditorId++ },
     ]);
     return (
-        <Box
-            gridArea="editor"
-            display="flex"
-            flexDirection="column"
-            height="100%"
-            alignItems="start"
-        >
+        <Stack vertical gridArea="editor" height="100%">
             <Stack gap={10} alignItems="center">
                 <Shortcut>O</Shortcut>
                 <EditorSuggestions
@@ -195,8 +190,8 @@ export function EditorStack() {
                     }
                 />
             </Stack>
-            {editors.length === 0 && <NonIdealText>No editors open</NonIdealText>}
-            <Box overflow="auto" flex="1 1 1px">
+            <Stack vertical overflow="auto" flex="1 1 1px" alignItems="start">
+                {editors.length === 0 && <NonIdealText>No editors open</NonIdealText>}
                 <AnimatePresence>
                     {editors.map((editor, i) => (
                         <motion.div
@@ -220,7 +215,7 @@ export function EditorStack() {
                         </motion.div>
                     ))}
                 </AnimatePresence>
-            </Box>
-        </Box>
+            </Stack>
+        </Stack>
     );
 }
