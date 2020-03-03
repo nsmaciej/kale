@@ -87,6 +87,28 @@ function materialiseUnderlines(theme: KaleTheme, parent: Layout) {
     return layout;
 }
 
+function isCallInline(theme: KaleTheme, args: readonly Layout[]): boolean {
+    if (args.length === 0) {
+        return true;
+    }
+    if (!args.every(x => x.inline)) {
+        return false;
+    }
+    // Our situation won't improve much from here on by making the function not-inline.
+    if (args.length === 1) {
+        return true;
+    }
+    // Do we need a line break?
+    const lineWidth = args.map(x => x.size.width).reduce((x, y) => x + y, 0);
+    if (lineWidth > theme.lineBreakPointPx && args.length > 0) {
+        return false;
+    }
+    // Is the expression too nested?
+    const underlinesHeight = max(args.map(x => x.underlinesHeight()));
+    const MAX_NESTING_LEVEL = 3;
+    return underlinesHeight < MAX_NESTING_LEVEL;
+}
+
 interface LayoutState {
     hasDisabledParent: boolean;
 }
@@ -178,7 +200,7 @@ class ExprLayout implements ExprVisitor<Layout> {
             <HitBox area={line.pad(new Vec(5))} {...this.exprProps(expr)} key={0}>
                 <SvgLine
                     start={line.origin}
-                    end={line.bottom_right}
+                    end={line.bottomRight}
                     stroke={disabled ? this.t.disabledExprColour : this.t.listRulerStroke}
                 />
             </HitBox>
@@ -192,9 +214,11 @@ class ExprLayout implements ExprVisitor<Layout> {
 
     visitLiteral(expr: E.Literal): Layout {
         let content = expr.content;
-        if (expr.type == "str") content = `"${expr.content}"`;
-        else if (expr.type == "symbol") content = expr.content + ":";
-        else if (expr.type == "int") {
+        if (expr.type === "str") {
+            content = `"${expr.content}"`;
+        } else if (expr.type === "symbol") {
+            content = expr.content + ":";
+        } else if (expr.type === "int") {
             content = new Intl.NumberFormat().format(parseFloat(expr.content));
         }
 
@@ -304,28 +328,6 @@ class ExprLayout implements ExprVisitor<Layout> {
         const comment = this.layoutComment(expr);
         return vstack(this.t.lineSpacingPx, comment, layout);
     }
-}
-
-function isCallInline(theme: KaleTheme, args: readonly Layout[]): boolean {
-    if (args.length === 0) {
-        return true;
-    }
-    if (!args.every(x => x.inline)) {
-        return false;
-    }
-    // Our situation won't improve much from here on by making the function not-inline.
-    if (args.length === 1) {
-        return true;
-    }
-    // Do we need a line break?
-    const lineWidth = args.map(x => x.size.width).reduce((x, y) => x + y, 0);
-    if (lineWidth > theme.lineBreakPointPx && args.length > 0) {
-        return false;
-    }
-    // Is the expression too nested?
-    const underlinesHeight = max(args.map(x => x.underlinesHeight()));
-    const MAX_NESTING_LEVEL = 3;
-    return underlinesHeight < MAX_NESTING_LEVEL;
 }
 
 export interface LayoutProps {

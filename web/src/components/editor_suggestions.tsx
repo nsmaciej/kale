@@ -50,8 +50,8 @@ interface NewEditorInputProps {
 
 function useFocus() {
     const [focus, setFocus] = useState(false);
-    const onFocus = (_: React.FocusEvent) => setFocus(true);
-    const onBlur = (_: React.FocusEvent) => setFocus(false);
+    const onFocus = () => setFocus(true);
+    const onBlur = () => setFocus(false);
     return [focus, { onFocus, onBlur }];
 }
 
@@ -72,7 +72,7 @@ export default function EditorSuggestions({ onCreateEditor }: NewEditorInputProp
             .filter(x => x.toLowerCase().includes(value.toLowerCase()))
             .slice(0, 5)
             .map(x => ({ name: x, create: false }));
-        const fullMatch = workspace.topLevel.hasOwnProperty(value);
+        const fullMatch = Object.prototype.hasOwnProperty.call(workspace.topLevel, value);
         if (value && !fullMatch) {
             r.push({ name: value, create: true });
         }
@@ -117,8 +117,8 @@ export default function EditorSuggestions({ onCreateEditor }: NewEditorInputProp
                     <EditorInputSuggestion
                         key={x.name}
                         onMouseDown={e => e.preventDefault()} // Don't blur.
-                        onClick={_ => selectEditor(x.name)}
-                        selected={i == selection}
+                        onClick={() => selectEditor(x.name)}
+                        selected={i === selection}
                     >
                         {x.create && <AiOutlinePlusCircle />}
                         {x.create ? `Create "${x.name}"` : x.name}

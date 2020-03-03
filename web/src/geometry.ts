@@ -1,75 +1,5 @@
 // N.B. The origin is the top left corner.
 
-export class Size {
-    static readonly zero = new Size(0, 0);
-
-    constructor(readonly width: number, readonly height = width) {}
-
-    get bottom_left(): Vec {
-        return new Vec(0, this.height);
-    }
-    get bottom_right(): Vec {
-        return new Vec(this.width, this.height);
-    }
-    get top_right(): Vec {
-        return new Vec(this.width, 0);
-    }
-
-    pad({ x, y }: Vec) {
-        return new Size(this.width + x, this.height + y);
-    }
-
-    isZero() {
-        return this.width === 0 && this.height === 0;
-    }
-
-    extend(offset: Vec, size: Size): Size {
-        return new Size(
-            Math.max(this.width, offset.x + size.width),
-            Math.max(this.height, offset.y + size.height),
-        );
-    }
-}
-
-export class Rect {
-    constructor(readonly origin: Vec, readonly size: Size) {}
-    get x() {
-        return this.origin.x;
-    }
-    get y() {
-        return this.origin.y;
-    }
-    get width() {
-        return this.size.width;
-    }
-    get height() {
-        return this.size.height;
-    }
-    get atOrigin() {
-        return new Rect(Vec.zero, this.size.pad(this.origin.neg));
-    }
-    get bottom_right() {
-        return this.origin.add(new Vec(this.width, this.height));
-    }
-
-    withSize(size: Size) {
-        return new Rect(this.origin, size);
-    }
-
-    contains(point: Vec) {
-        const corner = this.size.bottom_right.add(this.origin);
-        return this.origin.lt(point) && corner.gt(point);
-    }
-
-    pad(d: Vec) {
-        return new Rect(this.origin.dy(-d.y).dx(-d.x), this.size.pad(d.scale(2)));
-    }
-
-    shift(offset: Vec) {
-        return new Rect(this.origin.add(offset), this.size);
-    }
-}
-
 export class Vec {
     static readonly zero = new Vec(0);
 
@@ -115,5 +45,75 @@ export class Vec {
     }
     dy(d: number) {
         return new Vec(this.x, this.y + d);
+    }
+}
+
+export class Size {
+    static readonly zero = new Size(0, 0);
+
+    constructor(readonly width: number, readonly height = width) {}
+
+    get bottomLeft(): Vec {
+        return new Vec(0, this.height);
+    }
+    get bottomRight(): Vec {
+        return new Vec(this.width, this.height);
+    }
+    get topRight(): Vec {
+        return new Vec(this.width, 0);
+    }
+
+    pad({ x, y }: Vec) {
+        return new Size(this.width + x, this.height + y);
+    }
+
+    isZero() {
+        return this.width === 0 && this.height === 0;
+    }
+
+    extend(offset: Vec, size: Size): Size {
+        return new Size(
+            Math.max(this.width, offset.x + size.width),
+            Math.max(this.height, offset.y + size.height),
+        );
+    }
+}
+
+export class Rect {
+    constructor(readonly origin: Vec, readonly size: Size) {}
+    get x() {
+        return this.origin.x;
+    }
+    get y() {
+        return this.origin.y;
+    }
+    get width() {
+        return this.size.width;
+    }
+    get height() {
+        return this.size.height;
+    }
+    get atOrigin() {
+        return new Rect(Vec.zero, this.size.pad(this.origin.neg));
+    }
+    get bottomRight() {
+        return this.origin.add(new Vec(this.width, this.height));
+    }
+
+    withSize(size: Size) {
+        return new Rect(this.origin, size);
+    }
+
+    contains(point: Vec) {
+        const corner = this.size.bottomRight.add(this.origin);
+        return this.origin.lt(point) && corner.gt(point);
+    }
+
+    pad(d: Vec) {
+        return new Rect(this.origin.dy(-d.y).dx(-d.x), this.size.pad(d.scale(2)));
+    }
+
+    shift(offset: Vec) {
+        return new Rect(this.origin.add(offset), this.size);
     }
 }

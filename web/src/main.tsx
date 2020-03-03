@@ -112,7 +112,8 @@ function App() {
     );
 }
 
-document.addEventListener("DOMContentLoaded", async () => {
-    await TextMetrics.loadGlobal(DefaultTheme);
-    ReactDOM.render(<App />, document.getElementById("main"));
+document.addEventListener("DOMContentLoaded", () => {
+    TextMetrics.loadGlobal(DefaultTheme).then(() => {
+        ReactDOM.render(<App />, document.getElementById("main"));
+    });
 });

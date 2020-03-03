@@ -14,7 +14,7 @@ export function exprData(comment?: string): ExprData {
     return { comment, id: GlobalExprId++, disabled: false };
 }
 
-export interface ExprVisitor<R = any> {
+export interface ExprVisitor<R = void> {
     visitList(expr: List): R;
     visitLiteral(expr: Literal): R;
     visitVariable(expr: Variable): R;
@@ -84,8 +84,8 @@ export default abstract class Expr {
     }
 
     // Give each sub-expr a fresh id.
-    resetIds() {
-        return this.filterMap(x => x.replaceId(GlobalExprId++))!;
+    resetIds(): Expr {
+        return assertSome(this.filterMap(x => x.replaceId(GlobalExprId++)));
     }
 
     // Replace the id of the current expr.
@@ -94,7 +94,7 @@ export default abstract class Expr {
     }
 
     replace(old: Optional<ExprId>, next: Expr): Expr {
-        return assertSome(this.update(old, _ => next));
+        return assertSome(this.update(old, () => next));
     }
 
     find(predicate: (expr: Expr) => boolean): Optional<Expr> {
@@ -158,7 +158,7 @@ export default abstract class Expr {
     }
 
     remove(id: Optional<ExprId>): Optional<Expr> {
-        return this.update(id, _ => null);
+        return this.update(id, () => null);
     }
 }
 

@@ -6,7 +6,8 @@
     "scripts": {
         "build": "webpack --mode=production",
         "start": "webpack-dev-server",
-        "test": "jest"
+        "test": "jest",
+        "lint": "eslint src/**/*.{ts,tsx}"
     },
     "author": "",
     "license": "ISC",
@@ -24,6 +25,12 @@
         "@types/react-dom": "^16.9.5",
         "@types/styled-components": "^5.0.1",
         "@types/styled-system": "^5.1.7",
+        "@typescript-eslint/eslint-plugin": "^2.22.0",
+        "@typescript-eslint/parser": "^2.22.0",
+        "eslint": "^6.1.0",
+        "eslint-config-prettier": "^6.10.0",
+        "eslint-plugin-react": "^7.18.3",
+        "eslint-plugin-react-hooks": "^1.7.0",
         "jest": "^25.1.0",
         "ts-jest": "^25.2.1",
         "ts-loader": "^6.2.1",

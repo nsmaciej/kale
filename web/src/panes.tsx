@@ -125,7 +125,10 @@ export function ClipboardList() {
         <Box gridArea="history" overflow="auto">
             <Stack gap={10} alignItems="baseline" justifyContent="space-between">
                 <PaneHeading>History</PaneHeading>
-                <SubtleButton onClick={_ => clipboard.clear()} disabled={!clipboard.canBeCleared()}>
+                <SubtleButton
+                    onClick={() => clipboard.clear()}
+                    disabled={!clipboard.canBeCleared()}
+                >
                     Clear All
                 </SubtleButton>
             </Stack>
@@ -142,7 +145,7 @@ export function ClipboardList() {
                     </NonIdealText>
                 }
                 extras={item => (
-                    <SubtleButton onClick={_ => clipboard.togglePinned(item.expr.id)}>
+                    <SubtleButton onClick={() => clipboard.togglePinned(item.expr.id)}>
                         {item.pinned ? <AiFillPushpin /> : <AiOutlinePushpin />}
                     </SubtleButton>
                 )}
@@ -166,7 +169,7 @@ export function EditorStack() {
         <Stack vertical gridArea="editor" overflow="auto" gap={40}>
             {editors.length === 0 && <p>No editors open</p>}
             <EditorInputWrapper>
-                <EditorSuggestions onCreateEditor={x => setEditors(editors => [x, ...editors])} />
+                <EditorSuggestions onCreateEditor={x => setEditors(xs => [x, ...xs])} />
             </EditorInputWrapper>
             {editors.map((topLevelName, i) => (
                 //TODO: Don't use i as the key.
@@ -175,7 +178,7 @@ export function EditorStack() {
                         <EditorHeading>{topLevelName}</EditorHeading>
                         <AiOutlineClose
                             color={theme.clickableColour}
-                            onClick={_ => setEditors(xs => removeIndex(xs, i))}
+                            onClick={() => setEditors(xs => removeIndex(xs, i))}
                         />
                     </Stack>
                     <InnerEditor topLevelName={topLevelName} stealFocus={i === 0} />

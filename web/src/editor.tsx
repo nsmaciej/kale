@@ -183,11 +183,13 @@ class Editor extends Component<EditorProps, EditorState> {
                 break;
             // Comments.
             case "q":
-                const sel = this.state.selection;
-                const selected = this.expr.withId(sel);
-                if (selected != null) {
-                    const comment = prompt("Comment?", selected.data.comment) ?? undefined;
-                    this.update(expr => expr.assignToDataWithId(sel, { comment }));
+                {
+                    const sel = this.state.selection;
+                    const selected = this.expr.withId(sel);
+                    if (selected != null) {
+                        const comment = prompt("Comment?", selected.data.comment) ?? undefined;
+                        this.update(expr => expr.assignToDataWithId(sel, { comment }));
+                    }
                 }
                 break;
             default:

@@ -99,7 +99,6 @@ export class DragAndDropSurface extends Component<{}, DragAndDropSurfaceState> {
         let surface: React.ReactNode;
 
         if (this.drag?.delta != null) {
-            // drag.delta gets set when the drag starts proper.
             const pos = assertSome(this.state.position).add(this.drag.delta);
             surface = ReactDOM.createPortal(
                 <DragAndDropSurface.Svg
@@ -233,7 +232,7 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
     }
 
     render() {
-        const { nodes, size, areas, inlineExprs } = layoutExpr(this.theme, this.props.expr, {
+        const { nodes, size, areas } = layoutExpr(this.theme, this.props.expr, {
             frozen: this.props.frozen,
             focused: this.props.focused,
             selection: this.props.selection,

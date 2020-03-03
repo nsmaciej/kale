@@ -25,9 +25,11 @@ export class WorkspaceProvider extends Component<{}, WorkspaceProvider["state"]>
             }));
         },
         getTopLevel: (name: string): Expr => {
-            if (this.state.topLevel.hasOwnProperty(name)) return this.state.topLevel[name];
+            if (Object.prototype.hasOwnProperty.call(this.state.topLevel, name)) {
+                return this.state.topLevel[name];
+            }
             const blank = new E.Blank();
-            this.state.setTopLevel(name, _ => blank);
+            this.state.setTopLevel(name, () => blank);
             return blank;
         },
     };
@@ -45,11 +47,6 @@ interface ClipboardEntry {
 export type ClipboardValue = ClipboardProvider["state"];
 export const Clipboard = React.createContext<Optional<ClipboardValue>>(null);
 export class ClipboardProvider extends Component<{}, ClipboardProvider["state"]> {
-    private update(update: (clipboard: ClipboardEntry[]) => ClipboardEntry[]) {
-        this.setState(state => ({
-            clipboard: update(state.clipboard),
-        }));
-    }
     state = {
         clipboard: [] as ClipboardEntry[],
         add: (entry: ClipboardEntry) => {
@@ -86,6 +83,13 @@ export class ClipboardProvider extends Component<{}, ClipboardProvider["state"]>
             });
         },
     };
+
+    private update(update: (clipboard: ClipboardEntry[]) => ClipboardEntry[]) {
+        this.setState(state => ({
+            clipboard: update(state.clipboard),
+        }));
+    }
+
     render() {
         return <Clipboard.Provider value={this.state}>{this.props.children}</Clipboard.Provider>;
     }
