@@ -35,7 +35,7 @@ function useFocus() {
     return [focus, { onFocus, onBlur }];
 }
 
-interface Suggestion extends MenuItem<string> {
+interface Suggestion extends MenuItem {
     name: string;
     create: boolean;
 }
@@ -47,15 +47,12 @@ export default function EditorSuggestions({ onCreateEditor }: NewEditorInputProp
     const [focus, bindFocus] = useFocus();
     const inputRef = createRef<HTMLInputElement>();
 
-    const selectEditor = useCallback(
-        (name: string) => {
-            onCreateEditor(name);
-            inputRef.current?.blur();
-            setValue("");
-            setSelection(0);
-        },
-        [onCreateEditor, inputRef],
-    );
+    function selectEditor(name: string) {
+        onCreateEditor(name);
+        inputRef.current?.blur();
+        setValue("");
+        setSelection(0);
+    }
 
     const suggestions = useMemo(() => {
         const r = Object.keys(workspace.topLevel)
@@ -65,7 +62,6 @@ export default function EditorSuggestions({ onCreateEditor }: NewEditorInputProp
                 name: x,
                 create: false,
                 id: x,
-                action: (i: Suggestion) => selectEditor(i.name),
             }));
         const fullMatch = Object.prototype.hasOwnProperty.call(workspace.topLevel, value);
         if (value && !fullMatch) {
@@ -73,11 +69,10 @@ export default function EditorSuggestions({ onCreateEditor }: NewEditorInputProp
                 name: value,
                 create: true,
                 id: value,
-                action: (i: Suggestion) => selectEditor(i.name),
             });
         }
         return r as Suggestion[];
-    }, [selectEditor, value, workspace.topLevel]);
+    }, [value, workspace.topLevel]);
 
     function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
         switch (e.key) {
@@ -114,7 +109,12 @@ export default function EditorSuggestions({ onCreateEditor }: NewEditorInputProp
                 onChange={onChange}
             />
             {focus && (
-                <Menu items={suggestions} selected={suggestions[selection].id}>
+                <Menu
+                    items={suggestions}
+                    selected={selection}
+                    onClick={x => selectEditor(x.name)}
+                    setSelected={(_, i) => setSelection(i)}
+                >
                     {item => (
                         <>
                             {item.create && <AiOutlinePlusCircle />}

@@ -9,7 +9,7 @@ import Expr, { ExprId } from "expr";
 import * as E from "expr";
 import { KaleTheme } from "theme";
 
-import Menu, { MenuItem } from "components/menu";
+import Menu, { MenuItem, ContextMenu, ContextMenuItem } from "components/menu";
 
 import { Area } from "expr_view/core";
 import { layoutExpr } from "expr_view/layout";
@@ -131,7 +131,7 @@ interface ExprViewProps {
     onClickCreateCircle?: (expr: ExprId) => void;
 
     // Delegation.
-    contextMenuFor?: (expr: ExprId) => MenuItem[];
+    contextMenuFor?: (expr: ExprId) => ContextMenuItem[];
 
     // Looks.
     scale?: number;
@@ -145,6 +145,7 @@ interface ExprViewProps {
 
 interface ExprViewState {
     highlight: Optional<ExprId>;
+    showingMenu: Optional<{ menu: ContextMenuItem[]; at: Vec }>;
 }
 
 // This needs to be a class component so we can nicely pass it to the layout helper.
@@ -152,7 +153,7 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
     static contextType = DragAndDropSurface.Context;
     declare context: React.ContextType<typeof DragAndDropSurface.Context>;
 
-    state: ExprViewState = { highlight: null };
+    state: ExprViewState = { highlight: null, showingMenu: null };
 
     get theme() {
         return this.props.theme;
@@ -246,7 +247,12 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
         if (this.props.contextMenuFor == null) return;
         e.preventDefault();
         e.stopPropagation();
-        console.log(this.props.contextMenuFor?.(expr.id));
+        this.setState({
+            showingMenu: {
+                at: Vec.fromPage(e),
+                menu: this.props.contextMenuFor?.(expr.id),
+            },
+        });
     };
 
     render() {
@@ -284,18 +290,29 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
         const { width, height } = size.pad(padding.scale(2));
         const scale = this.props.scale ?? 1;
         return (
-            <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width={width * scale}
-                height={height * scale}
-                // SVGs are inline by default, this leads to a scourge of invisible space
-                // characters. Make it a block instead.
-                display="block"
-                viewBox={`0 0 ${width} ${height}`}
-            >
-                {layers}
-                <SvgGroup translate={padding}>{nodes}</SvgGroup>
-            </svg>
+            <>
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width={width * scale}
+                    height={height * scale}
+                    // SVGs are inline by default, this leads to a scourge of invisible space
+                    // characters. Make it a block instead.
+                    display="block"
+                    viewBox={`0 0 ${width} ${height}`}
+                    // If we can open context menus, do not allow the system menu.
+                    onContextMenu={e => this.props.contextMenuFor && e.preventDefault()}
+                >
+                    {layers}
+                    <SvgGroup translate={padding}>{nodes}</SvgGroup>
+                </svg>
+                {this.state.showingMenu && (
+                    <ContextMenu
+                        items={this.state.showingMenu.menu}
+                        origin={this.state.showingMenu.at}
+                        dismissMenu={() => this.setState({ showingMenu: null })}
+                    />
+                )}
+            </>
         );
     }
 }

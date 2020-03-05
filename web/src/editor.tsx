@@ -285,6 +285,11 @@ class Editor extends Component<EditorProps, EditorState> {
                             label: "Do the thing",
                             action: () => alert("Look at me ma!"),
                         },
+                        {
+                            id: "other_thing",
+                            label: "Do the other thing",
+                            action: () => alert("Doing the thing..."),
+                        },
                     ]}
                 />
             </div>
