@@ -127,6 +127,7 @@ class ExprLayout implements ExprVisitor<Layout> {
             onMouseLeave: (e: E) => this.props.onHoverExpr?.(e, null),
             onClick: (e: E) => this.props.onClickExpr?.(e, expr),
             onMouseDown: (e: E) => this.props.onMouseDown?.(e, expr),
+            onContextMenu: (e: E) => this.props.onContextMenu?.(e, expr),
         };
     }
 
@@ -333,6 +334,7 @@ class ExprLayout implements ExprVisitor<Layout> {
 export interface LayoutProps {
     onHoverExpr?(e: React.MouseEvent, expr: Optional<Expr>): void;
     onClickExpr?(e: React.MouseEvent, expr: Expr): void;
+    onContextMenu?(e: React.MouseEvent, expr: Expr): void;
     onClickCreateCircle?(e: React.MouseEvent, expr: Expr): void;
     onMouseDown?(e: React.MouseEvent, expr: Expr): void;
     frozen?: boolean;

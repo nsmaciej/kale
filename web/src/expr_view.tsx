@@ -1,4 +1,4 @@
-import React, { PureComponent, Component } from "react";
+import React, { PureComponent, Component, ReactNode } from "react";
 import ReactDOM from "react-dom";
 import styled, { ThemeConsumer } from "styled-components";
 import { motion } from "framer-motion";
@@ -8,6 +8,8 @@ import { Vec, Rect } from "geometry";
 import Expr, { ExprId } from "expr";
 import * as E from "expr";
 import { KaleTheme } from "theme";
+
+import Menu, { MenuItem } from "components/menu";
 
 import { Area } from "expr_view/core";
 import { layoutExpr } from "expr_view/layout";
@@ -122,14 +124,23 @@ export class DragAndDropSurface extends Component<{}, DragAndDropSurfaceState> {
 
 interface ExprViewProps {
     expr: Expr;
-    frozen?: boolean;
-    focused?: boolean;
-    selection?: Optional<ExprId>;
-    foldComments?: boolean;
+    theme: KaleTheme;
+
+    // Callbacks.
     onClick?: (expr: ExprId) => void;
     onClickCreateCircle?: (expr: ExprId) => void;
-    theme: KaleTheme;
+
+    // Delegation.
+    contextMenuFor?: (expr: ExprId) => MenuItem[];
+
+    // Looks.
     scale?: number;
+    frozen?: boolean;
+    foldComments?: boolean;
+
+    //TODO: Handle these in the generalised selection mechanism.
+    focused?: boolean;
+    selection?: Optional<ExprId>;
 }
 
 interface ExprViewState {
@@ -231,7 +242,15 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
         );
     }
 
+    onContextMenu = (e: React.MouseEvent, expr: Expr) => {
+        if (this.props.contextMenuFor == null) return;
+        e.preventDefault();
+        e.stopPropagation();
+        console.log(this.props.contextMenuFor?.(expr.id));
+    };
+
     render() {
+        //TODO: Remove these binds.
         const { nodes, size, areas } = layoutExpr(this.theme, this.props.expr, {
             frozen: this.props.frozen,
             focused: this.props.focused,
@@ -241,6 +260,7 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
             onClickCreateCircle: this.onClickCreateCircle.bind(this),
             onClickExpr: this.onClickExpr.bind(this),
             onMouseDown: this.onMouseDown.bind(this),
+            onContextMenu: this.onContextMenu,
         });
 
         // Selection and highlight drawing logic.

@@ -1,10 +1,11 @@
-import React, { useContext, useState, createRef, useMemo } from "react";
+import React, { useContext, useState, createRef, useMemo, useCallback } from "react";
 import styled from "styled-components";
 import { AiOutlinePlusCircle } from "react-icons/ai";
 
-import { Stack, EditorHeadingStyle } from "components";
+import { EditorHeadingStyle } from "components";
 import { assertSome } from "utils";
 import { Workspace } from "workspace";
+import Menu, { MenuItem } from "components/menu";
 
 const Container = styled.div`
     display: relative;
@@ -23,32 +24,6 @@ const EditorInput = styled.input`
     position: relative;
 `;
 
-const EditorInputPopover = styled(Stack).attrs({ gap: 1, vertical: true })`
-    width: 400px; /* TODO: Remove this - shouldn't be needed but doesn't work without this */
-    position: absolute;
-    background: #ffffff;
-    border-radius: 0 0 ${p => p.theme.borderRadiusPx}px ${p => p.theme.borderRadiusPx}px;
-    box-shadow: 0 0 0 1px #10161a1a, 0 2px 4px #10161a33, 0 8px 24px #10161a33;
-    padding: 6px;
-    z-index: 1000;
-`;
-
-const EditorInputSuggestion = styled.div<{ selected: boolean }>`
-    user-select: none;
-    border-radius: ${p => p.theme.borderRadiusPx}px;
-    padding: 8px 8px;
-    background: ${p => (p.selected ? p.theme.clickableColour : "transparent")};
-    display: flex;
-    align-items: center;
-    & > svg {
-        margin-right: 5px;
-    }
-    &:hover {
-        background: ${p => (p.selected ? p.theme.clickableColour : p.theme.grey)};
-    }
-    color: ${p => (p.selected ? "white" : "black")};
-`;
-
 interface NewEditorInputProps {
     onCreateEditor: (topLevel: string) => void;
 }
@@ -60,7 +35,7 @@ function useFocus() {
     return [focus, { onFocus, onBlur }];
 }
 
-interface Suggestion {
+interface Suggestion extends MenuItem<string> {
     name: string;
     create: boolean;
 }
@@ -72,24 +47,37 @@ export default function EditorSuggestions({ onCreateEditor }: NewEditorInputProp
     const [focus, bindFocus] = useFocus();
     const inputRef = createRef<HTMLInputElement>();
 
+    const selectEditor = useCallback(
+        (name: string) => {
+            onCreateEditor(name);
+            inputRef.current?.blur();
+            setValue("");
+            setSelection(0);
+        },
+        [onCreateEditor, inputRef],
+    );
+
     const suggestions = useMemo(() => {
         const r = Object.keys(workspace.topLevel)
             .filter(x => x.toLowerCase().includes(value.toLowerCase()))
             .slice(0, 5)
-            .map(x => ({ name: x, create: false }));
+            .map(x => ({
+                name: x,
+                create: false,
+                id: x,
+                action: (i: Suggestion) => selectEditor(i.name),
+            }));
         const fullMatch = Object.prototype.hasOwnProperty.call(workspace.topLevel, value);
         if (value && !fullMatch) {
-            r.push({ name: value, create: true });
+            r.push({
+                name: value,
+                create: true,
+                id: value,
+                action: (i: Suggestion) => selectEditor(i.name),
+            });
         }
         return r as Suggestion[];
-    }, [value, workspace.topLevel]);
-
-    function selectEditor(name: string) {
-        onCreateEditor(name);
-        inputRef.current?.blur();
-        setValue("");
-        setSelection(0);
-    }
+    }, [selectEditor, value, workspace.topLevel]);
 
     function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
         switch (e.key) {
@@ -114,25 +102,6 @@ export default function EditorSuggestions({ onCreateEditor }: NewEditorInputProp
         setSelection(0);
     }
 
-    function renderSuggestions() {
-        if (!suggestions.length) return;
-        return (
-            <EditorInputPopover>
-                {suggestions.map((x, i) => (
-                    <EditorInputSuggestion
-                        key={x.name}
-                        onMouseDown={e => e.preventDefault()} // Don't blur.
-                        onClick={() => selectEditor(x.name)}
-                        selected={i === selection}
-                    >
-                        {x.create && <AiOutlinePlusCircle />}
-                        {x.create ? `Create "${x.name}"` : x.name}
-                    </EditorInputSuggestion>
-                ))}
-            </EditorInputPopover>
-        );
-    }
-
     return (
         <Container>
             <EditorInput
@@ -144,7 +113,16 @@ export default function EditorSuggestions({ onCreateEditor }: NewEditorInputProp
                 onKeyDown={onKeyDown}
                 onChange={onChange}
             />
-            {focus && renderSuggestions()}
+            {focus && (
+                <Menu items={suggestions} selected={suggestions[selection].id}>
+                    {item => (
+                        <>
+                            {item.create && <AiOutlinePlusCircle />}
+                            {item.create ? `Create "${item.name}"` : item.name}
+                        </>
+                    )}
+                </Menu>
+            )}
         </Container>
     );
 }

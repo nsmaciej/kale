@@ -279,6 +279,13 @@ class Editor extends Component<EditorProps, EditorState> {
                     onClickCreateCircle={this.createChildBlank}
                     foldComments={this.state.foldingComments}
                     theme={this.props.theme}
+                    contextMenuFor={() => [
+                        {
+                            id: "thing",
+                            label: "Do the thing",
+                            action: () => alert("Look at me ma!"),
+                        },
+                    ]}
                 />
             </div>
         );
