@@ -110,31 +110,73 @@ class Editor extends Component<EditorProps, EditorState> {
         this.update(expr => expr.replace(sel, next.resetIds().replaceId(sel)));
     }
 
+    private readonly actions = {
+        delete: () => this.removeSelection(),
+        replace: () => this.replaceSelection(new E.Blank()),
+        move: () => {
+            this.addSelectionToClipboard();
+            this.removeSelection();
+        },
+        shuffle: () => {
+            this.addSelectionToClipboard();
+            this.replaceSelection(new E.Blank());
+        },
+        copy: () => this.addSelectionToClipboard(),
+        append: () => this.createChildBlank(this.state.selection),
+        insert: () => this.createSiblingBlank(),
+        foldComments: () => this.setState(state => ({ foldingComments: !state.foldingComments })),
+        comment: () => {
+            const sel = this.state.selection;
+            const selected = this.expr.withId(sel);
+            if (selected != null) {
+                const comment = prompt("Comment?", selected.data.comment) ?? undefined;
+                this.update(expr => expr.assignToDataWithId(sel, { comment }));
+            }
+        },
+        disable: () => {
+            this.update(expr =>
+                assertSome(
+                    expr.update(this.state.selection, x => {
+                        if (x instanceof E.Blank) return x;
+                        return x.assignToData({ disabled: !x.data.disabled });
+                    }),
+                ),
+            );
+        },
+    };
+
+    private readonly menuKeys: { [key: string]: keyof Editor["actions"] } = {
+        d: "delete",
+        r: "replace",
+        m: "move",
+        s: "shuffle",
+        c: "copy",
+        a: "append",
+        i: "insert",
+        "#": "foldComments",
+        q: "comment",
+        "/": "disable",
+    };
+
+    private readonly menu: { [label: string]: keyof Editor["actions"] } = {
+        Delete: "delete",
+        Replace: "replace",
+        Move: "move",
+        Shuffle: "shuffle",
+        Copy: "copy",
+        "Append blank": "append",
+        "Insert blank": "insert",
+        "Fold comments": "foldComments",
+        "Comment...": "comment",
+        Disable: "disable",
+    };
+
     private readonly keyDown = (event: React.KeyboardEvent) => {
         // Do not handle modifier keys.
         if (event.ctrlKey || event.altKey || event.metaKey) return;
         const key = event.key;
         // See https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values.
         switch (key) {
-            // Deletion.
-            case "d":
-                // Just delete.
-                this.removeSelection();
-                break;
-            case "r":
-                // Intend to replace (delete with blank).
-                this.replaceSelection(new E.Blank());
-                break;
-            case "m":
-                // Intend to move.
-                this.addSelectionToClipboard();
-                this.removeSelection();
-                break;
-            case "s":
-                // Intend to shuffle (move with blank).
-                this.addSelectionToClipboard();
-                this.replaceSelection(new E.Blank());
-                break;
             // Logical selection.
             case "h":
                 this.setSelection(Editor.selectParent);
@@ -148,49 +190,11 @@ class Editor extends Component<EditorProps, EditorState> {
             case "l":
                 this.setSelection(Editor.selectFirstCHild);
                 break;
-            // Copy.
-            case "c":
-                this.addSelectionToClipboard();
-                break;
-            // Blanks selection.
             case "Tab":
                 // We don't want the default "select root" behaviour of setSelection.
                 this.setState(state => ({
                     selection: Editor.selectNextBlank(this.expr, state.selection),
                 }));
-                break;
-            // Blank insertion.
-            case "a":
-                this.createChildBlank(this.state.selection);
-                break;
-            case "i":
-                this.createSiblingBlank();
-                break;
-            // Disabling.
-            case "/":
-                this.update(expr =>
-                    assertSome(
-                        expr.update(this.state.selection, x => {
-                            if (x instanceof E.Blank) return x;
-                            return x.assignToData({ disabled: !x.data.disabled });
-                        }),
-                    ),
-                );
-                break;
-            // Folding.
-            case "#":
-                this.setState(state => ({ foldingComments: !state.foldingComments }));
-                break;
-            // Comments.
-            case "q":
-                {
-                    const sel = this.state.selection;
-                    const selected = this.expr.withId(sel);
-                    if (selected != null) {
-                        const comment = prompt("Comment?", selected.data.comment) ?? undefined;
-                        this.update(expr => expr.assignToDataWithId(sel, { comment }));
-                    }
-                }
                 break;
             default:
                 // From clipboard history.
@@ -201,6 +205,8 @@ class Editor extends Component<EditorProps, EditorState> {
                         this.replaceSelection(clipboard[ix].expr);
                         this.props.clipboard.use(clipboard[ix].expr.id);
                     }
+                } else if (Object.prototype.hasOwnProperty.call(this.menuKeys, key)) {
+                    this.actions[this.menuKeys[key]]();
                 } else {
                     console.log("Did not handle", event.key);
                     return; // Do not prevent the early default below.
@@ -279,18 +285,13 @@ class Editor extends Component<EditorProps, EditorState> {
                     onClickCreateCircle={this.createChildBlank}
                     foldComments={this.state.foldingComments}
                     theme={this.props.theme}
-                    contextMenuFor={() => [
-                        {
-                            id: "thing",
-                            label: "Do the thing",
-                            action: () => alert("Look at me ma!"),
-                        },
-                        {
-                            id: "other_thing",
-                            label: "Do the other thing",
-                            action: () => alert("Doing the thing..."),
-                        },
-                    ]}
+                    contextMenuFor={() =>
+                        Object.entries(this.menu).map(([k, v]) => ({
+                            id: v,
+                            label: k,
+                            action: () => (this.actions as { [key: string]: () => void })[v](),
+                        }))
+                    }
                 />
             </div>
         );

@@ -90,6 +90,7 @@ export function ContextMenu({ items, origin, dismissMenu }: ContextMenuProps) {
     }
 
     function onClick(item: ContextMenuItem) {
+        dismissMenu();
         item.action();
     }
 
