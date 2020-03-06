@@ -33,16 +33,19 @@
     "plugins": ["react", "@typescript-eslint", "react-hooks"],
 
     "rules": {
-        "capitalized-comments": ["warn", "always", { "ignoreConsecutiveComments": true }],
         "react-hooks/rules-of-hooks": "error",
         "react-hooks/exhaustive-deps": "warn",
+
+        "capitalized-comments": ["warn", "always", { "ignoreConsecutiveComments": true }],
         "curly": ["error", "multi-line", "consistent"],
         "eqeqeq": ["error", "always", { "null": "ignore" }],
         "spaced-comment": ["error", "always", { "markers": ["TODO:"] }],
         "no-shadow": "error",
+
+        // This is just a pain to have on.
         "@typescript-eslint/explicit-function-return-type": "off",
         "@typescript-eslint/no-use-before-define": ["error", { "classes": false }],
-        "@typescript-eslint/no-empty-interface": ["error", { "allowSingleExtends": true }],
-        "@typescript-eslint/unbound-method": ["error", { "ignoreStatic": true }]
+        "@typescript-eslint/unbound-method": ["error", { "ignoreStatic": true }],
+        "@typescript-eslint/prefer-readonly": ["warn"],
     }
 }
