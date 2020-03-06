@@ -59,7 +59,7 @@ export default function Menu<I extends MenuItem>(props: MenuProps<I>): JSX.Eleme
                             paddingTop: minimalPadding ? 1 : 6,
                             paddingBottom: minimalPadding ? 1 : 6,
                             paddingLeft: minimalPadding ? 0 : 16,
-                            paddingRight: minimalPadding ? 0 : 16,
+                            paddingRight: minimalPadding ? 0 : 10,
                         }}
                     >
                         {props.children(x)}

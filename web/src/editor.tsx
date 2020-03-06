@@ -7,6 +7,7 @@ import ExprView from "expr_view";
 import { Optional, assertSome, insertIndex, reverseObject } from "utils";
 import { Clipboard, Workspace, ClipboardValue, WorkspaceValue } from "workspace";
 import { KaleTheme } from "theme";
+import { ContextMenuItem } from "components/menu";
 
 interface EditorState {
     focused: boolean;
@@ -189,6 +190,15 @@ class Editor extends Component<EditorProps, EditorState> {
         "foldComments",
     ];
 
+    contextMenuFor = (expr: ExprId): ContextMenuItem[] => {
+        return this.exprMenu.map((item, i) => ({
+            id: item ?? i.toString(),
+            label: item && this.menuNames[item],
+            action: item && (() => this.actions[item]()),
+            keyEquivalent: item && this.keyForAction[item],
+        }));
+    };
+
     private readonly keyDown = (event: React.KeyboardEvent) => {
         // Do not handle modifier keys.
         if (event.ctrlKey || event.altKey || event.metaKey) return;
@@ -303,14 +313,7 @@ class Editor extends Component<EditorProps, EditorState> {
                     onClickCreateCircle={this.createChildBlank}
                     foldComments={this.state.foldingComments}
                     theme={this.props.theme}
-                    contextMenuFor={() =>
-                        this.exprMenu.map((item, i) => ({
-                            id: item ?? i.toString(),
-                            label: item && this.menuNames[item],
-                            action: item && (() => this.actions[item]()),
-                            keyEquivalent: item && this.keyForAction[item],
-                        }))
-                    }
+                    contextMenuFor={this.contextMenuFor}
                 />
             </div>
         );
