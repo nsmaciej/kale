@@ -24,7 +24,7 @@ const GlobalStyle = createGlobalStyle`
 }
 body {
     font: 14px/1 "Nunito", sans-serif;
-    color: #404040;
+    color: ${p => p.theme.mainTextColour};
 }
 p {
     line-height: 1.8;

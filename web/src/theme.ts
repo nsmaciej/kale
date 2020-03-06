@@ -5,6 +5,7 @@ export const DefaultTheme = {
     // Text.
     fontSizePx: 13,
     fontFamily: "iA Writer Quattro",
+    mainTextColour: "#404040",
     subtleTextColour: "#7b7b7b",
 
     // Generic colours.

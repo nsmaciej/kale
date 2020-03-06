@@ -158,18 +158,34 @@ class Editor extends Component<EditorProps, EditorState> {
         "/": "disable",
     };
 
-    private readonly menu: { [label: string]: keyof Editor["actions"] } = {
-        Delete: "delete",
-        Replace: "replace",
-        Move: "move",
-        Shuffle: "shuffle",
-        Copy: "copy",
-        "Append blank": "append",
-        "Insert blank": "insert",
-        "Fold comments": "foldComments",
-        "Comment...": "comment",
-        Disable: "disable",
+    private readonly menuNames: { [action in keyof Editor["actions"]]: string } = {
+        delete: "Delete",
+        replace: "Replace",
+        move: "Move",
+        shuffle: "Shuffle",
+        copy: "Copy",
+        append: "Append blank",
+        insert: "Insert blank",
+        foldComments: "Fold comments",
+        comment: "Comment...",
+        disable: "Disable",
     };
+
+    private readonly exprMenu: Optional<keyof Editor["actions"]>[] = [
+        "delete",
+        "replace",
+        "move",
+        "shuffle",
+        null,
+        "copy",
+        null,
+        "append",
+        "insert",
+        null,
+        "disable",
+        "comment",
+        "foldComments",
+    ];
 
     private readonly keyDown = (event: React.KeyboardEvent) => {
         // Do not handle modifier keys.
@@ -286,10 +302,10 @@ class Editor extends Component<EditorProps, EditorState> {
                     foldComments={this.state.foldingComments}
                     theme={this.props.theme}
                     contextMenuFor={() =>
-                        Object.entries(this.menu).map(([k, v]) => ({
-                            id: v,
-                            label: k,
-                            action: () => (this.actions as { [key: string]: () => void })[v](),
+                        this.exprMenu.map((item, i) => ({
+                            id: item ?? i.toString(),
+                            label: item && this.menuNames[item],
+                            action: item && (() => this.actions[item]()),
                         }))
                     }
                 />

@@ -1,7 +1,7 @@
 import React, { ReactNode, useState } from "react";
 import styled from "styled-components";
 import { Stack } from "components";
-import { Optional } from "utils";
+import { Optional, mod, assert } from "utils";
 import { Vec } from "geometry";
 
 const MenuPopover = styled(Stack).attrs({ gap: 1, vertical: true })`
@@ -10,21 +10,19 @@ const MenuPopover = styled(Stack).attrs({ gap: 1, vertical: true })`
     background: #ffffff;
     border-radius: ${p => p.theme.borderRadiusPx}px;
     box-shadow: 0 0 0 1px #10161a1a, 0 2px 4px #10161a33, 0 8px 24px #10161a33;
-    padding: 6px;
+    padding: 6px 0;
     z-index: 1000;
 `;
 
 const MenuItemContainer = styled.div<{ selected: boolean }>`
     user-select: none;
-    border-radius: ${p => p.theme.borderRadiusPx}px;
-    padding: 8px 8px;
     background: ${p => (p.selected ? p.theme.clickableColour : "transparent")};
     display: flex;
     align-items: center;
     & > svg {
         margin-right: 5px;
     }
-    color: ${p => (p.selected ? "white" : "black")};
+    color: ${p => (p.selected ? "white" : p.theme.mainTextColour)};
 `;
 
 export interface MenuItem {
@@ -33,34 +31,53 @@ export interface MenuItem {
 
 interface MenuProps<I> {
     items: readonly I[];
+    width?: number;
     selected: Optional<number>;
     setSelected: (item: I, index: number) => void;
-    children: (item: I) => ReactNode;
     onClick: (item: I, index: number) => void;
+    // Function-children to render a menu item.
+    children: (item: I) => ReactNode;
+    // Special function for the context menu.
+    minimalPadding?: (item: I, index: number) => boolean;
 }
 
 export default function Menu<I extends MenuItem>(props: MenuProps<I>): JSX.Element {
     return (
-        <MenuPopover>
-            {props.items.map((x, i) => (
-                <MenuItemContainer
-                    key={x.id}
-                    onMouseDown={e => e.preventDefault()} // Don't blur.
-                    onClick={() => props.onClick(x, i)}
-                    onContextMenu={e => e.preventDefault()} // Can't right click.
-                    onMouseMove={e => props.setSelected(x, i)}
-                    selected={i === props.selected}
-                >
-                    {props.children(x)}
-                </MenuItemContainer>
-            ))}
+        <MenuPopover style={{ width: props.width ?? "max-content" }}>
+            {props.items.map((x, i) => {
+                const minimalPadding = props.minimalPadding?.(x, i) ?? false;
+                return (
+                    <MenuItemContainer
+                        key={x.id}
+                        onMouseDown={e => e.preventDefault()} // Don't blur.
+                        onClick={() => props.onClick(x, i)}
+                        onContextMenu={e => e.preventDefault()} // Can't right click.
+                        onMouseMove={e => props.setSelected(x, i)}
+                        selected={i === props.selected}
+                        style={{
+                            paddingTop: minimalPadding ? 1 : 6,
+                            paddingBottom: minimalPadding ? 1 : 6,
+                            paddingLeft: minimalPadding ? 0 : 16,
+                            paddingRight: minimalPadding ? 0 : 32,
+                        }}
+                    >
+                        {props.children(x)}
+                    </MenuItemContainer>
+                );
+            })}
         </MenuPopover>
     );
 }
 
+const ContextMenuSeparator = styled.div`
+    height: 1px;
+    background: ${p => p.theme.disabledColour};
+    width: 100%;
+`;
+
 export interface ContextMenuItem extends MenuItem {
-    label: string;
-    action: () => void;
+    label: Optional<string>;
+    action: Optional<() => void>;
 }
 
 interface ContextMenuProps {
@@ -70,18 +87,29 @@ interface ContextMenuProps {
 }
 
 export function ContextMenu({ items, origin, dismissMenu }: ContextMenuProps) {
+    assert(items.length > 0);
     const [selection, setSelection] = useState(null as Optional<number>);
+
+    // Move selection skipping past separators, if the menu consists of only separators,
+    // bad things(tm) will happen.
+    function moveSelection(delta: 1 | -1) {
+        setSelection(current => {
+            let next = current == null ? 0 : mod(current + delta, items.length);
+            while (items[next].label == null) {
+                next = mod(next + delta, items.length);
+            }
+            return next;
+        });
+    }
 
     function onKeyDown(e: React.KeyboardEvent) {
         e.stopPropagation();
         switch (e.key) {
             case "ArrowDown":
-                setSelection(x => (x != null ? (x + 1) % items.length : 0));
+                moveSelection(1);
                 break;
             case "ArrowUp":
-                setSelection(x =>
-                    x != null ? (x - 1 + items.length) % items.length : items.length - 1,
-                );
+                moveSelection(-1);
                 break;
             case "Escape":
                 dismissMenu();
@@ -91,7 +119,7 @@ export function ContextMenu({ items, origin, dismissMenu }: ContextMenuProps) {
 
     function onClick(item: ContextMenuItem) {
         dismissMenu();
-        item.action();
+        item.action?.();
     }
 
     return (
@@ -106,9 +134,11 @@ export function ContextMenu({ items, origin, dismissMenu }: ContextMenuProps) {
                 selected={selection}
                 items={items}
                 onClick={onClick}
-                setSelected={(_, i) => setSelection(i)}
+                // Do not allow selecting separators.
+                setSelected={(_, i) => items[i].label != null && setSelection(i)}
+                minimalPadding={(_, i) => items[i].label == null}
             >
-                {item => item.label}
+                {item => (item.label ? item.label : <ContextMenuSeparator />)}
             </Menu>
         </div>
     );

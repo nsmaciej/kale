@@ -54,3 +54,7 @@ export function partition<T>(array: readonly T[], test: (value: T) => boolean): 
     }
     return [left, right];
 }
+
+export function mod(n: number, m: number): number {
+    return ((n % m) + m) % m;
+}
