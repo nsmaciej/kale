@@ -46,17 +46,26 @@ export const Stack = styled(Box)`
     }
 `;
 
-export const Shortcut = styled.kbd`
-    display: inline;
-    background-color: #eee;
+interface ShortcutProps {
+    subtle?: boolean;
+}
+
+export const Shortcut = styled.kbd<ShortcutProps>`
+    display: inline-block;
+    background-color: ${p => (p.subtle ? "#ffffff" : "#eeeeee")};
     border-radius: 3px;
     border: 1px solid #cecece;
     box-shadow: 0 1px 1px #6b6b6b33;
     font-size: 0.85em;
-    padding: 2px 4px;
+    padding: 2px;
     white-space: nowrap;
-    font-family: inherit;
     font-variant-numeric: normal;
+    min-width: 1.5em;
+    text-align: center;
+    font-family: inherit;
+    /* Ensure we always look snazzy no matter the context */
+    color: ${p => p.theme.mainTextColour};
+    line-height: 1;
 `;
 
 export const SubtleButton = styled.button`

@@ -1,6 +1,6 @@
 import React, { ReactNode, useState } from "react";
 import styled from "styled-components";
-import { Stack } from "components";
+import { Stack, Shortcut } from "components";
 import { Optional, mod, assert } from "utils";
 import { Vec } from "geometry";
 
@@ -33,32 +33,33 @@ interface MenuProps<I> {
     items: readonly I[];
     width?: number;
     selected: Optional<number>;
-    setSelected: (item: I, index: number) => void;
+    setSelected: (index: number | null) => void;
     onClick: (item: I, index: number) => void;
     // Function-children to render a menu item.
     children: (item: I) => ReactNode;
     // Special function for the context menu.
-    minimalPadding?: (item: I, index: number) => boolean;
+    minimalPadding?: (index: number) => boolean;
 }
 
 export default function Menu<I extends MenuItem>(props: MenuProps<I>): JSX.Element {
     return (
         <MenuPopover style={{ width: props.width ?? "max-content" }}>
             {props.items.map((x, i) => {
-                const minimalPadding = props.minimalPadding?.(x, i) ?? false;
+                const minimalPadding = props.minimalPadding?.(i) ?? false;
                 return (
                     <MenuItemContainer
                         key={x.id}
                         onMouseDown={e => e.preventDefault()} // Don't blur.
                         onClick={() => props.onClick(x, i)}
                         onContextMenu={e => e.preventDefault()} // Can't right click.
-                        onMouseMove={e => props.setSelected(x, i)}
+                        onMouseMove={() => props.setSelected(i)}
+                        onMouseLeave={() => props.setSelected(null)}
                         selected={i === props.selected}
                         style={{
                             paddingTop: minimalPadding ? 1 : 6,
                             paddingBottom: minimalPadding ? 1 : 6,
                             paddingLeft: minimalPadding ? 0 : 16,
-                            paddingRight: minimalPadding ? 0 : 32,
+                            paddingRight: minimalPadding ? 0 : 16,
                         }}
                     >
                         {props.children(x)}
@@ -75,9 +76,19 @@ const ContextMenuSeparator = styled.div`
     width: 100%;
 `;
 
+const ContextMenuItemContainer = styled.div`
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    & > kbd {
+        margin-left: 20px;
+    }
+`;
+
 export interface ContextMenuItem extends MenuItem {
     label: Optional<string>;
     action: Optional<() => void>;
+    keyEquivalent?: Optional<string>;
 }
 
 interface ContextMenuProps {
@@ -102,6 +113,11 @@ export function ContextMenu({ items, origin, dismissMenu }: ContextMenuProps) {
         });
     }
 
+    function onClick(item: ContextMenuItem) {
+        dismissMenu();
+        item.action?.();
+    }
+
     function onKeyDown(e: React.KeyboardEvent) {
         e.stopPropagation();
         switch (e.key) {
@@ -114,12 +130,14 @@ export function ContextMenu({ items, origin, dismissMenu }: ContextMenuProps) {
             case "Escape":
                 dismissMenu();
                 break;
+            default:
+                for (const item of items) {
+                    if (item.keyEquivalent === e.key) {
+                        onClick(item);
+                        return;
+                    }
+                }
         }
-    }
-
-    function onClick(item: ContextMenuItem) {
-        dismissMenu();
-        item.action?.();
     }
 
     return (
@@ -135,10 +153,19 @@ export function ContextMenu({ items, origin, dismissMenu }: ContextMenuProps) {
                 items={items}
                 onClick={onClick}
                 // Do not allow selecting separators.
-                setSelected={(_, i) => items[i].label != null && setSelection(i)}
-                minimalPadding={(_, i) => items[i].label == null}
+                setSelected={i => setSelection(i != null && items[i].label != null ? i : null)}
+                minimalPadding={i => items[i].label == null}
             >
-                {item => (item.label ? item.label : <ContextMenuSeparator />)}
+                {item =>
+                    item.label ? (
+                        <ContextMenuItemContainer>
+                            {item.label}
+                            <Shortcut subtle>{item.keyEquivalent?.toUpperCase()}</Shortcut>
+                        </ContextMenuItemContainer>
+                    ) : (
+                        <ContextMenuSeparator />
+                    )
+                }
             </Menu>
         </div>
     );

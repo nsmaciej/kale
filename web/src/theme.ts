@@ -70,5 +70,6 @@ export type KaleTheme = typeof DefaultTheme;
 // See: https://github.com/styled-components/styled-components-website/issues/447
 // and DefaultTheme comments for more.
 declare module "styled-components" {
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
     export interface DefaultTheme extends KaleTheme {}
 }

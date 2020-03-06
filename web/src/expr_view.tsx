@@ -1,4 +1,4 @@
-import React, { PureComponent, Component, ReactNode } from "react";
+import React, { PureComponent, Component } from "react";
 import ReactDOM from "react-dom";
 import styled, { ThemeConsumer } from "styled-components";
 import { motion } from "framer-motion";
@@ -9,7 +9,7 @@ import Expr, { ExprId } from "expr";
 import * as E from "expr";
 import { KaleTheme } from "theme";
 
-import Menu, { MenuItem, ContextMenu, ContextMenuItem } from "components/menu";
+import { ContextMenu, ContextMenuItem } from "components/menu";
 
 import { Area } from "expr_view/core";
 import { layoutExpr } from "expr_view/layout";
@@ -40,7 +40,7 @@ export class DragAndDropSurface extends Component<{}, DragAndDropSurfaceState> {
 
     static readonly Context = React.createContext<Optional<DragAndDropSurfaceContext>>(null);
 
-    private contextValue: DragAndDropSurfaceContext = {
+    private readonly contextValue: DragAndDropSurfaceContext = {
         dismissDrag: this.dismissDrag.bind(this),
         maybeStartDrag: this.maybeStartDrag.bind(this),
     };

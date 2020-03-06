@@ -4,7 +4,7 @@ import { useTheme } from "styled-components";
 import * as E from "expr";
 import Expr, { ExprId } from "expr";
 import ExprView from "expr_view";
-import { Optional, assertSome, insertIndex } from "utils";
+import { Optional, assertSome, insertIndex, reverseObject } from "utils";
 import { Clipboard, Workspace, ClipboardValue, WorkspaceValue } from "workspace";
 import { KaleTheme } from "theme";
 
@@ -26,7 +26,7 @@ interface EditorProps extends EditorWrapperProps {
 }
 
 class Editor extends Component<EditorProps, EditorState> {
-    private containerRef = React.createRef<HTMLDivElement>();
+    private readonly containerRef = React.createRef<HTMLDivElement>();
 
     state: EditorState = {
         selection: this.expr.id,
@@ -157,6 +157,8 @@ class Editor extends Component<EditorProps, EditorState> {
         q: "comment",
         "/": "disable",
     };
+
+    private readonly keyForAction = reverseObject(this.menuKeys);
 
     private readonly menuNames: { [action in keyof Editor["actions"]]: string } = {
         delete: "Delete",
@@ -306,6 +308,7 @@ class Editor extends Component<EditorProps, EditorState> {
                             id: item ?? i.toString(),
                             label: item && this.menuNames[item],
                             action: item && (() => this.actions[item]()),
+                            keyEquivalent: item && this.keyForAction[item],
                         }))
                     }
                 />

@@ -1,9 +1,9 @@
-import React, { useContext, useState, createRef, useMemo, useCallback } from "react";
+import React, { useContext, useState, createRef, useMemo } from "react";
 import styled from "styled-components";
 import { AiOutlinePlusCircle } from "react-icons/ai";
 
 import { EditorHeadingStyle } from "components";
-import { assertSome } from "utils";
+import { Optional, assertSome, mod } from "utils";
 import { Workspace } from "workspace";
 import Menu, { MenuItem } from "components/menu";
 
@@ -42,7 +42,7 @@ interface Suggestion extends MenuItem {
 
 export default function EditorSuggestions({ onCreateEditor }: NewEditorInputProps) {
     const [value, setValue] = useState("");
-    const [selection, setSelection] = useState(0);
+    const [selection, setSelection] = useState<Optional<number>>(0);
     const workspace = assertSome(useContext(Workspace));
     const [focus, bindFocus] = useFocus();
     const inputRef = createRef<HTMLInputElement>();
@@ -77,13 +77,13 @@ export default function EditorSuggestions({ onCreateEditor }: NewEditorInputProp
     function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
         switch (e.key) {
             case "Enter":
-                selectEditor(suggestions[selection].name);
+                if (selection != null) selectEditor(suggestions[selection].name);
                 break;
             case "ArrowDown":
-                setSelection(x => (x + 1) % suggestions.length);
+                setSelection(x => mod(x == null ? 0 : x + 1, suggestions.length));
                 break;
             case "ArrowUp":
-                setSelection(x => (x - 1 + suggestions.length) % suggestions.length);
+                setSelection(x => mod(x == null ? -1 : x - 1, suggestions.length));
                 break;
             default:
                 return;
@@ -113,7 +113,7 @@ export default function EditorSuggestions({ onCreateEditor }: NewEditorInputProp
                     items={suggestions}
                     selected={selection}
                     onClick={x => selectEditor(x.name)}
-                    setSelected={(_, i) => setSelection(i)}
+                    setSelected={i => setSelection(i ?? 0)}
                 >
                     {item => (
                         <>

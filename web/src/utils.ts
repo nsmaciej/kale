@@ -58,3 +58,11 @@ export function partition<T>(array: readonly T[], test: (value: T) => boolean): 
 export function mod(n: number, m: number): number {
     return ((n % m) + m) % m;
 }
+
+export function reverseObject(obj: { [key: string]: string }): { [value: string]: string } {
+    const reversed = {} as { [value: string]: string };
+    for (const key in obj) {
+        reversed[obj[key]] = key;
+    }
+    return reversed;
+}
