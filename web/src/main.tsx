@@ -46,7 +46,7 @@ const Container = styled.div`
         "nav nav nav"
         "toybox editor history";
     grid-template-rows: min-content auto;
-    grid-template-columns: max-content minmax(min-content, auto) max-content;
+    grid-template-columns: max-content minmax(min-content, 1fr) max-content;
     gap: 20px 40px;
     padding: 15px 20px 0;
     height: 100%;
