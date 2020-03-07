@@ -277,14 +277,15 @@ class Editor extends Component<EditorProps, EditorState> {
         if (this.props.stealFocus) this.containerRef.current?.focus();
     }
 
-    componentDidUpdate(prevProps: EditorProps, prevState: EditorState) {
+    componentDidUpdate(prevProps: EditorProps) {
         assert(
             prevProps.topLevelName === this.props.topLevelName,
             "Use a key to create a new Editor component instead",
         );
         // This ensures the selection is always valid. Find the closest existing parent.
         if (!this.expr.contains(this.state.selection)) {
-            const prevExpr = prevProps.workspace.topLevel[prevProps.topLevelName];
+            // We cannot use getTopLevel here because it doesn't use the older topLevel value.
+            const prevExpr = prevProps.workspace.topLevel[prevProps.topLevelName] ?? new E.Blank();
             const [siblings, ix] = prevExpr.siblings(this.state.selection);
             const candidates: Expr[][] = [];
             if (ix != null) {
