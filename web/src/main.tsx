@@ -84,7 +84,13 @@ function Kale() {
     return (
         <Container>
             <HeaderStack>
-                <MainHeading>Kale</MainHeading>
+                <Stack gap={15} alignItems="center" width="300px">
+                    <MainHeading>Kale</MainHeading>
+                    <p>
+                        A visual programming project made by{" "}
+                        <a href="https://maciej.ie">Maciej Goszczycki</a>
+                    </p>
+                </Stack>
                 <Help />
             </HeaderStack>
             <ToyBox />
