@@ -21,7 +21,6 @@ const ExprListItem = styled(motion.div)`
     justify-self: left;
     border: 1px solid #dfe1e5;
     border-radius: ${p => p.theme.exprViewPaddingPx}px;
-    display: flex;
 `;
 
 const ExprListShortcut = styled(Shortcut)`

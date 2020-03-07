@@ -9,11 +9,10 @@ import Expr, { ExprId } from "expr";
 import * as E from "expr";
 import { KaleTheme } from "theme";
 
-import { ContextMenu, ContextMenuItem } from "components/menu";
-
 import { Area } from "expr_view/core";
 import { layoutExpr } from "expr_view/layout";
 import { SvgGroup } from "expr_view/components";
+import ContextMenu, { ContextMenuItem } from "components/context_menu";
 
 interface DragAndDropSurfaceContext {
     maybeStartDrag: (start: Vec, exprStart: Vec, expr: Expr) => void;

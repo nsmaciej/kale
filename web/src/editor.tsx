@@ -7,7 +7,7 @@ import ExprView from "expr_view";
 import { Optional, assertSome, insertIndex, reverseObject, assert } from "utils";
 import { Clipboard, Workspace, ClipboardValue, WorkspaceValue } from "workspace";
 import { KaleTheme } from "theme";
-import { ContextMenuItem } from "components/menu";
+import { ContextMenuItem } from "components/context_menu";
 
 interface EditorState {
     focused: boolean;
