@@ -79,6 +79,7 @@ const ContextMenuSeparator = styled.div`
 const ContextMenuItemContainer = styled.div`
     display: flex;
     justify-content: space-between;
+    align-items: center;
     width: 100%;
     & > kbd {
         margin-left: 20px;
