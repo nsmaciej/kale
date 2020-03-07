@@ -93,6 +93,16 @@ class Editor extends Component<EditorProps, EditorState> {
         this.update(expr => expr.replace(old, next.resetIds().replaceId(old)));
     }
 
+    private buildPasteAction(ix: number): () => void {
+        return () => {
+            const clipboard = this.props.clipboard.clipboard;
+            if (ix < clipboard.length) {
+                this.replaceExpr(this.state.selection, clipboard[ix].expr);
+                this.props.clipboard.use(clipboard[ix].expr.id);
+            }
+        };
+    }
+
     private readonly actions = {
         delete: (e: ExprId) => this.removeExpr(e),
         replace: (e: ExprId) => this.replaceExpr(e, new E.Blank()),
@@ -128,6 +138,7 @@ class Editor extends Component<EditorProps, EditorState> {
         },
     };
 
+    // See https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values.
     private readonly menuKeys: { [key: string]: keyof Editor["actions"] } = {
         d: "delete",
         r: "replace",
@@ -141,43 +152,48 @@ class Editor extends Component<EditorProps, EditorState> {
         "/": "disable",
     };
 
-    private readonly keyForAction = reverseObject(this.menuKeys);
-
-    private readonly menuNames: { [action in keyof Editor["actions"]]: string } = {
-        delete: "Delete",
-        move: "Delete and Copy",
-        replace: "Replace",
-        shuffle: "Replace and Copy",
-        copy: "Copy",
-        append: "Append a Blank",
-        insert: "Insert a Blank",
-        foldComments: "Fold comments",
-        comment: "Comment...",
-        disable: "Disable",
+    // The shortcuts only accessible from the keyboard.
+    private readonly hiddenKeys: { [key: string]: (sel: ExprId) => void } = {
+        h: () => this.setSelection(Editor.selectParent),
+        j: () => this.setSelection(Editor.selectRightSibling),
+        k: () => this.setSelection(Editor.selectLeftSibling),
+        l: () => this.setSelection(Editor.selectFirstCHild),
+        Tab: () => this.setSelection(Editor.selectNextBlank),
+        "1": this.buildPasteAction(0),
+        "2": this.buildPasteAction(1),
+        "3": this.buildPasteAction(2),
+        "4": this.buildPasteAction(3),
+        "5": this.buildPasteAction(4),
+        "6": this.buildPasteAction(5),
+        "7": this.buildPasteAction(6),
+        "8": this.buildPasteAction(7),
+        "9": this.buildPasteAction(9),
+        "0": this.buildPasteAction(9),
     };
 
-    private readonly exprMenu: Optional<keyof Editor["actions"]>[] = [
-        "delete",
-        "move",
-        "replace",
-        "shuffle",
+    private readonly exprMenu: Optional<{ label: string; action: keyof Editor["actions"] }>[] = [
+        { action: "delete", label: "Delete" },
+        { action: "move", label: "Delete and Copy" },
+        { action: "replace", label: "Replace" },
+        { action: "shuffle", label: "Replace and Copy" },
         null,
-        "copy",
+        { action: "copy", label: "Copy" },
         null,
-        "append",
-        "insert",
+        { action: "append", label: "Append a Blank" },
+        { action: "insert", label: "Insert a Blank" },
         null,
-        "disable",
-        "comment",
-        "foldComments",
+        { action: "comment", label: "Comment..." },
+        { action: "disable", label: "Disable" },
+        { action: "foldComments", label: "Fold Comments" },
     ];
 
+    private readonly menuKeyForAction = reverseObject(this.menuKeys);
     contextMenuFor = (expr: ExprId): ContextMenuItem[] => {
         return this.exprMenu.map((item, i) => ({
-            id: item ?? i.toString(),
-            label: item && this.menuNames[item],
-            action: item && (() => this.actions[item](expr)),
-            keyEquivalent: item && this.keyForAction[item],
+            id: item?.action ?? i.toString(),
+            label: item?.label,
+            action: item?.action && (() => this.actions[item.action](expr)),
+            keyEquivalent: item?.action && this.menuKeyForAction[item.action],
         }));
     };
 
@@ -185,44 +201,15 @@ class Editor extends Component<EditorProps, EditorState> {
         // Do not handle modifier keys.
         if (event.ctrlKey || event.altKey || event.metaKey) return;
         const key = event.key;
-        // See https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values.
-        switch (key) {
-            // Logical selection.
-            case "h":
-                this.setSelection(Editor.selectParent);
-                break;
-            case "k":
-                this.setSelection(Editor.selectLeftSibling);
-                break;
-            case "j":
-                this.setSelection(Editor.selectRightSibling);
-                break;
-            case "l":
-                this.setSelection(Editor.selectFirstCHild);
-                break;
-            case "Tab":
-                // We don't want the default "select root" behaviour of setSelection.
-                this.setState(state => ({
-                    selection: Editor.selectNextBlank(this.expr, state.selection),
-                }));
-                break;
-            default:
-                // From clipboard history.
-                if (key >= "0" && key <= "9") {
-                    const ix = parseInt(key);
-                    const clipboard = this.props.clipboard.clipboard;
-                    if (ix < clipboard.length) {
-                        this.replaceExpr(this.state.selection, clipboard[ix].expr);
-                        this.props.clipboard.use(clipboard[ix].expr.id);
-                    }
-                } else if (Object.prototype.hasOwnProperty.call(this.menuKeys, key)) {
-                    this.actions[this.menuKeys[key]](this.state.selection);
-                } else {
-                    console.log("Did not handle", event.key);
-                    return; // Do not prevent the early default below.
-                }
+        if (Object.prototype.hasOwnProperty.call(this.menuKeys, key)) {
+            this.actions[this.menuKeys[key]](this.state.selection);
+            event.preventDefault();
+        } else if (Object.prototype.hasOwnProperty.call(this.hiddenKeys, key)) {
+            this.hiddenKeys[key](this.state.selection);
+            event.preventDefault();
+        } else {
+            console.log("Did not handle", event.key);
         }
-        event.preventDefault();
     };
 
     private createSiblingBlank(expr: ExprId) {
