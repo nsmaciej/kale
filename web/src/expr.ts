@@ -120,6 +120,19 @@ export default abstract class Expr {
         });
     }
 
+    parents(id: Optional<ExprId>): Expr[] {
+        if (id == null) return [];
+        let current = id;
+        const parents = [];
+        for (;;) {
+            const parent = this.parentOf(current);
+            if (parent == null) break;
+            parents.push(parent);
+            current = parent.id;
+        }
+        return parents;
+    }
+
     parentOf(id: Optional<ExprId>): Optional<Expr> {
         if (id == null) return null;
         return this.find(

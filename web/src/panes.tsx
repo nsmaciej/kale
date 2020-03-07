@@ -210,7 +210,12 @@ export function EditorStack() {
                                 />
                             </EditorHeader>
                             <Box marginTop={10} marginBottom={20}>
-                                <InnerEditor topLevelName={editor.topLevel} stealFocus={i === 0} />
+                                <InnerEditor
+                                    topLevelName={editor.topLevel}
+                                    //TODO: This seems reasonable but not sure if needed.
+                                    key={editor.topLevel}
+                                    stealFocus={i === 0}
+                                />
                             </Box>
                         </motion.div>
                     ))}

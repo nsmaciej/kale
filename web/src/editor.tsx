@@ -4,7 +4,7 @@ import { useTheme } from "styled-components";
 import * as E from "expr";
 import Expr, { ExprId } from "expr";
 import ExprView from "expr_view";
-import { Optional, assertSome, insertIndex, reverseObject } from "utils";
+import { Optional, assertSome, insertIndex, reverseObject, assert } from "utils";
 import { Clipboard, Workspace, ClipboardValue, WorkspaceValue } from "workspace";
 import { KaleTheme } from "theme";
 import { ContextMenuItem } from "components/menu";
@@ -47,30 +47,13 @@ class Editor extends Component<EditorProps, EditorState> {
         this.props.clipboard.add({ expr, pinned: false });
     }
 
-    private addSelectionToClipboard() {
-        const selected = this.expr.withId(this.state.selection);
+    private addExprToClipboard(expr: ExprId) {
+        const selected = this.expr.withId(expr);
         if (selected) this.addToClipboard(selected);
     }
 
-    private removeSelection() {
-        this.update(expr => {
-            const [siblings, ix] = expr.siblings(this.state.selection);
-            const oldParent = expr.parentOf(this.state.selection)?.id;
-            const newExpr =
-                expr.remove(this.state.selection) ?? new E.Blank(E.exprData("Double click me"));
-            const closestSibling = ix == null ? null : siblings[ix + 1]?.id ?? siblings[ix - 1]?.id;
-            this.setState({
-                selection:
-                    // Try to select our right sibling, or left sibling.
-                    closestSibling ??
-                    // Otherwise our parent, or its parent if it gets deleted (by list pruning).
-                    oldParent ??
-                    expr.parentOf(oldParent)?.id ??
-                    // Otherwise the new root.
-                    newExpr.id,
-            });
-            return newExpr;
-        });
+    private removeExpr(sel: ExprId) {
+        this.update(expr => expr.remove(sel) ?? new E.Blank(E.exprData("Double click me")));
     }
 
     private static selectParent(expr: Expr, sel: ExprId) {
@@ -106,38 +89,37 @@ class Editor extends Component<EditorProps, EditorState> {
         }));
     }
 
-    private replaceSelection(next: Expr) {
-        const sel = this.state.selection;
-        this.update(expr => expr.replace(sel, next.resetIds().replaceId(sel)));
+    private replaceExpr(old: ExprId, next: Expr) {
+        this.update(expr => expr.replace(old, next.resetIds().replaceId(old)));
     }
 
     private readonly actions = {
-        delete: () => this.removeSelection(),
-        replace: () => this.replaceSelection(new E.Blank()),
-        move: () => {
-            this.addSelectionToClipboard();
-            this.removeSelection();
+        delete: (e: ExprId) => this.removeExpr(e),
+        replace: (e: ExprId) => this.replaceExpr(e, new E.Blank()),
+        move: (e: ExprId) => {
+            this.addExprToClipboard(e);
+            this.removeExpr(e);
         },
-        shuffle: () => {
-            this.addSelectionToClipboard();
-            this.replaceSelection(new E.Blank());
+        shuffle: (e: ExprId) => {
+            this.addExprToClipboard(e);
+            this.replaceExpr(e, new E.Blank());
         },
-        copy: () => this.addSelectionToClipboard(),
-        append: () => this.createChildBlank(this.state.selection),
-        insert: () => this.createSiblingBlank(),
-        foldComments: () => this.setState(state => ({ foldingComments: !state.foldingComments })),
-        comment: () => {
-            const sel = this.state.selection;
-            const selected = this.expr.withId(sel);
+        copy: (e: ExprId) => this.addExprToClipboard(e),
+        append: (e: ExprId) => this.createChildBlank(e),
+        insert: (e: ExprId) => this.createSiblingBlank(e),
+        foldComments: (_: ExprId) =>
+            this.setState(state => ({ foldingComments: !state.foldingComments })),
+        comment: (e: ExprId) => {
+            const selected = this.expr.withId(e);
             if (selected != null) {
                 const comment = prompt("Comment?", selected.data.comment) ?? undefined;
-                this.update(expr => expr.assignToDataWithId(sel, { comment }));
+                this.update(expr => expr.assignToDataWithId(e, { comment }));
             }
         },
-        disable: () => {
+        disable: (e: ExprId) => {
             this.update(expr =>
                 assertSome(
-                    expr.update(this.state.selection, x => {
+                    expr.update(e, x => {
                         if (x instanceof E.Blank) return x;
                         return x.assignToData({ disabled: !x.data.disabled });
                     }),
@@ -163,12 +145,12 @@ class Editor extends Component<EditorProps, EditorState> {
 
     private readonly menuNames: { [action in keyof Editor["actions"]]: string } = {
         delete: "Delete",
+        move: "Delete and Copy",
         replace: "Replace",
-        move: "Move",
-        shuffle: "Shuffle",
+        shuffle: "Replace and Copy",
         copy: "Copy",
-        append: "Append blank",
-        insert: "Insert blank",
+        append: "Append a Blank",
+        insert: "Insert a Blank",
         foldComments: "Fold comments",
         comment: "Comment...",
         disable: "Disable",
@@ -176,8 +158,8 @@ class Editor extends Component<EditorProps, EditorState> {
 
     private readonly exprMenu: Optional<keyof Editor["actions"]>[] = [
         "delete",
-        "replace",
         "move",
+        "replace",
         "shuffle",
         null,
         "copy",
@@ -194,7 +176,7 @@ class Editor extends Component<EditorProps, EditorState> {
         return this.exprMenu.map((item, i) => ({
             id: item ?? i.toString(),
             label: item && this.menuNames[item],
-            action: item && (() => this.actions[item]()),
+            action: item && (() => this.actions[item](expr)),
             keyEquivalent: item && this.keyForAction[item],
         }));
     };
@@ -230,11 +212,11 @@ class Editor extends Component<EditorProps, EditorState> {
                     const ix = parseInt(key);
                     const clipboard = this.props.clipboard.clipboard;
                     if (ix < clipboard.length) {
-                        this.replaceSelection(clipboard[ix].expr);
+                        this.replaceExpr(this.state.selection, clipboard[ix].expr);
                         this.props.clipboard.use(clipboard[ix].expr.id);
                     }
                 } else if (Object.prototype.hasOwnProperty.call(this.menuKeys, key)) {
-                    this.actions[this.menuKeys[key]]();
+                    this.actions[this.menuKeys[key]](this.state.selection);
                 } else {
                     console.log("Did not handle", event.key);
                     return; // Do not prevent the early default below.
@@ -243,9 +225,8 @@ class Editor extends Component<EditorProps, EditorState> {
         event.preventDefault();
     };
 
-    private createSiblingBlank() {
-        const sel = this.state.selection;
-        const parent = this.expr.parentOf(sel);
+    private createSiblingBlank(expr: ExprId) {
+        const parent = this.expr.parentOf(expr);
         const blank = new E.Blank();
 
         // Special case: wrap the expr in a list.
@@ -257,10 +238,10 @@ class Editor extends Component<EditorProps, EditorState> {
 
         let next: Expr;
         if (parent instanceof E.Call) {
-            const ix = parent.args.findIndex(x => x.id === sel);
+            const ix = parent.args.findIndex(x => x.id === expr);
             next = new E.Call(parent.fn, insertIndex(parent.args, ix, blank), parent.data);
         } else if (parent instanceof E.List) {
-            const ix = parent.list.findIndex(x => x.id === sel);
+            const ix = parent.list.findIndex(x => x.id === expr);
             next = new E.List(insertIndex(parent.list, ix, blank), parent.data);
         } else {
             return; // Bail out early.
@@ -291,8 +272,34 @@ class Editor extends Component<EditorProps, EditorState> {
     private readonly focusChanged = () => {
         this.setState({ focused: document.activeElement?.id === "editor" });
     };
+
     componentDidMount() {
         if (this.props.stealFocus) this.containerRef.current?.focus();
+    }
+
+    componentDidUpdate(prevProps: EditorProps, prevState: EditorState) {
+        assert(
+            prevProps.topLevelName === this.props.topLevelName,
+            "Use a key to create a new Editor component instead",
+        );
+        // This ensures the selection is always valid. Find the closest existing parent.
+        if (!this.expr.contains(this.state.selection)) {
+            const prevExpr = prevProps.workspace.topLevel[prevProps.topLevelName];
+            const [siblings, ix] = prevExpr.siblings(this.state.selection);
+            const candidates: Expr[][] = [];
+            if (ix != null) {
+                candidates.push(siblings.slice(ix + 1));
+                candidates.push(siblings.slice(0, ix));
+            }
+            candidates.push(prevExpr.parents(this.state.selection));
+            for (const option of candidates.flat()) {
+                if (this.expr.contains(option.id)) {
+                    this.setState({ selection: option.id });
+                    return;
+                }
+            }
+            this.setState({ selection: this.expr.id }); // Last resort.
+        }
     }
 
     render() {
