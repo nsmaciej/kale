@@ -1,0 +1,20 @@
+language: node_js
+node_js: node
+
+before_install: cd web
+
+script:
+  - npm run build
+  - mkdir deploy
+  - cp -r dist vendor deploy
+  - cp index.html deploy
+
+deploy:
+  provider: pages
+  skip_cleanup: true
+  github_token: $GITHUB_TOKEN
+  local_dir: deploy
+  keep_history: false
+  fqdn: kale.maciej.ie
+  on:
+    branch: master
