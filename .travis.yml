@@ -13,7 +13,7 @@ deploy:
   provider: pages
   skip_cleanup: true
   github_token: $GITHUB_TOKEN
-  local_dir: deploy
+  local_dir: web/deploy
   keep_history: false
   fqdn: kale.maciej.ie
   on:
