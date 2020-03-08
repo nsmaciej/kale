@@ -8,7 +8,7 @@ import Expr from "expr";
 import ExprView from "expr_view";
 import { Box, Stack, SubtleButton, NonIdealText, EditorHeadingStyle, Shortcut } from "components";
 import InnerEditor from "editor";
-import { assertSome, removeIndex } from "utils";
+import { assertSome, removeIndex, mod } from "utils";
 import { Clipboard } from "workspace";
 import EditorSuggestions from "components/editor_suggestions";
 
@@ -21,6 +21,7 @@ const ExprListItem = styled(motion.div)`
     justify-self: left;
     border: 1px solid #dfe1e5;
     border-radius: ${p => p.theme.exprViewPaddingPx}px;
+    display: flex;
 `;
 
 const ExprListShortcut = styled(Shortcut)`
@@ -51,7 +52,7 @@ interface ShortcutExpr {
 
 interface ExprViewListProps<E> {
     animate?: boolean;
-    small?: boolean;
+    maxWidth?: number;
     items: E[];
     frozen?: boolean;
     fallback?: ReactNode;
@@ -63,7 +64,7 @@ function ExprViewList<E extends ShortcutExpr>({
     frozen,
     animate,
     fallback,
-    small,
+    maxWidth,
     extras,
 }: ExprViewListProps<E>) {
     const theme = useTheme();
@@ -78,7 +79,7 @@ function ExprViewList<E extends ShortcutExpr>({
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.1, ease: "easeIn" }}
             >
-                <ExprView expr={item.expr} frozen={frozen} theme={theme} scale={small ? 0.6 : 1} />
+                <ExprView expr={item.expr} frozen={frozen} theme={theme} maxWidth={maxWidth} />
                 {extras && <Extras>{extras(item)}</Extras>}
             </ExprListItem>
         </Fragment>
@@ -118,7 +119,7 @@ export function ClipboardList() {
     const clipboard = assertSome(useContext(Clipboard));
     const history = clipboard.clipboard.map((x, i) => ({
         ...x,
-        shortcut: i < 10 ? i.toString() : undefined,
+        shortcut: i < 10 ? mod(i + 1, 10).toString() : undefined,
     }));
     return (
         <Box gridArea="history" overflow="auto">
@@ -134,7 +135,7 @@ export function ClipboardList() {
             <ExprViewList
                 frozen
                 animate
-                small
+                maxWidth={300}
                 items={history}
                 fallback={
                     <NonIdealText>

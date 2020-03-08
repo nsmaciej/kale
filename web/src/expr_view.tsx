@@ -133,7 +133,7 @@ interface ExprViewProps {
     contextMenuFor?: (expr: ExprId) => ContextMenuItem[];
 
     // Looks.
-    scale?: number;
+    maxWidth?: number;
     frozen?: boolean;
     foldComments?: boolean;
 
@@ -287,7 +287,7 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
             : [selectionRect, highlightRect];
 
         const { width, height } = size.pad(padding.scale(2));
-        const scale = this.props.scale ?? 1;
+        const scale = Math.min(this.props.maxWidth ?? width, width) / width;
         return (
             <>
                 <svg
