@@ -2,7 +2,7 @@ import * as ReactDOM from "react-dom";
 import React from "react";
 import styled, { ThemeProvider, StyleSheetManager, createGlobalStyle } from "styled-components";
 
-import { DragAndDropSurface } from "expr_view";
+import DragAndDropSurface from "drag_and_drop";
 import TextMetrics from "text_metrics";
 import { DefaultTheme } from "theme";
 import { Stack, Shortcut } from "components";
