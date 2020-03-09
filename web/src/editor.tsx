@@ -109,9 +109,10 @@ class Editor extends Component<EditorProps, EditorState> {
 
     private replaceAndEdit(expr: ExprId, next: Expr) {
         // Replace expr but using the callback.
-        const value = assertSome(next.value());
         this.replaceExpr(expr, next);
-        //TODO: Start editing.
+        //TODO: No.
+        // ReplaceExpr will re-use the expr ID.
+        this.forceUpdate(() => this.startEditing(expr));
     }
 
     private readonly actions = {
