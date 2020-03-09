@@ -88,7 +88,7 @@ export default function ContextMenu({ items, origin, dismissMenu }: ContextMenuP
                     dismissMenu();
                 }
                 break;
-            default:
+            default: {
                 let i = 0;
                 for (const item of items) {
                     if (item.keyEquivalent === e.key) {
@@ -97,6 +97,7 @@ export default function ContextMenu({ items, origin, dismissMenu }: ContextMenuP
                     }
                     i++;
                 }
+            }
         }
     }
 

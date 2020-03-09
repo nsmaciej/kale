@@ -1,4 +1,4 @@
-import React, { PureComponent, Component } from "react";
+import React, { PureComponent } from "react";
 import { motion } from "framer-motion";
 
 import { Optional, assert, assertSome } from "utils";
@@ -13,9 +13,23 @@ import { Area } from "expr_view/core";
 import { layoutExpr } from "expr_view/layout";
 import { SvgGroup } from "expr_view/components";
 
+// The `in` is weird here. See https://github.com/microsoft/TypeScript/issues/1778.
+export type ExprAreaMap = { [expr in ExprId]: { inline: boolean; rect: Rect } };
+
+function flattenArea(parent: Area): ExprAreaMap {
+    const map: ExprAreaMap = {};
+    function traverse(area: Area, origin: Vec) {
+        map[area.expr.id] = { inline: area.inline, rect: area.rect.shift(origin) };
+        for (const child of area.children) traverse(child, area.rect.origin.add(origin));
+    }
+    traverse(parent, Vec.zero);
+    return map;
+}
+
 interface ExprViewProps {
     expr: Expr;
     theme: KaleTheme;
+    exprAreaMapRef?: React.RefObject<ExprAreaMap>;
 
     // Callbacks.
     onClick?: (expr: ExprId) => void;
@@ -45,6 +59,9 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
     declare context: React.ContextType<typeof DragAndDrop>;
 
     state: ExprViewState = { highlight: null, showingMenu: null };
+    // This is computed during the render phase, we only call the onExprAreaMap once
+    // we are mounted or updated.
+    pendingExprAreaMap: ExprAreaMap = {};
 
     get theme() {
         return this.props.theme;
@@ -85,21 +102,10 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
         );
     }
 
-    private findExprRect(expr: ExprId, area: Area): Optional<Rect> {
-        if (area.expr.id === expr) return area.rect;
-        for (const child of area.children) {
-            const rect = this.findExprRect(expr, child);
-            if (rect != null) return rect.shift(area.rect.origin);
-        }
-        return null;
-    }
-
-    private drawRect(expr: Optional<ExprId>, isSelection: boolean, area: Area) {
+    private drawRect(expr: Optional<ExprId>, isSelection: boolean, areas: ExprAreaMap) {
         if (expr == null) return;
         if (!isSelection && !this.props.focused) return;
-
-        const rect = this.findExprRect(expr, area)?.pad(this.theme.selection.paddingPx);
-        if (rect == null) return; // This happens when an expression is removed.
+        const rect = assertSome(areas[expr].rect);
 
         const isHole = this.props.expr.withId(expr) instanceof E.Blank;
         return (
@@ -146,6 +152,24 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
         });
     };
 
+    private updateExprAreaMapRef() {
+        if (this.props.exprAreaMapRef) {
+            // See https://github.com/DefinitelyTyped/DefinitelyTyped/issues/31065
+            // As far as I can see React's users are free to modify .current, but the typings do not
+            // respect that.
+            (this.props.exprAreaMapRef as React.MutableRefObject<
+                ExprAreaMap
+            >).current = this.pendingExprAreaMap;
+        }
+    }
+
+    componentDidMount() {
+        this.updateExprAreaMapRef();
+    }
+    componentDidUpdate() {
+        this.updateExprAreaMapRef();
+    }
+
     render() {
         //TODO: Remove these binds.
         const { nodes, size, areas } = layoutExpr(this.theme, this.props.expr, {
@@ -162,18 +186,20 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
 
         // Selection and highlight drawing logic.
         const padding = new Vec(this.theme.exprViewPaddingPx);
-        const area = {
+        // Spooky in React's Concurrent Mode, but it's ok since we'll only use this when
+        // we commit and it doesn't depend on any previous calls to render.
+        this.pendingExprAreaMap = flattenArea({
             expr: this.props.expr,
             children: areas,
             rect: new Rect(padding, size),
             inline: false,
-        };
+        });
 
         // Note: A similar check has to be perfomed in expr_layout for blanks.
         const highlight = this.props.frozen ? null : this.state.highlight;
         const selection = this.props.selection;
-        const highlightRect = this.drawRect(highlight, false, area);
-        const selectionRect = this.drawRect(selection, true, area);
+        const highlightRect = this.drawRect(highlight, false, this.pendingExprAreaMap);
+        const selectionRect = this.drawRect(selection, true, this.pendingExprAreaMap);
         const layers = this.props.expr.withId(highlight)?.contains(selection)
             ? [highlightRect, selectionRect]
             : [selectionRect, highlightRect];

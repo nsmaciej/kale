@@ -3,7 +3,7 @@ import { useTheme } from "styled-components";
 
 import * as E from "expr";
 import Expr, { ExprId } from "expr";
-import ExprView from "expr_view";
+import ExprView, { ExprAreaMap } from "expr_view";
 import { Optional, assertSome, insertIndex, reverseObject, assert } from "utils";
 import { Clipboard, Workspace, ClipboardValue, WorkspaceValue } from "workspace";
 import { KaleTheme } from "theme";
@@ -26,8 +26,36 @@ interface EditorProps extends EditorWrapperProps {
     theme: KaleTheme;
 }
 
+function selectParent(expr: Expr, sel: ExprId) {
+    return expr.parentOf(sel)?.id;
+}
+
+function selectLeftSibling(expr: Expr, sel: ExprId) {
+    const [siblings, ix] = expr.siblings(sel);
+    if (ix == null || ix === 0) return;
+    return siblings[ix - 1]?.id;
+}
+
+function selectRightSibling(expr: Expr, sel: ExprId) {
+    const [siblings, ix] = expr.siblings(sel);
+    if (ix == null) return;
+    return siblings[ix + 1]?.id;
+}
+
+function selectFirstChild(expr: Expr, sel: ExprId) {
+    return expr.withId(sel)?.children()[0]?.id;
+}
+
+function selectNextBlank(expr: Expr, sel: Optional<ExprId>) {
+    const blanks = expr.findAll(x => x instanceof E.Blank);
+    const ix = blanks.findIndex(x => x.id === sel);
+    if (ix === -1) return blanks[0].id;
+    return blanks[(ix + 1) % blanks.length].id;
+}
+
 class Editor extends Component<EditorProps, EditorState> {
     private readonly containerRef = React.createRef<HTMLDivElement>();
+    private readonly exprAreaMapRef = React.createRef<ExprAreaMap>();
 
     state: EditorState = {
         selection: this.expr.id,
@@ -56,48 +84,34 @@ class Editor extends Component<EditorProps, EditorState> {
         this.update(expr => expr.remove(sel) ?? new E.Blank(E.exprData("Double click me")));
     }
 
-    private static selectParent(expr: Expr, sel: ExprId) {
-        return expr.parentOf(sel)?.id;
-    }
-
-    private static selectLeftSibling(expr: Expr, sel: ExprId) {
-        const [siblings, ix] = expr.siblings(sel);
-        if (ix == null || ix === 0) return;
-        return siblings[ix - 1]?.id;
-    }
-
-    private static selectRightSibling(expr: Expr, sel: ExprId) {
-        const [siblings, ix] = expr.siblings(sel);
-        if (ix == null) return;
-        return siblings[ix + 1]?.id;
-    }
-
-    private static selectFirstCHild(expr: Expr, sel: ExprId) {
-        return expr.withId(sel)?.children()[0]?.id;
-    }
-
-    private static selectNextBlank(expr: Expr, sel: Optional<ExprId>) {
-        const blanks = expr.findAll(x => x instanceof E.Blank);
-        const ix = blanks.findIndex(x => x.id === sel);
-        if (ix === -1) return blanks[0].id;
-        return blanks[(ix + 1) % blanks.length].id;
-    }
-
     private setSelection(reducer: (expr: Expr, sel: ExprId) => Optional<ExprId>) {
         this.setState(state => ({
             selection: reducer(this.expr, state.selection) ?? state.selection,
         }));
     }
 
+    private setVisualSelection(expr: ExprId, direction: "up" | "down" | "left" | "right") {
+        const inline = this.exprAreaMapRef.current?.[expr]?.inline;
+        if (direction === "up") {
+            this.setSelection(inline ? selectParent : selectLeftSibling);
+        } else if (direction === "down") {
+            this.setSelection(inline ? selectFirstChild : selectRightSibling);
+        } else if (direction === "left") {
+            this.setSelection(inline ? selectLeftSibling : selectParent);
+        } else if (direction === "right") {
+            this.setSelection(inline ? selectRightSibling : selectFirstChild);
+        }
+    }
+
     private replaceExpr(old: ExprId, next: Expr) {
         this.update(expr => expr.replace(old, next.resetIds().replaceId(old)));
     }
 
-    private buildPasteAction(ix: number): () => void {
-        return () => {
+    private buildPasteAction(ix: number): (expr: ExprId) => void {
+        return expr => {
             const clipboard = this.props.clipboard.clipboard;
             if (ix < clipboard.length) {
-                this.replaceExpr(this.state.selection, clipboard[ix].expr);
+                this.replaceExpr(expr, clipboard[ix].expr);
                 this.props.clipboard.use(clipboard[ix].expr.id);
             }
         };
@@ -117,8 +131,7 @@ class Editor extends Component<EditorProps, EditorState> {
         copy: (e: ExprId) => this.addExprToClipboard(e),
         append: (e: ExprId) => this.createChildBlank(e),
         insert: (e: ExprId) => this.createSiblingBlank(e),
-        foldComments: (_: ExprId) =>
-            this.setState(state => ({ foldingComments: !state.foldingComments })),
+        foldComments: () => this.setState(state => ({ foldingComments: !state.foldingComments })),
         comment: (e: ExprId) => {
             const selected = this.expr.withId(e);
             if (selected != null) {
@@ -154,11 +167,15 @@ class Editor extends Component<EditorProps, EditorState> {
 
     // The shortcuts only accessible from the keyboard.
     private readonly hiddenKeys: { [key: string]: (sel: ExprId) => void } = {
-        h: () => this.setSelection(Editor.selectParent),
-        j: () => this.setSelection(Editor.selectRightSibling),
-        k: () => this.setSelection(Editor.selectLeftSibling),
-        l: () => this.setSelection(Editor.selectFirstCHild),
-        Tab: () => this.setSelection(Editor.selectNextBlank),
+        h: () => this.setSelection(selectParent),
+        j: () => this.setSelection(selectRightSibling),
+        k: () => this.setSelection(selectLeftSibling),
+        l: () => this.setSelection(selectFirstChild),
+        Tab: () => this.setSelection(selectNextBlank),
+        ArrowUp: e => this.setVisualSelection(e, "up"),
+        ArrowDown: e => this.setVisualSelection(e, "down"),
+        ArrowLeft: e => this.setVisualSelection(e, "left"),
+        ArrowRight: e => this.setVisualSelection(e, "right"),
         "1": this.buildPasteAction(0),
         "2": this.buildPasteAction(1),
         "3": this.buildPasteAction(2),
@@ -212,8 +229,8 @@ class Editor extends Component<EditorProps, EditorState> {
         }
     };
 
-    private createSiblingBlank(expr: ExprId) {
-        const parent = this.expr.parentOf(expr);
+    private createSiblingBlank(target: ExprId) {
+        const parent = this.expr.parentOf(target);
         const blank = new E.Blank();
 
         // Special case: wrap the expr in a list.
@@ -225,10 +242,10 @@ class Editor extends Component<EditorProps, EditorState> {
 
         let next: Expr;
         if (parent instanceof E.Call) {
-            const ix = parent.args.findIndex(x => x.id === expr);
+            const ix = parent.args.findIndex(x => x.id === target);
             next = new E.Call(parent.fn, insertIndex(parent.args, ix, blank), parent.data);
         } else if (parent instanceof E.List) {
-            const ix = parent.list.findIndex(x => x.id === expr);
+            const ix = parent.list.findIndex(x => x.id === target);
             next = new E.List(insertIndex(parent.list, ix, blank), parent.data);
         } else {
             return; // Bail out early.
@@ -304,11 +321,13 @@ class Editor extends Component<EditorProps, EditorState> {
                     expr={this.expr}
                     selection={this.state.selection}
                     focused={this.state.focused}
-                    onClick={this.exprSelected}
-                    onClickCreateCircle={this.createChildBlank}
                     foldComments={this.state.foldingComments}
                     theme={this.props.theme}
+                    exprAreaMapRef={this.exprAreaMapRef}
+                    // Callbacks.
                     contextMenuFor={this.contextMenuFor}
+                    onClick={this.exprSelected}
+                    onClickCreateCircle={this.createChildBlank}
                 />
             </div>
         );
