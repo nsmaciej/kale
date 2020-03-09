@@ -209,7 +209,11 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
         const selection = this.props.selection;
         const highlightRect = this.drawRect(highlight, false, this.pendingExprAreaMap);
         const selectionRect = this.drawRect(selection, true, this.pendingExprAreaMap);
-        const layers = this.props.expr.withId(highlight)?.contains(selection)
+        const highlightContainsSelection =
+            highlight != null && selection != null
+                ? this.props.expr.withId(highlight)?.contains(selection)
+                : false;
+        const layers = highlightContainsSelection
             ? [highlightRect, selectionRect]
             : [selectionRect, highlightRect];
 

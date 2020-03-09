@@ -51,7 +51,7 @@ export default abstract class Expr {
         throw new UnvisitableExpr(this);
     }
 
-    contains(expr: Optional<ExprId>): boolean {
+    contains(expr: ExprId): boolean {
         return this.withId(expr) != null;
     }
 
@@ -60,12 +60,11 @@ export default abstract class Expr {
     }
 
     // Find a sub-expr with an id.
-    withId(id: Optional<ExprId>): Optional<Expr> {
-        return id == null ? null : this.find(x => x.id === id);
+    withId(id: ExprId): Optional<Expr> {
+        return this.find(x => x.id === id);
     }
 
-    update(id: Optional<ExprId>, update: (expr: Expr) => Optional<Expr>): Optional<Expr> {
-        if (id == null) return this;
+    update(id: ExprId, update: (expr: Expr) => Optional<Expr>): Optional<Expr> {
         return this.filterMap(x => (x.id === id ? update(x) : x));
     }
 
@@ -79,7 +78,7 @@ export default abstract class Expr {
         throw new UnvisitableExpr(this);
     }
 
-    assignToDataWithId(id: Optional<ExprId>, value: Partial<ExprData>): Expr {
+    assignToDataWithId(id: ExprId, value: Partial<ExprData>): Expr {
         return assertSome(this.update(id, x => x.assignToData(value)));
     }
 
@@ -93,7 +92,7 @@ export default abstract class Expr {
         return this.assignToData({ id });
     }
 
-    replace(old: Optional<ExprId>, next: Expr): Expr {
+    replace(old: ExprId, next: Expr): Expr {
         return assertSome(this.update(old, () => next));
     }
 
@@ -120,8 +119,7 @@ export default abstract class Expr {
         });
     }
 
-    parents(id: Optional<ExprId>): Expr[] {
-        if (id == null) return [];
+    parents(id: ExprId): Expr[] {
         let current = id;
         const parents = [];
         for (;;) {
@@ -133,8 +131,7 @@ export default abstract class Expr {
         return parents;
     }
 
-    parentOf(id: Optional<ExprId>): Optional<Expr> {
-        if (id == null) return null;
+    parentOf(id: ExprId): Optional<Expr> {
         return this.find(
             x =>
                 (x instanceof Call && x.args.some(i => i.id === id)) ||
@@ -148,7 +145,7 @@ export default abstract class Expr {
         return [];
     }
 
-    siblings(id: Optional<ExprId>): [readonly Expr[], Optional<number>] {
+    siblings(id: ExprId): [readonly Expr[], Optional<number>] {
         const siblings = this.parentOf(id)?.children() ?? [];
         const index = siblings.findIndex(x => x.id === id);
         return [siblings, index < 0 ? null : index];
@@ -170,7 +167,7 @@ export default abstract class Expr {
         return this.visit(new ExprFilterMap(fn));
     }
 
-    remove(id: Optional<ExprId>): Optional<Expr> {
+    remove(id: ExprId): Optional<Expr> {
         return this.update(id, () => null);
     }
 }
