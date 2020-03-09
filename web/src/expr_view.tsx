@@ -105,7 +105,7 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
     private drawRect(expr: Optional<ExprId>, isSelection: boolean, areas: ExprAreaMap) {
         if (expr == null) return;
         if (!isSelection && !this.props.focused) return;
-        const rect = assertSome(areas[expr].rect);
+        const rect = assertSome(areas[expr].rect).pad(this.theme.selection.paddingPx);
 
         const isHole = this.props.expr.withId(expr) instanceof E.Blank;
         return (
