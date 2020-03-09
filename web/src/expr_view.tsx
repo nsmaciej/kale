@@ -32,11 +32,12 @@ interface ExprViewProps {
     exprAreaMapRef?: React.RefObject<ExprAreaMap>;
 
     // Callbacks.
-    onClick?: (expr: ExprId) => void;
-    onClickCreateCircle?: (expr: ExprId) => void;
+    onClick?(expr: ExprId): void;
+    onDoubleClick?(expr: ExprId): void;
+    onClickCreateCircle?(expr: ExprId): void;
 
     // Delegation.
-    contextMenuFor?: (expr: ExprId) => ContextMenuItem[];
+    contextMenuFor?(expr: ExprId): ContextMenuItem[];
 
     // Looks.
     maxWidth?: number;
@@ -65,35 +66,6 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
 
     get theme() {
         return this.props.theme;
-    }
-
-    // Generic click action passed on using the props.
-    private onClickExpr(event: React.MouseEvent, expr: Expr) {
-        event.stopPropagation();
-        assertSome(this.context).dismissDrag();
-        this.props.onClick?.(expr.id);
-    }
-
-    // Chang the highlighted expr.
-    private onHoverExpr(event: React.MouseEvent, expr: Optional<Expr>) {
-        event.stopPropagation();
-        if (!this.props.frozen) this.setState({ highlight: expr?.id });
-    }
-
-    // Handler for the mousedown event.
-    private onMouseDown(event: React.MouseEvent, expr: Expr) {
-        assert(event.type === "mousedown");
-        if (event.buttons !== 1) return;
-        event.stopPropagation();
-        const rect = (event.target as SVGElement).getBoundingClientRect();
-        assertSome(this.context).maybeStartDrag(
-            Vec.fromPage(event),
-            //TODO: This only really works well for the top-left element of an expr. For example
-            // this doesn't work for functions with comments on top of them, since the offset is
-            // relative to the function name instead of the whole expression.
-            Vec.fromBoundingRect(rect),
-            this.props.frozen ? this.props.expr : expr,
-        );
     }
 
     private drawRect(expr: Optional<ExprId>, isSelection: boolean, areas: ExprAreaMap) {
@@ -134,6 +106,22 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
         );
     }
 
+    // Handler for the mousedown event.
+    private onMouseDown(event: React.MouseEvent, expr: Expr) {
+        assert(event.type === "mousedown");
+        if (event.buttons !== 1) return;
+        event.stopPropagation();
+        const rect = (event.target as SVGElement).getBoundingClientRect();
+        assertSome(this.context).maybeStartDrag(
+            Vec.fromPage(event),
+            //TODO: This only really works well for the top-left element of an expr. For example
+            // this doesn't work for functions with comments on top of them, since the offset is
+            // relative to the function name instead of the whole expression.
+            Vec.fromBoundingRect(rect),
+            this.props.frozen ? this.props.expr : expr,
+        );
+    }
+
     private onContextMenu(e: React.MouseEvent, expr: Expr) {
         if (this.props.contextMenuFor == null) return;
         e.preventDefault();
@@ -146,19 +134,36 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
         });
     }
 
+    // Change the highlighted expr.
+    private onHoverExpr(event: React.MouseEvent, expr: Optional<Expr>) {
+        event.stopPropagation();
+        if (!this.props.frozen) this.setState({ highlight: expr?.id });
+    }
+
+    private readonly exprPropsFor = (expr: Expr): Partial<React.DOMAttributes<Element>> => ({
+        onMouseEnter: e => this.onHoverExpr(e, expr),
+        onMouseLeave: e => this.onHoverExpr(e, null),
+        onContextMenu: e => this.onContextMenu(e, expr),
+        onMouseDown: e => this.onMouseDown(e, expr),
+        onMouseUp: e => {
+            e.stopPropagation();
+            assertSome(this.context).dismissDrag();
+        },
+        onDoubleClick: e => {
+            e.stopPropagation();
+            this.props.onDoubleClick?.(expr.id);
+        },
+        onClick: e => {
+            e.stopPropagation();
+            this.props.onClick?.(expr.id);
+        },
+    });
+
     private readonly onClickCreateCircle = (event: React.MouseEvent, expr: Expr) => {
         //TODO: Might make sense to have a better delegation mechanism.
         event.stopPropagation();
         this.props.onClickCreateCircle?.(expr.id);
     };
-
-    private readonly exprPropsFor = (expr: Expr): Partial<React.DOMAttributes<Element>> => ({
-        onMouseEnter: e => this.onHoverExpr(e, expr),
-        onMouseLeave: e => this.onHoverExpr(e, null),
-        onClick: e => this.onClickExpr(e, expr),
-        onMouseDown: e => this.onMouseDown(e, expr),
-        onContextMenu: e => this.onContextMenu(e, expr),
-    });
 
     private updateExprAreaMapRef() {
         if (this.props.exprAreaMapRef) {
