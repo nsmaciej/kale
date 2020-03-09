@@ -5,32 +5,32 @@ import { Optional } from "utils";
 
 export type SelectFn = (expr: Expr, sel: ExprId, areas: ExprAreaMap) => Optional<ExprId>;
 
-const selectParent: SelectFn = (expr, sel) => {
+export const parent: SelectFn = (expr, sel) => {
     return expr.parentOf(sel)?.id;
 };
 
-const selectLeftSibling: SelectFn = (expr, sel) => {
+const leftSibling: SelectFn = (expr, sel) => {
     const [siblings, ix] = expr.siblings(sel);
     if (ix == null || ix === 0) return null;
     return siblings[ix - 1]?.id;
 };
 
-const selectRightSibling: SelectFn = (expr, sel) => {
+const rightBiling: SelectFn = (expr, sel) => {
     const [siblings, ix] = expr.siblings(sel);
     if (ix == null) return null;
     return siblings[ix + 1]?.id;
 };
 
-const selectFirstChild: SelectFn = (expr, sel) => {
+const firstChild: SelectFn = (expr, sel) => {
     return expr.withId(sel)?.children()[0]?.id;
 };
 
 // Select only non-inline blocks.
 function smartBlockSelection(selectSibling: SelectFn): SelectFn {
     return (expr, sel, areas) => {
-        for (const parent of expr.parents(sel)) {
-            if (!areas[parent.id].inline) {
-                const sibling = selectSibling(expr, parent.id, areas);
+        for (const parentExpr of expr.parents(sel)) {
+            if (!areas[parentExpr.id].inline) {
+                const sibling = selectSibling(expr, parentExpr.id, areas);
                 if (sibling != null) return sibling;
             }
         }
@@ -64,9 +64,9 @@ export const nextBlank: SelectFn = (expr, sel) => {
     return blanks[(ix + 1) % blanks.length].id;
 };
 
-export const rightSiblingSmart = smartSelection(selectRightSibling, selectFirstChild);
-export const leftSiblingSmart = smartSelection(selectLeftSibling, selectParent);
-export const firstChildSmart = smartSelection(selectFirstChild, null, selectRightSibling);
-export const parentSmart = smartSelection(selectParent, null, selectLeftSibling);
-export const upSmart = smartBlockSelection(selectLeftSibling);
-export const downSmart = smartBlockSelection(selectRightSibling);
+export const rightSiblingSmart = smartSelection(rightBiling, firstChild);
+export const leftSiblingSmart = smartSelection(leftSibling, parent);
+export const firstChildSmart = smartSelection(firstChild, null, rightBiling);
+export const parentSmart = smartSelection(parent, null, leftSibling);
+export const upSmart = smartBlockSelection(leftSibling);
+export const downSmart = smartBlockSelection(rightBiling);

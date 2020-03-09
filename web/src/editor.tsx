@@ -178,6 +178,7 @@ class Editor extends Component<EditorProps, EditorState> {
         j: e => this.setSmartSelection(e, "down"),
         k: e => this.setSmartSelection(e, "up"),
         l: e => this.setSmartSelection(e, "right"),
+        p: () => this.setSelection(Select.parent),
         Tab: () => this.setSelection(Select.nextBlank),
         ArrowUp: e => this.setSmartSelection(e, "up"),
         ArrowDown: e => this.setSmartSelection(e, "down"),
