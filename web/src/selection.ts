@@ -15,7 +15,7 @@ const leftSibling: SelectFn = (expr, sel) => {
     return siblings[ix - 1]?.id;
 };
 
-const rightBiling: SelectFn = (expr, sel) => {
+const rightSibling: SelectFn = (expr, sel) => {
     const [siblings, ix] = expr.siblings(sel);
     if (ix == null) return null;
     return siblings[ix + 1]?.id;
@@ -23,6 +23,22 @@ const rightBiling: SelectFn = (expr, sel) => {
 
 const firstChild: SelectFn = (expr, sel) => {
     return expr.withId(sel)?.children()[0]?.id;
+};
+
+const lastChild: SelectFn = (expr, sel) => {
+    const children = expr.withId(sel)?.children();
+    if (children == null) return null;
+    return children[children.length - 1]?.id;
+};
+
+const leftDeepestChild: SelectFn = (expr, sel, areas) => {
+    let r = leftSibling(expr, sel, areas);
+    while (r != null) {
+        const next = lastChild(expr, r, areas);
+        if (next == null) return r;
+        r = next;
+    }
+    return r;
 };
 
 // Select only non-inline blocks.
@@ -38,18 +54,14 @@ function smartBlockSelection(selectSibling: SelectFn): SelectFn {
     };
 }
 
-function smartSelection(
-    first: SelectFn,
-    fallback?: Optional<SelectFn>,
-    parentFallback = first,
-): SelectFn {
+function smartSelection(first: SelectFn, fallback: SelectFn): SelectFn {
     return (expr, sel, areas) => {
         // Try the first selection function or its fallback.
-        const simple = first(expr, sel, areas) ?? fallback?.(expr, sel, areas);
+        const simple = first(expr, sel, areas) ?? fallback(expr, sel, areas);
         if (simple != null) return simple;
         // Otherwise try using the parentFallback on each parent.
-        for (const parent of expr.parents(sel)) {
-            const next = parentFallback(expr, parent.id, areas);
+        for (const parentExpr of expr.parents(sel)) {
+            const next = fallback(expr, parentExpr.id, areas);
             if (next != null) return next;
         }
         return null;
@@ -64,9 +76,12 @@ export const nextBlank: SelectFn = (expr, sel) => {
     return blanks[(ix + 1) % blanks.length].id;
 };
 
-export const rightSiblingSmart = smartSelection(rightBiling, firstChild);
+// Skip past children.
+export const rightSiblingSmart = smartSelection(rightSibling, rightSibling);
 export const leftSiblingSmart = smartSelection(leftSibling, parent);
-export const firstChildSmart = smartSelection(firstChild, null, rightBiling);
-export const parentSmart = smartSelection(parent, null, leftSibling);
+// Non-inline siblings.
 export const upSmart = smartBlockSelection(leftSibling);
-export const downSmart = smartBlockSelection(rightBiling);
+export const downSmart = smartBlockSelection(rightSibling);
+// Pre-order traversal.
+export const leftSmart = smartSelection(leftDeepestChild, parent);
+export const rightSmart = smartSelection(firstChild, rightSibling);

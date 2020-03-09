@@ -87,9 +87,9 @@ class Editor extends Component<EditorProps, EditorState> {
         } else if (direction === "down") {
             this.setSelection(inline ? Select.downSmart : Select.rightSiblingSmart);
         } else if (direction === "left") {
-            this.setSelection(inline ? Select.leftSiblingSmart : Select.parentSmart);
+            this.setSelection(Select.leftSmart);
         } else if (direction === "right") {
-            this.setSelection(inline ? Select.rightSiblingSmart : Select.firstChildSmart);
+            this.setSelection(Select.rightSmart);
         }
     }
 
@@ -179,6 +179,8 @@ class Editor extends Component<EditorProps, EditorState> {
         k: e => this.setSmartSelection(e, "up"),
         l: e => this.setSmartSelection(e, "right"),
         p: () => this.setSelection(Select.parent),
+        H: () => this.setSelection(Select.leftSiblingSmart),
+        L: () => this.setSelection(Select.rightSiblingSmart),
         Tab: () => this.setSelection(Select.nextBlank),
         ArrowUp: e => this.setSmartSelection(e, "up"),
         ArrowDown: e => this.setSmartSelection(e, "down"),
