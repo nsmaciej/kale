@@ -17,7 +17,7 @@ import { UnderlineLine, SvgLine, HitBox, HoverHitBox } from "expr_view/component
 const Code = styled.text`
     font-size: ${p => p.theme.fontSizePx}px;
     font-family: ${p => p.theme.fontFamily};
-    dominant-baseline: text-before-edge;
+    /* dominant-baseline: text-before-edge; */
 `;
 
 const CommentIndicator = styled.tspan`
@@ -134,7 +134,7 @@ class ExprLayout implements ExprVisitor<Layout> {
                     fontStyle={italic ? "italic" : undefined}
                     fontWeight={bold ? "bold" : undefined}
                     x={offset?.x}
-                    y={offset?.y}
+                    y={(offset?.y ?? 0) + this.t.fontSizePx}
                     {...this.exprProps(expr)}
                     key={0}
                 >

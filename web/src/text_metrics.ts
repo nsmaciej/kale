@@ -46,7 +46,7 @@ export default class TextMetrics {
         this._textElement.textContent = text.replace(/ /g, nbsp);
         this._textElement.style.fontWeight = bold ? "bold" : "normal";
         this._textElement.style.fontStyle = italic ? "italic" : "normal";
-        const width = this._textElement.getComputedTextLength();
+        const width = Math.round(this._textElement.getComputedTextLength());
         this._metricsCache[key] = width;
         return new Size(width, height);
     }

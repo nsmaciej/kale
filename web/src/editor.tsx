@@ -366,7 +366,7 @@ class Editor extends Component<EditorProps, EditorState> {
                             TextMetrics.global.measure(value || " ", { bold, italic }).width,
                             TextMetrics.global.measure(originalValue, { bold, italic }).width,
                         ) +
-                        fudge * 2,
+                        fudge * 3,
                     color: colour,
                     fontStyle: italic ? "italic" : undefined,
                     fontWeight: bold ? "bold" : undefined,
