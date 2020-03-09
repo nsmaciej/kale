@@ -2,6 +2,7 @@ import React, { Component, useContext } from "react";
 import { useTheme } from "styled-components";
 
 import * as E from "expr";
+import * as Select from "selection";
 import Expr, { ExprId } from "expr";
 import ExprView, { ExprAreaMap } from "expr_view";
 import { Optional, assertSome, insertIndex, reverseObject, assert } from "utils";
@@ -25,73 +26,6 @@ interface EditorProps extends EditorWrapperProps {
     clipboard: ClipboardValue;
     theme: KaleTheme;
 }
-
-type SelectionFunction = (expr: Expr, sel: ExprId, areas: ExprAreaMap) => Optional<ExprId>;
-
-const selectNextBlank: SelectionFunction = (expr, sel) => {
-    const blanks = expr.findAll(x => x instanceof E.Blank);
-    const ix = blanks.findIndex(x => x.id === sel);
-    if (ix === -1) return blanks[0].id;
-    return blanks[(ix + 1) % blanks.length].id;
-};
-
-const selectParent: SelectionFunction = (expr, sel) => {
-    return expr.parentOf(sel)?.id;
-};
-
-const selectLeftSibling: SelectionFunction = (expr, sel) => {
-    const [siblings, ix] = expr.siblings(sel);
-    if (ix == null || ix === 0) return null;
-    return siblings[ix - 1]?.id;
-};
-
-const selectRightSibling: SelectionFunction = (expr, sel) => {
-    const [siblings, ix] = expr.siblings(sel);
-    if (ix == null) return null;
-    return siblings[ix + 1]?.id;
-};
-
-const selectFirstChild: SelectionFunction = (expr, sel) => {
-    return expr.withId(sel)?.children()[0]?.id;
-};
-
-// Select only non-inline blocks.
-function smartBlockSelection(selectSibling: SelectionFunction): SelectionFunction {
-    return (expr, sel, areas) => {
-        for (const parent of expr.parents(sel)) {
-            if (!areas[parent.id].inline) {
-                const sibling = selectSibling(expr, parent.id, areas);
-                if (sibling != null) return sibling;
-            }
-        }
-        return null;
-    };
-}
-
-function smartSelection(
-    first: SelectionFunction,
-    fallback?: Optional<SelectionFunction>,
-    parentFallback = first,
-): SelectionFunction {
-    return (expr, sel, areas) => {
-        // Try the first selection function or its fallback.
-        const simple = first(expr, sel, areas) ?? fallback?.(expr, sel, areas);
-        if (simple != null) return simple;
-        // Otherwise try using the parentFallback on each parent.
-        for (const parent of expr.parents(sel)) {
-            const next = parentFallback(expr, parent.id, areas);
-            if (next != null) return next;
-        }
-        return null;
-    };
-}
-
-const selectRightSiblingSmart = smartSelection(selectRightSibling, selectFirstChild);
-const selectLeftSiblingSmart = smartSelection(selectLeftSibling, selectParent);
-const selectFirstChildSmart = smartSelection(selectFirstChild, null, selectRightSibling);
-const selectParentSmart = smartSelection(selectParent, null, selectLeftSibling);
-const selectUpSmart = smartBlockSelection(selectLeftSibling);
-const selectDownSmart = smartBlockSelection(selectRightSibling);
 
 class Editor extends Component<EditorProps, EditorState> {
     private readonly containerRef = React.createRef<HTMLDivElement>();
@@ -124,7 +58,7 @@ class Editor extends Component<EditorProps, EditorState> {
         this.update(expr => expr.remove(sel) ?? new E.Blank(E.exprData("Double click me")));
     }
 
-    private setSelection(reducer: SelectionFunction) {
+    private setSelection(reducer: Select.SelectFn) {
         this.setState(state => ({
             selection:
                 reducer(this.expr, state.selection, assertSome(this.exprAreaMapRef.current)) ??
@@ -135,13 +69,13 @@ class Editor extends Component<EditorProps, EditorState> {
     private setSmartSelection(expr: ExprId, direction: "up" | "down" | "left" | "right") {
         const inline = this.exprAreaMapRef.current?.[expr]?.inline;
         if (direction === "up") {
-            this.setSelection(inline ? selectUpSmart : selectLeftSiblingSmart);
+            this.setSelection(inline ? Select.upSmart : Select.leftSiblingSmart);
         } else if (direction === "down") {
-            this.setSelection(inline ? selectDownSmart : selectRightSiblingSmart);
+            this.setSelection(inline ? Select.downSmart : Select.rightSiblingSmart);
         } else if (direction === "left") {
-            this.setSelection(inline ? selectLeftSiblingSmart : selectParentSmart);
+            this.setSelection(inline ? Select.leftSiblingSmart : Select.parentSmart);
         } else if (direction === "right") {
-            this.setSelection(inline ? selectRightSiblingSmart : selectFirstChildSmart);
+            this.setSelection(inline ? Select.rightSiblingSmart : Select.firstChildSmart);
         }
     }
 
@@ -213,7 +147,7 @@ class Editor extends Component<EditorProps, EditorState> {
         j: e => this.setSmartSelection(e, "down"),
         k: e => this.setSmartSelection(e, "up"),
         l: e => this.setSmartSelection(e, "right"),
-        Tab: () => this.setSelection(selectNextBlank),
+        Tab: () => this.setSelection(Select.nextBlank),
         ArrowUp: e => this.setSmartSelection(e, "up"),
         ArrowDown: e => this.setSmartSelection(e, "down"),
         ArrowLeft: e => this.setSmartSelection(e, "left"),
