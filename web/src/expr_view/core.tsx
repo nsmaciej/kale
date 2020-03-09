@@ -5,6 +5,15 @@ import { Optional, max } from "utils";
 import { SvgGroup } from "expr_view/components";
 import Expr from "expr";
 
+export interface TextProperties {
+    italic?: boolean;
+    bold?: boolean;
+    colour?: string;
+    title?: string;
+    offset?: Vec;
+    commentIndicator?: boolean;
+}
+
 export interface Underline {
     level: number;
     offset: number;
@@ -14,20 +23,25 @@ export interface Underline {
 export interface Area {
     rect: Rect;
     expr: Expr;
+    text: Optional<TextProperties>;
     children: Area[];
     // Needed for setAreasHeightInPlace. See its comment.
     inline: boolean;
 }
 
 export class Layout {
+    // Do not forget to update withNoUnderlines when adding properties.
     size: Size;
     nodes: ReactNode[] = [];
-    inline = false;
     underlines: Underline[] = [];
-    expr: Optional<Expr>;
     areas: Area[] = [];
     isUnderlined = false;
     inlineExprs = new Set<Expr>();
+
+    // Things that will get copied to areas.
+    expr: Optional<Expr>;
+    inline = false;
+    text: Optional<TextProperties>;
 
     // Important: The node passed here should have a key, otherwise it might end up in a list, and
     // React will complain. A safe key is '0'.
@@ -40,6 +54,7 @@ export class Layout {
         const layout = new Layout(this.nodes.slice(), this.size);
         layout.areas = this.areas;
         layout.expr = this.expr;
+        layout.text = this.text;
         layout.inlineExprs = this.inlineExprs;
         //TODO: Note this also turns off inline (which is the default). This makes
         // right arrow not-always intuitive.
@@ -92,13 +107,15 @@ export class Layout {
                 expr: layout.expr,
                 children: layout.areas,
                 inline: layout.inline,
+                text: layout.text,
             });
         } else {
             // Adopt the areas.
-            const orphans = layout.areas.map(({ rect, expr, children, inline }) => ({
+            const orphans = layout.areas.map(({ rect, expr, children, inline, text }) => ({
                 expr,
                 children,
                 inline,
+                text,
                 rect: rect.shift(origin),
             }));
             this.areas.push(...orphans);

@@ -9,12 +9,13 @@ import { Optional, assertSome, insertIndex, reverseObject, assert } from "utils"
 import { Clipboard, Workspace, ClipboardValue, WorkspaceValue } from "workspace";
 import { KaleTheme } from "theme";
 import { ContextMenuItem } from "components/context_menu";
+import TextMetrics from "text_metrics";
 
 interface EditorState {
     focused: boolean;
     selection: ExprId;
     foldingComments: boolean;
-    editingInline: Optional<{ expr: ExprId; value: string }>;
+    editingInline: Optional<{ expr: ExprId; value: string; originalValue: string }>;
 }
 
 interface EditorWrapperProps {
@@ -33,9 +34,9 @@ const InlineEditor = styled.input`
     font-family: ${p => p.theme.fontFamily};
     font-size: ${p => p.theme.fontSizePx}px;
     line-height: 1;
-    padding: 0;
+    padding: 2px;
     border-radius: ${p => p.theme.borderRadiusPx}px;
-    border: 0;
+    border: 1px solid ${p => p.theme.clickableColour};
 `;
 
 class Editor extends Component<EditorProps, EditorState> {
@@ -279,7 +280,7 @@ class Editor extends Component<EditorProps, EditorState> {
         } else {
             throw new E.UnvisitableExpr(parent);
         }
-        this.setState({ editingInline: { expr, value } });
+        this.setState({ editingInline: { expr, value, originalValue: value } });
     };
 
     componentDidMount() {
@@ -313,8 +314,8 @@ class Editor extends Component<EditorProps, EditorState> {
     }
 
     private renderInlineEditor() {
-        const { expr, value } = assertSome(this.state.editingInline);
-        const rect = assertSome(this.exprAreaMapRef.current)[expr].rect;
+        const { expr, value, originalValue } = assertSome(this.state.editingInline);
+        const { rect, textProps } = assertSome(this.exprAreaMapRef.current)[expr];
 
         const onKeyDown = (e: React.KeyboardEvent) => {
             e.stopPropagation();
@@ -339,18 +340,36 @@ class Editor extends Component<EditorProps, EditorState> {
             );
         };
 
+        const { offset, colour, italic, bold } = assertSome(textProps);
+        const fudge = 3; // How much to add for border and padding.
         return (
             <InlineEditor
                 value={value}
                 //TODO: No idea why we need the +2.
-                style={{ top: rect.y + 2, left: rect.x, width: rect.width }}
+                style={{
+                    top: rect.y + 2.3 + (offset?.y ?? 0) - fudge,
+                    left: rect.x + (offset?.x ?? 0) - fudge,
+                    width:
+                        Math.max(
+                            TextMetrics.global.measure(value, { bold, italic }).width,
+                            TextMetrics.global.measure(originalValue, { bold, italic }).width,
+                        ) +
+                        fudge * 2,
+                    color: colour,
+                    fontStyle: italic ? "italic" : undefined,
+                    fontWeight: bold ? "bold" : undefined,
+                }}
                 ref={r => r?.focus()}
                 //TODO: Stop the editor from doing stuff, should check for focus instead.
                 onKeyDown={onKeyDown}
                 onChange={e => {
                     const content = e.target?.value; // Get if now before it's gone.
                     this.setState(s => ({
-                        editingInline: { expr: s.editingInline!.expr, value: content },
+                        editingInline: {
+                            expr: s.editingInline!.expr,
+                            value: content,
+                            originalValue: s.editingInline!.originalValue,
+                        },
                     }));
                 }}
             />

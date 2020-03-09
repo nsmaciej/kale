@@ -9,17 +9,8 @@ import Expr, { ExprId, ExprVisitor } from "expr";
 import * as E from "expr";
 import TextMetrics from "text_metrics";
 
-import { Layout, hstack, vstack, Area } from "expr_view/core";
+import { Layout, TextProperties, hstack, vstack, Area } from "expr_view/core";
 import { UnderlineLine, SvgLine, HitBox, HoverHitBox } from "expr_view/components";
-
-interface TextProperties {
-    italic?: boolean;
-    bold?: boolean;
-    colour?: string;
-    title?: string;
-    offset?: Vec;
-    commentIndicator?: boolean;
-}
 
 // See https://vanseodesign.com/web-design/svg-text-baseline-alignment/ for excellent discussion
 // on SVG text aligment properties.
@@ -133,11 +124,8 @@ class ExprLayout implements ExprVisitor<Layout> {
         return this.props.exprPropsFor?.(expr);
     }
 
-    private layoutText(
-        expr: Expr,
-        text: string,
-        { italic, colour, title, bold, offset, commentIndicator }: TextProperties = {},
-    ) {
+    private layoutText(expr: Expr, text: string, props: TextProperties = {}) {
+        const { italic, colour, title, bold, offset, commentIndicator } = props;
         const disabled = expr.data.disabled || this.state.hasDisabledParent;
         const layout = new Layout(
             (
@@ -158,6 +146,7 @@ class ExprLayout implements ExprVisitor<Layout> {
             TextMetrics.global.measure(text, { italic, bold }),
         );
         layout.inline = true;
+        layout.text = props;
         return layout;
     }
 
@@ -216,14 +205,15 @@ class ExprLayout implements ExprVisitor<Layout> {
     }
 
     visitLiteral(expr: E.Literal): Layout {
-        let content = expr.content;
-        if (expr.type === "str") {
-            content = `"${expr.content}"`;
-        } else if (expr.type === "symbol") {
-            content = expr.content + ":";
-        } else if (expr.type === "int") {
-            content = new Intl.NumberFormat().format(parseFloat(expr.content));
-        }
+        const content = expr.content;
+        //TODO: Enable later.
+        // if (expr.type === "str") {
+        //     content = `"${expr.content}"`;
+        // } else if (expr.type === "symbol") {
+        //     content = expr.content + ":";
+        // } else if (expr.type === "int") {
+        //     content = new Intl.NumberFormat().format(parseFloat(expr.content));
+        // }
 
         return this.layoutText(expr, content, {
             title: expr.data.comment,
@@ -299,13 +289,14 @@ class ExprLayout implements ExprVisitor<Layout> {
     visitCall(expr: E.Call): Layout {
         const args = expr.args.map(x => this.layoutInner(expr, x), this);
         const inline = isCallInline(this.t, args);
+        const textProps: TextProperties = {
+            bold: !inline,
+            commentIndicator: expr.data.comment != null && this.props.foldComments,
+            colour: this.t.callColour,
+        };
         const fnName = hstack(
             this.t.createCircle.maxRadius,
-            this.layoutText(expr, expr.fn, {
-                bold: !inline,
-                commentIndicator: expr.data.comment != null && this.props.foldComments,
-                colour: this.t.callColour,
-            }),
+            this.layoutText(expr, expr.fn, textProps),
             this.layoutCreateCircle(expr),
         );
 
@@ -329,7 +320,9 @@ class ExprLayout implements ExprVisitor<Layout> {
         }
 
         const comment = this.layoutComment(expr);
-        return vstack(this.t.lineSpacingPx, comment, layout);
+        const finalLayout = vstack(this.t.lineSpacingPx, comment, layout);
+        finalLayout.text = textProps;
+        return finalLayout;
     }
 }
 

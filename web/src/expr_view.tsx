@@ -9,17 +9,23 @@ import { KaleTheme } from "theme";
 import { DragAndDrop } from "drag_and_drop";
 import ContextMenu, { ContextMenuItem } from "components/context_menu";
 
-import { Area } from "expr_view/core";
+import { Area, TextProperties } from "expr_view/core";
 import { layoutExpr } from "expr_view/layout";
 import { SvgGroup } from "expr_view/components";
 
 // The `in` is weird here. See https://github.com/microsoft/TypeScript/issues/1778.
-export type ExprAreaMap = { [expr in ExprId]: { inline: boolean; rect: Rect } };
+export type ExprAreaMap = {
+    [expr in ExprId]: { inline: boolean; rect: Rect; textProps: Optional<TextProperties> };
+};
 
 function flattenArea(parent: Area): ExprAreaMap {
     const map: ExprAreaMap = {};
     function traverse(area: Area, origin: Vec) {
-        map[area.expr.id] = { inline: area.inline, rect: area.rect.shift(origin) };
+        map[area.expr.id] = {
+            inline: area.inline,
+            rect: area.rect.shift(origin),
+            textProps: area.text,
+        };
         for (const child of area.children) traverse(child, area.rect.origin.add(origin));
     }
     traverse(parent, Vec.zero);
@@ -202,6 +208,7 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
             children: areas,
             rect: new Rect(padding, size),
             inline: false,
+            text: null,
         });
 
         // Note: A similar check has to be perfomed in expr_layout for blanks.
