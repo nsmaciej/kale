@@ -191,7 +191,7 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
 
     render() {
         //TODO: Remove these binds.
-        const { nodes, size, areas } = layoutExpr(this.theme, this.props.expr, {
+        const { nodes, size, areas, text } = layoutExpr(this.theme, this.props.expr, {
             frozen: this.props.frozen,
             focused: this.props.focused,
             selection: this.props.selection,
@@ -209,7 +209,7 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
             children: areas,
             rect: new Rect(padding, size),
             inline: false,
-            text: null,
+            text,
         });
 
         // Note: A similar check has to be perfomed in expr_layout for blanks.
