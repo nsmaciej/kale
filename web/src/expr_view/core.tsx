@@ -41,6 +41,8 @@ export class Layout {
         layout.areas = this.areas;
         layout.expr = this.expr;
         layout.inlineExprs = this.inlineExprs;
+        //TODO: Note this also turns off inline (which is the default). This makes
+        // right arrow not-always intuitive.
         return layout;
     }
 

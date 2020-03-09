@@ -26,32 +26,57 @@ interface EditorProps extends EditorWrapperProps {
     theme: KaleTheme;
 }
 
-function selectParent(expr: Expr, sel: ExprId) {
-    return expr.parentOf(sel)?.id;
-}
+type SelectionFunction = (expr: Expr, sel: ExprId) => Optional<ExprId>;
 
-function selectLeftSibling(expr: Expr, sel: ExprId) {
-    const [siblings, ix] = expr.siblings(sel);
-    if (ix == null || ix === 0) return;
-    return siblings[ix - 1]?.id;
-}
-
-function selectRightSibling(expr: Expr, sel: ExprId) {
-    const [siblings, ix] = expr.siblings(sel);
-    if (ix == null) return;
-    return siblings[ix + 1]?.id;
-}
-
-function selectFirstChild(expr: Expr, sel: ExprId) {
-    return expr.withId(sel)?.children()[0]?.id;
-}
-
-function selectNextBlank(expr: Expr, sel: Optional<ExprId>) {
+const selectNextBlank: SelectionFunction = (expr, sel) => {
     const blanks = expr.findAll(x => x instanceof E.Blank);
     const ix = blanks.findIndex(x => x.id === sel);
     if (ix === -1) return blanks[0].id;
     return blanks[(ix + 1) % blanks.length].id;
+};
+
+const selectParent: SelectionFunction = (expr, sel) => {
+    return expr.parentOf(sel)?.id;
+};
+
+const selectLeftSibling: SelectionFunction = (expr, sel) => {
+    const [siblings, ix] = expr.siblings(sel);
+    if (ix == null || ix === 0) return null;
+    return siblings[ix - 1]?.id;
+};
+
+const selectRightSibling: SelectionFunction = (expr, sel) => {
+    const [siblings, ix] = expr.siblings(sel);
+    if (ix == null) return null;
+    return siblings[ix + 1]?.id;
+};
+
+const selectFirstChild: SelectionFunction = (expr, sel) => {
+    return expr.withId(sel)?.children()[0]?.id;
+};
+
+function smartSelection(
+    first: SelectionFunction,
+    fallback?: Optional<SelectionFunction>,
+    parentFallback = first,
+): SelectionFunction {
+    return (expr, sel) => {
+        // Try the first selection function or its fallback.
+        const simple = first(expr, sel) ?? fallback?.(expr, sel);
+        if (simple != null) return simple;
+        // Otherwise try using the parentFallback on each parent.
+        for (const parent of expr.parents(sel)) {
+            const next = parentFallback(expr, parent.id);
+            if (next != null) return next;
+        }
+        return null;
+    };
 }
+
+const selectRightSiblingSmart = smartSelection(selectRightSibling, selectFirstChild);
+const selectLeftSiblingSmart = smartSelection(selectLeftSibling, selectParent);
+const selectFirstChildSmart = smartSelection(selectFirstChild, null, selectRightSibling);
+const selectParentSmart = smartSelection(selectParent, null, selectLeftSibling);
 
 class Editor extends Component<EditorProps, EditorState> {
     private readonly containerRef = React.createRef<HTMLDivElement>();
@@ -84,7 +109,7 @@ class Editor extends Component<EditorProps, EditorState> {
         this.update(expr => expr.remove(sel) ?? new E.Blank(E.exprData("Double click me")));
     }
 
-    private setSelection(reducer: (expr: Expr, sel: ExprId) => Optional<ExprId>) {
+    private setSelection(reducer: SelectionFunction) {
         this.setState(state => ({
             selection: reducer(this.expr, state.selection) ?? state.selection,
         }));
@@ -93,13 +118,13 @@ class Editor extends Component<EditorProps, EditorState> {
     private setVisualSelection(expr: ExprId, direction: "up" | "down" | "left" | "right") {
         const inline = this.exprAreaMapRef.current?.[expr]?.inline;
         if (direction === "up") {
-            this.setSelection(inline ? selectParent : selectLeftSibling);
+            this.setSelection(inline ? selectParentSmart : selectLeftSiblingSmart);
         } else if (direction === "down") {
-            this.setSelection(inline ? selectFirstChild : selectRightSibling);
+            this.setSelection(inline ? selectFirstChildSmart : selectRightSiblingSmart);
         } else if (direction === "left") {
-            this.setSelection(inline ? selectLeftSibling : selectParent);
+            this.setSelection(inline ? selectLeftSiblingSmart : selectParentSmart);
         } else if (direction === "right") {
-            this.setSelection(inline ? selectRightSibling : selectFirstChild);
+            this.setSelection(inline ? selectRightSiblingSmart : selectFirstChildSmart);
         }
     }
 
