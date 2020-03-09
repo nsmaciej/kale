@@ -72,23 +72,24 @@ class Editor extends Component<EditorProps, EditorState> {
         this.update(expr => expr.remove(sel) ?? new E.Blank(E.exprData("Double click me")));
     }
 
-    private setSelection(reducer: Select.SelectFn) {
-        this.setState(state => ({
-            selection:
-                reducer(this.expr, state.selection, assertSome(this.exprAreaMapRef.current)) ??
-                this.expr.id,
-        }));
+    private selectionAction(reducer: Select.SelectFn): () => void {
+        return () =>
+            this.setState(state => ({
+                selection:
+                    reducer(this.expr, state.selection, assertSome(this.exprAreaMapRef.current)) ??
+                    this.expr.id,
+            }));
     }
 
     private replaceExpr(old: ExprId, next: Expr) {
         this.update(expr => expr.replace(old, next.resetIds().replaceId(old)));
     }
 
-    private buildPasteAction(ix: number): (expr: ExprId) => void {
-        return expr => {
+    private pasteAction(ix: number): () => void {
+        return () => {
             const clipboard = this.props.clipboard.clipboard;
             if (ix < clipboard.length) {
-                this.replaceExpr(expr, clipboard[ix].expr);
+                this.replaceExpr(this.state.selection, clipboard[ix].expr);
                 this.props.clipboard.use(clipboard[ix].expr.id);
             }
         };
@@ -161,28 +162,28 @@ class Editor extends Component<EditorProps, EditorState> {
 
     // The shortcuts only accessible from the keyboard.
     private readonly hiddenKeys: { [key: string]: (sel: ExprId) => void } = {
-        h: () => this.setSelection(Select.leftSmart),
-        j: e => this.setSelection(Select.downSmart),
-        k: e => this.setSelection(Select.upSmart),
-        l: () => this.setSelection(Select.rightSmart),
-        p: () => this.setSelection(Select.parent),
-        H: () => this.setSelection(Select.leftSiblingSmart),
-        L: () => this.setSelection(Select.rightSiblingSmart),
-        Tab: () => this.setSelection(Select.nextBlank),
-        ArrowUp: e => this.setSelection(Select.upSmart),
-        ArrowDown: e => this.setSelection(Select.downSmart),
-        ArrowLeft: () => this.setSelection(Select.leftSmart),
-        ArrowRight: () => this.setSelection(Select.rightSmart),
-        "1": this.buildPasteAction(0),
-        "2": this.buildPasteAction(1),
-        "3": this.buildPasteAction(2),
-        "4": this.buildPasteAction(3),
-        "5": this.buildPasteAction(4),
-        "6": this.buildPasteAction(5),
-        "7": this.buildPasteAction(6),
-        "8": this.buildPasteAction(7),
-        "9": this.buildPasteAction(9),
-        "0": this.buildPasteAction(9),
+        h: this.selectionAction(Select.leftSmart),
+        j: this.selectionAction(Select.downSmart),
+        k: this.selectionAction(Select.upSmart),
+        l: this.selectionAction(Select.rightSmart),
+        p: this.selectionAction(Select.parent),
+        H: this.selectionAction(Select.leftSiblingSmart),
+        L: this.selectionAction(Select.rightSiblingSmart),
+        Tab: this.selectionAction(Select.nextBlank),
+        ArrowUp: this.selectionAction(Select.upSmart),
+        ArrowDown: this.selectionAction(Select.downSmart),
+        ArrowLeft: this.selectionAction(Select.leftSmart),
+        ArrowRight: this.selectionAction(Select.rightSmart),
+        "1": this.pasteAction(0),
+        "2": this.pasteAction(1),
+        "3": this.pasteAction(2),
+        "4": this.pasteAction(3),
+        "5": this.pasteAction(4),
+        "6": this.pasteAction(5),
+        "7": this.pasteAction(6),
+        "8": this.pasteAction(7),
+        "9": this.pasteAction(9),
+        "0": this.pasteAction(9),
     };
 
     private readonly exprMenu: Optional<{ label: string; action: keyof Editor["actions"] }>[] = [
