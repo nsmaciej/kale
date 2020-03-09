@@ -170,6 +170,16 @@ export default abstract class Expr {
     remove(id: ExprId): Optional<Expr> {
         return this.update(id, () => null);
     }
+
+    value(): Optional<string> {
+        if (this instanceof Blank || this instanceof List) {
+            return null;
+        }
+        if (this instanceof Literal) return this.content;
+        else if (this instanceof Variable) return this.name;
+        else if (this instanceof Call) return this.fn;
+        else throw new UnvisitableExpr(this);
+    }
 }
 
 export class List extends Expr {

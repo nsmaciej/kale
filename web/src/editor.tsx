@@ -107,6 +107,13 @@ class Editor extends Component<EditorProps, EditorState> {
         };
     }
 
+    private replaceAndEdit(expr: ExprId, next: Expr) {
+        // Replace expr but using the callback.
+        const value = assertSome(next.value());
+        this.replaceExpr(expr, next);
+        //TODO: Start editing.
+    }
+
     private readonly actions = {
         delete: (e: ExprId) => this.removeExpr(e),
         replace: (e: ExprId) => this.replaceExpr(e, new E.Blank()),
@@ -141,9 +148,9 @@ class Editor extends Component<EditorProps, EditorState> {
         },
         edit: (e: ExprId) => this.startEditing(e),
         // Demo things that should be moved to the toy-box.
-        demoAddCall: (e: ExprId) => this.replaceExpr(e, new E.Call("Call")),
-        demoAddVariable: (e: ExprId) => this.replaceExpr(e, new E.Variable("Variable")),
-        demoAddString: (e: ExprId) => this.replaceExpr(e, new E.Literal("String", "str")),
+        demoAddCall: (e: ExprId) => this.replaceAndEdit(e, new E.Call("Call")),
+        demoAddVariable: (e: ExprId) => this.replaceAndEdit(e, new E.Variable("Variable")),
+        demoAddString: (e: ExprId) => this.replaceAndEdit(e, new E.Literal("String", "str")),
     };
 
     // See https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values.
@@ -282,19 +289,10 @@ class Editor extends Component<EditorProps, EditorState> {
     };
 
     private readonly startEditing = (expr: ExprId) => {
-        const parent = assertSome(this.expr.withId(expr));
-        if (parent instanceof E.Blank || parent instanceof E.List) return;
-        let value;
-        if (parent instanceof E.Literal) {
-            value = parent.content;
-        } else if (parent instanceof E.Variable) {
-            value = parent.name;
-        } else if (parent instanceof E.Call) {
-            value = parent.fn;
-        } else {
-            throw new E.UnvisitableExpr(parent);
+        const value = assertSome(this.expr.withId(expr)).value();
+        if (value != null) {
+            this.setState({ editingInline: { expr, value, originalValue: value } });
         }
-        this.setState({ editingInline: { expr, value, originalValue: value } });
     };
 
     componentDidMount() {
@@ -368,9 +366,8 @@ class Editor extends Component<EditorProps, EditorState> {
         return (
             <InlineEditor
                 value={value}
-                //TODO: No idea why we need the +2.
                 style={{
-                    top: rect.y + 2.3 + (offset?.y ?? 0) - fudge,
+                    top: rect.y + (offset?.y ?? 0) - fudge,
                     left: rect.x + (offset?.x ?? 0) - fudge,
                     width:
                         Math.max(
