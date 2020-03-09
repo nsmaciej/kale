@@ -69,7 +69,7 @@ export const Shortcut = styled.kbd<ShortcutProps>`
 `;
 
 // Prevent a shortcut group from containing line-breaks.
-export const ShortcutGroup = styled.div`
+export const ShortcutGroup = styled.span`
     display: inline-block;
 `;
 

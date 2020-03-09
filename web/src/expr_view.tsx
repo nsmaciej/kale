@@ -61,7 +61,7 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
     state: ExprViewState = { highlight: null, showingMenu: null };
     // This is computed during the render phase, we only call the onExprAreaMap once
     // we are mounted or updated.
-    pendingExprAreaMap: ExprAreaMap = {};
+    private pendingExprAreaMap: ExprAreaMap = {};
 
     get theme() {
         return this.props.theme;
