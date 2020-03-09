@@ -1,5 +1,5 @@
 import React, { Component, useContext } from "react";
-import { useTheme } from "styled-components";
+import styled, { useTheme } from "styled-components";
 
 import * as E from "expr";
 import * as Select from "selection";
@@ -14,6 +14,7 @@ interface EditorState {
     focused: boolean;
     selection: ExprId;
     foldingComments: boolean;
+    editingInline: Optional<{ expr: ExprId; value: string }>;
 }
 
 interface EditorWrapperProps {
@@ -27,6 +28,16 @@ interface EditorProps extends EditorWrapperProps {
     theme: KaleTheme;
 }
 
+const InlineEditor = styled.input`
+    position: absolute;
+    font-family: ${p => p.theme.fontFamily};
+    font-size: ${p => p.theme.fontSizePx}px;
+    line-height: 1;
+    padding: 0;
+    border-radius: ${p => p.theme.borderRadiusPx}px;
+    border: 0;
+`;
+
 class Editor extends Component<EditorProps, EditorState> {
     private readonly containerRef = React.createRef<HTMLDivElement>();
     private readonly exprAreaMapRef = React.createRef<ExprAreaMap>();
@@ -34,7 +45,9 @@ class Editor extends Component<EditorProps, EditorState> {
     state: EditorState = {
         selection: this.expr.id,
         focused: this.props.stealFocus ?? false,
-        foldingComments: false,
+        //TODO: Until editing location is fixed.
+        foldingComments: true,
+        editingInline: null,
     };
 
     private update(updater: (expr: Expr) => Expr) {
@@ -253,6 +266,22 @@ class Editor extends Component<EditorProps, EditorState> {
         this.setState({ focused: document.activeElement?.id === "editor" });
     };
 
+    private readonly startEditing = (expr: ExprId) => {
+        const parent = assertSome(this.expr.withId(expr));
+        if (parent instanceof E.Blank || parent instanceof E.List) return;
+        let value;
+        if (parent instanceof E.Literal) {
+            value = parent.content;
+        } else if (parent instanceof E.Variable) {
+            value = parent.name;
+        } else if (parent instanceof E.Call) {
+            value = parent.fn;
+        } else {
+            throw new E.UnvisitableExpr(parent);
+        }
+        this.setState({ editingInline: { expr, value } });
+    };
+
     componentDidMount() {
         if (this.props.stealFocus) this.containerRef.current?.focus();
     }
@@ -283,6 +312,51 @@ class Editor extends Component<EditorProps, EditorState> {
         }
     }
 
+    private renderInlineEditor() {
+        const { expr, value } = assertSome(this.state.editingInline);
+        const rect = assertSome(this.exprAreaMapRef.current)[expr].rect;
+
+        const onKeyDown = (e: React.KeyboardEvent) => {
+            e.stopPropagation();
+            if (e.key !== "Enter") return;
+            e.preventDefault();
+            const content = (e.target as HTMLInputElement).value;
+            this.setState({ editingInline: null });
+            this.update(mainExpr =>
+                assertSome(
+                    mainExpr.update(expr, u => {
+                        if (u instanceof E.Literal) {
+                            return new E.Literal(content, u.type, u.data);
+                        } else if (u instanceof E.Variable) {
+                            return new E.Variable(content, u.data);
+                        } else if (u instanceof E.Call) {
+                            return new E.Call(content, u.args, u.data);
+                        } else {
+                            throw new E.UnvisitableExpr(u);
+                        }
+                    }),
+                ),
+            );
+        };
+
+        return (
+            <InlineEditor
+                value={value}
+                //TODO: No idea why we need the +2.
+                style={{ top: rect.y + 2, left: rect.x, width: rect.width }}
+                ref={r => r?.focus()}
+                //TODO: Stop the editor from doing stuff, should check for focus instead.
+                onKeyDown={onKeyDown}
+                onChange={e => {
+                    const content = e.target?.value; // Get if now before it's gone.
+                    this.setState(s => ({
+                        editingInline: { expr: s.editingInline!.expr, value: content },
+                    }));
+                }}
+            />
+        );
+    }
+
     render() {
         return (
             <div
@@ -292,6 +366,8 @@ class Editor extends Component<EditorProps, EditorState> {
                 onBlur={this.focusChanged}
                 onFocus={this.focusChanged}
                 id="editor"
+                // Needed for positioning the inline editor.
+                style={{ position: "relative" }}
             >
                 <ExprView
                     expr={this.expr}
@@ -303,8 +379,10 @@ class Editor extends Component<EditorProps, EditorState> {
                     // Callbacks.
                     contextMenuFor={this.contextMenuFor}
                     onClick={this.exprSelected}
+                    onDoubleClick={this.startEditing}
                     onClickCreateCircle={this.createChildBlank}
                 />
+                {this.state.editingInline && this.renderInlineEditor()}
             </div>
         );
     }
