@@ -59,6 +59,7 @@ function smartSelection(
 export const nextBlank: SelectFn = (expr, sel) => {
     const blanks = expr.findAll(x => x instanceof E.Blank);
     const ix = blanks.findIndex(x => x.id === sel);
+    if (!blanks.length) return null;
     if (ix === -1) return blanks[0].id;
     return blanks[(ix + 1) % blanks.length].id;
 };
