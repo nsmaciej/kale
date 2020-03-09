@@ -68,26 +68,20 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
     }
 
     // Generic click action passed on using the props.
-    onClickExpr(event: React.MouseEvent, expr: Expr) {
+    private onClickExpr(event: React.MouseEvent, expr: Expr) {
         event.stopPropagation();
         assertSome(this.context).dismissDrag();
         this.props.onClick?.(expr.id);
     }
 
-    onClickCreateCircle(event: React.MouseEvent, expr: Expr) {
-        //TODO: Might make sense to have a better delegation mechanism.
-        event.stopPropagation();
-        this.props.onClickCreateCircle?.(expr.id);
-    }
-
     // Chang the highlighted expr.
-    onHoverExpr(event: React.MouseEvent, expr: Optional<Expr>) {
+    private onHoverExpr(event: React.MouseEvent, expr: Optional<Expr>) {
         event.stopPropagation();
         if (!this.props.frozen) this.setState({ highlight: expr?.id });
     }
 
     // Handler for the mousedown event.
-    onMouseDown(event: React.MouseEvent, expr: Expr) {
+    private onMouseDown(event: React.MouseEvent, expr: Expr) {
         assert(event.type === "mousedown");
         if (event.buttons !== 1) return;
         event.stopPropagation();
@@ -140,7 +134,7 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
         );
     }
 
-    onContextMenu = (e: React.MouseEvent, expr: Expr) => {
+    private onContextMenu(e: React.MouseEvent, expr: Expr) {
         if (this.props.contextMenuFor == null) return;
         e.preventDefault();
         e.stopPropagation();
@@ -150,7 +144,21 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
                 menu: this.props.contextMenuFor?.(expr.id),
             },
         });
+    }
+
+    private readonly onClickCreateCircle = (event: React.MouseEvent, expr: Expr) => {
+        //TODO: Might make sense to have a better delegation mechanism.
+        event.stopPropagation();
+        this.props.onClickCreateCircle?.(expr.id);
     };
+
+    private readonly exprPropsFor = (expr: Expr): Partial<React.DOMAttributes<Element>> => ({
+        onMouseEnter: e => this.onHoverExpr(e, expr),
+        onMouseLeave: e => this.onHoverExpr(e, null),
+        onClick: e => this.onClickExpr(e, expr),
+        onMouseDown: e => this.onMouseDown(e, expr),
+        onContextMenu: e => this.onContextMenu(e, expr),
+    });
 
     private updateExprAreaMapRef() {
         if (this.props.exprAreaMapRef) {
@@ -162,7 +170,6 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
             >).current = this.pendingExprAreaMap;
         }
     }
-
     componentDidMount() {
         this.updateExprAreaMapRef();
     }
@@ -177,11 +184,8 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
             focused: this.props.focused,
             selection: this.props.selection,
             foldComments: this.props.foldComments,
-            onHoverExpr: this.onHoverExpr.bind(this),
-            onClickCreateCircle: this.onClickCreateCircle.bind(this),
-            onClickExpr: this.onClickExpr.bind(this),
-            onMouseDown: this.onMouseDown.bind(this),
-            onContextMenu: this.onContextMenu,
+            exprPropsFor: this.exprPropsFor,
+            onClickCreateCircle: this.onClickCreateCircle,
         });
 
         // Selection and highlight drawing logic.

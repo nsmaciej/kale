@@ -109,6 +109,15 @@ function isCallInline(theme: KaleTheme, args: readonly Layout[]): boolean {
     return underlinesHeight < MAX_NESTING_LEVEL;
 }
 
+export interface LayoutProps {
+    exprPropsFor?(expr: Expr): Partial<React.DOMAttributes<Element>>;
+    onClickCreateCircle?(e: React.MouseEvent, expr: Expr): void;
+    frozen?: boolean;
+    focused?: boolean;
+    selection?: Optional<ExprId>;
+    foldComments?: boolean;
+}
+
 interface LayoutState {
     hasDisabledParent: boolean;
 }
@@ -121,14 +130,7 @@ class ExprLayout implements ExprVisitor<Layout> {
     ) {}
 
     private exprProps(expr: Expr) {
-        type E = React.MouseEvent;
-        return {
-            onMouseEnter: (e: E) => this.props.onHoverExpr?.(e, expr),
-            onMouseLeave: (e: E) => this.props.onHoverExpr?.(e, null),
-            onClick: (e: E) => this.props.onClickExpr?.(e, expr),
-            onMouseDown: (e: E) => this.props.onMouseDown?.(e, expr),
-            onContextMenu: (e: E) => this.props.onContextMenu?.(e, expr),
-        };
+        return this.props.exprPropsFor?.(expr);
     }
 
     private layoutText(
@@ -329,18 +331,6 @@ class ExprLayout implements ExprVisitor<Layout> {
         const comment = this.layoutComment(expr);
         return vstack(this.t.lineSpacingPx, comment, layout);
     }
-}
-
-export interface LayoutProps {
-    onHoverExpr?(e: React.MouseEvent, expr: Optional<Expr>): void;
-    onClickExpr?(e: React.MouseEvent, expr: Expr): void;
-    onContextMenu?(e: React.MouseEvent, expr: Expr): void;
-    onClickCreateCircle?(e: React.MouseEvent, expr: Expr): void;
-    onMouseDown?(e: React.MouseEvent, expr: Expr): void;
-    frozen?: boolean;
-    focused?: boolean;
-    selection?: Optional<ExprId>;
-    foldComments?: boolean;
 }
 
 export function layoutExpr(theme: KaleTheme, expr: Expr, props: LayoutProps): Layout {
