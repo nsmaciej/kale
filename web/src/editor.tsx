@@ -80,19 +80,6 @@ class Editor extends Component<EditorProps, EditorState> {
         }));
     }
 
-    private setSmartSelection(expr: ExprId, direction: "up" | "down" | "left" | "right") {
-        const inline = this.exprAreaMapRef.current?.[expr]?.inline;
-        if (direction === "up") {
-            this.setSelection(inline ? Select.upSmart : Select.leftSiblingSmart);
-        } else if (direction === "down") {
-            this.setSelection(inline ? Select.downSmart : Select.rightSiblingSmart);
-        } else if (direction === "left") {
-            this.setSelection(Select.leftSmart);
-        } else if (direction === "right") {
-            this.setSelection(Select.rightSmart);
-        }
-    }
-
     private replaceExpr(old: ExprId, next: Expr) {
         this.update(expr => expr.replace(old, next.resetIds().replaceId(old)));
     }
@@ -174,18 +161,18 @@ class Editor extends Component<EditorProps, EditorState> {
 
     // The shortcuts only accessible from the keyboard.
     private readonly hiddenKeys: { [key: string]: (sel: ExprId) => void } = {
-        h: e => this.setSmartSelection(e, "left"),
-        j: e => this.setSmartSelection(e, "down"),
-        k: e => this.setSmartSelection(e, "up"),
-        l: e => this.setSmartSelection(e, "right"),
+        h: () => this.setSelection(Select.leftSmart),
+        j: e => this.setSelection(Select.downSmart),
+        k: e => this.setSelection(Select.upSmart),
+        l: () => this.setSelection(Select.rightSmart),
         p: () => this.setSelection(Select.parent),
         H: () => this.setSelection(Select.leftSiblingSmart),
         L: () => this.setSelection(Select.rightSiblingSmart),
         Tab: () => this.setSelection(Select.nextBlank),
-        ArrowUp: e => this.setSmartSelection(e, "up"),
-        ArrowDown: e => this.setSmartSelection(e, "down"),
-        ArrowLeft: e => this.setSmartSelection(e, "left"),
-        ArrowRight: e => this.setSmartSelection(e, "right"),
+        ArrowUp: e => this.setSelection(Select.upSmart),
+        ArrowDown: e => this.setSelection(Select.downSmart),
+        ArrowLeft: () => this.setSelection(Select.leftSmart),
+        ArrowRight: () => this.setSelection(Select.rightSmart),
         "1": this.buildPasteAction(0),
         "2": this.buildPasteAction(1),
         "3": this.buildPasteAction(2),

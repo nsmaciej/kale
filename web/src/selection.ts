@@ -44,6 +44,10 @@ const leftDeepestChild: SelectFn = (expr, sel, areas) => {
 // Select only non-inline blocks.
 function smartBlockSelection(selectSibling: SelectFn): SelectFn {
     return (expr, sel, areas) => {
+        if (!areas[sel].inline) {
+            const sibling = selectSibling(expr, sel, areas);
+            if (sibling != null) return sibling;
+        }
         for (const parentExpr of expr.parents(sel)) {
             if (!areas[parentExpr.id].inline) {
                 const sibling = selectSibling(expr, parentExpr.id, areas);
@@ -59,7 +63,7 @@ function smartSelection(first: SelectFn, fallback: SelectFn): SelectFn {
         // Try the first selection function or its fallback.
         const simple = first(expr, sel, areas) ?? fallback(expr, sel, areas);
         if (simple != null) return simple;
-        // Otherwise try using the parentFallback on each parent.
+        // Otherwise try using the fallback on each parent.
         for (const parentExpr of expr.parents(sel)) {
             const next = fallback(expr, parentExpr.id, areas);
             if (next != null) return next;
