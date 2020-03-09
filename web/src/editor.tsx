@@ -115,7 +115,7 @@ class Editor extends Component<EditorProps, EditorState> {
         }));
     }
 
-    private setVisualSelection(expr: ExprId, direction: "up" | "down" | "left" | "right") {
+    private setSmartSelection(expr: ExprId, direction: "up" | "down" | "left" | "right") {
         const inline = this.exprAreaMapRef.current?.[expr]?.inline;
         if (direction === "up") {
             this.setSelection(inline ? selectParentSmart : selectLeftSiblingSmart);
@@ -192,15 +192,15 @@ class Editor extends Component<EditorProps, EditorState> {
 
     // The shortcuts only accessible from the keyboard.
     private readonly hiddenKeys: { [key: string]: (sel: ExprId) => void } = {
-        h: () => this.setSelection(selectParent),
-        j: () => this.setSelection(selectRightSibling),
-        k: () => this.setSelection(selectLeftSibling),
-        l: () => this.setSelection(selectFirstChild),
+        h: e => this.setSmartSelection(e, "left"),
+        j: e => this.setSmartSelection(e, "down"),
+        k: e => this.setSmartSelection(e, "up"),
+        l: e => this.setSmartSelection(e, "right"),
         Tab: () => this.setSelection(selectNextBlank),
-        ArrowUp: e => this.setVisualSelection(e, "up"),
-        ArrowDown: e => this.setVisualSelection(e, "down"),
-        ArrowLeft: e => this.setVisualSelection(e, "left"),
-        ArrowRight: e => this.setVisualSelection(e, "right"),
+        ArrowUp: e => this.setSmartSelection(e, "up"),
+        ArrowDown: e => this.setSmartSelection(e, "down"),
+        ArrowLeft: e => this.setSmartSelection(e, "left"),
+        ArrowRight: e => this.setSmartSelection(e, "right"),
         "1": this.buildPasteAction(0),
         "2": this.buildPasteAction(1),
         "3": this.buildPasteAction(2),
