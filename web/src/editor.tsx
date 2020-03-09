@@ -139,20 +139,29 @@ class Editor extends Component<EditorProps, EditorState> {
                 ),
             );
         },
+        edit: (e: ExprId) => this.startEditing(e),
+        // Demo things that should be moved to the toy-box.
+        demoAddCall: (e: ExprId) => this.replaceExpr(e, new E.Call("Call")),
+        demoAddVariable: (e: ExprId) => this.replaceExpr(e, new E.Variable("Variable")),
+        demoAddString: (e: ExprId) => this.replaceExpr(e, new E.Literal("String", "str")),
     };
 
     // See https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values.
     private readonly menuKeys: { [key: string]: keyof Editor["actions"] } = {
-        d: "delete",
-        r: "replace",
-        m: "move",
-        s: "shuffle",
-        c: "copy",
-        a: "append",
-        i: "insert",
-        "#": "foldComments",
-        q: "comment",
         "/": "disable",
+        "#": "foldComments",
+        a: "append",
+        c: "copy",
+        d: "delete",
+        f: "demoAddCall",
+        i: "insert",
+        g: "demoAddString",
+        m: "move",
+        q: "comment",
+        r: "replace",
+        s: "shuffle",
+        v: "demoAddVariable",
+        Enter: "edit",
     };
 
     // The shortcuts only accessible from the keyboard.
@@ -185,6 +194,7 @@ class Editor extends Component<EditorProps, EditorState> {
         { action: "shuffle", label: "Replace and Copy" },
         null,
         { action: "copy", label: "Copy" },
+        { action: "edit", label: "Edit..." },
         null,
         { action: "append", label: "Append a Blank" },
         { action: "insert", label: "Insert a Blank" },
@@ -192,6 +202,10 @@ class Editor extends Component<EditorProps, EditorState> {
         { action: "comment", label: "Comment..." },
         { action: "disable", label: "Disable" },
         { action: "foldComments", label: "Fold Comments" },
+        null,
+        { action: "demoAddCall", label: "Add a Call" },
+        { action: "demoAddVariable", label: "Add a Variable" },
+        { action: "demoAddString", label: "Add a String" },
     ];
 
     private readonly menuKeyForAction = reverseObject(this.menuKeys);
@@ -319,6 +333,14 @@ class Editor extends Component<EditorProps, EditorState> {
 
         const onKeyDown = (e: React.KeyboardEvent) => {
             e.stopPropagation();
+            if (e.key === "Escape") {
+                e.preventDefault();
+                this.setState({ editingInline: null });
+                this.containerRef.current?.focus();
+                return;
+            }
+
+            // Everything below is about confirming an edit.
             if (e.key !== "Enter") return;
             e.preventDefault();
             const content = (e.target as HTMLInputElement).value;
@@ -338,6 +360,7 @@ class Editor extends Component<EditorProps, EditorState> {
                     }),
                 ),
             );
+            this.containerRef.current?.focus();
         };
 
         const { offset, colour, italic, bold } = assertSome(textProps);
@@ -374,6 +397,13 @@ class Editor extends Component<EditorProps, EditorState> {
                 }}
             />
         );
+    }
+
+    constructor(props: EditorProps) {
+        super(props);
+        for (const shortcut of Object.keys(this.menuKeys)) {
+            assert(!(shortcut in this.hiddenKeys), "Shortcut conflict");
+        }
     }
 
     render() {

@@ -103,7 +103,7 @@ export default function ContextMenu({ items, origin, dismissMenu }: ContextMenuP
 
     return (
         <div
-            style={{ position: "absolute", left: origin.x, top: origin.y }}
+            style={{ position: "fixed", left: origin.x, top: origin.y, zIndex: 100 }}
             onKeyDown={onKeyDown}
             onKeyUp={e => {
                 e.preventDefault();
@@ -127,7 +127,11 @@ export default function ContextMenu({ items, origin, dismissMenu }: ContextMenuP
                     item.label ? (
                         <ContextMenuItemContainer>
                             {item.label}
-                            <Shortcut subtle>{item.keyEquivalent?.toUpperCase()}</Shortcut>
+                            <Shortcut subtle>
+                                {item.keyEquivalent?.length === 1
+                                    ? item.keyEquivalent?.toUpperCase()
+                                    : item.keyEquivalent}
+                            </Shortcut>
                         </ContextMenuItemContainer>
                     ) : (
                         <ContextMenuSeparator />

@@ -42,7 +42,8 @@ export default class TextMetrics {
         if (key in this._metricsCache) {
             return new Size(this._metricsCache[key], height);
         }
-        this._textElement.textContent = text;
+        const nbsp = "\xa0"; // Without this we can't measure trailing spaces.
+        this._textElement.textContent = text.replace(/ /g, nbsp);
         this._textElement.style.fontWeight = bold ? "bold" : "normal";
         this._textElement.style.fontStyle = italic ? "italic" : "normal";
         const width = this._textElement.getComputedTextLength();

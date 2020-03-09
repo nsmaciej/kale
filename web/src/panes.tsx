@@ -97,10 +97,11 @@ function blank(comment: string) {
 }
 
 const toyBoxExprs = [
-    { shortcut: "S", expr: new E.List([blank("first line"), blank("second line")]) },
-    { shortcut: "F", expr: new E.Call("if", [blank("true branch"), blank("false branch")]) },
-    { shortcut: "A", expr: new E.Variable("variable") },
-    { expr: new E.Literal("a string", "str") },
+    { shortcut: "F", expr: new E.Call("Call") },
+    { shortcut: "V", expr: new E.Variable("Variable") },
+    { shortcut: "G", expr: new E.Literal("String", "str") },
+    { expr: new E.List([blank("first line"), blank("second line")]) },
+    { expr: new E.Call("if", [blank("true branch"), blank("false branch")]) },
     { expr: new E.Literal("42", "int") },
 ];
 
@@ -165,6 +166,7 @@ const EditorHeader = styled(Stack).attrs({ gap: 5 })`
     padding: 15px 0 5px;
     border-bottom: 1px solid ${p => p.theme.grey};
     align-items: center;
+    z-index: 50;
 `;
 
 interface Editor {
