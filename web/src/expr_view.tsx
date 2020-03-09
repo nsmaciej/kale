@@ -75,7 +75,8 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
     }
 
     private drawRect(expr: Optional<ExprId>, isSelection: boolean, areas: ExprAreaMap) {
-        if (expr == null) return;
+        // This is blindly called each render, so we mightn't have areas.
+        if (expr == null || areas[expr] == null) return;
         if (!isSelection && !this.props.focused) return;
         const rect = assertSome(areas[expr].rect).pad(this.theme.selection.paddingPx);
 
