@@ -149,9 +149,9 @@ class Editor extends Component<EditorProps, EditorState> {
         },
         edit: (e: ExprId) => this.startEditing(e),
         // Demo things that should be moved to the toy-box.
-        demoAddCall: (e: ExprId) => this.replaceAndEdit(e, new E.Call("Call")),
-        demoAddVariable: (e: ExprId) => this.replaceAndEdit(e, new E.Variable("Variable")),
-        demoAddString: (e: ExprId) => this.replaceAndEdit(e, new E.Literal("String", "str")),
+        demoAddCall: (e: ExprId) => this.replaceAndEdit(e, new E.Call("")),
+        demoAddVariable: (e: ExprId) => this.replaceAndEdit(e, new E.Variable("")),
+        demoAddString: (e: ExprId) => this.replaceAndEdit(e, new E.Literal("", "str")),
     };
 
     // See https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values.
@@ -372,7 +372,7 @@ class Editor extends Component<EditorProps, EditorState> {
                     left: rect.x + (offset?.x ?? 0) - fudge,
                     width:
                         Math.max(
-                            TextMetrics.global.measure(value, { bold, italic }).width,
+                            TextMetrics.global.measure(value || " ", { bold, italic }).width,
                             TextMetrics.global.measure(originalValue, { bold, italic }).width,
                         ) +
                         fudge * 2,
