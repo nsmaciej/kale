@@ -5,7 +5,7 @@ import styled, { ThemeProvider, StyleSheetManager, createGlobalStyle } from "sty
 import DragAndDropSurface from "drag_and_drop";
 import TextMetrics from "text_metrics";
 import { DefaultTheme } from "theme";
-import { Stack, Shortcut } from "components";
+import { Stack, Shortcut, ShortcutGroup } from "components";
 import { WorkspaceProvider, ClipboardProvider } from "workspace";
 import { ToyBox, ClipboardList, EditorStack } from "panes";
 
@@ -70,12 +70,23 @@ const MainHeading = styled.h1`
 
 function Help() {
     const S = Shortcut;
+    const Sg = ShortcutGroup;
     return (
-        <p style={{ maxWidth: "800px" }}>
-            Use <S>H</S> <S>J</S> <S>K</S> <S>L</S> to move around. Fill in the blanks with{" "}
-            <S>Tab</S>. Use <S>Backspace</S> or <S>D</S> to Delete and <S>C</S> to Copy. Create
-            blanks with the circular buttons or <S>A</S> or <S>I</S>. Paste items from history using{" "}
-            <S>0</S>-<S>9</S>. Fold comments with <S>#</S> &mdash; <b>Help is on the way!</b>
+        <p style={{ maxWidth: "700px" }}>
+            Use{" "}
+            <Sg>
+                <S>→</S> <S>↓</S> <S>←</S> <S>↑</S>
+            </Sg>{" "}
+            (or{" "}
+            <Sg>
+                <S>H</S> <S>J</S> <S>K</S> <S>L</S>
+            </Sg>
+            ) to move around. Jump to the next blank with <S>Tab</S> and paste snippets from History
+            using{" "}
+            <Sg>
+                <S>0</S>-<S>9</S>
+            </Sg>
+            . Right-click code for more options and shortcuts. <b>More help is on the way!</b>
         </p>
     );
 }

@@ -68,6 +68,11 @@ export const Shortcut = styled.kbd<ShortcutProps>`
     line-height: 1;
 `;
 
+// Prevent a shortcut group from containing line-breaks.
+export const ShortcutGroup = styled.div`
+    display: inline-block;
+`;
+
 export const SubtleButton = styled.button`
     font: inherit;
     background: none;
