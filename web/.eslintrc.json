@@ -41,6 +41,7 @@
         "eqeqeq": ["error", "always", { "null": "ignore" }],
         "spaced-comment": ["error", "always", { "markers": ["TODO:"] }],
         "no-shadow": "error",
+        "prefer-const": "error",
 
         // This is just a pain to have on.
         "@typescript-eslint/explicit-function-return-type": "off",
