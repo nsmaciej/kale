@@ -11,13 +11,10 @@ const Container = styled.div`
     position: absolute;
 `;
 
-const inputPadding = 2;
-
 const InlineEditorInput = styled.input`
     font-family: ${p => p.theme.fontFamily};
     font-size: ${p => p.theme.fontSizePx}px;
     line-height: 1;
-    padding: ${inputPadding}px;
     outline: 0;
     border: 0;
 `;
@@ -66,19 +63,18 @@ export default function InlineEditor({
 
     const { offset, colour, italic, bold } = exprArea.textProps ?? {};
     const origin = exprArea.rect.origin;
-    const fudge = inputPadding + 1;
     return (
         <Container
             style={{
-                top: origin.y + (offset?.y ?? 0) - fudge,
-                left: origin.x + (offset?.x ?? 0) - fudge,
+                top: origin.y + (offset?.y ?? 0),
+                left: origin.x + (offset?.x ?? 0),
             }}
         >
             <InlineEditorInput
                 value={value}
                 onBlur={() => onDismiss()}
                 style={{
-                    width: TextMetrics.global.measure(value, { bold, italic }).width + fudge * 3,
+                    width: TextMetrics.global.measure(value, { bold, italic }).width,
                     color: colour,
                     fontStyle: italic ? "italic" : undefined,
                     fontWeight: bold ? "bold" : undefined,

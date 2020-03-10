@@ -2,7 +2,7 @@ import React, { useState, useRef } from "react";
 import styled from "styled-components";
 import { AiOutlinePlusCircle } from "react-icons/ai";
 
-import { EditorHeadingStyle, SubtleButton, Shortcut, Box, Stack } from "components";
+import { SubtleButton, Shortcut, Box, Stack } from "components";
 import Menu, { MenuTextWrapper } from "components/menu";
 import { useSuggestions } from "hooks";
 
