@@ -124,8 +124,12 @@ class ExprLayout implements ExprVisitor<Layout> {
         return this.props.exprPropsFor?.(expr);
     }
 
-    private layoutText(expr: Expr, text: string, props: TextProperties = {}) {
-        const { italic, colour, title, bold, offset, commentIndicator } = props;
+    private layoutText(
+        expr: Expr,
+        text: string,
+        props: TextProperties & { mainText?: boolean } = {},
+    ) {
+        const { italic, colour, title, bold, offset, commentIndicator, mainText } = props;
         const disabled = expr.data.disabled || this.state.hasDisabledParent;
         const layout = new Layout(
             (
@@ -146,7 +150,9 @@ class ExprLayout implements ExprVisitor<Layout> {
             TextMetrics.global.measure(text, { italic, bold }),
         );
         layout.inline = true;
-        layout.text = props;
+        if (mainText) {
+            layout.text = props;
+        }
         return layout;
     }
 
@@ -220,6 +226,7 @@ class ExprLayout implements ExprVisitor<Layout> {
             colour: this.t.literalColour,
             italic: expr.type === "symbol",
             commentIndicator: expr.data.comment != null,
+            mainText: true,
         });
     }
 
@@ -228,6 +235,7 @@ class ExprLayout implements ExprVisitor<Layout> {
             title: expr.data.comment,
             commentIndicator: expr.data.comment != null,
             colour: this.t.variableColour,
+            mainText: true,
         });
     }
 
@@ -289,14 +297,14 @@ class ExprLayout implements ExprVisitor<Layout> {
     visitCall(expr: E.Call): Layout {
         const args = expr.args.map(x => this.layoutInner(expr, x), this);
         const inline = isCallInline(this.t, args);
-        const textProps: TextProperties = {
-            bold: !inline,
-            commentIndicator: expr.data.comment != null && this.props.foldComments,
-            colour: this.t.callColour,
-        };
         const fnName = hstack(
             this.t.createCircle.maxRadius,
-            this.layoutText(expr, expr.fn, textProps),
+            this.layoutText(expr, expr.fn, {
+                bold: !inline,
+                commentIndicator: expr.data.comment != null && this.props.foldComments,
+                colour: this.t.callColour,
+                mainText: true,
+            }),
             this.layoutCreateCircle(expr),
         );
 
@@ -320,9 +328,7 @@ class ExprLayout implements ExprVisitor<Layout> {
         }
 
         const comment = this.layoutComment(expr);
-        const finalLayout = vstack(this.t.lineSpacingPx, comment, layout);
-        finalLayout.text = textProps;
-        return finalLayout;
+        return vstack(this.t.lineSpacingPx, comment, layout);
     }
 }
 

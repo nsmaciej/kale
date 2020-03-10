@@ -46,8 +46,7 @@ class Editor extends Component<EditorProps, EditorState> {
     state: EditorState = {
         selection: this.expr.id,
         focused: this.props.stealFocus ?? false,
-        //TODO: Until editing location is fixed.
-        foldingComments: true,
+        foldingComments: false,
         editingInline: null,
     };
 

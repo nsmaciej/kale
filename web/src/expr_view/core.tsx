@@ -1,7 +1,7 @@
 import React, { ReactNode } from "react";
 
 import { Size, Vec, Rect } from "geometry";
-import { Optional, max } from "utils";
+import { Optional, max, assert } from "utils";
 import { SvgGroup } from "expr_view/components";
 import Expr from "expr";
 
@@ -27,6 +27,11 @@ export interface Area {
     children: Area[];
     // Needed for setAreasHeightInPlace. See its comment.
     inline: boolean;
+}
+
+function shiftText(props: TextProperties, origin: Vec): TextProperties {
+    const { offset, ...kept } = props;
+    return { ...kept, offset: offset?.add(origin) ?? origin };
 }
 
 export class Layout {
@@ -119,6 +124,11 @@ export class Layout {
                 rect: rect.shift(origin),
             }));
             this.areas.push(...orphans);
+            // Copy the text over while stacking children of exprs.
+            if (layout.text != null) {
+                assert(this.text == null, "Multiple text properties");
+                this.text = shiftText(layout.text, origin);
+            }
         }
     }
 
