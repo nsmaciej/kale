@@ -34,7 +34,7 @@ interface EditorStackProps {
 export default function EditorStack({ onClose, editors }: EditorStackProps) {
     const theme = useTheme();
     return (
-        <Stack vertical gridArea="editor" height="100%">
+        <Box gridArea="editor" height="100%">
             <Stack vertical overflow="auto" flex="1 1 1px" alignItems="start">
                 {editors.length === 0 && <NonIdealText>No editors open</NonIdealText>}
                 <AnimatePresence>
@@ -66,6 +66,6 @@ export default function EditorStack({ onClose, editors }: EditorStackProps) {
                     ))}
                 </AnimatePresence>
             </Stack>
-        </Stack>
+        </Box>
     );
 }
