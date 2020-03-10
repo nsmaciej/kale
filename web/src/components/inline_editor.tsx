@@ -63,6 +63,8 @@ export default function InlineEditor({
 
     const { offset, colour, italic, bold } = exprArea.textProps ?? {};
     const origin = exprArea.rect.origin;
+    // Make sure the input is always at least wide enough to show the cursor.
+    const width = Math.max(2, TextMetrics.global.measure(value, { bold, italic }).width);
     return (
         <Container
             style={{
@@ -74,7 +76,7 @@ export default function InlineEditor({
                 value={value}
                 onBlur={() => onDismiss()}
                 style={{
-                    width: TextMetrics.global.measure(value, { bold, italic }).width,
+                    width,
                     color: colour,
                     fontStyle: italic ? "italic" : undefined,
                     fontWeight: bold ? "bold" : undefined,
