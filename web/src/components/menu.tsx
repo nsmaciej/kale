@@ -1,17 +1,16 @@
 import React, { ReactNode } from "react";
 import styled from "styled-components";
 
-import { Stack } from "components";
 import { Optional } from "utils";
 
-const MenuPopover = styled(Stack).attrs({ gap: 1, vertical: true })`
-    width: 400px; /* TODO: Remove this - shouldn't be needed but doesn't work without this */
-    position: absolute;
+const MenuPopover = styled.div<{ subtle: boolean }>`
     background: #ffffff;
     border-radius: ${p => p.theme.borderRadiusPx}px;
     box-shadow: 0 0 0 1px #10161a1a, 0 2px 4px #10161a33, 0 8px 24px #10161a33;
-    padding: 6px 0;
+    ${p => !p.subtle && "padding: 6px 0"};
     z-index: 1000;
+    position: absolute;
+    overflow: auto;
 `;
 
 const MenuItemContainer = styled.div<{ selected: boolean }>`
@@ -23,6 +22,14 @@ const MenuItemContainer = styled.div<{ selected: boolean }>`
         margin-right: 5px;
     }
     color: ${p => (p.selected ? "white" : p.theme.mainTextColour)};
+    overflow: hidden;
+`;
+
+// Convenience class for overflowing text.
+export const MenuTextWrapper = styled.div`
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 `;
 
 export interface MenuItem {
@@ -32,18 +39,24 @@ export interface MenuItem {
 interface MenuProps<I> {
     items: readonly I[];
     width?: number;
+    subtle?: boolean;
     selected: Optional<number>;
     setSelected: (index: number | null) => void;
     onClick: (item: I, index: number) => void;
-    // Function-children to render a menu item.
+    // Function-children to render a menu item in a flexbox context.
     children: (item: I) => ReactNode;
     // Special function for the context menu.
     minimalPadding?: (index: number) => boolean;
 }
 
-export default function Menu<I extends MenuItem>(props: MenuProps<I>): JSX.Element {
+export default function Menu<I extends MenuItem>(props: MenuProps<I>) {
     return (
-        <MenuPopover style={{ width: props.width ?? "max-content" }}>
+        <MenuPopover
+            subtle={props.subtle ?? false}
+            style={{
+                minWidth: props.width ?? "max-content",
+            }}
+        >
             {props.items.map((x, i) => {
                 const minimalPadding = props.minimalPadding?.(i) ?? false;
                 return (
@@ -58,7 +71,7 @@ export default function Menu<I extends MenuItem>(props: MenuProps<I>): JSX.Eleme
                         style={{
                             paddingTop: minimalPadding ? 1 : 6,
                             paddingBottom: minimalPadding ? 1 : 6,
-                            paddingLeft: minimalPadding ? 0 : 16,
+                            paddingLeft: minimalPadding ? 0 : 10,
                             paddingRight: minimalPadding ? 0 : 10,
                         }}
                     >

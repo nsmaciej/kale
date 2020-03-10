@@ -1,23 +1,24 @@
-import React, { useContext, useState, createRef, useMemo } from "react";
+import React, { useState, useRef } from "react";
 import styled from "styled-components";
 import { AiOutlinePlusCircle } from "react-icons/ai";
 
 import { EditorHeadingStyle } from "components";
-import { Optional, assertSome, mod } from "utils";
-import { Workspace } from "workspace";
-import Menu, { MenuItem } from "components/menu";
+import Menu, { MenuTextWrapper } from "components/menu";
+import { useSuggestions } from "hooks";
 
 const Container = styled.div`
     display: relative;
 `;
+
+const inputWidthPx = 400;
 
 const EditorInput = styled.input`
     border: 0;
     font: inherit;
     color: inherit;
     border-bottom: 1px solid ${p => p.theme.grey};
-    ${EditorHeadingStyle}
-    width: 400px;
+    ${EditorHeadingStyle};
+    width: ${inputWidthPx}px;
     &:focus {
         border-bottom: 1px solid ${p => p.theme.clickableColour};
     }
@@ -28,24 +29,11 @@ interface NewEditorInputProps {
     onCreateEditor: (topLevel: string) => void;
 }
 
-function useFocus() {
-    const [focus, setFocus] = useState(false);
-    const onFocus = () => setFocus(true);
-    const onBlur = () => setFocus(false);
-    return [focus, { onFocus, onBlur }];
-}
-
-interface Suggestion extends MenuItem {
-    name: string;
-    create: boolean;
-}
-
 export default function EditorSuggestions({ onCreateEditor }: NewEditorInputProps) {
     const [value, setValue] = useState("");
-    const [selection, setSelection] = useState<Optional<number>>(0);
-    const workspace = assertSome(useContext(Workspace));
-    const [focus, bindFocus] = useFocus();
-    const inputRef = createRef<HTMLInputElement>();
+    const [focus, setFocus] = useState(false);
+    const { setSelection, selection, suggestions, moveSelection } = useSuggestions(value, true);
+    const inputRef = useRef<HTMLInputElement>(null);
 
     function selectEditor(name: string) {
         onCreateEditor(name);
@@ -54,39 +42,19 @@ export default function EditorSuggestions({ onCreateEditor }: NewEditorInputProp
         setSelection(0);
     }
 
-    const suggestions = useMemo(() => {
-        const r = Object.keys(workspace.topLevel)
-            .filter(x => x.toLowerCase().includes(value.toLowerCase()))
-            .slice(0, 5)
-            .map(x => ({
-                name: x,
-                create: false,
-                id: x,
-            }));
-        const fullMatch = Object.prototype.hasOwnProperty.call(workspace.topLevel, value);
-        if (value && !fullMatch) {
-            r.push({
-                name: value,
-                create: true,
-                id: value,
-            });
-        }
-        return r as Suggestion[];
-    }, [value, workspace.topLevel]);
-
     function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-        switch (e.key) {
-            case "Enter":
-                if (selection != null) selectEditor(suggestions[selection].name);
-                break;
-            case "ArrowDown":
-                setSelection(x => mod(x == null ? 0 : x + 1, suggestions.length));
-                break;
-            case "ArrowUp":
-                setSelection(x => mod(x == null ? -1 : x - 1, suggestions.length));
-                break;
-            default:
-                return;
+        if (e.key === "Enter") {
+            if (selection == null || !suggestions.length) {
+                selectEditor(value);
+            } else {
+                selectEditor(suggestions[selection].name);
+            }
+        } else if (e.key === "ArrowDown") {
+            moveSelection(1);
+        } else if (e.key === "ArrowUp") {
+            moveSelection(-1);
+        } else {
+            return;
         }
         e.preventDefault();
         e.stopPropagation();
@@ -100,7 +68,11 @@ export default function EditorSuggestions({ onCreateEditor }: NewEditorInputProp
     return (
         <Container>
             <EditorInput
-                {...bindFocus}
+                onFocus={() => {
+                    setSelection(0);
+                    setFocus(true);
+                }}
+                onBlur={() => setFocus(false)}
                 ref={inputRef}
                 value={value}
                 placeholder="Open an editor&hellip;"
@@ -112,13 +84,16 @@ export default function EditorSuggestions({ onCreateEditor }: NewEditorInputProp
                 <Menu
                     items={suggestions}
                     selected={selection}
+                    width={inputWidthPx}
                     onClick={x => selectEditor(x.name)}
-                    setSelected={i => setSelection(i ?? 0)}
+                    setSelected={i => setSelection(i)}
                 >
                     {item => (
                         <>
-                            {item.create && <AiOutlinePlusCircle />}
-                            {item.create ? `Create "${item.name}"` : item.name}
+                            {item.original && <AiOutlinePlusCircle style={{ flex: "none" }} />}
+                            <MenuTextWrapper>
+                                {item.original ? `Create "${item.name}"` : item.name}
+                            </MenuTextWrapper>
                         </>
                     )}
                 </Menu>

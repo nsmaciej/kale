@@ -35,6 +35,11 @@ export default class TextMetrics {
         document.body.appendChild(svg);
     }
 
+    get space(): Size {
+        // Measure the non-breaking space.
+        return this.measure("\xa0");
+    }
+
     measure(text: string, { bold = false, italic = false }: TextStyle = {}): Size {
         const key = [+bold, +italic, text].join("");
         const HEIGHT_FUDGE_FACTOR = 1.3;

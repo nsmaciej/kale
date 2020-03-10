@@ -78,10 +78,6 @@ export default abstract class Expr {
         throw new UnvisitableExpr(this);
     }
 
-    assignToDataWithId(id: ExprId, value: Partial<ExprData>): Expr {
-        return assertSome(this.update(id, x => x.assignToData(value)));
-    }
-
     // Give each sub-expr a fresh id.
     resetIds(): Expr {
         return assertSome(this.filterMap(x => x.replaceId(GlobalExprId++)));
@@ -90,10 +86,6 @@ export default abstract class Expr {
     // Replace the id of the current expr.
     replaceId(id: ExprId): Expr {
         return this.assignToData({ id });
-    }
-
-    replace(old: ExprId, next: Expr): Expr {
-        return assertSome(this.update(old, () => next));
     }
 
     find(predicate: (expr: Expr) => boolean): Optional<Expr> {
@@ -178,6 +170,16 @@ export default abstract class Expr {
         if (this instanceof Literal) return this.content;
         else if (this instanceof Variable) return this.name;
         else if (this instanceof Call) return this.fn;
+        else throw new UnvisitableExpr(this);
+    }
+
+    withValue(value: string): Expr {
+        if (this instanceof Blank || this instanceof List) {
+            return this;
+        }
+        if (this instanceof Literal) return new Literal(value, this.type, this.data);
+        else if (this instanceof Variable) return new Variable(value, this.data);
+        else if (this instanceof Call) return new Call(value, this.args, this.data);
         else throw new UnvisitableExpr(this);
     }
 }

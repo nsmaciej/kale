@@ -107,6 +107,7 @@ export interface LayoutProps {
     focused?: boolean;
     selection?: Optional<ExprId>;
     foldComments?: boolean;
+    forceInline?: { [expr in ExprId]: boolean };
 }
 
 interface LayoutState {
@@ -296,7 +297,10 @@ class ExprLayout implements ExprVisitor<Layout> {
 
     visitCall(expr: E.Call): Layout {
         const args = expr.args.map(x => this.layoutInner(expr, x), this);
-        const inline = isCallInline(this.t, args);
+        const inline =
+            this.props.forceInline != null && expr.id in this.props.forceInline
+                ? this.props.forceInline[expr.id]
+                : isCallInline(this.t, args);
         const fnName = hstack(
             this.t.createCircle.maxRadius,
             this.layoutText(expr, expr.fn, {
@@ -308,17 +312,16 @@ class ExprLayout implements ExprVisitor<Layout> {
             this.layoutCreateCircle(expr),
         );
 
-        const inlineMarginPx = TextMetrics.global.measure("\xa0").width; // Non-breaking space.
         let layout: Layout;
         // Adding a comment makes a call non-inline but not bold.
         //TODO: Don't do this if we are in a list.
         if (inline && (expr.data.comment == null || this.props.foldComments)) {
-            layout = hstack(inlineMarginPx, fnName, args);
+            layout = hstack(TextMetrics.global.space.width, fnName, args);
             layout.isUnderlined = true;
             layout.inline = true;
         } else {
             layout = hstack(
-                inlineMarginPx,
+                TextMetrics.global.space.width,
                 fnName,
                 vstack(
                     this.t.lineSpacingPx,

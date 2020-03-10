@@ -8,14 +8,15 @@ import ExprView, { ExprAreaMap } from "expr_view";
 import { Optional, assertSome, insertIndex, reverseObject, assert } from "utils";
 import { Clipboard, Workspace, ClipboardValue, WorkspaceValue } from "workspace";
 import { KaleTheme } from "theme";
+
 import { ContextMenuItem } from "components/context_menu";
-import TextMetrics from "text_metrics";
+import InlineEditor from "components/inline_editor";
 
 interface EditorState {
     focused: boolean;
     selection: ExprId;
     foldingComments: boolean;
-    editingInline: Optional<{ expr: ExprId; value: string; originalValue: string }>;
+    editing: Optional<{ expr: ExprId; value: string }>;
 }
 
 interface EditorWrapperProps {
@@ -29,16 +30,6 @@ interface EditorProps extends EditorWrapperProps {
     theme: KaleTheme;
 }
 
-const InlineEditor = styled.input`
-    position: absolute;
-    font-family: ${p => p.theme.fontFamily};
-    font-size: ${p => p.theme.fontSizePx}px;
-    line-height: 1;
-    padding: 2px;
-    border-radius: ${p => p.theme.borderRadiusPx}px;
-    border: 1px solid ${p => p.theme.clickableColour};
-`;
-
 class Editor extends Component<EditorProps, EditorState> {
     private readonly containerRef = React.createRef<HTMLDivElement>();
     private readonly exprAreaMapRef = React.createRef<ExprAreaMap>();
@@ -47,11 +38,16 @@ class Editor extends Component<EditorProps, EditorState> {
         selection: this.expr.id,
         focused: this.props.stealFocus ?? false,
         foldingComments: false,
-        editingInline: null,
+        editing: null,
     };
 
-    private update(updater: (expr: Expr) => Expr) {
-        this.props.workspace.setTopLevel(this.props.topLevelName, expr => updater(expr));
+    private update(child: Optional<ExprId>, updater: (expr: Expr) => Optional<Expr>) {
+        this.props.workspace.setTopLevel(
+            this.props.topLevelName,
+            expr =>
+                expr.update(child ?? expr.id, updater) ??
+                new E.Blank(E.exprData("Double click me")),
+        );
     }
 
     private get expr() {
@@ -68,7 +64,7 @@ class Editor extends Component<EditorProps, EditorState> {
     }
 
     private removeExpr(sel: ExprId) {
-        this.update(expr => expr.remove(sel) ?? new E.Blank(E.exprData("Double click me")));
+        this.update(sel, () => null);
     }
 
     private selectionAction(reducer: Select.SelectFn): () => void {
@@ -81,7 +77,7 @@ class Editor extends Component<EditorProps, EditorState> {
     }
 
     private replaceExpr(old: ExprId, next: Expr) {
-        this.update(expr => expr.replace(old, next.resetIds().replaceId(old)));
+        this.update(old, () => next.resetIds().replaceId(old));
     }
 
     private pasteAction(ix: number): () => void {
@@ -121,18 +117,14 @@ class Editor extends Component<EditorProps, EditorState> {
             const selected = this.expr.withId(e);
             if (selected != null) {
                 const comment = prompt("Comment?", selected.data.comment) ?? undefined;
-                this.update(expr => expr.assignToDataWithId(e, { comment }));
+                this.update(e, expr => expr.assignToData({ comment }));
             }
         },
         disable: (e: ExprId) => {
-            this.update(expr =>
-                assertSome(
-                    expr.update(e, x => {
-                        if (x instanceof E.Blank) return x;
-                        return x.assignToData({ disabled: !x.data.disabled });
-                    }),
-                ),
-            );
+            this.update(e, expr => {
+                if (expr instanceof E.Blank) return expr;
+                return expr.assignToData({ disabled: !expr.data.disabled });
+            });
         },
         edit: (e: ExprId) => this.startEditing(e),
         // Demo things that should be moved to the toy-box.
@@ -232,42 +224,30 @@ class Editor extends Component<EditorProps, EditorState> {
     };
 
     private createSiblingBlank(target: ExprId) {
-        const parent = this.expr.parentOf(target);
         const blank = new E.Blank();
-
-        // Special case: wrap the expr in a list.
-        if (parent == null) {
-            this.update(expr => new E.List([expr, blank]));
-            this.setState({ selection: blank.id });
-            return;
-        }
-
-        let next: Expr;
-        if (parent instanceof E.Call) {
-            const ix = parent.args.findIndex(x => x.id === target);
-            next = new E.Call(parent.fn, insertIndex(parent.args, ix, blank), parent.data);
-        } else if (parent instanceof E.List) {
-            const ix = parent.list.findIndex(x => x.id === target);
-            next = new E.List(insertIndex(parent.list, ix, blank), parent.data);
-        } else {
-            return; // Bail out early.
-        }
-        this.update(expr => expr.replace(parent.id, next));
+        this.update(this.expr.parentOf(target)?.id, parent => {
+            if (parent instanceof E.Call) {
+                const ix = parent.args.findIndex(x => x.id === target);
+                return new E.Call(parent.fn, insertIndex(parent.args, ix, blank), parent.data);
+            } else if (parent instanceof E.List) {
+                const ix = parent.list.findIndex(x => x.id === target);
+                return new E.List(insertIndex(parent.list, ix, blank), parent.data);
+            }
+            return parent;
+        });
         this.setState({ selection: blank.id });
     }
 
     private readonly createChildBlank = (parentId: ExprId) => {
-        const parent = this.expr.withId(parentId);
         const blank = new E.Blank();
-        let next: Expr;
-        if (parent instanceof E.Call) {
-            next = new E.Call(parent.fn, parent.args.concat(blank), parent.data);
-        } else if (parent instanceof E.List) {
-            next = new E.List(parent.list.concat(blank), parent.data);
-        } else {
-            return; // Bail out early.
-        }
-        this.update(expr => expr.replace(parentId, next));
+        this.update(parentId, parent => {
+            if (parent instanceof E.Call) {
+                return new E.Call(parent.fn, parent.args.concat(blank), parent.data);
+            } else if (parent instanceof E.List) {
+                return new E.List(parent.list.concat(blank), parent.data);
+            }
+            return parent;
+        });
         this.setState({ selection: blank.id });
     };
 
@@ -280,9 +260,9 @@ class Editor extends Component<EditorProps, EditorState> {
     };
 
     private readonly startEditing = (expr: ExprId) => {
-        const value = assertSome(this.expr.withId(expr)).value();
+        const value = this.expr.withId(expr)?.value();
         if (value != null) {
-            this.setState({ editingInline: { expr, value, originalValue: value } });
+            this.setState({ editing: { expr, value } });
         }
     };
 
@@ -316,77 +296,6 @@ class Editor extends Component<EditorProps, EditorState> {
         }
     }
 
-    private renderInlineEditor() {
-        const { expr, value, originalValue } = assertSome(this.state.editingInline);
-        const { rect, textProps } = assertSome(this.exprAreaMapRef.current)[expr];
-
-        const onKeyDown = (e: React.KeyboardEvent) => {
-            e.stopPropagation();
-            if (e.key === "Escape") {
-                e.preventDefault();
-                this.setState({ editingInline: null });
-                this.containerRef.current?.focus();
-                return;
-            }
-
-            // Everything below is about confirming an edit.
-            if (e.key !== "Enter") return;
-            e.preventDefault();
-            const content = (e.target as HTMLInputElement).value;
-            this.setState({ editingInline: null });
-            this.update(mainExpr =>
-                assertSome(
-                    mainExpr.update(expr, u => {
-                        if (u instanceof E.Literal) {
-                            return new E.Literal(content, u.type, u.data);
-                        } else if (u instanceof E.Variable) {
-                            return new E.Variable(content, u.data);
-                        } else if (u instanceof E.Call) {
-                            return new E.Call(content, u.args, u.data);
-                        } else {
-                            throw new E.UnvisitableExpr(u);
-                        }
-                    }),
-                ),
-            );
-            this.containerRef.current?.focus();
-        };
-
-        const { offset, colour, italic, bold } = assertSome(textProps);
-        const fudge = 3; // How much to add for border and padding.
-        return (
-            <InlineEditor
-                value={value}
-                style={{
-                    top: rect.y + (offset?.y ?? 0) - fudge,
-                    left: rect.x + (offset?.x ?? 0) - fudge,
-                    width:
-                        Math.max(
-                            TextMetrics.global.measure(value || " ", { bold, italic }).width,
-                            TextMetrics.global.measure(originalValue, { bold, italic }).width,
-                        ) +
-                        fudge * 3,
-                    color: colour,
-                    fontStyle: italic ? "italic" : undefined,
-                    fontWeight: bold ? "bold" : undefined,
-                }}
-                ref={r => r?.focus()}
-                //TODO: Stop the editor from doing stuff, should check for focus instead.
-                onKeyDown={onKeyDown}
-                onChange={e => {
-                    const content = e.target?.value; // Get if now before it's gone.
-                    this.setState(s => ({
-                        editingInline: {
-                            expr: s.editingInline!.expr,
-                            value: content,
-                            originalValue: s.editingInline!.originalValue,
-                        },
-                    }));
-                }}
-            />
-        );
-    }
-
     constructor(props: EditorProps) {
         super(props);
         for (const shortcut of Object.keys(this.menuKeys)) {
@@ -413,13 +322,32 @@ class Editor extends Component<EditorProps, EditorState> {
                     foldComments={this.state.foldingComments}
                     theme={this.props.theme}
                     exprAreaMapRef={this.exprAreaMapRef}
+                    forceInline={{}}
                     // Callbacks.
                     contextMenuFor={this.contextMenuFor}
                     onClick={this.exprSelected}
                     onDoubleClick={this.startEditing}
                     onClickCreateCircle={this.createChildBlank}
                 />
-                {this.state.editingInline && this.renderInlineEditor()}
+                {this.state.editing && (
+                    <InlineEditor
+                        exprArea={this.exprAreaMapRef.current![this.state.editing.expr]}
+                        value={this.state.editing.value}
+                        onChange={value => {
+                            this.update(this.state.editing?.expr, x => x.withValue(value));
+                            this.setState({ editing: { ...this.state.editing!, value } });
+                        }}
+                        onDismiss={() => {
+                            this.setState({ editing: null });
+                            this.containerRef.current?.focus();
+                        }}
+                        onSubmit={value => {
+                            this.update(this.state.editing?.expr, x => x.withValue(value));
+                            this.setState({ editing: null });
+                            this.containerRef.current?.focus();
+                        }}
+                    />
+                )}
             </div>
         );
     }

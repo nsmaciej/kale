@@ -13,10 +13,14 @@ import { Area, TextProperties } from "expr_view/core";
 import { layoutExpr } from "expr_view/layout";
 import { SvgGroup } from "expr_view/components";
 
+export interface ExprArea {
+    inline: boolean;
+    rect: Rect;
+    textProps: Optional<TextProperties>;
+}
+
 // The `in` is weird here. See https://github.com/microsoft/TypeScript/issues/1778.
-export type ExprAreaMap = {
-    [expr in ExprId]: { inline: boolean; rect: Rect; textProps: Optional<TextProperties> };
-};
+export type ExprAreaMap = { [expr in ExprId]: ExprArea };
 
 function flattenArea(parent: Area): ExprAreaMap {
     const map: ExprAreaMap = {};
@@ -49,6 +53,7 @@ interface ExprViewProps {
     maxWidth?: number;
     frozen?: boolean;
     foldComments?: boolean;
+    forceInline?: { [expr in ExprId]: boolean };
 
     //TODO: Handle these in the generalised selection mechanism.
     focused?: boolean;
@@ -192,12 +197,14 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
     render() {
         //TODO: Remove these binds.
         const { nodes, size, areas, text } = layoutExpr(this.theme, this.props.expr, {
+            exprPropsFor: this.exprPropsFor,
+            onClickCreateCircle: this.onClickCreateCircle,
+            // Passed through props.
             frozen: this.props.frozen,
             focused: this.props.focused,
             selection: this.props.selection,
             foldComments: this.props.foldComments,
-            exprPropsFor: this.exprPropsFor,
-            onClickCreateCircle: this.onClickCreateCircle,
+            forceInline: this.props.forceInline,
         });
 
         // Selection and highlight drawing logic.

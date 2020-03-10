@@ -38,6 +38,9 @@ svg * {
 h1, h2, h3 {
     user-select: none;
 }
+a {
+    color: ${p => p.theme.clickableColour};
+}
 `;
 
 const Container = styled.div`
