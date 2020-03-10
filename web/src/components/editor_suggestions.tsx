@@ -98,7 +98,9 @@ export default function EditorSuggestions({ onCreateEditor }: NewEditorInputProp
                     </Menu>
                 )}
             </Box>
-            <SubtleButton onClick={() => selectEditor(value)}>Open</SubtleButton>
+            <SubtleButton onClick={() => selectEditor(value)} disabled={value.length === 0}>
+                Open
+            </SubtleButton>
         </Stack>
     );
 }
