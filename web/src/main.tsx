@@ -1,12 +1,8 @@
 import * as ReactDOM from "react-dom";
 import React, { useState } from "react";
-import styled, {
-    ThemeProvider,
-    StyleSheetManager,
-    createGlobalStyle,
-    useTheme,
-} from "styled-components";
+import { ToastProvider } from "react-toast-notifications";
 import { AiOutlineGithub } from "react-icons/ai";
+import styled, { ThemeProvider, StyleSheetManager, createGlobalStyle } from "styled-components";
 
 import DragAndDropSurface from "drag_and_drop";
 import TextMetrics from "text_metrics";
@@ -14,10 +10,11 @@ import { DefaultTheme } from "theme";
 import { WorkspaceProvider, ClipboardProvider } from "workspace";
 import { Stack, Box } from "components";
 import EditorStack, { OpenEditor } from "components/editor_stack";
+import { removeIndex } from "utils";
 import ToyBox from "components/toy_box";
 import ClipboardList from "components/clipboard_list";
 import EditorSuggestions from "components/editor_suggestions";
-import { removeIndex } from "utils";
+import ErrorBoundary from "components/error_boundary";
 
 const GlobalStyle = createGlobalStyle`
 #main {
@@ -117,7 +114,6 @@ const MainHeading = styled.h1`
 let GlobalEditorId = 1;
 
 function Kale() {
-    const theme = useTheme();
     const [editors, setEditors] = useState<OpenEditor[]>([
         { topLevel: "Sample 1", id: GlobalEditorId++ },
         { topLevel: "Sample 1", id: GlobalEditorId++ },
@@ -141,11 +137,7 @@ function Kale() {
                 </Box>
                 <Box gridArea="menu" justifySelf="end">
                     <a href="https://github.com/mgoszcz2/kale">
-                        <AiOutlineGithub
-                            size="2em"
-                            // color={theme.clickableGrey}
-                            title="Open on GitHub"
-                        />
+                        <AiOutlineGithub size="2em" title="Open on GitHub" />
                     </a>
                 </Box>
             </HeaderGrid>
@@ -161,14 +153,18 @@ function App() {
         <React.StrictMode>
             <StyleSheetManager disableVendorPrefixes>
                 <ThemeProvider theme={DefaultTheme}>
-                    <DragAndDropSurface>
-                        <WorkspaceProvider>
-                            <ClipboardProvider>
-                                <GlobalStyle />
-                                <Kale />
-                            </ClipboardProvider>
-                        </WorkspaceProvider>
-                    </DragAndDropSurface>
+                    <ToastProvider>
+                        <ErrorBoundary>
+                            <DragAndDropSurface>
+                                <WorkspaceProvider>
+                                    <ClipboardProvider>
+                                        <GlobalStyle />
+                                        <Kale />
+                                    </ClipboardProvider>
+                                </WorkspaceProvider>
+                            </DragAndDropSurface>
+                        </ErrorBoundary>
+                    </ToastProvider>
                 </ThemeProvider>
             </StyleSheetManager>
         </React.StrictMode>
