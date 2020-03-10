@@ -303,6 +303,32 @@ class Editor extends Component<EditorProps, EditorState> {
         }
     }
 
+    private stopEditing() {
+        this.setState({ editing: null });
+        this.containerRef.current?.focus();
+    }
+
+    renderInlineEditor() {
+        if (this.exprAreaMapRef.current == null || this.state.editing == null) return;
+        return (
+            <InlineEditor
+                exprArea={this.exprAreaMapRef.current[this.state.editing.expr]}
+                value={this.state.editing.value}
+                onChange={value => {
+                    if (this.state.editing != null) {
+                        this.update(this.state.editing.expr, x => x.withValue(value));
+                        this.setState({ editing: { ...this.state.editing, value } });
+                    }
+                }}
+                onDismiss={() => this.stopEditing()}
+                onSubmit={value => {
+                    this.update(this.state.editing?.expr, x => x.withValue(value));
+                    this.stopEditing();
+                }}
+            />
+        );
+    }
+
     render() {
         return (
             <div
@@ -329,25 +355,7 @@ class Editor extends Component<EditorProps, EditorState> {
                     onDoubleClick={this.startEditing}
                     onClickCreateCircle={this.createChildBlank}
                 />
-                {this.state.editing && (
-                    <InlineEditor
-                        exprArea={this.exprAreaMapRef.current![this.state.editing.expr]}
-                        value={this.state.editing.value}
-                        onChange={value => {
-                            this.update(this.state.editing?.expr, x => x.withValue(value));
-                            this.setState({ editing: { ...this.state.editing!, value } });
-                        }}
-                        onDismiss={() => {
-                            this.setState({ editing: null });
-                            this.containerRef.current?.focus();
-                        }}
-                        onSubmit={value => {
-                            this.update(this.state.editing?.expr, x => x.withValue(value));
-                            this.setState({ editing: null });
-                            this.containerRef.current?.focus();
-                        }}
-                    />
-                )}
+                {this.renderInlineEditor()}
             </div>
         );
     }

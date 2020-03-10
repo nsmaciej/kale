@@ -6,7 +6,7 @@ import DragAndDropSurface from "drag_and_drop";
 import TextMetrics from "text_metrics";
 import { DefaultTheme } from "theme";
 import { WorkspaceProvider, ClipboardProvider } from "workspace";
-import { Stack, Box, Shortcut, ShortcutGroup } from "components";
+import { Stack, Box } from "components";
 import EditorStack, { OpenEditor } from "components/editor_stack";
 import ToyBox from "components/toy_box";
 import ClipboardList from "components/clipboard_list";
