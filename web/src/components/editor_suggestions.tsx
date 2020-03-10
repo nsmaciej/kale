@@ -16,13 +16,15 @@ const EditorInput = styled.input`
     border: 0;
     font: inherit;
     color: inherit;
-    border-bottom: 1px solid ${p => p.theme.grey};
+    border: 1px solid ${p => p.theme.clickableGrey};
+    border-radius: ${p => p.theme.borderRadiusPx}px;
     ${EditorHeadingStyle};
     width: ${inputWidthPx}px;
     &:focus {
-        border-bottom: 1px solid ${p => p.theme.clickableColour};
+        border: 1px solid ${p => p.theme.clickableColour};
     }
     position: relative;
+    padding: 5px;
 `;
 
 interface NewEditorInputProps {

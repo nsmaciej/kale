@@ -11,6 +11,7 @@ export const DefaultTheme = {
     // Generic colours.
     disabledColour: "#d8d8d8",
     grey: "#e4e4e4",
+    clickableGrey: "#ccc",
     clickableColour: "#1b65f1",
     borderRadiusPx: 4,
 
