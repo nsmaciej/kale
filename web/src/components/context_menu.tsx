@@ -3,7 +3,7 @@ import styled from "styled-components";
 
 import { Shortcut } from "components";
 import { Optional, mod, assert, delay } from "utils";
-import { Vec } from "geometry";
+import { Offset } from "geometry";
 import Menu, { MenuItem } from "components/menu";
 
 const ContextMenuSeparator = styled.div`
@@ -30,7 +30,7 @@ export interface ContextMenuItem extends MenuItem {
 interface ContextMenuProps {
     dismissMenu: () => void;
     items: ContextMenuItem[];
-    origin: Vec;
+    origin: Offset;
 }
 
 export default function ContextMenu({ items, origin, dismissMenu }: ContextMenuProps) {

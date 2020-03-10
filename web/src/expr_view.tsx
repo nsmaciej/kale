@@ -2,7 +2,7 @@ import React, { PureComponent } from "react";
 import { motion } from "framer-motion";
 
 import { Optional, assert, assertSome } from "utils";
-import { Vec, Rect } from "geometry";
+import { Offset, Rect } from "geometry";
 import Expr, { ExprId } from "expr";
 import * as E from "expr";
 import { KaleTheme } from "theme";
@@ -24,7 +24,7 @@ export type ExprAreaMap = { [expr in ExprId]: ExprArea };
 
 function flattenArea(parent: Area): ExprAreaMap {
     const map: ExprAreaMap = {};
-    function traverse(area: Area, origin: Vec) {
+    function traverse(area: Area, origin: Offset) {
         map[area.expr.id] = {
             inline: area.inline,
             rect: area.rect.shift(origin),
@@ -32,7 +32,7 @@ function flattenArea(parent: Area): ExprAreaMap {
         };
         for (const child of area.children) traverse(child, area.rect.origin.add(origin));
     }
-    traverse(parent, Vec.zero);
+    traverse(parent, Offset.zero);
     return map;
 }
 
@@ -62,7 +62,7 @@ interface ExprViewProps {
 
 interface ExprViewState {
     highlight: Optional<ExprId>;
-    showingMenu: Optional<{ menu: ContextMenuItem[]; at: Vec }>;
+    showingMenu: Optional<{ menu: ContextMenuItem[]; at: Offset }>;
 }
 
 // This needs to be a class component so we can nicely pass it to the layout helper.
@@ -125,11 +125,11 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
         event.stopPropagation();
         const rect = (event.target as SVGElement).getBoundingClientRect();
         assertSome(this.context).maybeStartDrag(
-            Vec.fromPage(event),
+            Offset.fromPage(event),
             //TODO: This only really works well for the top-left element of an expr. For example
             // this doesn't work for functions with comments on top of them, since the offset is
             // relative to the function name instead of the whole expression.
-            Vec.fromBoundingRect(rect),
+            Offset.fromBoundingRect(rect),
             this.props.frozen ? this.props.expr : expr,
         );
     }
@@ -140,7 +140,7 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
         e.stopPropagation();
         this.setState({
             showingMenu: {
-                at: Vec.fromPage(e),
+                at: Offset.fromPage(e),
                 menu: this.props.contextMenuFor?.(expr.id),
             },
         });
@@ -208,7 +208,7 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
         });
 
         // Selection and highlight drawing logic.
-        const padding = new Vec(this.theme.exprViewPaddingPx);
+        const padding = new Offset(this.theme.exprViewPaddingPx);
         // Spooky in React's Concurrent Mode, but it's ok since we'll only use this when
         // we commit and it doesn't depend on any previous calls to render.
         this.pendingExprAreaMap = flattenArea({

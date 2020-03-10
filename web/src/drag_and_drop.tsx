@@ -3,19 +3,19 @@ import ReactDOM from "react-dom";
 import styled, { ThemeConsumer } from "styled-components";
 
 import { Optional, assertSome } from "utils";
-import { Vec } from "geometry";
+import { Offset } from "geometry";
 import Expr from "expr";
 
 import { layoutExpr } from "expr_view/layout";
 import { SvgGroup } from "expr_view/components";
 
 interface DragAndDropSurfaceContext {
-    maybeStartDrag: (start: Vec, exprStart: Vec, expr: Expr) => void;
+    maybeStartDrag: (start: Offset, exprStart: Offset, expr: Expr) => void;
     dismissDrag: () => void;
 }
 
 interface DragAndDropSurfaceState {
-    position: Optional<Vec>;
+    position: Optional<Offset>;
 }
 
 export const DragAndDrop = React.createContext<Optional<DragAndDropSurfaceContext>>(null);
@@ -39,13 +39,13 @@ export default class DragAndDropSurface extends Component<{}, DragAndDropSurface
         maybeStartDrag: this.maybeStartDrag.bind(this),
     };
     private drag: Optional<{
-        start: Vec; // Where the maybe-drag started.
-        delta: Optional<Vec>; // How much to offset the expr when showing the drag.
-        exprStart: Vec; // Page space coordinates of the expr.
+        start: Offset; // Where the maybe-drag started.
+        delta: Optional<Offset>; // How much to offset the expr when showing the drag.
+        exprStart: Offset; // Page space coordinates of the expr.
         expr: Expr;
     }>;
 
-    private maybeStartDrag(start: Vec, exprStart: Vec, expr: Expr) {
+    private maybeStartDrag(start: Offset, exprStart: Offset, expr: Expr) {
         this.drag = { start, expr, exprStart, delta: null };
     }
 
@@ -63,7 +63,7 @@ export default class DragAndDropSurface extends Component<{}, DragAndDropSurface
         }
 
         const DRAG_THRESHOLD = 4; // Based on Windows default, DragHeight registry.
-        const position = Vec.fromPage(event);
+        const position = Offset.fromPage(event);
         if (this.drag.delta == null) {
             // Consider starting a drag.
             if (this.drag.start.distance(position) > DRAG_THRESHOLD) {

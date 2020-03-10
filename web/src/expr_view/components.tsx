@@ -1,6 +1,6 @@
 import React, { ReactNode, useState } from "react";
 
-import { Vec, Rect } from "geometry";
+import { Offset, Rect } from "geometry";
 import { useTheme } from "styled-components";
 
 // A type for components that have custom props but pass everything else on.
@@ -10,15 +10,15 @@ type CustomSvgProps<Element, CustomProps> = CustomProps &
 // Naming convention: generic svg components have the prefix Svg, bot established UI elements.
 export function SvgGroup({
     children,
-    translate = Vec.zero,
+    translate = Offset.zero,
 }: {
     children: ReactNode;
-    translate?: Vec;
+    translate?: Offset;
 }) {
     return <g transform={`translate(${translate.x} ${translate.y})`}>{children}</g>;
 }
 
-type LineProps = CustomSvgProps<SVGLineElement, { start: Vec; end: Vec }>;
+type LineProps = CustomSvgProps<SVGLineElement, { start: Offset; end: Offset }>;
 export function SvgLine({ start, end, stroke = "#000000", ...props }: LineProps) {
     return <line x1={start.x} x2={end.x} y1={start.y} y2={end.y} stroke={stroke} {...props} />;
 }

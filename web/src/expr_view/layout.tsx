@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 
 import { KaleTheme } from "theme";
 import { Optional, max } from "utils";
-import { Vec, Size, Rect } from "geometry";
+import { Offset, Size, Rect } from "geometry";
 import Expr, { ExprId, ExprVisitor } from "expr";
 import * as E from "expr";
 import TextMetrics from "text_metrics";
@@ -33,7 +33,7 @@ function CreateCircle({ onClick }: { onClick: (e: React.MouseEvent) => void }) {
     const maxR = theme.createCircle.maxRadius;
     const cx = r;
     const cy = theme.fontSizePx / 2 + 3;
-    const rect = new Rect(new Vec(cx - maxR, cy - maxR), new Size(maxR * 2));
+    const rect = new Rect(new Offset(cx - maxR, cy - maxR), new Size(maxR * 2));
     return (
         <HoverHitBox area={rect} onClick={onClick} title="Add an argument...">
             {mouseOver => (
@@ -69,11 +69,11 @@ function materialiseUnderlines(theme: KaleTheme, parent: Layout) {
     const layout = parent.withNoUnderlines();
     const gap = theme.underlineSpacingPx;
     parent.underlines.forEach((x, i) => {
-        const pos = new Vec(x.offset, parent.size.height + x.level * gap);
+        const pos = new Offset(x.offset, parent.size.height + x.level * gap);
         layout.nodes.push(<UnderlineLine start={pos} end={pos.dx(x.length)} key={"U" + i} />);
     });
     const height = max(parent.underlines.map(x => x.level)) * gap;
-    layout.size = layout.size.pad(new Vec(0, height));
+    layout.size = layout.size.pad(new Offset(0, height));
     setAreasHeightInPlace(layout.areas, layout.size.height);
     return layout;
 }
@@ -192,11 +192,11 @@ class ExprLayout implements ExprVisitor<Layout> {
             this.t.lineSpacingPx,
             expr.list.map(x => materialiseUnderlines(this.t, this.layoutInner(expr, x))),
         );
-        const line = new Rect(new Vec(3, 5), new Size(0, layout.size.height - 5));
+        const line = new Rect(new Offset(3, 5), new Size(0, layout.size.height - 5));
         // Only thing outside layoutText checking this.
         const disabled = expr.data.disabled || this.state.hasDisabledParent;
         const ruler = (
-            <HitBox area={line.pad(new Vec(5))} {...this.exprProps(expr)} key={0}>
+            <HitBox area={line.pad(new Offset(5))} {...this.exprProps(expr)} key={0}>
                 <SvgLine
                     start={line.origin}
                     end={line.bottomRight}

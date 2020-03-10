@@ -1,4 +1,4 @@
-import { Vec } from "geometry";
+import { Offset } from "geometry";
 import { assert } from "utils";
 
 export const DefaultTheme = {
@@ -27,7 +27,7 @@ export const DefaultTheme = {
     variableColour: "#248af0",
     literalColour: "#ef6c00",
     blanks: {
-        padding: new Vec(10, 1),
+        padding: new Offset(10, 1),
         stroke: "#dcdcdc",
         fill: "#f7f7f7",
         fillHover: "#efefef",
@@ -36,7 +36,7 @@ export const DefaultTheme = {
 
     // Selection and highlights.
     selection: {
-        paddingPx: new Vec(3),
+        paddingPx: new Offset(3),
         radiusPx: 3,
         blurredFill: "#fcfdff",
         blurredStroke: "#d7e9ff",

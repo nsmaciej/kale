@@ -1,50 +1,50 @@
 // N.B. The origin is the top left corner.
 
-export class Vec {
-    static readonly zero = new Vec(0);
+export class Offset {
+    static readonly zero = new Offset(0);
 
     constructor(readonly x: number, readonly y = x) {}
 
     static fromPage(e: { pageX: number; pageY: number }) {
-        return new Vec(e.pageX, e.pageY);
+        return new Offset(e.pageX, e.pageY);
     }
     static fromBoundingRect(rect: { left: number; top: number }) {
-        return new Vec(rect.left, rect.top);
+        return new Offset(rect.left, rect.top);
     }
 
     get neg() {
-        return new Vec(-this.x, -this.y);
+        return new Offset(-this.x, -this.y);
     }
 
-    difference(other: Vec) {
+    difference(other: Offset) {
         return this.add(other.neg);
     }
-    add(other: Vec) {
-        return new Vec(this.x + other.x, this.y + other.y);
+    add(other: Offset) {
+        return new Offset(this.x + other.x, this.y + other.y);
     }
     scale(factor: number) {
-        return new Vec(this.x * factor, this.y * factor);
+        return new Offset(this.x * factor, this.y * factor);
     }
 
-    lt(other: Vec) {
+    lt(other: Offset) {
         return this.x < other.x && this.y < other.y;
     }
-    gt(other: Vec) {
+    gt(other: Offset) {
         return this.x > other.x && this.y > other.y;
     }
 
     hypot() {
         return Math.hypot(this.x, this.y);
     }
-    distance(other: Vec) {
+    distance(other: Offset) {
         return this.difference(other).hypot();
     }
 
     dx(d: number) {
-        return new Vec(this.x + d, this.y);
+        return new Offset(this.x + d, this.y);
     }
     dy(d: number) {
-        return new Vec(this.x, this.y + d);
+        return new Offset(this.x, this.y + d);
     }
 }
 
@@ -53,17 +53,17 @@ export class Size {
 
     constructor(readonly width: number, readonly height = width) {}
 
-    get bottomLeft(): Vec {
-        return new Vec(0, this.height);
+    get bottomLeft(): Offset {
+        return new Offset(0, this.height);
     }
-    get bottomRight(): Vec {
-        return new Vec(this.width, this.height);
+    get bottomRight(): Offset {
+        return new Offset(this.width, this.height);
     }
-    get topRight(): Vec {
-        return new Vec(this.width, 0);
+    get topRight(): Offset {
+        return new Offset(this.width, 0);
     }
 
-    pad({ x, y }: Vec) {
+    pad({ x, y }: Offset) {
         return new Size(this.width + x, this.height + y);
     }
 
@@ -71,7 +71,7 @@ export class Size {
         return this.width === 0 && this.height === 0;
     }
 
-    extend(offset: Vec, size: Size): Size {
+    extend(offset: Offset, size: Size): Size {
         return new Size(
             Math.max(this.width, offset.x + size.width),
             Math.max(this.height, offset.y + size.height),
@@ -80,7 +80,7 @@ export class Size {
 }
 
 export class Rect {
-    constructor(readonly origin: Vec, readonly size: Size) {}
+    constructor(readonly origin: Offset, readonly size: Size) {}
     get x() {
         return this.origin.x;
     }
@@ -94,26 +94,26 @@ export class Rect {
         return this.size.height;
     }
     get atOrigin() {
-        return new Rect(Vec.zero, this.size.pad(this.origin.neg));
+        return new Rect(Offset.zero, this.size.pad(this.origin.neg));
     }
     get bottomRight() {
-        return this.origin.add(new Vec(this.width, this.height));
+        return this.origin.add(new Offset(this.width, this.height));
     }
 
     withSize(size: Size) {
         return new Rect(this.origin, size);
     }
 
-    contains(point: Vec) {
+    contains(point: Offset) {
         const corner = this.size.bottomRight.add(this.origin);
         return this.origin.lt(point) && corner.gt(point);
     }
 
-    pad(d: Vec) {
+    pad(d: Offset) {
         return new Rect(this.origin.dy(-d.y).dx(-d.x), this.size.pad(d.scale(2)));
     }
 
-    shift(offset: Vec) {
+    shift(offset: Offset) {
         return new Rect(this.origin.add(offset), this.size);
     }
 }

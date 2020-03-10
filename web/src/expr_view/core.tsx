@@ -1,6 +1,6 @@
 import React, { ReactNode } from "react";
 
-import { Size, Vec, Rect } from "geometry";
+import { Size, Offset, Rect } from "geometry";
 import { Optional, max, assert } from "utils";
 import { SvgGroup } from "expr_view/components";
 import Expr from "expr";
@@ -10,7 +10,7 @@ export interface TextProperties {
     bold?: boolean;
     colour?: string;
     title?: string;
-    offset?: Vec;
+    offset?: Offset;
     commentIndicator?: boolean;
 }
 
@@ -29,7 +29,7 @@ export interface Area {
     inline: boolean;
 }
 
-function shiftText(props: TextProperties, origin: Vec): TextProperties {
+function shiftText(props: TextProperties, origin: Offset): TextProperties {
     const { offset, ...kept } = props;
     return { ...kept, offset: offset?.add(origin) ?? origin };
 }
@@ -66,7 +66,7 @@ export class Layout {
         return layout;
     }
 
-    place(origin: Vec, layout: Layout, index = this.nodes.length) {
+    place(origin: Offset, layout: Layout, index = this.nodes.length) {
         this.size = this.size.extend(origin, layout.size);
         this.nodes.splice(
             index,
@@ -149,7 +149,7 @@ function stack(column: boolean, margin: number, args: StackLayout) {
     for (const x of children) {
         // Do not use the margin for the first element.
         const pad = layout.size.isZero() ? 0 : margin;
-        const size = layout.size.pad(new Vec(pad));
+        const size = layout.size.pad(new Offset(pad));
         const pos = column ? size.bottomLeft : size.topRight;
         layout.place(pos, x);
     }
