@@ -65,6 +65,7 @@ const HeaderGrid = styled.div`
     padding-bottom: 15px;
     border-bottom: 1px solid ${p => p.theme.grey};
     grid-template: "branding search ." / minmax(max-content, 1fr) auto minmax(0, 1fr);
+    gap: 40px;
 `;
 
 const MainHeading = styled.h1`
