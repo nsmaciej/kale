@@ -2,13 +2,9 @@ import React, { useState, useRef } from "react";
 import styled from "styled-components";
 import { AiOutlinePlusCircle } from "react-icons/ai";
 
-import { EditorHeadingStyle } from "components";
+import { EditorHeadingStyle, SubtleButton, Shortcut, Box, Stack } from "components";
 import Menu, { MenuTextWrapper } from "components/menu";
 import { useSuggestions } from "hooks";
-
-const Container = styled.div`
-    display: relative;
-`;
 
 const inputWidthPx = 400;
 
@@ -68,38 +64,42 @@ export default function EditorSuggestions({ onCreateEditor }: NewEditorInputProp
     }
 
     return (
-        <Container>
-            <EditorInput
-                onFocus={() => {
-                    setSelection(0);
-                    setFocus(true);
-                }}
-                onBlur={() => setFocus(false)}
-                ref={inputRef}
-                value={value}
-                placeholder="Open an editor&hellip;"
-                spellCheck={false}
-                onKeyDown={onKeyDown}
-                onChange={onChange}
-            />
-            {focus && (
-                <Menu
-                    items={suggestions}
-                    selected={selection}
-                    width={inputWidthPx}
-                    onClick={x => selectEditor(x.name)}
-                    setSelected={i => setSelection(i)}
-                >
-                    {item => (
-                        <>
-                            {item.original && <AiOutlinePlusCircle style={{ flex: "none" }} />}
-                            <MenuTextWrapper>
-                                {item.original ? `Create "${item.name}"` : item.name}
-                            </MenuTextWrapper>
-                        </>
-                    )}
-                </Menu>
-            )}
-        </Container>
+        <Stack gap={10} alignItems="center">
+            <Shortcut>N</Shortcut>
+            <Box position="relative">
+                <EditorInput
+                    onFocus={() => {
+                        setSelection(0);
+                        setFocus(true);
+                    }}
+                    onBlur={() => setFocus(false)}
+                    ref={inputRef}
+                    value={value}
+                    placeholder="Open a function&hellip;"
+                    spellCheck={false}
+                    onKeyDown={onKeyDown}
+                    onChange={onChange}
+                />
+                {focus && (
+                    <Menu
+                        items={suggestions}
+                        selected={selection}
+                        width={inputWidthPx}
+                        onClick={x => selectEditor(x.name)}
+                        setSelected={i => setSelection(i)}
+                    >
+                        {item => (
+                            <>
+                                {item.original && <AiOutlinePlusCircle style={{ flex: "none" }} />}
+                                <MenuTextWrapper>
+                                    {item.original ? `Create "${item.name}"` : item.name}
+                                </MenuTextWrapper>
+                            </>
+                        )}
+                    </Menu>
+                )}
+            </Box>
+            <SubtleButton onClick={() => selectEditor(value)}>Open</SubtleButton>
+        </Stack>
     );
 }

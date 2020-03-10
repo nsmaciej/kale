@@ -6,7 +6,7 @@ import DragAndDropSurface from "drag_and_drop";
 import TextMetrics from "text_metrics";
 import { DefaultTheme } from "theme";
 import { WorkspaceProvider, ClipboardProvider } from "workspace";
-import { Stack, Shortcut, ShortcutGroup } from "components";
+import { Stack, Box, Shortcut, ShortcutGroup } from "components";
 import EditorStack, { OpenEditor } from "components/editor_stack";
 import ToyBox from "components/toy_box";
 import ClipboardList from "components/clipboard_list";
@@ -115,13 +115,13 @@ function Kale() {
                         <a href="https://maciej.ie">Maciej Goszczycki</a>
                     </p>
                 </Stack>
-                <Stack gap={10} alignItems="center" gridArea="search">
+                <Box gridArea="search">
                     <EditorSuggestions
                         onCreateEditor={topLevel =>
                             setEditors(xs => [{ topLevel, id: GlobalEditorId++ }, ...xs])
                         }
                     />
-                </Stack>
+                </Box>
             </HeaderGrid>
             <ToyBox />
             <EditorStack editors={editors} onClose={i => setEditors(xs => removeIndex(xs, i))} />

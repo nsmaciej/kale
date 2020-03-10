@@ -1,11 +1,10 @@
-import React, { useState } from "react";
+import React from "react";
 import styled, { useTheme } from "styled-components";
 import { motion, AnimatePresence } from "framer-motion";
 import { AiOutlineClose } from "react-icons/ai";
 
 import { Box, Stack, NonIdealText, EditorHeadingStyle } from "components";
 import InnerEditor from "editor";
-import { removeIndex } from "utils";
 
 const EditorHeading = styled.h2`
     ${EditorHeadingStyle}
