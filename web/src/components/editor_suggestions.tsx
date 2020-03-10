@@ -14,13 +14,12 @@ const EditorInput = styled.input`
     color: inherit;
     border: 1px solid ${p => p.theme.clickableGrey};
     border-radius: ${p => p.theme.borderRadiusPx}px;
-    ${EditorHeadingStyle};
     width: ${inputWidthPx}px;
     &:focus {
         border: 1px solid ${p => p.theme.clickableColour};
     }
     position: relative;
-    padding: 5px;
+    padding: 8px 5px;
 `;
 
 interface NewEditorInputProps {
