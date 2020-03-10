@@ -8,11 +8,12 @@ export const DefaultTheme = {
     mainTextColour: "#404040",
     subtleTextColour: "#7b7b7b",
 
-    // Generic colours.
-    disabledColour: "#d8d8d8",
+    // Generic settings.
     grey: "#e4e4e4",
-    clickableGrey: "#ccc",
+    disabledColour: "#d8d8d8",
     clickableColour: "#1b65f1",
+    clickableSubtleColour: "#ccc",
+    activeColour: "#003fb7",
     borderRadiusPx: 4,
 
     // Interface and decoration colours.

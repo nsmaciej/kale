@@ -246,6 +246,7 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
                     viewBox={`0 0 ${width} ${height}`}
                     // If we can open context menus, do not allow the system menu.
                     onContextMenu={e => this.props.contextMenuFor && e.preventDefault()}
+                    style={{ cursor: "default" }}
                 >
                     {layers}
                     <SvgGroup translate={padding}>{nodes}</SvgGroup>

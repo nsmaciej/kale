@@ -1,6 +1,12 @@
 import * as ReactDOM from "react-dom";
 import React, { useState } from "react";
-import styled, { ThemeProvider, StyleSheetManager, createGlobalStyle } from "styled-components";
+import styled, {
+    ThemeProvider,
+    StyleSheetManager,
+    createGlobalStyle,
+    useTheme,
+} from "styled-components";
+import { AiOutlineGithub } from "react-icons/ai";
 
 import DragAndDropSurface from "drag_and_drop";
 import TextMetrics from "text_metrics";
@@ -37,13 +43,19 @@ p {
 /* Nothing inside svgs should be selectable */
 svg * {
     user-select: none;
-    cursor: default;
 }
 h1, h2, h3 {
     user-select: none;
 }
 a {
     color: ${p => p.theme.clickableColour};
+    display: inline-block;
+    text-decoration: none;
+    /* In case we embed SVGs etc. */
+    cursor: pointer;
+    &:hover {
+        color: ${p => p.theme.activeColour};
+    }
 }
 `;
 
@@ -64,7 +76,10 @@ const HeaderGrid = styled.div`
     display: grid;
     padding-bottom: 15px;
     border-bottom: 1px solid ${p => p.theme.grey};
-    grid-template: "branding search ." / minmax(max-content, 1fr) auto minmax(0, 1fr);
+    grid-template: "branding search menu" / minmax(max-content, 1fr) max-content minmax(
+            max-content,
+            1fr
+        );
     align-items: center;
     gap: 40px;
 `;
@@ -102,6 +117,7 @@ const MainHeading = styled.h1`
 let GlobalEditorId = 1;
 
 function Kale() {
+    const theme = useTheme();
     const [editors, setEditors] = useState<OpenEditor[]>([
         { topLevel: "Sample 1", id: GlobalEditorId++ },
         { topLevel: "Sample 1", id: GlobalEditorId++ },
@@ -122,6 +138,15 @@ function Kale() {
                             setEditors(xs => [{ topLevel, id: GlobalEditorId++ }, ...xs])
                         }
                     />
+                </Box>
+                <Box gridArea="menu" justifySelf="end">
+                    <a href="https://github.com/mgoszcz2/kale">
+                        <AiOutlineGithub
+                            size="2em"
+                            // color={theme.clickableGrey}
+                            title="Open on GitHub"
+                        />
+                    </a>
                 </Box>
             </HeaderGrid>
             <ToyBox />

@@ -12,7 +12,7 @@ const EditorInput = styled.input`
     border: 0;
     font: inherit;
     color: inherit;
-    border: 1px solid ${p => p.theme.clickableGrey};
+    border: 1px solid ${p => p.theme.clickableSubtleColour};
     border-radius: ${p => p.theme.borderRadiusPx}px;
     width: ${inputWidthPx}px;
     &:focus {

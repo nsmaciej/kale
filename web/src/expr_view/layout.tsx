@@ -175,9 +175,7 @@ class ExprLayout implements ExprVisitor<Layout> {
 
     layout(expr: Expr): Layout {
         const layout = expr.visit(this);
-        // This associates the layout with the expr, which is used for generating selection areas.
-        // No need to do this on frozen exprs.
-        if (!this.props.frozen) layout.expr = expr;
+        layout.expr = expr;
         return layout;
     }
 
