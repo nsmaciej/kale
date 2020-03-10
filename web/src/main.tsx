@@ -5,9 +5,11 @@ import styled, { ThemeProvider, StyleSheetManager, createGlobalStyle } from "sty
 import DragAndDropSurface from "drag_and_drop";
 import TextMetrics from "text_metrics";
 import { DefaultTheme } from "theme";
-import { Stack, Shortcut, ShortcutGroup } from "components";
 import { WorkspaceProvider, ClipboardProvider } from "workspace";
-import { ToyBox, ClipboardList, EditorStack } from "panes";
+import { Stack, Shortcut, ShortcutGroup } from "components";
+import EditorStack from "components/editor_stack";
+import ToyBox from "components/toy_box";
+import ClipboardList from "components/clipboard_list";
 
 const GlobalStyle = createGlobalStyle`
 #main {

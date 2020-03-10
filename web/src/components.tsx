@@ -101,3 +101,7 @@ export const EditorHeadingStyle = css`
     font-size: 20px;
     font-variant-numeric: oldstyle-nums;
 `;
+
+export const PaneHeading = styled.h2`
+    ${EditorHeadingStyle}
+`;

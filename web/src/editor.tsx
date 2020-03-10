@@ -1,5 +1,5 @@
 import React, { Component, useContext } from "react";
-import styled, { useTheme } from "styled-components";
+import { useTheme } from "styled-components";
 
 import * as E from "expr";
 import * as Select from "selection";

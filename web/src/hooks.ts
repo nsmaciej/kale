@@ -1,6 +1,6 @@
 import { useContext, useState, useMemo } from "react";
 
-import { assertSome, Optional, mod, assert } from "utils";
+import { assertSome, Optional, mod } from "utils";
 import { Workspace } from "workspace";
 import { MenuItem } from "components/menu";
 
