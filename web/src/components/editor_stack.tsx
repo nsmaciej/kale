@@ -1,5 +1,5 @@
 import React from "react";
-import styled, { useTheme } from "styled-components";
+import styled from "styled-components";
 import { motion, AnimatePresence } from "framer-motion";
 import { AiOutlineCloseCircle, AiOutlinePlayCircle } from "react-icons/ai";
 
