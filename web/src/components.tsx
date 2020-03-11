@@ -91,6 +91,24 @@ export const SubtleButton = styled.button`
     }
 `;
 
+// Meant for wrapping react-icons icons.
+export const IconButton = styled.button`
+    background: none;
+    border: none;
+    color: ${p => p.theme.clickableColour};
+    & > svg {
+        width: 2em;
+        height: 2em;
+    }
+    &:hover,
+    &:focus {
+        color: ${p => p.theme.activeColour};
+    }
+    &:disabled {
+        color: ${p => p.theme.disabledExprColour};
+    }
+`;
+
 export const NonIdealText = styled.p`
     text-align: center;
     color: ${p => p.theme.subtleTextColour};

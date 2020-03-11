@@ -1,9 +1,9 @@
 import React from "react";
 import styled, { useTheme } from "styled-components";
 import { motion, AnimatePresence } from "framer-motion";
-import { AiOutlineClose } from "react-icons/ai";
+import { AiOutlineCloseCircle, AiOutlinePlayCircle } from "react-icons/ai";
 
-import { Box, Stack, NonIdealText, EditorHeadingStyle } from "components";
+import { Box, Stack, NonIdealText, EditorHeadingStyle, IconButton } from "components";
 import InnerEditor from "editor";
 
 const EditorHeading = styled.h2`
@@ -19,6 +19,9 @@ const EditorHeader = styled(Stack).attrs({ gap: 5 })`
     border-bottom: 1px solid ${p => p.theme.grey};
     align-items: center;
     z-index: 50;
+    & > *:last-child {
+        margin-left: auto;
+    }
 `;
 
 export interface OpenEditor {
@@ -32,7 +35,6 @@ interface EditorStackProps {
 }
 
 export default function EditorStack({ onClose, editors }: EditorStackProps) {
-    const theme = useTheme();
     return (
         <Box gridArea="editor" height="100%">
             <Stack vertical overflow="auto" flex="1 1 1px" alignItems="start">
@@ -49,10 +51,12 @@ export default function EditorStack({ onClose, editors }: EditorStackProps) {
                         >
                             <EditorHeader>
                                 <EditorHeading>{editor.topLevel}</EditorHeading>
-                                <AiOutlineClose
-                                    color={theme.clickableColour}
-                                    onClick={() => onClose(i)}
-                                />
+                                <IconButton onClick={() => onClose(i)}>
+                                    <AiOutlineCloseCircle />
+                                </IconButton>
+                                <IconButton onClick={() => alert("Execute")}>
+                                    <AiOutlinePlayCircle />
+                                </IconButton>
                             </EditorHeader>
                             <Box marginTop={10} marginBottom={20}>
                                 <InnerEditor
