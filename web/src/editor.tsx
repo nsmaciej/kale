@@ -113,6 +113,7 @@ class Editor extends Component<EditorProps, EditorState> {
         copy: (e: ExprId) => this.addExprToClipboard(e),
         append: (e: ExprId) => this.createChildBlank(e),
         insert: (e: ExprId) => this.createSiblingBlank(e),
+        insertBefore: (e: ExprId) => this.createSiblingBlank(e, true),
         foldComments: () => this.setState(state => ({ foldingComments: !state.foldingComments })),
         comment: (e: ExprId) => {
             const selected = this.expr.withId(e);
@@ -143,6 +144,7 @@ class Editor extends Component<EditorProps, EditorState> {
         d: "delete",
         f: "demoAddCall",
         i: "insert",
+        I: "insertBefore",
         g: "demoAddString",
         m: "move",
         q: "comment",
@@ -187,8 +189,9 @@ class Editor extends Component<EditorProps, EditorState> {
         { action: "copy", label: "Copy" },
         { action: "edit", label: "Edit..." },
         null,
-        { action: "append", label: "Append a Blank" },
-        { action: "insert", label: "Insert a Blank" },
+        { action: "append", label: "Append Argument" },
+        { action: "insert", label: "New Line" },
+        { action: "insertBefore", label: "New Line Before" },
         null,
         { action: "comment", label: "Comment..." },
         { action: "disable", label: "Disable" },
@@ -224,18 +227,30 @@ class Editor extends Component<EditorProps, EditorState> {
         }
     };
 
-    private createSiblingBlank(target: ExprId) {
+    private createSiblingBlank(target: ExprId, insertBefore = false) {
         const blank = new E.Blank();
-        this.update(this.expr.parentOf(target)?.id, parent => {
-            if (parent instanceof E.Call) {
-                const ix = parent.args.findIndex(x => x.id === target);
-                return new E.Call(parent.fn, insertIndex(parent.args, ix, blank), parent.data);
-            } else if (parent instanceof E.List) {
-                const ix = parent.list.findIndex(x => x.id === target);
-                return new E.List(insertIndex(parent.list, ix, blank), parent.data);
-            }
-            return parent;
-        });
+        const currentParent = this.expr.parentOf(target)?.id;
+        if (currentParent == null) {
+            this.update(null, main => new E.List(insertBefore ? [blank, main] : [main, blank]));
+        } else {
+            this.update(currentParent, parent => {
+                if (parent instanceof E.Call) {
+                    const ix = parent.args.findIndex(x => x.id === target);
+                    return new E.Call(
+                        parent.fn,
+                        insertIndex(parent.args, ix - +insertBefore, blank),
+                        parent.data,
+                    );
+                } else if (parent instanceof E.List) {
+                    const ix = parent.list.findIndex(x => x.id === target);
+                    return new E.List(
+                        insertIndex(parent.list, ix - +insertBefore, blank),
+                        parent.data,
+                    );
+                }
+                return parent;
+            });
+        }
         this.setState({ selection: blank.id });
     }
 
@@ -268,7 +283,7 @@ class Editor extends Component<EditorProps, EditorState> {
     };
 
     componentDidMount() {
-        if (this.props.stealFocus) this.containerRef.current?.focus();
+        if (this.props.stealFocus) this.focus();
     }
 
     componentDidUpdate(prevProps: EditorProps) {
@@ -307,8 +322,12 @@ class Editor extends Component<EditorProps, EditorState> {
 
     private stopEditing() {
         this.setState({ editing: null });
-        this.containerRef.current?.focus();
+        this.focus();
     }
+
+    private readonly focus = () => {
+        this.containerRef.current?.focus();
+    };
 
     renderInlineEditor() {
         if (this.exprAreaMapRef.current == null || this.state.editing == null) return;
@@ -356,6 +375,7 @@ class Editor extends Component<EditorProps, EditorState> {
                     onClick={this.exprSelected}
                     onDoubleClick={this.startEditing}
                     onClickCreateCircle={this.createChildBlank}
+                    onFocus={this.focus}
                 />
                 {this.renderInlineEditor()}
             </div>

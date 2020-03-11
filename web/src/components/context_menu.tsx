@@ -14,11 +14,12 @@ const ContextMenuSeparator = styled.div`
 
 const ContextMenuItemContainer = styled.div`
     display: flex;
-    justify-content: space-between;
     align-items: center;
     width: 100%;
-    & > kbd {
-        margin-left: 20px;
+    & > *:first-child {
+        /* Basically separate out the kbd shortcut by at least 20px */
+        padding-right: 20px;
+        margin-right: auto;
     }
 `;
 export interface ContextMenuItem extends MenuItem {
@@ -69,6 +70,7 @@ export default function ContextMenu({ items, origin, dismissMenu }: ContextMenuP
     }
 
     function onKeyDown(e: React.KeyboardEvent) {
+        if (e.ctrlKey || e.altKey || e.metaKey) return;
         e.stopPropagation();
         e.preventDefault();
         switch (e.key) {
@@ -101,6 +103,19 @@ export default function ContextMenu({ items, origin, dismissMenu }: ContextMenuP
         }
     }
 
+    function renderShortcut(key: Optional<string>) {
+        const S = Shortcut;
+        if (key == null) return null;
+        if (key.length > 1) return <S subtle>{key}</S>;
+        if (key.toLowerCase() === key) return <S subtle>{key.toUpperCase()}</S>;
+        return (
+            <>
+                <S subtle>Shift</S>
+                <S subtle>{key.toUpperCase()}</S>
+            </>
+        );
+    }
+
     return (
         <div
             style={{ position: "fixed", left: origin.x, top: origin.y, zIndex: 100 }}
@@ -126,12 +141,8 @@ export default function ContextMenu({ items, origin, dismissMenu }: ContextMenuP
                 {item =>
                     item.label ? (
                         <ContextMenuItemContainer>
-                            {item.label}
-                            <Shortcut subtle>
-                                {item.keyEquivalent?.length === 1
-                                    ? item.keyEquivalent?.toUpperCase()
-                                    : item.keyEquivalent}
-                            </Shortcut>
+                            <span>{item.label}</span>
+                            {renderShortcut(item.keyEquivalent)}
                         </ContextMenuItemContainer>
                     ) : (
                         <ContextMenuSeparator />

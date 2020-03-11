@@ -57,7 +57,10 @@ export default function EditorStack({ onClose, editors }: EditorStackProps) {
                                 <IconButton onClick={() => onClose(i)}>
                                     <AiOutlineCloseCircle />
                                 </IconButton>
-                                <IconButton onClick={() => dbg.evalFunction(editor.topLevel)}>
+                                <IconButton
+                                    onClick={() => dbg.evalFunction(editor.topLevel)}
+                                    disabled={dbg.interpreter != null}
+                                >
                                     <AiOutlinePlayCircle />
                                 </IconButton>
                             </EditorHeader>

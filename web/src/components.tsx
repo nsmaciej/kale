@@ -66,6 +66,9 @@ export const Shortcut = styled.kbd<ShortcutProps>`
     /* Ensure we always look snazzy no matter the context */
     color: ${p => p.theme.mainTextColour};
     line-height: 1;
+    & + & {
+        margin-left: 1ex;
+    }
 `;
 
 // Prevent a shortcut group from containing line-breaks.

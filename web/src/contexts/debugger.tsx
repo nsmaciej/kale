@@ -17,7 +17,7 @@ export function useDebugProvider() {
         evalFunction(name: string) {
             const int = new Interpreter({
                 onBreakpoint: cc => setContinueEval(cc),
-                onTerminated: () => console.log("Terminated"),
+                onTerminated: () => setInterpeter(null),
             });
             int.setWorkspace(workspace.topLevel);
             int.evalFunction(name);

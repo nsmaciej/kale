@@ -45,6 +45,8 @@ interface ExprViewProps {
     onClick?(expr: ExprId): void;
     onDoubleClick?(expr: ExprId): void;
     onClickCreateCircle?(expr: ExprId): void;
+    // The expr has been focused on.
+    onFocus?(): void;
 
     // Delegation.
     contextMenuFor?(expr: ExprId): ContextMenuItem[];
@@ -255,7 +257,10 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
                     <ContextMenu
                         items={this.state.showingMenu.menu}
                         origin={this.state.showingMenu.at}
-                        dismissMenu={() => this.setState({ showingMenu: null })}
+                        dismissMenu={() => {
+                            this.setState({ showingMenu: null });
+                            this.props.onFocus?.();
+                        }}
                     />
                 )}
             </>
