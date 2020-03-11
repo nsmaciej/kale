@@ -7,7 +7,8 @@ import styled, { ThemeProvider, StyleSheetManager, createGlobalStyle } from "sty
 import DragAndDropSurface from "drag_and_drop";
 import TextMetrics from "text_metrics";
 import { DefaultTheme } from "theme";
-import { WorkspaceProvider, ClipboardProvider } from "workspace";
+import { ClipboardProvider } from "contexts/clipboard";
+import { WorkspaceProvider } from "contexts/workspace";
 import { Stack, Box } from "components";
 import EditorStack, { OpenEditor } from "components/editor_stack";
 import { removeIndex } from "utils";
@@ -15,6 +16,7 @@ import ToyBox from "components/toy_box";
 import ClipboardList from "components/clipboard_list";
 import EditorSuggestions from "components/editor_suggestions";
 import ErrorBoundary from "components/error_boundary";
+import { DebuggerProvider } from "contexts/debugger";
 
 const GlobalStyle = createGlobalStyle`
 #main {
@@ -115,8 +117,9 @@ let GlobalEditorId = 1;
 
 function Kale() {
     const [editors, setEditors] = useState<OpenEditor[]>([
+        { topLevel: "Hello World", id: GlobalEditorId++ },
         { topLevel: "Sample 1", id: GlobalEditorId++ },
-        { topLevel: "Sample 1", id: GlobalEditorId++ },
+        { topLevel: "Sample 2", id: GlobalEditorId++ },
     ]);
     return (
         <Container>
@@ -157,10 +160,12 @@ function App() {
                         <ErrorBoundary>
                             <DragAndDropSurface>
                                 <WorkspaceProvider>
-                                    <ClipboardProvider>
-                                        <GlobalStyle />
-                                        <Kale />
-                                    </ClipboardProvider>
+                                    <DebuggerProvider>
+                                        <ClipboardProvider>
+                                            <GlobalStyle />
+                                            <Kale />
+                                        </ClipboardProvider>
+                                    </DebuggerProvider>
                                 </WorkspaceProvider>
                             </DragAndDropSurface>
                         </ErrorBoundary>

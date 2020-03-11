@@ -279,7 +279,8 @@ class Editor extends Component<EditorProps, EditorState> {
         // This ensures the selection is always valid. Find the closest existing parent.
         if (!this.expr.contains(this.state.selection)) {
             // We cannot use getTopLevel here because it doesn't use the older topLevel value.
-            const prevExpr = prevProps.workspace.topLevel[prevProps.topLevelName] ?? new E.Blank();
+            const prevExpr =
+                prevProps.workspace.topLevel.get(prevProps.topLevelName)?.expr ?? new E.Blank();
             const [siblings, ix] = prevExpr.siblings(this.state.selection);
             const candidates: Expr[][] = [];
             if (ix != null) {

@@ -1,26 +1,20 @@
 import * as E from "expr";
 import Expr, { ExprId, UnvisitableExpr } from "expr";
-import { Optional, asyncForEach } from "utils";
+import { asyncForEach } from "utils";
+import {
+    Value,
+    Workspace,
+    WorkspaceRef,
+    Scope,
+    vmAssert,
+    assertFunc,
+    assertBoolean,
+    assertStr,
+} from "vm/types";
 
-interface Value<T = unknown> {
-    type: string;
-    value: T;
-}
-
-interface Func {
-    expr: Expr;
-    args: string[];
-    scope: null;
-}
-
-class VmError extends Error {}
-
-function nullValue(): Value {
-    return { type: "null", value: null };
-}
-
-function vmAssert(condition: boolean, message?: string): asserts condition {
-    if (!condition) throw new VmError(message);
+interface InterpreterCallbacks {
+    onBreakpoint(continueEval: () => void): void;
+    onTerminated(): void;
 }
 
 function assertVariable(expr: Expr): string {
@@ -28,63 +22,36 @@ function assertVariable(expr: Expr): string {
     return expr.name;
 }
 
-function assertType<T>(type: string): (value: Value) => T {
-    return value => {
-        vmAssert(value.type === type, `Cannot use a ${value.type}, expected ${type}`);
-        return value.value as T;
-    };
-}
-
-const assertBoolean = assertType<boolean>("boolean");
-const assertFunc = assertType<Func>("func");
-
-class Scope {
-    private readonly values = new Map<string, Value>();
-    constructor(private readonly parent?: Optional<Scope>) {}
-
-    get(name: string): Value {
-        const r = this.values.get(name);
-        if (r !== undefined) return r;
-        if (this.parent != null) return this.parent.get(name);
-        throw new VmError(`${name} not found`);
-    }
-
-    assign(name: string, value: Value) {
-        if (this.values.has(name)) {
-            this.values.set(name, value);
-        } else if (this.parent != null) {
-            this.parent.assign(name, value);
-        } else {
-            throw new VmError(`${name} not found`);
-        }
-    }
-
-    define(name: string, value: Value) {
-        this.values.set(name, value);
-    }
+function nullValue(): Value {
+    return { type: "null", value: null };
 }
 
 export default class Interpreter {
-    private readonly globalScope = new Scope();
+    private readonly workspaceRef: WorkspaceRef = { current: new Map() };
+    private readonly globalScope = new Scope(undefined, this.workspaceRef);
     private breakpoints = new Set<ExprId>();
 
-    constructor(
-        workspace: Map<string, Func>,
-        private readonly onBreakpoint: (expr: ExprId, scope: Scope) => Promise<void>,
-    ) {
-        for (const [name, func] of workspace) {
-            this.globalScope.define(name, { type: "func", value: func });
-        }
+    constructor(private readonly callbacks: InterpreterCallbacks) {}
+
+    setWorkspace(workspace: Workspace) {
+        this.workspaceRef.current = workspace;
     }
 
-    replaceBreakpoints(breakpoints: Set<ExprId>) {
+    setBreakpoints(breakpoints: Set<ExprId>) {
         this.breakpoints = breakpoints;
     }
 
-    async eval(expr: Expr, scope: Scope): Promise<Value> {
+    async evalFunction(name: string) {
+        const func = assertFunc(this.globalScope.get(name));
+        vmAssert(func.args.length === 0, "No arguments provided");
+        await this.eval(func.expr, this.globalScope);
+        this.callbacks.onTerminated();
+    }
+
+    private async eval(expr: Expr, scope: Scope): Promise<Value> {
         const promise = this.evalRaw(expr, scope);
         if (this.breakpoints.has(expr.id)) {
-            await this.onBreakpoint(expr.id, scope);
+            await new Promise(resolve => this.callbacks.onBreakpoint(resolve));
         }
         return promise;
     }
@@ -108,6 +75,10 @@ export default class Interpreter {
                 r = await this.eval(args[1], scope);
             }
             return r;
+        } else if (fn === "print") {
+            const value = await this.eval(args[0], scope);
+            console.log(assertStr(value));
+            return value;
         } else {
             // The actual call.
             const func = assertFunc(scope.get(fn));
@@ -121,21 +92,23 @@ export default class Interpreter {
     }
 
     private async evalRaw(expr: Expr, scope: Scope): Promise<Value> {
-        if (expr instanceof E.Blank) {
-            //TODO: In the future allow users to fill in blanks.
-            throw new VmError("Cannot execute functions with blanks");
-        } else if (expr instanceof E.Literal) {
-            const { type, value } = expr;
-            return { type, value };
+        //TODO: In the future allow users to fill in blanks.
+        vmAssert(!(expr instanceof E.Blank), "Cannot execute functions with blanks");
+
+        if (expr instanceof E.Literal) {
+            const { type, content } = expr;
+            return { type, value: content };
         } else if (expr instanceof E.Variable) {
             return scope.get(expr.name);
         } else if (expr instanceof E.List) {
             const listScope = new Scope(scope);
+            let r = nullValue();
             for (const line of expr.list) {
-                await this.eval(line, listScope);
+                r = await this.eval(line, listScope);
             }
+            return r;
         } else if (expr instanceof E.Call) {
-            await this.evalRawCall(expr, scope);
+            return await this.evalRawCall(expr, scope);
         }
         throw new UnvisitableExpr(expr);
     }

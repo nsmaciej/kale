@@ -1,35 +1,49 @@
 import React, { Component } from "react";
 
 import Expr, { Blank } from "expr";
-import { Optional } from "utils";
-import * as Samples from "sample";
-
-export type TopLevel = { [name: string]: Expr };
+import { Optional, assertSome } from "utils";
+import { Func, Workspace as InterpterWorkspace } from "vm/types";
+import * as Sample from "sample";
 
 export type WorkspaceValue = WorkspaceProvider["state"];
 export const Workspace = React.createContext<Optional<WorkspaceValue>>(null);
 
+function asFunc(expr: Expr): Func {
+    return { expr, scope: null, args: [] };
+}
+
 export class WorkspaceProvider extends Component<{}, WorkspaceProvider["state"]> {
     state = {
-        topLevel: { "Sample 1": Samples.SAMPLE_1, "Sample 2": Samples.SAMPLE_2 } as TopLevel,
+        topLevel: new Map([
+            ["Sample 1", asFunc(Sample.SAMPLE_1)],
+            ["Sample 2", asFunc(Sample.SAMPLE_2)],
+            ["Hello World", asFunc(Sample.HELLO_WORLD)],
+        ]) as InterpterWorkspace,
         removeTopLevel: (name: string) => {
             this.setState(state => {
-                const cloned = Object.assign({}, state.topLevel);
-                delete cloned[name];
-                return { topLevel: cloned };
+                const topLevel = new Map(state.topLevel);
+                topLevel.delete(name);
+                return { topLevel };
             });
         },
         setTopLevel: (name: string, update: (expr: Expr) => Expr) => {
-            this.setState(({ topLevel }) => ({
-                topLevel: { ...topLevel, [name]: update(topLevel[name]) },
-            }));
+            this.setState(state => {
+                const topLevel = new Map(state.topLevel);
+                topLevel.set(name, asFunc(update(assertSome(topLevel.get(name)).expr)));
+                return { topLevel };
+            });
         },
         getTopLevel: (name: string): Expr => {
-            if (Object.prototype.hasOwnProperty.call(this.state.topLevel, name)) {
-                return this.state.topLevel[name];
+            const func = this.state.topLevel.get(name);
+            if (func != null) {
+                return func.expr;
             }
             const blank = new Blank();
-            this.state.setTopLevel(name, () => blank);
+            this.setState(state => {
+                const topLevel = new Map(state.topLevel);
+                topLevel.set(name, asFunc(blank));
+                return { topLevel };
+            });
             return blank;
         },
     };

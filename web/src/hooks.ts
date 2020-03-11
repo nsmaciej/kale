@@ -21,7 +21,7 @@ export function useSuggestions(value: string, showValue = false): SuggestionsHoo
     const [selection, setSelection] = useState<Optional<number>>(0);
 
     const suggestions = useMemo(() => {
-        const r = Object.keys(workspace.topLevel)
+        const r = Array.from(workspace.topLevel.keys())
             .filter(x => x.toLowerCase().includes(value.toLowerCase()))
             .slice(0, 5)
             .map(x => ({

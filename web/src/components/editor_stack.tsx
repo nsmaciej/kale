@@ -1,10 +1,12 @@
-import React from "react";
+import React, { useContext } from "react";
 import styled from "styled-components";
 import { motion, AnimatePresence } from "framer-motion";
 import { AiOutlineCloseCircle, AiOutlinePlayCircle } from "react-icons/ai";
 
 import { Box, Stack, NonIdealText, EditorHeadingStyle, IconButton } from "components";
 import InnerEditor from "editor";
+import { Debugger } from "contexts/debugger";
+import { assertSome } from "utils";
 
 const EditorHeading = styled.h2`
     ${EditorHeadingStyle}
@@ -35,6 +37,7 @@ interface EditorStackProps {
 }
 
 export default function EditorStack({ onClose, editors }: EditorStackProps) {
+    const dbg = assertSome(useContext(Debugger));
     return (
         <Box gridArea="editor" height="100%">
             <Stack vertical overflow="auto" flex="1 1 1px" alignItems="start">
@@ -54,7 +57,7 @@ export default function EditorStack({ onClose, editors }: EditorStackProps) {
                                 <IconButton onClick={() => onClose(i)}>
                                     <AiOutlineCloseCircle />
                                 </IconButton>
-                                <IconButton onClick={() => alert("Execute")}>
+                                <IconButton onClick={() => dbg.evalFunction(editor.topLevel)}>
                                     <AiOutlinePlayCircle />
                                 </IconButton>
                             </EditorHeader>

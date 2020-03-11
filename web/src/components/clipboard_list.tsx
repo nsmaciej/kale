@@ -1,7 +1,7 @@
 import React, { useContext } from "react";
 import { AiOutlinePushpin, AiFillPushpin } from "react-icons/ai";
 
-import { Clipboard } from "workspace";
+import { Clipboard } from "contexts/clipboard";
 import { assertSome, mod } from "utils";
 import { Box, Stack, SubtleButton, NonIdealText, PaneHeading, Shortcut } from "components";
 import ExprViewList from "components/expr_view_list";

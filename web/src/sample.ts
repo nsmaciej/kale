@@ -44,5 +44,8 @@ const sample2 = new Call("object", [
     new Literal("48557177334.32", "int"),
 ]);
 
+const sample3 = new Call("print", [new Literal("Hello World", "str")]);
+
 export const SAMPLE_1 = sample1.validate();
 export const SAMPLE_2 = sample2.validate();
+export const HELLO_WORLD = sample3.validate();
