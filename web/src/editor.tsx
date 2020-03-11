@@ -6,7 +6,8 @@ import * as Select from "selection";
 import Expr, { ExprId } from "expr";
 import ExprView, { ExprAreaMap } from "expr_view";
 import { Optional, assertSome, insertIndex, reverseObject, assert } from "utils";
-import { Clipboard, Workspace, ClipboardValue, WorkspaceValue } from "workspace";
+import { Clipboard, ClipboardValue } from "contexts/clipboard";
+import { Workspace, WorkspaceValue } from "contexts/workspace";
 import { KaleTheme } from "theme";
 
 import { ContextMenuItem } from "components/context_menu";

@@ -1,7 +1,7 @@
 import { useContext, useState, useMemo } from "react";
 
 import { assertSome, Optional, mod } from "utils";
-import { Workspace } from "workspace";
+import { Workspace } from "contexts/workspace";
 import { MenuItem } from "components/menu";
 
 interface Suggestion extends MenuItem {
