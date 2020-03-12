@@ -17,6 +17,7 @@ const InlineEditorInput = styled.input`
     line-height: 1;
     outline: 0;
     border: 0;
+    background: ${p => p.theme.selection.blurredFill};
 `;
 
 interface InlineEditorProps {
@@ -69,7 +70,8 @@ export default function InlineEditor({
     const { offset, colour, italic, bold } = exprArea.textProps ?? {};
     const origin = exprArea.rect.origin;
     // Make sure the input is always at least wide enough to show the cursor.
-    const width = Math.max(2, TextMetrics.global.measure(value, { bold, italic }).width);
+    const widthFudge = 2;
+    const width = TextMetrics.global.measure(value, { bold, italic }).width + widthFudge;
     return (
         <Container
             style={{
