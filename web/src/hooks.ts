@@ -3,6 +3,7 @@ import { useContext, useState, useMemo } from "react";
 import { assertSome, Optional, mod } from "utils";
 import { Workspace } from "contexts/workspace";
 import { MenuItem } from "components/menu";
+import { specialFunctions } from "vm/interpreter";
 
 interface Suggestion extends MenuItem {
     name: string;
@@ -16,12 +17,15 @@ interface SuggestionsHook {
     moveSelection(delta: 1 | -1): void;
 }
 
-export function useSuggestions(value: string, showValue = false): SuggestionsHook {
+export function useSuggestions(
+    value: string,
+    { showValue, showSpecials }: { showValue?: boolean; showSpecials?: boolean } = {},
+): SuggestionsHook {
     const workspace = assertSome(useContext(Workspace));
     const [selection, setSelection] = useState<Optional<number>>(0);
 
     const suggestions = useMemo(() => {
-        const r = Array.from(workspace.topLevel.keys())
+        const r = [...workspace.topLevel.keys(), ...(showSpecials ? specialFunctions : [])]
             .filter(x => x.toLowerCase().includes(value.toLowerCase()))
             .slice(0, 5)
             .map(x => ({
@@ -30,7 +34,7 @@ export function useSuggestions(value: string, showValue = false): SuggestionsHoo
                 id: x,
             }));
         const fullMatch = workspace.topLevel.has(value);
-        if (value && !fullMatch && showValue) {
+        if (value !== "" && !fullMatch && showValue && !specialFunctions.includes(value)) {
             r.push({
                 name: value,
                 original: true,
@@ -41,7 +45,7 @@ export function useSuggestions(value: string, showValue = false): SuggestionsHoo
             setSelection(null);
         }
         return r as Suggestion[];
-    }, [value, workspace.topLevel, showValue]);
+    }, [value, workspace.topLevel, showValue, showSpecials]);
 
     return {
         selection,

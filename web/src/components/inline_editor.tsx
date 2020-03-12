@@ -34,7 +34,9 @@ export default function InlineEditor({
     onSubmit,
     onDismiss,
 }: InlineEditorProps) {
-    const { setSelection, selection, suggestions, moveSelection } = useSuggestions(value);
+    const { setSelection, selection, suggestions, moveSelection } = useSuggestions(value, {
+        showSpecials: true,
+    });
 
     function onKeyDown(e: React.KeyboardEvent) {
         e.stopPropagation(); // Always stop propagation.

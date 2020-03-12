@@ -27,6 +27,38 @@ function nullValue(): Value {
     return { type: Type.Null, value: null };
 }
 
+const specials: {
+    [special: string]: (
+        evalExpr: Interpreter["eval"],
+        args: readonly Expr[],
+        scope: Scope,
+    ) => Promise<Value>;
+} = {
+    async let(evalExpr, args, scope) {
+        const value = await evalExpr(args[1], scope);
+        scope.define(assertVariable(args[0]), value);
+        return value;
+    },
+    async set(evalExpr, args, scope) {
+        const value = await evalExpr(args[1], scope);
+        scope.assign(assertVariable(args[0]), value);
+        return value;
+    },
+    async if(evalExpr, args, scope) {
+        const condition = await evalExpr(args[0], scope);
+        return await evalExpr(assertBoolean(condition) ? args[1] : args[2], scope);
+    },
+    async while(evalExpr, args, scope) {
+        let r = nullValue();
+        while (assertBoolean(await evalExpr(args[0], scope))) {
+            r = await evalExpr(args[1], scope);
+        }
+        return r;
+    },
+};
+
+export const specialFunctions = Object.keys(specials);
+
 export default class Interpreter {
     private readonly workspaceRef: WorkspaceRef = { current: new Map() };
     private readonly globalScope = new Scope(undefined, this.workspaceRef);
@@ -68,38 +100,26 @@ export default class Interpreter {
 
     private async evalRawCall(expr: E.Call, scope: Scope): Promise<Value> {
         const { fn, args } = expr;
-        if (fn === "let") {
-            const value = await this.eval(args[1], scope);
-            scope.define(assertVariable(expr.args[0]), value);
-            return value;
-        } else if (fn === "set") {
-            const value = await this.eval(args[1], scope);
-            scope.assign(assertVariable(expr.args[0]), value);
-            return value;
-        } else if (fn === "if") {
-            const condition = await this.eval(expr.args[0], scope);
-            return await this.eval(assertBoolean(condition) ? args[1] : args[2], scope);
-        } else if (fn === "while") {
-            let r = nullValue();
-            while (assertBoolean(await this.eval(args[0], scope))) {
-                r = await this.eval(args[1], scope);
-            }
-            return r;
-        } else {
-            const value = scope.get(fn);
-            // Handle builtins.
-            if (value.type === Type.Builtin) {
-                return this.evalBuiltin(expr, scope);
-            }
-            // The actual call.
-            const func = assertFunc(value);
-            vmAssert(func.args.length === args.length - 1, `Wrong number of arguments for ${fn}`);
-            const callScope = new Scope(func.scope);
-            await asyncForEach(func.args, async (arg, i) => {
-                callScope.define(arg, await this.eval(args[i + 1], scope));
-            });
-            return this.eval(func.expr, callScope);
+
+        // Handle specials.
+        if (Object.prototype.hasOwnProperty.call(specials, fn)) {
+            return specials[fn](this.eval.bind(this), args, scope);
         }
+
+        const value = scope.get(fn);
+        // Handle builtins.
+        if (value.type === Type.Builtin) {
+            return this.evalBuiltin(expr, scope);
+        }
+
+        // The actual call.
+        const func = assertFunc(value);
+        vmAssert(func.args.length === args.length - 1, `Wrong number of arguments for ${fn}`);
+        const callScope = new Scope(func.scope);
+        await asyncForEach(func.args, async (arg, i) => {
+            callScope.define(arg, await this.eval(args[i + 1], scope));
+        });
+        return this.eval(func.expr, callScope);
     }
 
     private async evalRaw(expr: Expr, scope: Scope): Promise<Value> {

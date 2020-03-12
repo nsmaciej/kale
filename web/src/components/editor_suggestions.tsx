@@ -29,7 +29,9 @@ interface NewEditorInputProps {
 export default function EditorSuggestions({ onCreateEditor }: NewEditorInputProps) {
     const [value, setValue] = useState("");
     const [focus, setFocus] = useState(false);
-    const { setSelection, selection, suggestions, moveSelection } = useSuggestions(value, true);
+    const { setSelection, selection, suggestions, moveSelection } = useSuggestions(value, {
+        showValue: true,
+    });
     const inputRef = useRef<HTMLInputElement>(null);
 
     function selectEditor(name: string) {
@@ -39,13 +41,16 @@ export default function EditorSuggestions({ onCreateEditor }: NewEditorInputProp
         setSelection(0);
     }
 
+    function selectCurrent() {
+        // If there is really no suggestions we are probably using a special name.
+        if (suggestions.length) {
+            selectEditor(selection == null ? value : suggestions[selection].name);
+        }
+    }
+
     function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
         if (e.key === "Enter") {
-            if (selection == null || !suggestions.length) {
-                selectEditor(value);
-            } else {
-                selectEditor(suggestions[selection].name);
-            }
+            selectCurrent();
         } else if (e.key === "ArrowDown") {
             moveSelection(1);
         } else if (e.key === "ArrowUp") {
@@ -79,7 +84,7 @@ export default function EditorSuggestions({ onCreateEditor }: NewEditorInputProp
                     onKeyDown={onKeyDown}
                     onChange={onChange}
                 />
-                {focus && (
+                {focus && suggestions.length > 0 && (
                     <Menu
                         items={suggestions}
                         selected={selection}
@@ -98,7 +103,7 @@ export default function EditorSuggestions({ onCreateEditor }: NewEditorInputProp
                     </Menu>
                 )}
             </Box>
-            <SubtleButton onClick={() => selectEditor(value)} disabled={value.length === 0}>
+            <SubtleButton onClick={() => selectCurrent()} disabled={suggestions.length === 0}>
                 Open
             </SubtleButton>
         </Stack>
