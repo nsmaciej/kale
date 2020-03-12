@@ -13,6 +13,7 @@
     "license": "ISC",
     "dependencies": {
         "framer-motion": "^1.8.4",
+        "fuse.js": "^4.0.4-beta",
         "react": "^16.13.0",
         "react-dom": "^16.13.0",
         "react-icons": "^3.9.0",
