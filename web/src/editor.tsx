@@ -13,6 +13,7 @@ import { Type, Func } from "vm/types";
 
 import { ContextMenuItem } from "components/context_menu";
 import InlineEditor from "components/inline_editor";
+import { specialFunctions } from "vm/interpreter";
 
 interface EditorState {
     focused: boolean;
@@ -323,6 +324,10 @@ class Editor extends Component<EditorProps, EditorState> {
         for (const shortcut of Object.keys(this.menuKeys)) {
             assert(!(shortcut in this.hiddenKeys), "Shortcut conflict");
         }
+        assert(
+            !Object.prototype.hasOwnProperty.call(specialFunctions, props.topLevelName),
+            "Cannot edit special functions",
+        );
     }
 
     private stopEditing() {
