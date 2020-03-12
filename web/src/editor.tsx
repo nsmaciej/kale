@@ -9,7 +9,7 @@ import { Optional, assertSome, insertIndex, reverseObject, assert } from "utils"
 import { Clipboard, ClipboardValue } from "contexts/clipboard";
 import { Workspace, WorkspaceValue } from "contexts/workspace";
 import { KaleTheme } from "theme";
-import { Type, Func } from "vm/types";
+import { Type, Func, Value } from "vm/types";
 
 import { ContextMenuItem } from "components/context_menu";
 import InlineEditor from "components/inline_editor";
@@ -77,7 +77,7 @@ class Editor extends Component<EditorProps, EditorState> {
             this.setState(state => ({
                 selection:
                     reducer(this.expr, state.selection, assertSome(this.exprAreaMapRef.current)) ??
-                    this.expr.id,
+                    state.selection,
             }));
     }
 
@@ -252,7 +252,8 @@ class Editor extends Component<EditorProps, EditorState> {
                         parent.data,
                     );
                 }
-                return parent;
+                // Parent always has to be one of these.
+                throw new E.UnvisitableExpr(parent);
             });
         }
         this.setState({ selection: blank.id });
@@ -262,13 +263,14 @@ class Editor extends Component<EditorProps, EditorState> {
         const blank = new E.Blank();
         this.update(parentId, parent => {
             if (parent instanceof E.Call) {
+                this.setState({ selection: blank.id });
                 return new E.Call(parent.fn, parent.args.concat(blank), parent.data);
             } else if (parent instanceof E.List) {
+                this.setState({ selection: blank.id });
                 return new E.List(parent.list.concat(blank), parent.data);
             }
             return parent;
         });
-        this.setState({ selection: blank.id });
     };
 
     private readonly exprSelected = (selection: ExprId) => {
@@ -302,7 +304,10 @@ class Editor extends Component<EditorProps, EditorState> {
             //TODO: Fix that.
             const prevExprUnchecked = prevProps.workspace.topLevel.get(prevProps.topLevelName);
             assert(prevExprUnchecked == null || prevExprUnchecked.type === Type.Func);
-            const prevExpr = (prevExprUnchecked as Optional<Func>)?.expr ?? new E.Blank();
+            const prevExpr =
+                (prevExprUnchecked as Optional<Value<Func>>)?.value.expr ?? new E.Blank();
+
+            // Find the candidates for the next selection.
             const [siblings, ix] = prevExpr.siblings(this.state.selection);
             const candidates: Expr[][] = [];
             if (ix != null) {
