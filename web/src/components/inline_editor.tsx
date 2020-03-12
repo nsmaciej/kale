@@ -1,6 +1,6 @@
 import React from "react";
 import styled from "styled-components";
-import { AiOutlineBulb } from "react-icons/ai";
+import { AiOutlineBulb, AiOutlineBlock } from "react-icons/ai";
 
 import TextMetrics from "text_metrics";
 import { ExprArea } from "expr_view";
@@ -98,7 +98,7 @@ export default function InlineEditor({
                 >
                     {item => (
                         <>
-                            <AiOutlineBulb />
+                            {item.special ? <AiOutlineBlock /> : <AiOutlineBulb />}
                             {item.name}
                         </>
                     )}

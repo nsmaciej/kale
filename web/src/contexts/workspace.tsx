@@ -16,12 +16,15 @@ function asFunc(expr: Expr): Value<Func> {
 export class WorkspaceProvider extends Component<{}, WorkspaceProvider["state"]> {
     state = {
         topLevel: new Map() as InterpterWorkspace,
+        // This helps useSuggestions to not run as much, keys aren't reference stable.
+        functionList: [] as string[],
         removeTopLevel: (name: string) => {
             this.setState(state => {
                 const topLevel = new Map(state.topLevel);
                 topLevel.delete(name);
                 return { topLevel };
             });
+            this.syncFunctionList();
         },
 
         setTopLevel: (name: string, update: (expr: Expr) => Expr) => {
@@ -45,9 +48,20 @@ export class WorkspaceProvider extends Component<{}, WorkspaceProvider["state"]>
                 topLevel.set(name, asFunc(blank));
                 return { topLevel };
             });
+            this.syncFunctionList();
             return asFunc(blank);
         },
     };
+
+    private syncFunctionList() {
+        this.setState(state => ({
+            functionList: Array.from(state.topLevel.keys()),
+        }));
+    }
+
+    componentDidMount() {
+        this.syncFunctionList();
+    }
 
     constructor(props: {}) {
         super(props);

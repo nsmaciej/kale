@@ -28,7 +28,7 @@ interface NewEditorInputProps {
 
 export default function EditorSuggestions({ onCreateEditor }: NewEditorInputProps) {
     const [value, setValue] = useState("");
-    const [focus, setFocus] = useState(false);
+    const [hasFocus, setHasFocus] = useState(false);
     const { setSelection, selection, suggestions, moveSelection } = useSuggestions(value, {
         showValue: true,
     });
@@ -74,9 +74,9 @@ export default function EditorSuggestions({ onCreateEditor }: NewEditorInputProp
                 <EditorInput
                     onFocus={() => {
                         setSelection(0);
-                        setFocus(true);
+                        setHasFocus(true);
                     }}
-                    onBlur={() => setFocus(false)}
+                    onBlur={() => setHasFocus(false)}
                     ref={inputRef}
                     value={value}
                     placeholder="Open a function&hellip;"
@@ -84,7 +84,7 @@ export default function EditorSuggestions({ onCreateEditor }: NewEditorInputProp
                     onKeyDown={onKeyDown}
                     onChange={onChange}
                 />
-                {focus && suggestions.length > 0 && (
+                {hasFocus && suggestions.length > 0 && (
                     <Menu
                         items={suggestions}
                         selected={selection}

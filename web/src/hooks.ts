@@ -1,13 +1,16 @@
 import { useContext, useState, useMemo } from "react";
+import Fuse from "fuse.js";
 
 import { assertSome, Optional, mod } from "utils";
 import { Workspace } from "contexts/workspace";
 import { MenuItem } from "components/menu";
 import { specialFunctions } from "vm/interpreter";
 
+// Using MenuItem is just convenient.
 interface Suggestion extends MenuItem {
     name: string;
     original: boolean;
+    special: boolean;
 }
 
 interface SuggestionsHook {
@@ -19,33 +22,50 @@ interface SuggestionsHook {
 
 export function useSuggestions(
     value: string,
-    { showValue, showSpecials }: { showValue?: boolean; showSpecials?: boolean } = {},
+    { showValue = false, showSpecials = false } = {},
 ): SuggestionsHook {
     const workspace = assertSome(useContext(Workspace));
     const [selection, setSelection] = useState<Optional<number>>(0);
 
+    // We use functionList, which is specially updated to make this memo infrequent.
+    const fuse = useMemo(() => {
+        console.info("Indexing functions...");
+        const functions = workspace.functionList.map(name => ({
+            name,
+            id: name,
+            original: false,
+            special: false,
+        }));
+        const special = (showSpecials ? specialFunctions : []).map(name => ({
+            name,
+            id: name,
+            original: false,
+            special: true,
+        }));
+        return new Fuse([...functions, ...special], { keys: ["name"], findAllMatches: true });
+    }, [workspace.functionList, showSpecials]);
+
     const suggestions = useMemo(() => {
-        const r = [...workspace.topLevel.keys(), ...(showSpecials ? specialFunctions : [])]
-            .filter(x => x.toLowerCase().includes(value.toLowerCase()))
-            .slice(0, 5)
-            .map(x => ({
-                name: x,
-                original: false,
-                id: x,
-            }));
-        const fullMatch = workspace.topLevel.has(value);
-        if (value !== "" && !fullMatch && showValue && !specialFunctions.includes(value)) {
-            r.push({
+        const results = fuse?.search(value)?.slice(0, 5);
+        if (
+            value !== "" &&
+            results != null &&
+            results[0]?.name !== value &&
+            showValue &&
+            !specialFunctions.includes(value)
+        ) {
+            results.push({
                 name: value,
-                original: true,
                 id: value,
+                original: true,
+                special: false,
             });
         }
-        if (!r.length) {
+        if (!results?.length) {
             setSelection(null);
         }
-        return r as Suggestion[];
-    }, [value, workspace.topLevel, showValue, showSpecials]);
+        return results ?? [];
+    }, [value, showValue, fuse]);
 
     return {
         selection,
