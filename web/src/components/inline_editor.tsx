@@ -4,7 +4,7 @@ import { AiOutlineBulb, AiOutlineBlock } from "react-icons/ai";
 
 import TextMetrics from "text_metrics";
 import { ExprArea } from "expr_view";
-import { useSuggestions } from "hooks";
+import useSuggestions from "suggestions";
 import Menu from "components/menu";
 
 const Container = styled.div`

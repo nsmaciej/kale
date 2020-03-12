@@ -20,7 +20,7 @@ interface SuggestionsHook {
     moveSelection(delta: 1 | -1): void;
 }
 
-export function useSuggestions(
+export default function useSuggestions(
     value: string,
     { showValue = false, showSpecials = false } = {},
 ): SuggestionsHook {
