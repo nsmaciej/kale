@@ -6,10 +6,11 @@ import {
     Workspace,
     WorkspaceRef,
     Scope,
+    Type,
     vmAssert,
     assertFunc,
     assertBoolean,
-    assertStr,
+    assertBuiltin,
 } from "vm/types";
 
 interface InterpreterCallbacks {
@@ -23,7 +24,7 @@ function assertVariable(expr: Expr): string {
 }
 
 function nullValue(): Value {
-    return { type: "null", value: null };
+    return { type: Type.Null, value: null };
 }
 
 export default class Interpreter {
@@ -56,6 +57,15 @@ export default class Interpreter {
         return promise;
     }
 
+    private async evalBuiltin(expr: E.Call, scope: Scope): Promise<Value> {
+        const builtin = assertBuiltin(scope.get(expr.fn));
+        const args = await Promise.all(expr.args.map(x => this.eval(x, scope)));
+        builtin.args.forEach((type, i) =>
+            vmAssert(type === args[i].type, `Expected type ${args[i].type}, found ${type}`),
+        );
+        return builtin.builtin(...args);
+    }
+
     private async evalRawCall(expr: E.Call, scope: Scope): Promise<Value> {
         const { fn, args } = expr;
         if (fn === "let") {
@@ -75,19 +85,20 @@ export default class Interpreter {
                 r = await this.eval(args[1], scope);
             }
             return r;
-        } else if (fn === "print") {
-            const value = await this.eval(args[0], scope);
-            console.log(assertStr(value));
-            return value;
         } else {
+            const value = scope.get(fn);
+            // Handle builtins.
+            if (value.type === Type.Builtin) {
+                return this.evalBuiltin(expr, scope);
+            }
             // The actual call.
-            const func = assertFunc(scope.get(fn));
+            const func = assertFunc(value);
             vmAssert(func.args.length === args.length - 1, `Wrong number of arguments for ${fn}`);
             const callScope = new Scope(func.scope);
             await asyncForEach(func.args, async (arg, i) => {
                 callScope.define(arg, await this.eval(args[i + 1], scope));
             });
-            return await this.eval(func.expr, callScope);
+            return this.eval(func.expr, callScope);
         }
     }
 

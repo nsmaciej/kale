@@ -29,7 +29,7 @@ export function useSuggestions(value: string, showValue = false): SuggestionsHoo
                 original: false,
                 id: x,
             }));
-        const fullMatch = Object.prototype.hasOwnProperty.call(workspace.topLevel, value);
+        const fullMatch = workspace.topLevel.has(value);
         if (value && !fullMatch && showValue) {
             r.push({
                 name: value,

@@ -3,17 +3,21 @@ import { Call, List, Blank, Literal, Variable, exprData } from "expr";
 const sample1 = new Call(
     "if",
     [
-        new Call("=", [new Variable("n"), new Literal("0", "int")]),
+        new Call("=", [new Variable("n"), new Literal("0", "number")]),
         new List([
             new Call(
                 "print",
                 [
-                    new Literal("This literal has a comment", "str", exprData("A literal comment")),
-                    new Literal("Some other long string to test line breaking", "str"),
+                    new Literal(
+                        "This literal has a comment",
+                        "string",
+                        exprData("A literal comment"),
+                    ),
+                    new Literal("Some other long string to test line breaking", "string"),
                 ],
                 exprData("This is a call comment inside a list"),
             ),
-            new Literal("1", "int"),
+            new Literal("1", "number"),
         ]),
         new Call("id", [
             new List(
@@ -22,7 +26,7 @@ const sample1 = new Call(
                     new Call("*", [
                         new Variable("n"),
                         new Call("fact", [
-                            new Call("-", [new Variable("n"), new Literal("1", "int")]),
+                            new Call("-", [new Variable("n"), new Literal("1", "number")]),
                         ]),
                     ]),
                 ],
@@ -39,12 +43,15 @@ const sample2 = new Call("object", [
     new Literal("name", "symbol"),
     new Variable("name"),
     new Literal("age", "symbol"),
-    new Literal("42", "int"),
+    new Literal("42", "number"),
     new Literal("long", "symbol"),
-    new Literal("48557177334.32", "int"),
+    new Literal("48557177334.32", "number"),
 ]);
 
-const sample3 = new Call("print", [new Literal("Hello World", "str")]);
+const sample3 = new List([
+    new Call("let", [new Variable("msg"), new Literal("Hello World", "string")]),
+    new Call("print", [new Variable("msg")]),
+]);
 
 export const SAMPLE_1 = sample1.validate();
 export const SAMPLE_2 = sample2.validate();

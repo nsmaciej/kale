@@ -1,6 +1,16 @@
 import Expr from "expr";
 import { Optional } from "utils";
 
+export const enum Type {
+    Str = "string",
+    Num = "number",
+    List = "list",
+    Null = "null",
+    Bool = "boolean",
+    Func = "function",
+    Builtin = "builtin",
+}
+
 export interface Value<T = unknown> {
     type: string;
     value: T;
@@ -12,7 +22,12 @@ export interface Func {
     scope: null;
 }
 
-export type Workspace = Map<string, Func>;
+export interface Builtin {
+    args: (string | null)[];
+    builtin: (...args: Value[]) => Value;
+}
+
+export type Workspace = Map<string, Value<Builtin | Func>>;
 
 export interface WorkspaceRef {
     current: Workspace;
@@ -31,9 +46,11 @@ function assertType<T>(type: string): (value: Value) => T {
     };
 }
 
-export const assertBoolean = assertType<boolean>("boolean");
-export const assertFunc = assertType<Func>("func");
-export const assertStr = assertType<string>("str");
+export const assertBoolean = assertType<boolean>(Type.Bool);
+export const assertFunc = assertType<Func>(Type.Func);
+export const assertBuiltin = assertType<Builtin>(Type.Builtin);
+export const assertString = assertType<string>(Type.Str);
+export const assertNumber = assertType<number>(Type.Num);
 
 export class Scope {
     private readonly values = new Map<string, Value>();
@@ -52,9 +69,7 @@ export class Scope {
         }
         if (this.workspaceRef?.current != null) {
             const workspaceValue = this.workspaceRef.current.get(name);
-            if (workspaceValue != null) {
-                return { type: "func", value: workspaceValue };
-            }
+            if (workspaceValue != null) return workspaceValue;
         }
         throw new VmError(`${name} not found`);
     }

@@ -117,9 +117,9 @@ let GlobalEditorId = 1;
 
 function Kale() {
     const [editors, setEditors] = useState<OpenEditor[]>([
-        { topLevel: "Hello World", id: GlobalEditorId++ },
-        { topLevel: "Sample 1", id: GlobalEditorId++ },
-        { topLevel: "Sample 2", id: GlobalEditorId++ },
+        { topLevel: "Hello-World", id: GlobalEditorId++ },
+        { topLevel: "Sample-1", id: GlobalEditorId++ },
+        { topLevel: "Sample-2", id: GlobalEditorId++ },
     ]);
     return (
         <Container>

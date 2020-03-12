@@ -9,6 +9,7 @@ import { Optional, assertSome, insertIndex, reverseObject, assert } from "utils"
 import { Clipboard, ClipboardValue } from "contexts/clipboard";
 import { Workspace, WorkspaceValue } from "contexts/workspace";
 import { KaleTheme } from "theme";
+import { Type, Func } from "vm/types";
 
 import { ContextMenuItem } from "components/context_menu";
 import InlineEditor from "components/inline_editor";
@@ -51,8 +52,10 @@ class Editor extends Component<EditorProps, EditorState> {
         );
     }
 
-    private get expr() {
-        return this.props.workspace.getTopLevel(this.props.topLevelName);
+    private get expr(): Expr {
+        const func = this.props.workspace.getTopLevel(this.props.topLevelName);
+        assert(func.type === Type.Func);
+        return (func.value as Func).expr;
     }
 
     private addToClipboard(expr: Expr) {
@@ -294,8 +297,10 @@ class Editor extends Component<EditorProps, EditorState> {
         // This ensures the selection is always valid. Find the closest existing parent.
         if (!this.expr.contains(this.state.selection)) {
             // We cannot use getTopLevel here because it doesn't use the older topLevel value.
-            const prevExpr =
-                prevProps.workspace.topLevel.get(prevProps.topLevelName)?.expr ?? new E.Blank();
+            //TODO: Fix that.
+            const prevExprUnchecked = prevProps.workspace.topLevel.get(prevProps.topLevelName);
+            assert(prevExprUnchecked == null || prevExprUnchecked.type === Type.Func);
+            const prevExpr = (prevExprUnchecked as Optional<Func>)?.expr ?? new E.Blank();
             const [siblings, ix] = prevExpr.siblings(this.state.selection);
             const candidates: Expr[][] = [];
             if (ix != null) {
