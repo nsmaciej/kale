@@ -66,9 +66,9 @@ export default {
     "=": test((a, b) => a === b, "Checks if two values are strictly equal"),
     "/=": test((a, b) => a !== b, "Check if two values are not stricly equal"),
     "<": test((a, b) => a < b, "Checks if one number is less than another"),
-    ">": test((a, b) => a < b, "Checks if one number is greater than another"),
-    "<=": test((a, b) => a < b, "Checks if one number is less or equal to another"),
-    ">=": test((a, b) => a < b, "Checks if one number is more or equal to another"),
+    ">": test((a, b) => a > b, "Checks if one number is greater than another"),
+    "<=": test((a, b) => a <= b, "Checks if one number is less or equal to another"),
+    ">=": test((a, b) => a >= b, "Checks if one number is more or equal to another"),
 
     // Strings.
     "++": builtin(
@@ -86,6 +86,20 @@ export default {
 
     // Indexing.
     "@": atIndex,
+
+    // Conversion.
+    "number->text": builtin(
+        Type.Str,
+        [Type.Num],
+        (x: number) => x.toString(),
+        "Convert a number to text",
+    ),
+    "text->number": builtin(
+        Type.Num,
+        [Type.Str],
+        (x: string) => parseInt(x),
+        "Read a piece of a text as a number",
+    ),
 
     // I/O.
     print: builtin(

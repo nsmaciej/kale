@@ -116,11 +116,8 @@ export class Layout {
             });
         } else {
             // Adopt the areas.
-            const orphans = layout.areas.map(({ rect, expr, children, inline, text }) => ({
-                expr,
-                children,
-                inline,
-                text,
+            const orphans = layout.areas.map(({ rect, ...rest }) => ({
+                ...rest,
                 rect: rect.shift(origin),
             }));
             this.areas.push(...orphans);

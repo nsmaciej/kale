@@ -107,7 +107,6 @@ export interface LayoutProps {
     focused?: boolean;
     selection?: Optional<ExprId>;
     foldComments?: boolean;
-    forceInline?: { [expr in ExprId]: boolean };
 }
 
 interface LayoutState {
@@ -295,10 +294,7 @@ class ExprLayout implements ExprVisitor<Layout> {
 
     visitCall(expr: E.Call): Layout {
         const args = expr.args.map(x => this.layoutInner(expr, x), this);
-        const inline =
-            this.props.forceInline != null && expr.id in this.props.forceInline
-                ? this.props.forceInline[expr.id]
-                : isCallInline(this.t, args);
+        const inline = isCallInline(this.t, args);
         const fnName = hstack(
             this.t.createCircle.maxRadius,
             this.layoutText(expr, expr.fn, {

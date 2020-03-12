@@ -55,7 +55,6 @@ interface ExprViewProps {
     maxWidth?: number;
     frozen?: boolean;
     foldComments?: boolean;
-    forceInline?: { [expr in ExprId]: boolean };
 
     //TODO: Handle these in the generalised selection mechanism.
     focused?: boolean;
@@ -206,7 +205,6 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
             focused: this.props.focused,
             selection: this.props.selection,
             foldComments: this.props.foldComments,
-            forceInline: this.props.forceInline,
         });
 
         // Selection and highlight drawing logic.

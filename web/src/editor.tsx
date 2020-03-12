@@ -136,7 +136,7 @@ class Editor extends Component<EditorProps, EditorState> {
         // Demo things that should be moved to the toy-box.
         demoAddCall: (e: ExprId) => this.replaceAndEdit(e, new E.Call("")),
         demoAddVariable: (e: ExprId) => this.replaceAndEdit(e, new E.Variable("")),
-        demoAddString: (e: ExprId) => this.replaceAndEdit(e, new E.Literal("", "str")),
+        demoAddString: (e: ExprId) => this.replaceAndEdit(e, new E.Literal("", Type.Str)),
     };
 
     // See https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values.
@@ -386,7 +386,6 @@ class Editor extends Component<EditorProps, EditorState> {
                     foldComments={this.state.foldingComments}
                     theme={this.props.theme}
                     exprAreaMapRef={this.exprAreaMapRef}
-                    forceInline={{}}
                     // Callbacks.
                     contextMenuFor={this.contextMenuFor}
                     onClick={this.exprSelected}
