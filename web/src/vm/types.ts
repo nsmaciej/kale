@@ -23,6 +23,7 @@ export interface Func {
 }
 
 export interface Builtin {
+    help?: string;
     args: (string | null)[];
     builtin: (...args: Value[]) => Value;
 }

@@ -121,7 +121,6 @@ function Kale() {
         { topLevel: "Sample-1", id: GlobalEditorId++ },
         { topLevel: "Sample-2", id: GlobalEditorId++ },
     ]);
-    console.log("Rendering kale");
     return (
         <Container>
             <HeaderGrid>
