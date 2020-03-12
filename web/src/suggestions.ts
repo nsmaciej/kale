@@ -22,13 +22,14 @@ interface SuggestionsHook {
 
 export default function useSuggestions(
     value: string,
-    { showValue = false, showSpecials = false } = {},
+    { showValue = false, showSpecials = false, disable = false } = {},
 ): SuggestionsHook {
     const workspace = assertSome(useContext(Workspace));
     const [selection, setSelection] = useState<Optional<number>>(0);
 
     // We use functionList, which is specially updated to make this memo infrequent.
     const fuse = useMemo(() => {
+        if (disable) return null;
         console.info("Indexing functions...");
         const functions = workspace.functionList.map(name => ({
             name,
@@ -43,7 +44,7 @@ export default function useSuggestions(
             special: true,
         }));
         return new Fuse([...functions, ...special], { keys: ["name"], findAllMatches: true });
-    }, [workspace.functionList, showSpecials]);
+    }, [disable, workspace.functionList, showSpecials]);
 
     const suggestions = useMemo(() => {
         const results = fuse?.search(value)?.slice(0, 5);

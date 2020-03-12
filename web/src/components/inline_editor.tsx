@@ -22,6 +22,7 @@ const InlineEditorInput = styled.input`
 interface InlineEditorProps {
     exprArea: ExprArea;
     value: string;
+    disableSuggestions: boolean;
     onChange(value: string): void;
     onSubmit(value: string): void;
     onDismiss(): void;
@@ -30,12 +31,14 @@ interface InlineEditorProps {
 export default function InlineEditor({
     value,
     exprArea,
+    disableSuggestions,
     onChange,
     onSubmit,
     onDismiss,
 }: InlineEditorProps) {
     const { setSelection, selection, suggestions, moveSelection } = useSuggestions(value, {
         showSpecials: true,
+        disable: disableSuggestions,
     });
 
     function onKeyDown(e: React.KeyboardEvent) {

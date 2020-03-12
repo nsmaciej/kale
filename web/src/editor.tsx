@@ -19,7 +19,7 @@ interface EditorState {
     focused: boolean;
     selection: ExprId;
     foldingComments: boolean;
-    editing: Optional<{ expr: ExprId; value: string }>;
+    editing: Optional<{ expr: Expr; value: string }>;
 }
 
 interface EditorWrapperProps {
@@ -279,9 +279,10 @@ class Editor extends Component<EditorProps, EditorState> {
         this.setState({ focused: document.activeElement?.id === "editor" });
     };
 
-    private readonly startEditing = (expr: ExprId) => {
-        const value = this.expr.withId(expr)?.value();
-        if (value != null) {
+    private readonly startEditing = (exprId: ExprId) => {
+        const expr = this.expr.withId(exprId);
+        const value = expr?.value();
+        if (expr != null && value != null) {
             this.setState({ editing: { expr, value } });
         }
     };
@@ -343,17 +344,18 @@ class Editor extends Component<EditorProps, EditorState> {
         if (this.exprAreaMapRef.current == null || this.state.editing == null) return;
         return (
             <InlineEditor
-                exprArea={this.exprAreaMapRef.current[this.state.editing.expr]}
+                exprArea={this.exprAreaMapRef.current[this.state.editing.expr.id]}
                 value={this.state.editing.value}
+                disableSuggestions={!(this.state.editing.expr instanceof E.Call)}
                 onChange={value => {
                     if (this.state.editing != null) {
-                        this.update(this.state.editing.expr, x => x.withValue(value));
+                        this.update(this.state.editing.expr.id, x => x.withValue(value));
                         this.setState({ editing: { ...this.state.editing, value } });
                     }
                 }}
                 onDismiss={() => this.stopEditing()}
                 onSubmit={value => {
-                    this.update(this.state.editing?.expr, x => x.withValue(value));
+                    this.update(this.state.editing?.expr?.id, x => x.withValue(value));
                     this.stopEditing();
                 }}
             />

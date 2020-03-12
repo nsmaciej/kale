@@ -59,10 +59,6 @@ export class WorkspaceProvider extends Component<{}, WorkspaceProvider["state"]>
         }));
     }
 
-    componentDidMount() {
-        this.syncFunctionList();
-    }
-
     constructor(props: {}) {
         super(props);
         const topLevel: Map<string, Value<Builtin | Func>> = new Map([
@@ -74,6 +70,8 @@ export class WorkspaceProvider extends Component<{}, WorkspaceProvider["state"]>
             topLevel.set(name, builtin);
         }
         this.state.topLevel = topLevel;
+        // The initial function list sync.
+        this.state.functionList = Array.from(this.state.topLevel.keys());
     }
 
     render() {
