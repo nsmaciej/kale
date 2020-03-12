@@ -43,7 +43,8 @@ export default class TextMetrics {
     measure(text: string, { bold = false, italic = false }: TextStyle = {}): Size {
         const key = [+bold, +italic, text].join("");
         const HEIGHT_FUDGE_FACTOR = 1.3;
-        const height = this.theme.fontSizePx * HEIGHT_FUDGE_FACTOR;
+        // I don't why, but this is important to the text lining up with inline editors.
+        const height = Math.round(this.theme.fontSizePx * HEIGHT_FUDGE_FACTOR);
         if (key in this._metricsCache) {
             return new Size(this._metricsCache[key], height);
         }

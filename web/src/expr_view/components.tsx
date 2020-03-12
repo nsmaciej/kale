@@ -15,7 +15,11 @@ export function SvgGroup({
     children: ReactNode;
     translate?: Offset;
 }) {
-    return <g transform={`translate(${translate.x} ${translate.y})`}>{children}</g>;
+    return (
+        <g transform={`translate(${Math.round(translate.x)} ${Math.round(translate.y)})`}>
+            {children}
+        </g>
+    );
 }
 
 type LineProps = CustomSvgProps<SVGLineElement, { start: Offset; end: Offset }>;
