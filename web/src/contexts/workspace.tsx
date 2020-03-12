@@ -51,12 +51,15 @@ export class WorkspaceProvider extends Component<{}, WorkspaceProvider["state"]>
 
     constructor(props: {}) {
         super(props);
-        this.state.topLevel.set("Sample-1", asFunc(Sample.SAMPLE_1));
-        this.state.topLevel.set("Sample-2", asFunc(Sample.SAMPLE_2));
-        this.state.topLevel.set("Hello-World", asFunc(Sample.HELLO_WORLD));
+        const topLevel: Map<string, Value<Builtin | Func>> = new Map([
+            ["Sample-1", asFunc(Sample.SAMPLE_1)],
+            ["Sample-2", asFunc(Sample.SAMPLE_2)],
+            ["Hello-World", asFunc(Sample.HELLO_WORLD)],
+        ]);
         for (const [name, builtin] of Object.entries(Builtins)) {
-            this.state.topLevel.set(name, builtin);
+            topLevel.set(name, builtin);
         }
+        this.state.topLevel = topLevel;
     }
 
     render() {

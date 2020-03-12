@@ -27,7 +27,7 @@ export interface Builtin {
     builtin: (...args: Value[]) => Value;
 }
 
-export type Workspace = Map<string, Value<Builtin | Func>>;
+export type Workspace = ReadonlyMap<string, Value<Builtin | Func>>;
 
 export interface WorkspaceRef {
     current: Workspace;
