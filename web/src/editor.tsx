@@ -77,6 +77,10 @@ class Editor extends Component<EditorProps, EditorState> {
     }
 
     private stopEditing() {
+        const { expr, value } = assertSome(this.state.editing);
+        if (value === "") {
+            this.replaceExpr(expr.id, new E.Blank());
+        }
         this.setState({ editing: null });
         this.focus();
     }
@@ -269,13 +273,13 @@ class Editor extends Component<EditorProps, EditorState> {
     };
 
     private readonly exprMenu: Optional<{ label: string; action: keyof Editor["actions"] }>[] = [
+        { action: "edit", label: "Edit..." },
+        { action: "copy", label: "Copy" },
+        null,
         { action: "delete", label: "Delete" },
         { action: "move", label: "Delete and Copy" },
         { action: "replace", label: "Replace" },
         { action: "shuffle", label: "Replace and Copy" },
-        null,
-        { action: "copy", label: "Copy" },
-        { action: "edit", label: "Edit..." },
         null,
         { action: "append", label: "Add Argument" },
         { action: "insert", label: "New Line" },
