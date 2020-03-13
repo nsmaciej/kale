@@ -9,23 +9,23 @@ export const parent: SelectFn = (expr, sel) => {
     return expr.parentOf(sel)?.id;
 };
 
-const leftSibling: SelectFn = (expr, sel) => {
+export const leftSibling: SelectFn = (expr, sel) => {
     const [siblings, ix] = expr.siblings(sel);
     if (ix == null || ix === 0) return null;
     return siblings[ix - 1]?.id;
 };
 
-const rightSibling: SelectFn = (expr, sel) => {
+export const rightSibling: SelectFn = (expr, sel) => {
     const [siblings, ix] = expr.siblings(sel);
     if (ix == null) return null;
     return siblings[ix + 1]?.id;
 };
 
-const firstChild: SelectFn = (expr, sel) => {
+export const firstChild: SelectFn = (expr, sel) => {
     return expr.withId(sel)?.children()[0]?.id;
 };
 
-const lastChild: SelectFn = (expr, sel) => {
+export const lastChild: SelectFn = (expr, sel) => {
     const children = expr.withId(sel)?.children();
     if (children == null) return null;
     return children[children.length - 1]?.id;

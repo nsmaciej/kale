@@ -1,5 +1,6 @@
 import React, { Component, useContext } from "react";
 import { useTheme } from "styled-components";
+import produce from "immer";
 
 import * as E from "expr";
 import * as Select from "selection";
@@ -103,6 +104,24 @@ class Editor extends Component<EditorProps, EditorState> {
         this.forceUpdate(() => this.startEditing(expr));
     }
 
+    private readonly smartSpace = (target: ExprId) => {
+        const expr = this.expr.withId(target);
+        if (expr instanceof E.Call || expr instanceof E.List) {
+            this.createChildBlank(target);
+        } else if (expr instanceof E.Blank) {
+            // Kinda like slurp.
+            const parent = this.expr.parentOf(target);
+            if (parent != null) {
+                // Do not stack top-level lists.
+                if (this.expr.parentOf(parent.id) == null && this.expr instanceof E.List) return;
+                this.removeExpr(target);
+                this.insertAsSiblingOf(parent.id, expr, true);
+            }
+        } else {
+            this.createSiblingBlank(target, true);
+        }
+    };
+
     private readonly actions = {
         delete: (e: ExprId) => this.removeExpr(e),
         replace: (e: ExprId) => this.replaceExpr(e, new E.Blank()),
@@ -116,8 +135,8 @@ class Editor extends Component<EditorProps, EditorState> {
         },
         copy: (e: ExprId) => this.addExprToClipboard(e),
         append: (e: ExprId) => this.createChildBlank(e),
-        insert: (e: ExprId) => this.createSiblingBlank(e),
-        insertBefore: (e: ExprId) => this.createSiblingBlank(e, true),
+        insert: (e: ExprId) => this.createSiblingBlank(e, true),
+        insertBefore: (e: ExprId) => this.createSiblingBlank(e, false),
         foldComments: () => this.setState(state => ({ foldingComments: !state.foldingComments })),
         comment: (e: ExprId) => {
             const selected = this.expr.withId(e);
@@ -146,20 +165,21 @@ class Editor extends Component<EditorProps, EditorState> {
         a: "append",
         c: "copy",
         d: "delete",
+        Enter: "edit",
         f: "demoAddCall",
+        g: "demoAddString",
         i: "insert",
         I: "insertBefore",
-        g: "demoAddString",
         m: "move",
         q: "comment",
         r: "replace",
         s: "shuffle",
         v: "demoAddVariable",
-        Enter: "edit",
     };
 
     // The shortcuts only accessible from the keyboard.
     private readonly hiddenKeys: { [key: string]: (sel: ExprId) => void } = {
+        " ": this.smartSpace,
         h: this.selectionAction(Select.leftSmart),
         j: this.selectionAction(Select.downSmart),
         k: this.selectionAction(Select.upSmart),
@@ -193,7 +213,7 @@ class Editor extends Component<EditorProps, EditorState> {
         { action: "copy", label: "Copy" },
         { action: "edit", label: "Edit..." },
         null,
-        { action: "append", label: "Append Argument" },
+        { action: "append", label: "Add Argument" },
         { action: "insert", label: "New Line" },
         { action: "insertBefore", label: "New Line Before" },
         null,
@@ -231,46 +251,60 @@ class Editor extends Component<EditorProps, EditorState> {
         }
     };
 
-    private createSiblingBlank(target: ExprId, insertBefore = false) {
-        const blank = new E.Blank();
-        const currentParent = this.expr.parentOf(target)?.id;
-        if (currentParent == null) {
-            this.update(null, main => new E.List(insertBefore ? [blank, main] : [main, blank]));
-        } else {
-            this.update(currentParent, parent => {
-                if (parent instanceof E.Call) {
-                    const ix = parent.args.findIndex(x => x.id === target);
-                    return new E.Call(
-                        parent.fn,
-                        insertIndex(parent.args, ix - +insertBefore, blank),
-                        parent.data,
-                    );
-                } else if (parent instanceof E.List) {
-                    const ix = parent.list.findIndex(x => x.id === target);
-                    return new E.List(
-                        insertIndex(parent.list, ix - +insertBefore, blank),
-                        parent.data,
-                    );
-                }
-                // Parent always has to be one of these.
-                throw new E.UnvisitableExpr(parent);
-            });
-        }
-        this.setState({ selection: blank.id });
+    private createSiblingBlank(target: ExprId, right: boolean) {
+        this.insertAsSiblingOf(target, new E.Blank(), right);
     }
 
-    private readonly createChildBlank = (parentId: ExprId) => {
-        const blank = new E.Blank();
+    private appendAsLastChild(parentId: ExprId, child: Expr) {
         this.update(parentId, parent => {
             if (parent instanceof E.Call) {
-                this.setState({ selection: blank.id });
-                return new E.Call(parent.fn, parent.args.concat(blank), parent.data);
+                this.exprSelected(child.id);
+                return new E.Call(parent.fn, parent.args.concat(child), parent.data);
             } else if (parent instanceof E.List) {
-                this.setState({ selection: blank.id });
-                return new E.List(parent.list.concat(blank), parent.data);
+                this.exprSelected(child.id);
+                return new E.List(parent.list.concat(child), parent.data);
             }
             return parent;
         });
+    }
+
+    private insertAsSiblingOf(sibling: ExprId, toInsert: Expr, right: boolean) {
+        const currentParent = this.expr.parentOf(sibling)?.id;
+        const ixDelta = right ? 1 : 0;
+
+        if (currentParent == null) {
+            this.update(null, main => new E.List(right ? [main, toInsert] : [toInsert, main]));
+            this.exprSelected(toInsert.id);
+            return;
+        }
+
+        this.update(currentParent, parent => {
+            if (parent instanceof E.Call) {
+                const ix = parent.args.findIndex(x => x.id === sibling);
+                return new E.Call(
+                    parent.fn,
+                    produce(parent.args, draft => {
+                        draft.splice(ix + ixDelta, 0, toInsert);
+                    }),
+                    parent.data,
+                );
+            } else if (parent instanceof E.List) {
+                const ix = parent.list.findIndex(x => x.id === sibling);
+                return new E.List(
+                    produce(parent.list, draft => {
+                        draft.splice(ix + ixDelta, 0, toInsert);
+                    }),
+                    parent.data,
+                );
+            }
+            // Parent always has to be one of these.
+            throw new E.UnvisitableExpr(parent);
+        });
+        this.exprSelected(toInsert.id);
+    }
+
+    private readonly createChildBlank = (parentId: ExprId) => {
+        this.appendAsLastChild(parentId, new E.Blank());
     };
 
     private readonly exprSelected = (selection: ExprId) => {

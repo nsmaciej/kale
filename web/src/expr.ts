@@ -131,6 +131,11 @@ export default abstract class Expr {
         );
     }
 
+    grandparentOf(id: ExprId): Optional<Expr> {
+        const parent = this.parentOf(id);
+        return parent == null ? null : this.parentOf(parent.id);
+    }
+
     children(): readonly Expr[] {
         if (this instanceof Call) return this.args;
         if (this instanceof List) return this.list;
