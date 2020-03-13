@@ -107,7 +107,7 @@ class Editor extends Component<EditorProps, EditorState> {
     private readonly smartSpace = (target: ExprId) => {
         const expr = this.expr.withId(target);
         if (expr instanceof E.Call || expr instanceof E.List) {
-            this.createChildBlank(target);
+            this.insertAsChildOf(target, new E.Blank(), false);
         } else if (expr instanceof E.Blank) {
             // Kinda like slurp.
             const parent = this.expr.parentOf(target);
@@ -255,14 +255,23 @@ class Editor extends Component<EditorProps, EditorState> {
         this.insertAsSiblingOf(target, new E.Blank(), right);
     }
 
-    private appendAsLastChild(parentId: ExprId, child: Expr) {
-        this.update(parentId, parent => {
+    // Append an expr as a child of a parent in either first or last position.
+    private insertAsChildOf(target: ExprId, toInsert: Expr, last: boolean) {
+        const insertion = last ? -1 : 0;
+        this.update(target, parent => {
             if (parent instanceof E.Call) {
-                this.exprSelected(child.id);
-                return new E.Call(parent.fn, parent.args.concat(child), parent.data);
+                this.exprSelected(toInsert.id);
+                return new E.Call(
+                    parent.fn,
+                    produce(parent.args, draft => void draft.splice(insertion, 0, toInsert)),
+                    parent.data,
+                );
             } else if (parent instanceof E.List) {
-                this.exprSelected(child.id);
-                return new E.List(parent.list.concat(child), parent.data);
+                this.exprSelected(toInsert.id);
+                return new E.List(
+                    produce(parent.list, draft => void draft.splice(insertion, 0, toInsert)),
+                    parent.data,
+                );
             }
             return parent;
         });
@@ -283,17 +292,13 @@ class Editor extends Component<EditorProps, EditorState> {
                 const ix = parent.args.findIndex(x => x.id === sibling);
                 return new E.Call(
                     parent.fn,
-                    produce(parent.args, draft => {
-                        draft.splice(ix + ixDelta, 0, toInsert);
-                    }),
+                    produce(parent.args, draft => void draft.splice(ix + ixDelta, 0, toInsert)),
                     parent.data,
                 );
             } else if (parent instanceof E.List) {
                 const ix = parent.list.findIndex(x => x.id === sibling);
                 return new E.List(
-                    produce(parent.list, draft => {
-                        draft.splice(ix + ixDelta, 0, toInsert);
-                    }),
+                    produce(parent.list, draft => void draft.splice(ix + ixDelta, 0, toInsert)),
                     parent.data,
                 );
             }
@@ -304,7 +309,7 @@ class Editor extends Component<EditorProps, EditorState> {
     }
 
     private readonly createChildBlank = (parentId: ExprId) => {
-        this.appendAsLastChild(parentId, new E.Blank());
+        this.insertAsChildOf(parentId, new E.Blank(), true);
     };
 
     private readonly exprSelected = (selection: ExprId) => {
