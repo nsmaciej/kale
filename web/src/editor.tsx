@@ -45,6 +45,13 @@ class Editor extends Component<EditorProps, EditorState> {
         editing: null,
     };
 
+    private get expr(): Expr {
+        const func = this.props.workspace.getTopLevel(this.props.topLevelName);
+        assert(func.type === Type.Func);
+        return (func.value as Func).expr;
+    }
+
+    // Editor internal APIs.
     private update(child: Optional<ExprId>, updater: (expr: Expr) => Optional<Expr>) {
         this.props.workspace.setTopLevel(
             this.props.topLevelName,
@@ -54,208 +61,39 @@ class Editor extends Component<EditorProps, EditorState> {
         );
     }
 
-    private get expr(): Expr {
-        const func = this.props.workspace.getTopLevel(this.props.topLevelName);
-        assert(func.type === Type.Func);
-        return (func.value as Func).expr;
-    }
-
-    private addToClipboard(expr: Expr) {
-        this.props.clipboard.add({ expr, pinned: false });
-    }
-
-    private addExprToClipboard(expr: ExprId) {
+    private addToClipboard(expr: ExprId) {
         const selected = this.expr.withId(expr);
-        if (selected) this.addToClipboard(selected);
+        if (selected) {
+            this.props.clipboard.add({ expr: selected, pinned: false });
+        }
     }
 
     private removeExpr(sel: ExprId) {
         this.update(sel, () => null);
     }
 
-    private selectionAction(reducer: Select.SelectFn): () => void {
-        return () =>
-            this.setState(state => ({
-                selection:
-                    reducer(this.expr, state.selection, assertSome(this.exprAreaMapRef.current)) ??
-                    state.selection,
-            }));
-    }
-
     private replaceExpr(old: ExprId, next: Expr) {
         this.update(old, () => next.resetIds().replaceId(old));
     }
 
-    private pasteAction(ix: number): () => void {
-        return () => {
-            const clipboard = this.props.clipboard.clipboard;
-            if (ix < clipboard.length) {
-                this.replaceExpr(this.state.selection, clipboard[ix].expr);
-                this.props.clipboard.use(clipboard[ix].expr.id);
-            }
-        };
+    private stopEditing() {
+        this.setState({ editing: null });
+        this.focus();
     }
 
     private replaceAndEdit(expr: ExprId, next: Expr) {
         // Replace expr but using the callback.
         this.replaceExpr(expr, next);
-        //TODO: No.
+        //TODO: Remove this.
         // ReplaceExpr will re-use the expr ID.
         this.forceUpdate(() => this.startEditing(expr));
     }
 
-    private readonly smartSpace = (target: ExprId) => {
-        const expr = this.expr.withId(target);
-        if (expr instanceof E.Call || expr instanceof E.List) {
-            this.insertAsChildOf(target, new E.Blank(), false);
-        } else if (expr instanceof E.Blank) {
-            // Kinda like slurp.
-            const parent = this.expr.parentOf(target);
-            if (parent != null) {
-                // Do not stack top-level lists.
-                if (this.expr.parentOf(parent.id) == null && this.expr instanceof E.List) return;
-                this.removeExpr(target);
-                this.insertAsSiblingOf(parent.id, expr, true);
-            }
-        } else {
-            this.createSiblingBlank(target, true);
-        }
-    };
-
-    private readonly actions = {
-        delete: (e: ExprId) => this.removeExpr(e),
-        replace: (e: ExprId) => this.replaceExpr(e, new E.Blank()),
-        move: (e: ExprId) => {
-            this.addExprToClipboard(e);
-            this.removeExpr(e);
-        },
-        shuffle: (e: ExprId) => {
-            this.addExprToClipboard(e);
-            this.replaceExpr(e, new E.Blank());
-        },
-        copy: (e: ExprId) => this.addExprToClipboard(e),
-        append: (e: ExprId) => this.createChildBlank(e),
-        insert: (e: ExprId) => this.createSiblingBlank(e, true),
-        insertBefore: (e: ExprId) => this.createSiblingBlank(e, false),
-        foldComments: () => this.setState(state => ({ foldingComments: !state.foldingComments })),
-        comment: (e: ExprId) => {
-            const selected = this.expr.withId(e);
-            if (selected != null) {
-                const comment = prompt("Comment?", selected.data.comment) ?? undefined;
-                this.update(e, expr => expr.assignToData({ comment }));
-            }
-        },
-        disable: (e: ExprId) => {
-            this.update(e, expr => {
-                if (expr instanceof E.Blank) return expr;
-                return expr.assignToData({ disabled: !expr.data.disabled });
-            });
-        },
-        edit: (e: ExprId) => this.startEditing(e),
-        // Demo things that should be moved to the toy-box.
-        demoAddCall: (e: ExprId) => this.replaceAndEdit(e, new E.Call("")),
-        demoAddVariable: (e: ExprId) => this.replaceAndEdit(e, new E.Variable("")),
-        demoAddString: (e: ExprId) => this.replaceAndEdit(e, new E.Literal("", Type.Str)),
-    };
-
-    // See https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values.
-    private readonly menuKeys: { [key: string]: keyof Editor["actions"] } = {
-        "/": "disable",
-        "#": "foldComments",
-        a: "append",
-        c: "copy",
-        d: "delete",
-        Enter: "edit",
-        f: "demoAddCall",
-        g: "demoAddString",
-        i: "insert",
-        I: "insertBefore",
-        m: "move",
-        q: "comment",
-        r: "replace",
-        s: "shuffle",
-        v: "demoAddVariable",
-    };
-
-    // The shortcuts only accessible from the keyboard.
-    private readonly hiddenKeys: { [key: string]: (sel: ExprId) => void } = {
-        " ": this.smartSpace,
-        h: this.selectionAction(Select.leftSmart),
-        j: this.selectionAction(Select.downSmart),
-        k: this.selectionAction(Select.upSmart),
-        l: this.selectionAction(Select.rightSmart),
-        p: this.selectionAction(Select.parent),
-        H: this.selectionAction(Select.leftSiblingSmart),
-        L: this.selectionAction(Select.rightSiblingSmart),
-        Tab: this.selectionAction(Select.nextBlank),
-        ArrowUp: this.selectionAction(Select.upSmart),
-        ArrowDown: this.selectionAction(Select.downSmart),
-        ArrowLeft: this.selectionAction(Select.leftSmart),
-        ArrowRight: this.selectionAction(Select.rightSmart),
-        "1": this.pasteAction(0),
-        "2": this.pasteAction(1),
-        "3": this.pasteAction(2),
-        "4": this.pasteAction(3),
-        "5": this.pasteAction(4),
-        "6": this.pasteAction(5),
-        "7": this.pasteAction(6),
-        "8": this.pasteAction(7),
-        "9": this.pasteAction(9),
-        "0": this.pasteAction(9),
-    };
-
-    private readonly exprMenu: Optional<{ label: string; action: keyof Editor["actions"] }>[] = [
-        { action: "delete", label: "Delete" },
-        { action: "move", label: "Delete and Copy" },
-        { action: "replace", label: "Replace" },
-        { action: "shuffle", label: "Replace and Copy" },
-        null,
-        { action: "copy", label: "Copy" },
-        { action: "edit", label: "Edit..." },
-        null,
-        { action: "append", label: "Add Argument" },
-        { action: "insert", label: "New Line" },
-        { action: "insertBefore", label: "New Line Before" },
-        null,
-        { action: "comment", label: "Comment..." },
-        { action: "disable", label: "Disable" },
-        { action: "foldComments", label: "Fold Comments" },
-        null,
-        { action: "demoAddCall", label: "Add a Call" },
-        { action: "demoAddVariable", label: "Add a Variable" },
-        { action: "demoAddString", label: "Add a String" },
-    ];
-
-    private readonly menuKeyForAction = reverseObject(this.menuKeys);
-    contextMenuFor = (expr: ExprId): ContextMenuItem[] => {
-        return this.exprMenu.map((item, i) => ({
-            id: item?.action ?? i.toString(),
-            label: item?.label,
-            action: item?.action && (() => this.actions[item.action](expr)),
-            keyEquivalent: item?.action && this.menuKeyForAction[item.action],
-        }));
-    };
-
-    private readonly keyDown = (event: React.KeyboardEvent) => {
-        // Do not handle modifier keys.
-        if (event.ctrlKey || event.altKey || event.metaKey) return;
-        const key = event.key;
-        if (Object.prototype.hasOwnProperty.call(this.menuKeys, key)) {
-            this.actions[this.menuKeys[key]](this.state.selection);
-            event.preventDefault();
-        } else if (Object.prototype.hasOwnProperty.call(this.hiddenKeys, key)) {
-            this.hiddenKeys[key](this.state.selection);
-            event.preventDefault();
-        } else {
-            console.log("Did not handle", event.key);
-        }
-    };
-
-    private createSiblingBlank(target: ExprId, right: boolean) {
+    private insertBlankAsSiblingOf(target: ExprId, right: boolean) {
         this.insertAsSiblingOf(target, new E.Blank(), right);
     }
 
-    // Append an expr as a child of a parent in either first or last position.
+    // Complex functions.
     private insertAsChildOf(target: ExprId, toInsert: Expr, last: boolean) {
         const insertion = last ? -1 : 0;
         this.update(target, parent => {
@@ -308,6 +146,176 @@ class Editor extends Component<EditorProps, EditorState> {
         this.exprSelected(toInsert.id);
     }
 
+    // Actions.
+    private selectionAction(reducer: Select.SelectFn): () => void {
+        return () =>
+            this.setState(state => ({
+                selection:
+                    reducer(this.expr, state.selection, assertSome(this.exprAreaMapRef.current)) ??
+                    state.selection,
+            }));
+    }
+
+    private pasteAction(ix: number): () => void {
+        return () => {
+            const clipboard = this.props.clipboard.clipboard;
+            if (ix < clipboard.length) {
+                this.replaceExpr(this.state.selection, clipboard[ix].expr);
+                this.props.clipboard.use(clipboard[ix].expr.id);
+            }
+        };
+    }
+
+    private readonly smartSpace = (target: ExprId) => {
+        const expr = this.expr.withId(target);
+        if (expr instanceof E.Call || expr instanceof E.List) {
+            this.insertAsChildOf(target, new E.Blank(), false);
+        } else if (expr instanceof E.Blank) {
+            // Kinda like slurp. We don't create a new blank, rather move this one around.
+            const parent = this.expr.parentOf(target);
+            if (parent != null) {
+                // Do not stack top-level lists.
+                if (this.expr.parentOf(parent.id) == null && this.expr instanceof E.List) return;
+                this.removeExpr(target);
+                this.insertAsSiblingOf(parent.id, expr, true);
+            }
+        } else {
+            this.insertBlankAsSiblingOf(target, true);
+        }
+    };
+
+    private readonly actions = {
+        delete: (e: ExprId) => this.removeExpr(e),
+        replace: (e: ExprId) => this.replaceExpr(e, new E.Blank()),
+        move: (e: ExprId) => {
+            this.addToClipboard(e);
+            this.removeExpr(e);
+        },
+        shuffle: (e: ExprId) => {
+            this.addToClipboard(e);
+            this.replaceExpr(e, new E.Blank());
+        },
+        copy: (e: ExprId) => this.addToClipboard(e),
+        append: (e: ExprId) => this.createChildBlank(e),
+        insert: (e: ExprId) => this.insertBlankAsSiblingOf(e, true),
+        insertBefore: (e: ExprId) => this.insertBlankAsSiblingOf(e, false),
+        foldComments: () => this.setState(state => ({ foldingComments: !state.foldingComments })),
+        comment: (e: ExprId) => {
+            const selected = this.expr.withId(e);
+            if (selected != null) {
+                const comment = prompt("Comment?", selected.data.comment) ?? undefined;
+                this.update(e, expr => expr.assignToData({ comment }));
+            }
+        },
+        disable: (e: ExprId) => {
+            this.update(e, expr => {
+                if (expr instanceof E.Blank) return expr;
+                return expr.assignToData({ disabled: !expr.data.disabled });
+            });
+        },
+        edit: (e: ExprId) => this.startEditing(e),
+        // Demo things that should be moved to the toy-box.
+        demoAddCall: (e: ExprId) => this.replaceAndEdit(e, new E.Call("")),
+        demoAddVariable: (e: ExprId) => this.replaceAndEdit(e, new E.Variable("")),
+        demoAddString: (e: ExprId) => this.replaceAndEdit(e, new E.Literal("", Type.Str)),
+    };
+
+    // See https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values.
+    // Keep these sorted.
+    private readonly menuKeyEquivalents: { [key: string]: keyof Editor["actions"] } = {
+        "/": "disable",
+        "#": "foldComments",
+        a: "append",
+        c: "copy",
+        d: "delete",
+        Enter: "edit",
+        f: "demoAddCall",
+        g: "demoAddString",
+        i: "insert",
+        I: "insertBefore",
+        m: "move",
+        q: "comment",
+        r: "replace",
+        s: "shuffle",
+        v: "demoAddVariable",
+    };
+
+    // The shortcuts only accessible from the keyboard.
+    // Keep these sorted.
+    private readonly editorShortcuts: { [key: string]: (sel: ExprId) => void } = {
+        " ": this.smartSpace,
+        "0": this.pasteAction(9),
+        "1": this.pasteAction(0),
+        "2": this.pasteAction(1),
+        "3": this.pasteAction(2),
+        "4": this.pasteAction(3),
+        "5": this.pasteAction(4),
+        "6": this.pasteAction(5),
+        "7": this.pasteAction(6),
+        "8": this.pasteAction(7),
+        "9": this.pasteAction(9),
+        ArrowDown: this.selectionAction(Select.downSmart),
+        ArrowLeft: this.selectionAction(Select.leftSmart),
+        ArrowRight: this.selectionAction(Select.rightSmart),
+        ArrowUp: this.selectionAction(Select.upSmart),
+        H: this.selectionAction(Select.leftSiblingSmart),
+        h: this.selectionAction(Select.leftSmart),
+        j: this.selectionAction(Select.downSmart),
+        k: this.selectionAction(Select.upSmart),
+        L: this.selectionAction(Select.rightSiblingSmart),
+        l: this.selectionAction(Select.rightSmart),
+        p: this.selectionAction(Select.parent),
+        Tab: this.selectionAction(Select.nextBlank),
+    };
+
+    private readonly exprMenu: Optional<{ label: string; action: keyof Editor["actions"] }>[] = [
+        { action: "delete", label: "Delete" },
+        { action: "move", label: "Delete and Copy" },
+        { action: "replace", label: "Replace" },
+        { action: "shuffle", label: "Replace and Copy" },
+        null,
+        { action: "copy", label: "Copy" },
+        { action: "edit", label: "Edit..." },
+        null,
+        { action: "append", label: "Add Argument" },
+        { action: "insert", label: "New Line" },
+        { action: "insertBefore", label: "New Line Before" },
+        null,
+        { action: "comment", label: "Comment..." },
+        { action: "disable", label: "Disable" },
+        { action: "foldComments", label: "Fold Comments" },
+        null,
+        { action: "demoAddCall", label: "Add a Call" },
+        { action: "demoAddVariable", label: "Add a Variable" },
+        { action: "demoAddString", label: "Add a String" },
+    ];
+
+    // Bound methods.
+    private readonly menuKeyEquivalentForAction = reverseObject(this.menuKeyEquivalents);
+    contextMenuFor = (expr: ExprId): ContextMenuItem[] => {
+        return this.exprMenu.map((item, i) => ({
+            id: item?.action ?? i.toString(),
+            label: item?.label,
+            action: item?.action && (() => this.actions[item.action](expr)),
+            keyEquivalent: item?.action && this.menuKeyEquivalentForAction[item.action],
+        }));
+    };
+
+    private readonly keyDown = (event: React.KeyboardEvent) => {
+        // Do not handle modifier keys.
+        if (event.ctrlKey || event.altKey || event.metaKey) return;
+        const key = event.key;
+        if (Object.prototype.hasOwnProperty.call(this.menuKeyEquivalents, key)) {
+            this.actions[this.menuKeyEquivalents[key]](this.state.selection);
+            event.preventDefault();
+        } else if (Object.prototype.hasOwnProperty.call(this.editorShortcuts, key)) {
+            this.editorShortcuts[key](this.state.selection);
+            event.preventDefault();
+        } else {
+            console.log("Did not handle", event.key);
+        }
+    };
+
     private readonly createChildBlank = (parentId: ExprId) => {
         this.insertAsChildOf(parentId, new E.Blank(), true);
     };
@@ -326,6 +334,10 @@ class Editor extends Component<EditorProps, EditorState> {
         if (expr != null && value != null) {
             this.setState({ editing: { expr, value } });
         }
+    };
+
+    private readonly focus = () => {
+        this.containerRef.current?.focus();
     };
 
     componentDidMount() {
@@ -366,23 +378,14 @@ class Editor extends Component<EditorProps, EditorState> {
 
     constructor(props: EditorProps) {
         super(props);
-        for (const shortcut of Object.keys(this.menuKeys)) {
-            assert(!(shortcut in this.hiddenKeys), "Shortcut conflict");
+        for (const shortcut of Object.keys(this.menuKeyEquivalents)) {
+            assert(!(shortcut in this.editorShortcuts), "Shortcut conflict");
         }
         assert(
             !Object.prototype.hasOwnProperty.call(specialFunctions, props.topLevelName),
             "Cannot edit special functions",
         );
     }
-
-    private stopEditing() {
-        this.setState({ editing: null });
-        this.focus();
-    }
-
-    private readonly focus = () => {
-        this.containerRef.current?.focus();
-    };
 
     renderInlineEditor() {
         if (this.exprAreaMapRef.current == null || this.state.editing == null) return;
