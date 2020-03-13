@@ -41,9 +41,9 @@ export const DefaultTheme = {
         paddingPx: new Offset(3),
         radiusPx: 3,
         blurredFill: "#fcfdff",
-        blurredStroke: "#d7e9ff",
-        fill: "#edf5ff",
-        stroke: "#9fcbff",
+        blurredStroke: "#b8ccff",
+        fill: "#f2f7ff",
+        stroke: "#4375f9",
     },
 
     // Create Circle.
