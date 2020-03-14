@@ -220,7 +220,7 @@ class ExprLayout implements ExprVisitor<Layout> {
         // }
 
         return this.layoutText(expr, content, {
-            title: expr.data.comment,
+            title: expr.data.comment ?? undefined,
             colour: this.t.literalColour,
             italic: expr.type === "symbol",
             commentIndicator: expr.data.comment != null,
@@ -249,32 +249,26 @@ class ExprLayout implements ExprVisitor<Layout> {
         }
         const { x, y, width, height } = rect;
         const selected = this.props.selection === expr.id;
-        const pill = (mouseOver: boolean) => (
-            <motion.rect
-                {...{ width, height, x, y }}
-                animate={{
-                    // Here we recreate the selection rect colouring logic.
-                    //TODO: Find a more modular way.
-                    fill: selected
-                        ? this.props.focused
-                            ? this.t.selection.fill
-                            : this.t.selection.blurredFill
-                        : mouseOver && !this.props.frozen
-                        ? this.t.blanks.fillHover
-                        : this.t.blanks.fill,
-                }}
-                initial={false}
-                rx={rect.height / 2}
-                strokeWidth={1}
-                stroke={
-                    selected
-                        ? this.props.focused
-                            ? this.t.selection.stroke
-                            : this.t.selection.blurredStroke
-                        : this.t.blanks.stroke
-                }
-            />
-        );
+        const pill = (mouseOver: boolean) => {
+            const highlight = selected
+                ? this.t.selection.highlight
+                : mouseOver && !this.props.frozen
+                ? this.t.blanks.hover
+                : this.t.blanks.highlight;
+            return (
+                <motion.rect
+                    {...{ width, height, x, y }}
+                    animate={{
+                        // Here we recreate the selection rect colouring logic.
+                        fill: highlight.fill(this.props.focused === true),
+                    }}
+                    initial={false}
+                    rx={rect.height / 2}
+                    strokeWidth={1}
+                    stroke={highlight.stroke(this.props.focused === true)}
+                />
+            );
+        };
         const layout = new Layout(
             (
                 <HoverHitBox area={rect} {...this.exprProps(expr)} key={0}>

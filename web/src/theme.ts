@@ -1,6 +1,27 @@
 import { Offset } from "geometry";
 import { assert } from "utils";
 
+export interface Highlight {
+    fill(focused: boolean): string;
+    stroke(focused: boolean): string;
+}
+
+export function fillStroke(
+    fill = "none",
+    stroke = "none",
+    blurredFill = fill,
+    blurredStroke = stroke,
+): Highlight {
+    return {
+        fill(focused: boolean) {
+            return focused ? fill : blurredFill;
+        },
+        stroke(focused: boolean) {
+            return focused ? stroke : blurredStroke;
+        },
+    };
+}
+
 export const DefaultTheme = {
     // Text.
     fontSizePx: 13,
@@ -19,7 +40,6 @@ export const DefaultTheme = {
     // Interface and decoration colours.
     decorationColour: "#6a6a6a",
     listRulerStroke: "#000000",
-    highlightStroke: "#cecece",
     exprViewPaddingPx: 8,
     disabledExprColour: "#cccccc",
 
@@ -30,20 +50,17 @@ export const DefaultTheme = {
     literalColour: "#ef6c00",
     blanks: {
         padding: new Offset(10, 1),
-        stroke: "#dcdcdc",
-        fill: "#f7f7f7",
-        fillHover: "#efefef",
+        highlight: fillStroke("#f7f7f7", "#dcdcdc"),
+        hover: fillStroke("#efefef", "#dcdcdc"),
         textColour: "#909090",
     },
 
     // Selection and highlights.
+    hoverHighlight: fillStroke(undefined, "#cecece"),
     selection: {
         paddingPx: new Offset(3),
         radiusPx: 3,
-        blurredFill: "#fcfdff",
-        blurredStroke: "#b8ccff",
-        fill: "#f2f7ff",
-        stroke: "#4375f9",
+        highlight: fillStroke("#f2f7ff", "#4375f9", "#fcfdff", "#b8ccff"),
     },
 
     // Create Circle.

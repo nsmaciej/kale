@@ -87,6 +87,7 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
         const rect = assertSome(areas[expr].rect).pad(this.theme.selection.paddingPx);
 
         const isHole = this.props.expr.withId(expr) instanceof E.Blank;
+        const highlight = isSelection ? this.theme.selection.highlight : this.theme.hoverHighlight;
         return (
             <motion.rect
                 animate={{
@@ -98,21 +99,9 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
                 }}
                 key={+isSelection}
                 rx={this.theme.selection.radiusPx}
-                fill={
-                    isSelection
-                        ? this.props.focused
-                            ? this.theme.selection.fill
-                            : this.theme.selection.blurredFill
-                        : "none"
-                }
+                fill={highlight.fill(this.props.focused === true)}
+                stroke={highlight.stroke(this.props.focused === true)}
                 initial={false}
-                stroke={
-                    isSelection
-                        ? this.props.focused
-                            ? this.theme.selection.stroke
-                            : this.theme.selection.blurredStroke
-                        : this.theme.highlightStroke
-                }
                 strokeWidth={0.5}
                 transition={{ type: "tween", ease: "easeIn", duration: 0.1 }}
             />
