@@ -1,80 +1,64 @@
-import React, { Component } from "react";
+import React, { ReactNode } from "react";
+import { enableMapSet } from "immer";
+import { useImmer } from "use-immer";
 
 import Expr, { Blank } from "expr";
-import { Optional, assertSome, assert } from "utils";
-import { Type, Value, Func, Workspace as InterpterWorkspace, Builtin } from "vm/types";
+import { Optional, assertSome } from "utils";
+import { Type, Value, Func, Workspace as InterpterWorkspace, Builtin, assertFunc } from "vm/types";
 import Builtins from "vm/builtins";
 import * as Sample from "sample";
-
-export type WorkspaceValue = WorkspaceProvider["state"];
-export const Workspace = React.createContext<Optional<WorkspaceValue>>(null);
 
 function asFunc(expr: Expr): Value<Func> {
     return { type: Type.Func, value: { expr, scope: null, args: [] } };
 }
 
-export class WorkspaceProvider extends Component<{}, WorkspaceProvider["state"]> {
-    state = {
-        topLevel: new Map() as InterpterWorkspace,
-        // This helps useSuggestions to not run as much, keys aren't reference stable.
-        functionList: [] as string[],
-        removeTopLevel: (name: string) => {
-            this.setState(state => {
-                const topLevel = new Map(state.topLevel);
-                topLevel.delete(name);
-                return { topLevel };
-            });
-            this.syncFunctionList();
-        },
+function initialWorkspace() {
+    const scope: Map<string, Value<Builtin | Func>> = new Map([
+        ["Sample-1", asFunc(Sample.SAMPLE_1)],
+        ["Sample-2", asFunc(Sample.SAMPLE_2)],
+        ["Hello-World", asFunc(Sample.HELLO_WORLD)],
+    ]);
+    for (const [name, builtin] of Object.entries(Builtins)) {
+        scope.set(name, builtin);
+    }
+    // Functions helps useSuggestions to not run as much, keys aren't reference stable.
+    return { scope: scope as InterpterWorkspace, functions: Array.from(scope.keys()) };
+}
 
-        setTopLevel: (name: string, update: (expr: Expr) => Expr) => {
-            this.setState(state => {
-                const maybeFunc = assertSome(state.topLevel.get(name));
-                assert(maybeFunc.type === Type.Func, "Cannot edit builtins");
-                const topLevel = new Map(state.topLevel);
-                topLevel.set(name, asFunc(update((maybeFunc.value as Func).expr)));
-                return { topLevel };
+enableMapSet();
+export function useWorkSpaceProvider() {
+    const [globals, setGlobals] = useImmer(initialWorkspace);
+    return {
+        globals: globals.scope,
+        functions: globals.functions,
+        ensureExists(name: string) {
+            if (globals.scope.has(name)) return;
+            setGlobals(draft => {
+                draft.scope.set(name, asFunc(new Blank()));
+                draft.functions = Array.from(draft.scope.keys());
             });
         },
-
-        getTopLevel: (name: string): Value<Func | Builtin> => {
-            const func = this.state.topLevel.get(name);
-            if (func != null) {
-                return func;
-            }
-            const blank = new Blank();
-            this.setState(state => {
-                const topLevel = new Map(state.topLevel);
-                topLevel.set(name, asFunc(blank));
-                return { topLevel };
+        get(name: string): Value<Func | Builtin> {
+            return assertSome(globals.scope.get(name));
+        },
+        remove(name: string): void {
+            setGlobals(draft => {
+                draft.scope.delete(name);
+                draft.functions = Array.from(draft.scope.keys());
             });
-            this.syncFunctionList();
-            return asFunc(blank);
+        },
+        update(name: string, update: (expr: Expr) => Expr) {
+            setGlobals(draft => {
+                const next = asFunc(update(assertFunc(assertSome(draft.scope.get(name))).expr));
+                draft.scope.set(name, next);
+            });
         },
     };
+}
 
-    private syncFunctionList() {
-        this.setState(state => ({
-            functionList: Array.from(state.topLevel.keys()),
-        }));
-    }
+export type WorkspaceValue = ReturnType<typeof useWorkSpaceProvider>;
+export const Workspace = React.createContext<Optional<WorkspaceValue>>(null);
 
-    constructor(props: {}) {
-        super(props);
-        const topLevel: Map<string, Value<Builtin | Func>> = new Map([
-            ["Sample-1", asFunc(Sample.SAMPLE_1)],
-            ["Sample-2", asFunc(Sample.SAMPLE_2)],
-            ["Hello-World", asFunc(Sample.HELLO_WORLD)],
-        ]);
-        for (const [name, builtin] of Object.entries(Builtins)) {
-            topLevel.set(name, builtin);
-        }
-        this.state.topLevel = topLevel;
-        // The initial function list sync.
-        this.state.functionList = Array.from(this.state.topLevel.keys());
-    }
-
-    render() {
-        return <Workspace.Provider value={this.state}>{this.props.children}</Workspace.Provider>;
-    }
+export function WorkspaceProvider(props: { children: ReactNode }) {
+    return <Workspace.Provider value={useWorkSpaceProvider()}>{props.children}</Workspace.Provider>;
 }

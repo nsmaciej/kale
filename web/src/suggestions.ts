@@ -31,7 +31,7 @@ export default function useSuggestions(
     const fuse = useMemo(() => {
         if (disable) return null;
         console.info("Indexing functions...");
-        const functions = workspace.functionList.map(name => ({
+        const functions = workspace.functions.map(name => ({
             name,
             id: name,
             original: false,
@@ -44,7 +44,7 @@ export default function useSuggestions(
             special: true,
         }));
         return new Fuse([...functions, ...special], { keys: ["name"], findAllMatches: true });
-    }, [disable, workspace.functionList, showSpecials]);
+    }, [disable, workspace.functions, showSpecials]);
 
     const suggestions = useMemo(() => {
         const results = fuse?.search(value)?.slice(0, 5);

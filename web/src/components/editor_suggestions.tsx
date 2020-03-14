@@ -1,10 +1,12 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useContext } from "react";
 import styled from "styled-components";
 import { AiOutlinePlusCircle } from "react-icons/ai";
 
 import { SubtleButton, Shortcut, Box, Stack } from "components";
 import Menu, { MenuTextWrapper } from "components/menu";
 import useSuggestions from "suggestions";
+import { Workspace } from "contexts/workspace";
+import { assertSome } from "utils";
 
 const inputWidthPx = 400;
 
@@ -29,12 +31,14 @@ interface NewEditorInputProps {
 export default function EditorSuggestions({ onCreateEditor }: NewEditorInputProps) {
     const [value, setValue] = useState("");
     const [hasFocus, setHasFocus] = useState(false);
+    const { ensureExists } = assertSome(useContext(Workspace));
     const { setSelection, selection, suggestions, moveSelection } = useSuggestions(value, {
         showValue: true,
     });
     const inputRef = useRef<HTMLInputElement>(null);
 
     function selectEditor(name: string) {
+        ensureExists(name);
         onCreateEditor(name);
         inputRef.current?.blur();
         setValue("");

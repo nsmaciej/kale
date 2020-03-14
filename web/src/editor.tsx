@@ -10,7 +10,7 @@ import { Optional, assertSome, insertIndex, reverseObject, assert } from "utils"
 import { Clipboard, ClipboardValue } from "contexts/clipboard";
 import { Workspace, WorkspaceValue } from "contexts/workspace";
 import { KaleTheme } from "theme";
-import { Type, Func, Value } from "vm/types";
+import { Type, Func, Value, assertFunc } from "vm/types";
 
 import { ContextMenuItem } from "components/context_menu";
 import InlineEditor from "components/inline_editor";
@@ -46,14 +46,14 @@ class Editor extends Component<EditorProps, EditorState> {
     };
 
     private get expr(): Expr {
-        const func = this.props.workspace.getTopLevel(this.props.topLevelName);
+        const func = this.props.workspace.get(this.props.topLevelName);
         assert(func.type === Type.Func);
         return (func.value as Func).expr;
     }
 
     // Editor internal APIs.
     private update(child: Optional<ExprId>, updater: (expr: Expr) => Optional<Expr>) {
-        this.props.workspace.setTopLevel(
+        this.props.workspace.update(
             this.props.topLevelName,
             expr =>
                 expr.update(child ?? expr.id, updater) ??
@@ -76,10 +76,12 @@ class Editor extends Component<EditorProps, EditorState> {
         this.update(old, () => next.resetIds().replaceId(old));
     }
 
-    private stopEditing() {
+    private stopEditing(insertArguments: boolean) {
         const { expr, value } = assertSome(this.state.editing);
         if (value === "") {
             this.replaceExpr(expr.id, new E.Blank());
+        } else if (insertArguments) {
+            // const args = this.props.workspace.
         }
         this.setState({ editing: null });
         this.focus();
@@ -355,13 +357,7 @@ class Editor extends Component<EditorProps, EditorState> {
         );
         // This ensures the selection is always valid. Find the closest existing parent.
         if (!this.expr.contains(this.state.selection)) {
-            // We cannot use getTopLevel here because it doesn't use the older topLevel value.
-            //TODO: Fix that.
-            const prevExprUnchecked = prevProps.workspace.topLevel.get(prevProps.topLevelName);
-            assert(prevExprUnchecked == null || prevExprUnchecked.type === Type.Func);
-            const prevExpr =
-                (prevExprUnchecked as Optional<Value<Func>>)?.value.expr ?? new E.Blank();
-
+            const prevExpr = assertFunc(prevProps.workspace.get(prevProps.topLevelName)).expr;
             // Find the candidates for the next selection.
             const [siblings, ix] = prevExpr.siblings(this.state.selection);
             const candidates: Expr[][] = [];
@@ -404,10 +400,10 @@ class Editor extends Component<EditorProps, EditorState> {
                         this.setState({ editing: { ...this.state.editing, value } });
                     }
                 }}
-                onDismiss={() => this.stopEditing()}
+                onDismiss={() => this.stopEditing(false)}
                 onSubmit={value => {
                     this.update(this.state.editing?.expr?.id, x => x.withValue(value));
-                    this.stopEditing();
+                    this.stopEditing(true);
                 }}
             />
         );

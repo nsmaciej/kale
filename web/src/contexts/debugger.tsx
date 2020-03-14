@@ -19,7 +19,7 @@ export function useDebugProvider() {
                 onBreakpoint: cc => setContinueEval(cc),
                 onTerminated: () => setInterpeter(null),
             });
-            int.setWorkspace(workspace.topLevel);
+            int.setWorkspace(workspace.globals);
             int.evalFunction(name);
             setInterpeter(int);
         },
