@@ -57,7 +57,7 @@ const specials: {
     },
 };
 
-export const specialFunctions = Object.keys(specials);
+export const specialFunctions = new Set(Object.keys(specials)) as ReadonlySet<string>;
 
 export default class Interpreter {
     private readonly workspaceRef: WorkspaceRef = { current: new Map() };

@@ -35,7 +35,7 @@ function typeTest(type: string, help: string): Value<Builtin> {
 }
 
 // The return type depends on the value.
-const atIndex = {
+const atIndex: Value<Builtin> = {
     type: Type.Builtin,
     value: {
         args: [Type.Num, null],
@@ -51,7 +51,7 @@ const atIndex = {
             throw new VmError(`${indexable.type} is not indexable`);
         },
         help: "Index a list or piece of text with a number",
-    } as Builtin,
+    },
 };
 
 export default {

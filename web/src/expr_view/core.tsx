@@ -9,7 +9,7 @@ export interface TextProperties {
     italic?: boolean;
     bold?: boolean;
     colour?: string;
-    title?: string;
+    title?: Optional<string>;
     offset?: Offset;
     commentIndicator?: boolean;
 }

@@ -45,7 +45,7 @@ export default function InlineEditor({
     function onKeyDown(e: React.KeyboardEvent) {
         e.stopPropagation(); // Always stop propagation.
         if (e.key === "Escape") {
-            onSubmit(value);
+            onDismiss();
         } else if (e.key === "Enter" || e.key === "Tab") {
             if (selection == null || !suggestions.length) {
                 onSubmit(value);

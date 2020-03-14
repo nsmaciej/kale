@@ -6,11 +6,11 @@ import * as E from "expr";
 import * as Select from "selection";
 import Expr, { ExprId } from "expr";
 import ExprView, { ExprAreaMap } from "expr_view";
-import { Optional, assertSome, insertIndex, reverseObject, assert } from "utils";
+import { Optional, assertSome, reverseObject, assert } from "utils";
 import { Clipboard, ClipboardValue } from "contexts/clipboard";
 import { Workspace, WorkspaceValue } from "contexts/workspace";
 import { KaleTheme } from "theme";
-import { Type, Func, Value, assertFunc } from "vm/types";
+import { Type, Func, assertFunc } from "vm/types";
 
 import { ContextMenuItem } from "components/context_menu";
 import InlineEditor from "components/inline_editor";
@@ -20,7 +20,7 @@ interface EditorState {
     focused: boolean;
     selection: ExprId;
     foldingComments: boolean;
-    editing: Optional<{ expr: Expr; value: string }>;
+    editing: Optional<{ expr: ExprId; created: boolean }>;
 }
 
 interface EditorWrapperProps {
@@ -76,15 +76,47 @@ class Editor extends Component<EditorProps, EditorState> {
         this.update(old, () => next.resetIds().replaceId(old));
     }
 
-    private stopEditing(insertArguments: boolean) {
-        const { expr, value } = assertSome(this.state.editing);
-        if (value === "") {
-            this.replaceExpr(expr.id, new E.Blank());
-        } else if (insertArguments) {
-            // const args = this.props.workspace.
+    private createInlineEditor(exprId: ExprId, created: boolean) {
+        const expr = this.expr.withId(exprId);
+        // Only things with a value can be edited.
+        if (expr != null && expr.value() != null) {
+            this.setState({ editing: { expr: exprId, created } });
         }
-        this.setState({ editing: null });
-        this.focus();
+    }
+
+    private stopEditing(newValue: Optional<string>) {
+        // This will disable rendering the inline-editor, preventing it from firing onBlur.
+        this.setState({ editing: null }, () => this.focus());
+
+        const { expr: exprId, created } = assertSome(this.state.editing);
+        const expr = this.expr.withId(exprId);
+        const value = newValue ?? expr?.value();
+        if (!value) {
+            // If empty (or null for some reason).
+            this.replaceExpr(exprId, new E.Blank());
+            return;
+        }
+        this.update(exprId, x => x.withValue(value));
+
+        if (created && expr instanceof E.Call) {
+            // Auto-insert the right amount of blanks for this function.
+            // Note at this point expr still might have some old value.
+            const func = this.props.workspace.globals.get(value)?.value;
+            if (func != null && !specialFunctions.has(value)) {
+                const blanks = (func.args as (string | null)[]).map(
+                    x => new E.Blank(E.exprData(x)),
+                );
+                blanks.forEach(arg => this.insertAsChildOf(exprId, arg, true));
+                console.log(blanks, blanks[0]);
+                this.selectExpr(blanks[0].id);
+            }
+        } else if (expr != null && newValue != null) {
+            // Auto-select the next sibling (if we submitted).
+            const [siblings, ix] = this.expr.siblings(expr.id);
+            if (ix != null && ix + 1 < siblings.length) {
+                this.selectExpr(siblings[ix + 1].id);
+            }
+        }
     }
 
     private replaceAndEdit(expr: ExprId, next: Expr) {
@@ -92,42 +124,35 @@ class Editor extends Component<EditorProps, EditorState> {
         this.replaceExpr(expr, next);
         //TODO: Remove this.
         // ReplaceExpr will re-use the expr ID.
-        this.forceUpdate(() => this.startEditing(expr));
+        this.forceUpdate(() => this.createInlineEditor(expr, true));
     }
 
     private insertBlankAsSiblingOf(target: ExprId, right: boolean) {
-        this.insertAsSiblingOf(target, new E.Blank(), right);
+        this.selectAndInsertAsSiblingOf(target, new E.Blank(), right);
     }
 
     // Complex functions.
     private insertAsChildOf(target: ExprId, toInsert: Expr, last: boolean) {
-        const insertion = last ? -1 : 0;
+        function updateList(list: readonly Expr[]) {
+            return last ? [...list, toInsert] : [toInsert, ...list];
+        }
         this.update(target, parent => {
             if (parent instanceof E.Call) {
-                this.exprSelected(toInsert.id);
-                return new E.Call(
-                    parent.fn,
-                    produce(parent.args, draft => void draft.splice(insertion, 0, toInsert)),
-                    parent.data,
-                );
+                return new E.Call(parent.fn, updateList(parent.args), parent.data);
             } else if (parent instanceof E.List) {
-                this.exprSelected(toInsert.id);
-                return new E.List(
-                    produce(parent.list, draft => void draft.splice(insertion, 0, toInsert)),
-                    parent.data,
-                );
+                return new E.List(updateList(parent.list), parent.data);
             }
             return parent;
         });
     }
 
-    private insertAsSiblingOf(sibling: ExprId, toInsert: Expr, right: boolean) {
+    private selectAndInsertAsSiblingOf(sibling: ExprId, toInsert: Expr, right: boolean) {
         const currentParent = this.expr.parentOf(sibling)?.id;
         const ixDelta = right ? 1 : 0;
 
         if (currentParent == null) {
             this.update(null, main => new E.List(right ? [main, toInsert] : [toInsert, main]));
-            this.exprSelected(toInsert.id);
+            this.selectExpr(toInsert.id);
             return;
         }
 
@@ -149,7 +174,7 @@ class Editor extends Component<EditorProps, EditorState> {
             // Parent always has to be one of these.
             throw new E.UnvisitableExpr(parent);
         });
-        this.exprSelected(toInsert.id);
+        this.selectExpr(toInsert.id);
     }
 
     // Actions.
@@ -175,7 +200,9 @@ class Editor extends Component<EditorProps, EditorState> {
     private readonly smartSpace = (target: ExprId) => {
         const expr = this.expr.withId(target);
         if (expr instanceof E.Call || expr instanceof E.List) {
-            this.insertAsChildOf(target, new E.Blank(), false);
+            const blank = new E.Blank();
+            this.insertAsChildOf(target, blank, false);
+            this.selectExpr(blank.id);
         } else if (expr instanceof E.Blank) {
             // Kinda like slurp. We don't create a new blank, rather move this one around.
             const parent = this.expr.parentOf(target);
@@ -183,7 +210,7 @@ class Editor extends Component<EditorProps, EditorState> {
                 // Do not stack top-level lists.
                 if (this.expr.parentOf(parent.id) == null && this.expr instanceof E.List) return;
                 this.removeExpr(target);
-                this.insertAsSiblingOf(parent.id, expr, true);
+                this.selectAndInsertAsSiblingOf(parent.id, expr, true);
             }
         } else {
             this.insertBlankAsSiblingOf(target, true);
@@ -209,8 +236,9 @@ class Editor extends Component<EditorProps, EditorState> {
         comment: (e: ExprId) => {
             const selected = this.expr.withId(e);
             if (selected != null) {
-                const comment = prompt("Comment?", selected.data.comment) ?? undefined;
-                this.update(e, expr => expr.assignToData({ comment }));
+                // Empty string _should_ be null.
+                const comment = prompt("Comment?", selected.data.comment ?? "") || null;
+                this.update(e, expr => expr.assignToData({ comment: comment }));
             }
         },
         disable: (e: ExprId) => {
@@ -323,10 +351,12 @@ class Editor extends Component<EditorProps, EditorState> {
     };
 
     private readonly createChildBlank = (parentId: ExprId) => {
-        this.insertAsChildOf(parentId, new E.Blank(), true);
+        const blank = new E.Blank();
+        this.insertAsChildOf(parentId, blank, true);
+        this.selectExpr(blank.id);
     };
 
-    private readonly exprSelected = (selection: ExprId) => {
+    private readonly selectExpr = (selection: ExprId) => {
         this.setState({ selection });
     };
 
@@ -334,12 +364,8 @@ class Editor extends Component<EditorProps, EditorState> {
         this.setState({ focused: document.activeElement?.id === "editor" });
     };
 
-    private readonly startEditing = (exprId: ExprId) => {
-        const expr = this.expr.withId(exprId);
-        const value = expr?.value();
-        if (expr != null && value != null) {
-            this.setState({ editing: { expr, value } });
-        }
+    private readonly startEditing = (expr: ExprId) => {
+        this.createInlineEditor(expr, false);
     };
 
     private readonly focus = () => {
@@ -350,30 +376,37 @@ class Editor extends Component<EditorProps, EditorState> {
         if (this.props.stealFocus) this.focus();
     }
 
-    componentDidUpdate(prevProps: EditorProps) {
+    componentDidUpdate(prevProps: EditorProps, prevState: EditorState) {
         assert(
             prevProps.topLevelName === this.props.topLevelName,
             "Use a key to create a new Editor component instead",
         );
-        // This ensures the selection is always valid. Find the closest existing parent.
-        if (!this.expr.contains(this.state.selection)) {
-            const prevExpr = assertFunc(prevProps.workspace.get(prevProps.topLevelName)).expr;
-            // Find the candidates for the next selection.
-            const [siblings, ix] = prevExpr.siblings(this.state.selection);
-            const candidates: Expr[][] = [];
-            if (ix != null) {
-                candidates.push(siblings.slice(ix + 1));
-                candidates.push(siblings.slice(0, ix));
-            }
-            candidates.push(prevExpr.parents(this.state.selection));
-            for (const option of candidates.flat()) {
-                if (this.expr.contains(option.id)) {
-                    this.setState({ selection: option.id });
-                    return;
-                }
-            }
-            this.setState({ selection: this.expr.id }); // Last resort.
+        if (this.expr.contains(this.state.selection)) return;
+        // Ensure the selection is always valid.
+        const prevExpr = assertFunc(prevProps.workspace.get(prevProps.topLevelName)).expr;
+        const candidates: Expr[][] = [];
+
+        // Maybe we just tried updating the selection to something that doesn't exist. Use the
+        // old selection instead.
+        const oldSelection = prevExpr.withId(prevState.selection);
+        if (oldSelection != null) {
+            candidates.push([oldSelection]);
         }
+        // Try the siblings, going forward then back.
+        const [siblings, ix] = prevExpr.siblings(this.state.selection);
+        if (ix != null) {
+            candidates.push(siblings.slice(ix + 1));
+            candidates.push(siblings.slice(0, ix).reverse());
+        }
+        // Finally consider all the parents.
+        candidates.push(prevExpr.parents(this.state.selection));
+        for (const option of candidates.flat()) {
+            if (this.expr.contains(option.id)) {
+                this.selectExpr(option.id);
+                return;
+            }
+        }
+        this.selectExpr(this.expr.id); // Last resort.
     }
 
     constructor(props: EditorProps) {
@@ -381,30 +414,23 @@ class Editor extends Component<EditorProps, EditorState> {
         for (const shortcut of Object.keys(this.menuKeyEquivalents)) {
             assert(!(shortcut in this.editorShortcuts), "Shortcut conflict");
         }
-        assert(
-            !Object.prototype.hasOwnProperty.call(specialFunctions, props.topLevelName),
-            "Cannot edit special functions",
-        );
+        assert(!specialFunctions.has(props.topLevelName), "Cannot edit special functions");
     }
 
     renderInlineEditor() {
         if (this.exprAreaMapRef.current == null || this.state.editing == null) return;
+        const exprId = this.state.editing.expr;
+        const expr = assertSome(this.expr.withId(exprId));
         return (
             <InlineEditor
-                exprArea={this.exprAreaMapRef.current[this.state.editing.expr.id]}
-                value={this.state.editing.value}
-                disableSuggestions={!(this.state.editing.expr instanceof E.Call)}
+                exprArea={this.exprAreaMapRef.current[exprId]}
+                value={assertSome(expr.value())}
+                disableSuggestions={!(expr instanceof E.Call)}
                 onChange={value => {
-                    if (this.state.editing != null) {
-                        this.update(this.state.editing.expr.id, x => x.withValue(value));
-                        this.setState({ editing: { ...this.state.editing, value } });
-                    }
+                    this.update(exprId, x => x.withValue(value));
                 }}
-                onDismiss={() => this.stopEditing(false)}
-                onSubmit={value => {
-                    this.update(this.state.editing?.expr?.id, x => x.withValue(value));
-                    this.stopEditing(true);
-                }}
+                onDismiss={() => this.stopEditing(null)}
+                onSubmit={value => this.stopEditing(value)}
             />
         );
     }
@@ -422,6 +448,7 @@ class Editor extends Component<EditorProps, EditorState> {
                 style={{ position: "relative" }}
             >
                 <ExprView
+                    // This is heavy pure component, don't create new objects.
                     expr={this.expr}
                     selection={this.state.selection}
                     focused={this.state.focused}
@@ -430,7 +457,7 @@ class Editor extends Component<EditorProps, EditorState> {
                     exprAreaMapRef={this.exprAreaMapRef}
                     // Callbacks.
                     contextMenuFor={this.contextMenuFor}
-                    onClick={this.exprSelected}
+                    onClick={this.selectExpr}
                     onDoubleClick={this.startEditing}
                     onClickCreateCircle={this.createChildBlank}
                     onFocus={this.focus}

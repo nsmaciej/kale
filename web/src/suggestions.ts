@@ -37,7 +37,7 @@ export default function useSuggestions(
             original: false,
             special: false,
         }));
-        const special = (showSpecials ? specialFunctions : []).map(name => ({
+        const special = Array.from(showSpecials ? specialFunctions.values() : [], name => ({
             name,
             id: name,
             original: false,
@@ -53,7 +53,7 @@ export default function useSuggestions(
             results != null &&
             results[0]?.name !== value &&
             showValue &&
-            !specialFunctions.includes(value)
+            !specialFunctions.has(value)
         ) {
             results.push({
                 name: value,

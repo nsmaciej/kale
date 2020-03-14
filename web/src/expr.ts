@@ -1,16 +1,16 @@
-import { filterMap, Optional, arrayEquals, assertSome } from "utils";
+import { Optional, filterMap, arrayEquals, assertSome } from "utils";
 
 export type ExprId = number;
 
 export interface ExprData {
     id: ExprId;
-    comment?: string;
+    comment: Optional<string>;
     disabled: boolean;
 }
 
 let GlobalExprId = 1;
 // Construct simple ExprData for sample Exprs. Not very exciting right now.
-export function exprData(comment?: string): ExprData {
+export function exprData(comment?: Optional<string>): ExprData {
     return { comment, id: GlobalExprId++, disabled: false };
 }
 
