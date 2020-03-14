@@ -54,6 +54,15 @@ const atIndex: Value<Builtin> = {
     },
 };
 
+const id: Value<Builtin> = {
+    type: Type.Builtin,
+    value: {
+        args: [null],
+        builtin: x => x,
+        help: "Return the passed in value unchanged",
+    },
+};
+
 export default {
     // Numbers.
     "+": op((a, b) => a + b, "Adds two numbers together"),
@@ -79,30 +88,31 @@ export default {
     ),
 
     // Type testing.
-    "is-null?": typeTest(Type.Null, "Checks if a value is null"),
-    "is-text?": typeTest(Type.Str, "Checks if a value is a piece of text"),
-    "is-number?": typeTest(Type.Num, "Checks if a value is a number"),
-    "is-list?": typeTest(Type.List, "Checks if a value is a list of values"),
+    "Is-null?": typeTest(Type.Null, "Checks if a value is null"),
+    "Is-text?": typeTest(Type.Str, "Checks if a value is a piece of text"),
+    "Is-number?": typeTest(Type.Num, "Checks if a value is a number"),
+    "Is-list?": typeTest(Type.List, "Checks if a value is a list of values"),
 
     // Indexing.
     "@": atIndex,
 
     // Conversion.
-    "number->text": builtin(
+    "Number->text": builtin(
         Type.Str,
         [Type.Num],
         (x: number) => x.toString(),
         "Convert a number to text",
     ),
-    "text->number": builtin(
+    "Text->number": builtin(
         Type.Num,
         [Type.Str],
         (x: string) => parseInt(x),
         "Read a piece of a text as a number",
     ),
+    Id: id,
 
     // I/O.
-    print: builtin(
+    Print: builtin(
         Type.Null,
         [Type.Str],
         show => console.log(show),

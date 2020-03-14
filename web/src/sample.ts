@@ -1,12 +1,12 @@
 import { Call, List, Blank, Literal, Variable, exprData } from "expr";
 
 const sample1 = new Call(
-    "if",
+    "If",
     [
         new Call("=", [new Variable("n"), new Literal("0", "number")]),
         new List([
             new Call(
-                "print",
+                "Print",
                 [
                     new Literal(
                         "This literal has a comment",
@@ -19,10 +19,10 @@ const sample1 = new Call(
             ),
             new Literal("1", "number"),
         ]),
-        new Call("id", [
+        new Call("Id", [
             new List(
                 [
-                    new Call("print", [new Blank()]),
+                    new Call("Print", [new Blank()]),
                     new Call("*", [
                         new Variable("n"),
                         new Call("fact", [
@@ -49,8 +49,8 @@ const sample2 = new Call("object", [
 ]);
 
 const sample3 = new List([
-    new Call("let", [new Variable("msg"), new Literal("Hello World", "string")]),
-    new Call("print", [new Variable("msg")]),
+    new Call("Let", [new Variable("msg"), new Literal("Hello World", "string")]),
+    new Call("Print", [new Variable("msg")]),
 ]);
 
 export const SAMPLE_1 = sample1.validate();

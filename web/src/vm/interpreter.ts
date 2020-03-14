@@ -34,21 +34,21 @@ const specials: {
         scope: Scope,
     ) => Promise<Value>;
 } = {
-    async let(evalExpr, args, scope) {
+    async Let(evalExpr, args, scope) {
         const value = await evalExpr(args[1], scope);
         scope.define(assertVariable(args[0]), value);
         return value;
     },
-    async set(evalExpr, args, scope) {
+    async Set(evalExpr, args, scope) {
         const value = await evalExpr(args[1], scope);
         scope.assign(assertVariable(args[0]), value);
         return value;
     },
-    async if(evalExpr, args, scope) {
+    async If(evalExpr, args, scope) {
         const condition = await evalExpr(args[0], scope);
         return await evalExpr(assertBoolean(condition) ? args[1] : args[2], scope);
     },
-    async while(evalExpr, args, scope) {
+    async While(evalExpr, args, scope) {
         let r = nullValue();
         while (assertBoolean(await evalExpr(args[0], scope))) {
             r = await evalExpr(args[1], scope);
@@ -93,7 +93,10 @@ export default class Interpreter {
         const builtin = assertBuiltin(scope.get(expr.fn));
         const args = await Promise.all(expr.args.map(x => this.eval(x, scope)));
         builtin.args.forEach((type, i) =>
-            vmAssert(type === args[i].type, `Expected type ${args[i].type}, found ${type}`),
+            vmAssert(
+                type === null || type === args[i].type,
+                `Expected type ${args[i].type}, found ${type}`,
+            ),
         );
         return builtin.builtin(...args);
     }

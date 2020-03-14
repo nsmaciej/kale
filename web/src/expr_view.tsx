@@ -72,8 +72,6 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
     declare context: React.ContextType<typeof DragAndDrop>;
 
     state: ExprViewState = { highlight: null, showingMenu: null };
-    // This is computed during the render phase, we only call the onExprAreaMap once
-    // we are mounted or updated.
     private pendingExprAreaMap: ExprAreaMap = {};
 
     get theme() {
@@ -185,7 +183,6 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
     }
 
     render() {
-        //TODO: Remove these binds.
         const { nodes, size, areas, text } = layoutExpr(this.theme, this.props.expr, {
             exprPropsFor: this.exprPropsFor,
             onClickCreateCircle: this.onClickCreateCircle,
