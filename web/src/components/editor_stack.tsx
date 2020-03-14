@@ -39,43 +39,41 @@ interface EditorStackProps {
 export default function EditorStack({ onClose, editors }: EditorStackProps) {
     const dbg = assertSome(useContext(Debugger));
     return (
-        <Box gridArea="editor" height="100%">
-            <Stack vertical overflow="auto" flex="1 1 1px" alignItems="start">
-                {editors.length === 0 && <NonIdealText>No editors open</NonIdealText>}
-                <AnimatePresence>
-                    {editors.map((editor, i) => (
-                        <motion.div
-                            key={editor.id}
-                            initial={false}
-                            exit={{ opacity: 0, scale: 0 }}
-                            style={{ alignSelf: "start" }}
-                            transition={{ duration: 0.1, ease: "easeIn" }}
-                            positionTransition={{ duration: 0.1, ease: "easeIn" }}
-                        >
-                            <EditorHeader>
-                                <EditorHeading>{editor.topLevel}</EditorHeading>
-                                <IconButton onClick={() => onClose(i)}>
-                                    <AiOutlineCloseCircle />
-                                </IconButton>
-                                <IconButton
-                                    onClick={() => dbg.evalFunction(editor.topLevel)}
-                                    disabled={dbg.interpreter != null}
-                                >
-                                    <AiOutlinePlayCircle />
-                                </IconButton>
-                            </EditorHeader>
-                            <Box marginTop={10} marginBottom={20}>
-                                <InnerEditor
-                                    topLevelName={editor.topLevel}
-                                    //TODO: This seems reasonable but not sure if needed.
-                                    key={editor.topLevel}
-                                    stealFocus={i === 0}
-                                />
-                            </Box>
-                        </motion.div>
-                    ))}
-                </AnimatePresence>
-            </Stack>
+        <Box gridArea="editor" height="100%" overflow="auto">
+            {editors.length === 0 && <NonIdealText>No editors open</NonIdealText>}
+            <AnimatePresence>
+                {editors.map((editor, i) => (
+                    <motion.div
+                        key={editor.id}
+                        initial={false}
+                        exit={{ opacity: 0, scale: 0 }}
+                        transition={{ duration: 0.1, ease: "easeIn" }}
+                        positionTransition={{ duration: 0.1, ease: "easeIn" }}
+                        style={{ width: "max-content" }}
+                    >
+                        <EditorHeader>
+                            <EditorHeading>{editor.topLevel}</EditorHeading>
+                            <IconButton onClick={() => onClose(i)}>
+                                <AiOutlineCloseCircle />
+                            </IconButton>
+                            <IconButton
+                                onClick={() => dbg.evalFunction(editor.topLevel)}
+                                disabled={dbg.interpreter != null}
+                            >
+                                <AiOutlinePlayCircle />
+                            </IconButton>
+                        </EditorHeader>
+                        <Box marginTop={10} marginBottom={20}>
+                            <InnerEditor
+                                topLevelName={editor.topLevel}
+                                //TODO: This seems reasonable but not sure if needed.
+                                key={editor.topLevel}
+                                stealFocus={i === 0}
+                            />
+                        </Box>
+                    </motion.div>
+                ))}
+            </AnimatePresence>
         </Box>
     );
 }
