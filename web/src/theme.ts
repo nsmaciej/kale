@@ -24,7 +24,7 @@ export function fillStroke(
 
 export const DefaultTheme = {
     // Text.
-    fontSizePx: 13,
+    fontSizePx: 12,
     fontFamily: "iA Writer Quattro",
     mainTextColour: "#404040",
     subtleTextColour: "#7b7b7b",
@@ -49,7 +49,7 @@ export const DefaultTheme = {
     variableColour: "#248af0",
     literalColour: "#ef6c00",
     blanks: {
-        padding: new Offset(10, 1),
+        padding: new Offset(10, 0),
         highlight: fillStroke("#f7f7f7", "#dcdcdc"),
         hover: fillStroke("#efefef", "#dcdcdc"),
         textColour: "#909090",
@@ -72,7 +72,7 @@ export const DefaultTheme = {
     // Layout.
     lineBreakPointPx: 300,
     underlineSpacingPx: 3,
-    lineSpacingPx: 8, //TODO: This should be based on the current text size.
+    lineSpacingPx: 6, // Should be bigger than the selection padding.
 
     // Settings.
     showingShortcuts: true,
@@ -82,6 +82,8 @@ export const DefaultTheme = {
 // The main padding needs to be greather than the selection padding.
 assert(DefaultTheme.exprViewPaddingPx >= DefaultTheme.selection.paddingPx.x);
 assert(DefaultTheme.exprViewPaddingPx >= DefaultTheme.selection.paddingPx.y);
+// Selection padding needs to fit in the line-height.
+assert(DefaultTheme.selection.paddingPx.y < DefaultTheme.lineSpacingPx);
 
 export type KaleTheme = typeof DefaultTheme;
 
