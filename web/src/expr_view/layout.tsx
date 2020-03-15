@@ -17,7 +17,6 @@ import { UnderlineLine, SvgLine, HitBox, HoverHitBox } from "expr_view/component
 const Code = styled.text`
     font-size: ${p => p.theme.fontSizePx}px;
     font-family: ${p => p.theme.fontFamily};
-    /* dominant-baseline: text-before-edge; */
 `;
 
 const CommentIndicator = styled.tspan`

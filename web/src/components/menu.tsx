@@ -4,13 +4,14 @@ import styled from "styled-components";
 import { Optional } from "utils";
 
 const MenuPopover = styled.div<{ subtle: boolean }>`
-    background: #ffffff;
+    background: #ffffff30;
     border-radius: ${p => p.theme.borderRadiusPx}px;
     box-shadow: 0 0 0 1px #10161a1a, 0 2px 4px #10161a33, 0 8px 24px #10161a33;
     ${p => !p.subtle && "padding: 6px 0"};
     z-index: 1000;
     position: absolute;
     overflow: auto;
+    backdrop-filter: brightness(150%) blur(20px);
 `;
 
 const MenuItemContainer = styled.div<{ selected: boolean }>`
