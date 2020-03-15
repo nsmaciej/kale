@@ -1,5 +1,8 @@
 const path = require("path");
 
+const createStyledComponentsTransformer = require("typescript-plugin-styled-components").default;
+const styledComponentsTransformer = createStyledComponentsTransformer({ minify: true });
+
 module.exports = {
     context: path.resolve(__dirname, "src"),
     entry: "./main.tsx",
@@ -8,7 +11,12 @@ module.exports = {
         rules: [
             {
                 test: /\.tsx?$/,
-                use: "ts-loader",
+                use: {
+                    loader: "ts-loader",
+                    options: {
+                        getCustomTransformers: () => ({ before: [styledComponentsTransformer] }),
+                    },
+                },
             },
         ],
     },
