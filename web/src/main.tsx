@@ -10,7 +10,7 @@ import { DefaultTheme } from "theme";
 import { ClipboardProvider } from "contexts/clipboard";
 import { WorkspaceProvider } from "contexts/workspace";
 import { Stack, Box } from "components";
-import EditorStack, { OpenEditor as OpenedFunction } from "components/editor_stack";
+import EditorStack, { OpenedFunction } from "components/editor_stack";
 import { removeIndex } from "utils";
 import ToyBox from "components/toy_box";
 import ClipboardList from "components/clipboard_list";
@@ -93,11 +93,11 @@ const MainHeading = styled.h1`
 let GlobalEditorId = 1;
 
 function Kale() {
-    const [editors, setEditors] = useState<OpenedFunction[]>([
-        { topLevel: "Sample-1", id: GlobalEditorId++ },
-        { topLevel: "Hello-World", id: GlobalEditorId++ },
-        { topLevel: "Sample-1", id: GlobalEditorId++ },
-        { topLevel: "Sample-2", id: GlobalEditorId++ },
+    const [functions, setFunctions] = useState<OpenedFunction[]>([
+        { name: "Sample-1", id: GlobalEditorId++ },
+        { name: "Hello-World", id: GlobalEditorId++ },
+        { name: "Sample-1", id: GlobalEditorId++ },
+        { name: "Sample-2", id: GlobalEditorId++ },
     ]);
     return (
         <Container>
@@ -111,8 +111,8 @@ function Kale() {
                 </Stack>
                 <Box gridArea="search">
                     <EditorSuggestions
-                        onCreateEditor={topLevel =>
-                            setEditors(xs => [{ topLevel, id: GlobalEditorId++ }, ...xs])
+                        onCreateEditor={name =>
+                            setFunctions(xs => [{ name, id: GlobalEditorId++ }, ...xs])
                         }
                     />
                 </Box>
@@ -123,7 +123,10 @@ function Kale() {
                 </Box>
             </HeaderGrid>
             <ToyBox />
-            <EditorStack editors={editors} onClose={i => setEditors(xs => removeIndex(xs, i))} />
+            <EditorStack
+                editors={functions}
+                onClose={i => setFunctions(xs => removeIndex(xs, i))}
+            />
             <ClipboardList />
         </Container>
     );

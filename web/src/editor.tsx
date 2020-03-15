@@ -1,4 +1,4 @@
-import React, { Component, useContext } from "react";
+import React, { Component, Ref, useContext } from "react";
 import { useTheme } from "styled-components";
 import produce from "immer";
 
@@ -7,14 +7,16 @@ import * as Select from "selection";
 import Expr, { ExprId } from "expr";
 import ExprView, { ExprAreaMap } from "expr_view";
 import { Optional, assertSome, reverseObject, assert } from "utils";
+import { KaleTheme } from "theme";
+
+import { Type, Func, assertFunc } from "vm/types";
+import { specialFunctions } from "vm/interpreter";
+
 import { Clipboard, ClipboardValue } from "contexts/clipboard";
 import { Workspace, WorkspaceValue } from "contexts/workspace";
-import { KaleTheme } from "theme";
-import { Type, Func, assertFunc } from "vm/types";
 
 import { ContextMenuItem } from "components/context_menu";
 import InlineEditor from "components/inline_editor";
-import { specialFunctions } from "vm/interpreter";
 
 interface EditorState {
     focused: boolean;
@@ -24,7 +26,6 @@ interface EditorState {
 }
 
 interface EditorWrapperProps {
-    stealFocus?: boolean;
     topLevelName: string;
 }
 
@@ -32,6 +33,7 @@ interface EditorProps extends EditorWrapperProps {
     workspace: WorkspaceValue;
     clipboard: ClipboardValue;
     theme: KaleTheme;
+    forwardedRef: Ref<HTMLDivElement>;
 }
 
 class Editor extends Component<EditorProps, EditorState> {
@@ -40,7 +42,7 @@ class Editor extends Component<EditorProps, EditorState> {
 
     state: EditorState = {
         selection: this.expr.id,
-        focused: this.props.stealFocus ?? false,
+        focused: false,
         foldingComments: false,
         editing: null,
     };
@@ -372,10 +374,6 @@ class Editor extends Component<EditorProps, EditorState> {
         this.containerRef.current?.focus();
     };
 
-    componentDidMount() {
-        if (this.props.stealFocus) this.focus();
-    }
-
     componentDidUpdate(prevProps: EditorProps, prevState: EditorState) {
         assert(
             prevProps.topLevelName === this.props.topLevelName,
@@ -440,7 +438,7 @@ class Editor extends Component<EditorProps, EditorState> {
             <div
                 onKeyDown={this.keyDown}
                 tabIndex={0}
-                ref={this.containerRef}
+                ref={this.props.forwardedRef}
                 onBlur={this.focusChanged}
                 onFocus={this.focusChanged}
                 id="editor"
@@ -468,13 +466,17 @@ class Editor extends Component<EditorProps, EditorState> {
     }
 }
 
-export default function EditorWrapper(props: EditorWrapperProps) {
+export default React.forwardRef(function EditorWrapper(
+    props: EditorWrapperProps,
+    ref: Ref<HTMLDivElement>,
+) {
     return (
         <Editor
             {...props}
             workspace={assertSome(useContext(Workspace))}
             clipboard={assertSome(useContext(Clipboard))}
             theme={assertSome(useTheme())}
+            forwardedRef={ref}
         />
     );
-}
+});

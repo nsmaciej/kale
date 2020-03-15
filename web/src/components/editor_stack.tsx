@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { AiOutlineCloseCircle, AiOutlinePlayCircle } from "react-icons/ai";
 
 import { Box, Stack, NonIdealText, EditorHeadingStyle, IconButton } from "components";
-import InnerEditor from "editor";
+import EditorWrapper from "editor";
 import { Debugger } from "contexts/debugger";
 import { Workspace } from "contexts/workspace";
 import { assertSome } from "utils";
@@ -44,14 +44,14 @@ const MinimapItemStack = styled(Stack).attrs({ gap: 8, vertical: true })`
     }
 `;
 
-export interface OpenEditor {
+export interface OpenedFunction {
     id: number;
-    topLevel: string;
+    name: string;
 }
 
 interface EditorStackProps {
     onClose(editorId: number): void;
-    editors: OpenEditor[];
+    editors: OpenedFunction[];
 }
 
 function useDebounce<T>(value: T, delayMs: number) {
@@ -67,16 +67,16 @@ function useDebounce<T>(value: T, delayMs: number) {
     return debouncedValue;
 }
 
-function MinimapItem({ editor }: { editor: OpenEditor }) {
+function MinimapItem({ editor }: { editor: OpenedFunction }) {
     const theme = useTheme();
     const workspace = assertSome(useContext(Workspace));
-    const expr = useDebounce(assertFunc(workspace.get(editor.topLevel)).expr, 1000);
+    const expr = useDebounce(assertFunc(workspace.get(editor.name)).expr, 1000);
     return (
         <MinimapItemStack
             key={editor.id}
-            onClick={() => alert(`Focus on ${editor.id} (${editor.topLevel})`)}
+            onClick={() => alert(`Focus on ${editor.id} (${editor.name})`)}
         >
-            <span>{editor.topLevel}</span>
+            <span>{editor.name}</span>
             <ExprView frozen theme={theme} scale={0.2} expr={expr} />
         </MinimapItemStack>
     );
@@ -84,7 +84,8 @@ function MinimapItem({ editor }: { editor: OpenEditor }) {
 
 export default function EditorStack({ onClose, editors }: EditorStackProps) {
     const dbg = assertSome(useContext(Debugger));
-    function renderEditor(editor: OpenEditor, i: number) {
+
+    function renderEditor(editor: OpenedFunction, i: number) {
         return (
             <motion.div
                 key={editor.id}
@@ -95,23 +96,22 @@ export default function EditorStack({ onClose, editors }: EditorStackProps) {
                 style={{ width: "max-content" }}
             >
                 <EditorHeader>
-                    <EditorHeading>{editor.topLevel}</EditorHeading>
+                    <EditorHeading>{editor.name}</EditorHeading>
                     <IconButton onClick={() => onClose(i)}>
                         <AiOutlineCloseCircle />
                     </IconButton>
                     <IconButton
-                        onClick={() => dbg.evalFunction(editor.topLevel)}
+                        onClick={() => dbg.evalFunction(editor.name)}
                         disabled={dbg.interpreter != null}
                     >
                         <AiOutlinePlayCircle />
                     </IconButton>
                 </EditorHeader>
                 <Box marginTop={10} marginBottom={20}>
-                    <InnerEditor
-                        topLevelName={editor.topLevel}
+                    <EditorWrapper
+                        topLevelName={editor.name}
                         //TODO: This seems reasonable but not sure if needed.
-                        key={editor.topLevel}
-                        stealFocus={i === 0}
+                        key={editor.name}
                     />
                 </Box>
             </motion.div>
