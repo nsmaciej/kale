@@ -10,7 +10,7 @@ import { DefaultTheme } from "theme";
 import { ClipboardProvider } from "contexts/clipboard";
 import { WorkspaceProvider } from "contexts/workspace";
 import { Stack, Box } from "components";
-import EditorStack, { OpenEditor } from "components/editor_stack";
+import EditorStack, { OpenEditor as OpenedFunction } from "components/editor_stack";
 import { removeIndex } from "utils";
 import ToyBox from "components/toy_box";
 import ClipboardList from "components/clipboard_list";
@@ -90,33 +90,11 @@ const MainHeading = styled.h1`
     letter-spacing: 2px;
 `;
 
-// function Help() {
-//     const S = Shortcut;
-//     const Sg = ShortcutGroup;
-//     return (
-//         <p style={{ maxWidth: "700px" }}>
-//             Use{" "}
-//             <Sg>
-//                 <S>→</S> <S>↓</S> <S>←</S> <S>↑</S>
-//             </Sg>{" "}
-//             (or{" "}
-//             <Sg>
-//                 <S>H</S> <S>J</S> <S>K</S> <S>L</S>
-//             </Sg>
-//             ) to move around. Jump to the next blank with <S>Tab</S> and paste snippets from History
-//             using{" "}
-//             <Sg>
-//                 <S>0</S>-<S>9</S>
-//             </Sg>
-//             . Right-click code for more options and shortcuts. <b>More help is on the way!</b>
-//         </p>
-//     );
-// }
-
 let GlobalEditorId = 1;
 
 function Kale() {
-    const [editors, setEditors] = useState<OpenEditor[]>([
+    const [editors, setEditors] = useState<OpenedFunction[]>([
+        { topLevel: "Sample-1", id: GlobalEditorId++ },
         { topLevel: "Hello-World", id: GlobalEditorId++ },
         { topLevel: "Sample-1", id: GlobalEditorId++ },
         { topLevel: "Sample-2", id: GlobalEditorId++ },

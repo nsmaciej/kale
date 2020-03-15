@@ -22,7 +22,7 @@ const Code = styled.text`
 const CommentIndicator = styled.tspan`
     baseline-shift: super;
     fill: ${p => p.theme.commentColour};
-    font-size: ${p => p.theme.fontSizePx * 0.6}px;
+    font-size: ${p => Math.round(p.theme.fontSizePx * 0.6)}px;
     font-weight: normal;
 `;
 

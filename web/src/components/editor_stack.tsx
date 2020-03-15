@@ -1,12 +1,15 @@
-import React, { useContext } from "react";
-import styled from "styled-components";
+import React, { useContext, useState, useEffect } from "react";
+import styled, { useTheme } from "styled-components";
 import { motion, AnimatePresence } from "framer-motion";
 import { AiOutlineCloseCircle, AiOutlinePlayCircle } from "react-icons/ai";
 
 import { Box, Stack, NonIdealText, EditorHeadingStyle, IconButton } from "components";
 import InnerEditor from "editor";
 import { Debugger } from "contexts/debugger";
+import { Workspace } from "contexts/workspace";
 import { assertSome } from "utils";
+import ExprView from "expr_view";
+import { assertFunc } from "vm/types";
 
 const EditorHeading = styled.h2`
     ${EditorHeadingStyle}
@@ -26,6 +29,21 @@ const EditorHeader = styled(Stack).attrs({ gap: 5 })`
     }
 `;
 
+const MinimapStack = styled(Stack).attrs({ gap: 15, vertical: true })`
+    top: 0;
+    position: sticky;
+    user-select: none;
+`;
+
+const MinimapItemStack = styled(Stack).attrs({ gap: 8, vertical: true })`
+    border-radius: ${p => p.theme.borderRadiusPx}px;
+    padding: 5px;
+    color: ${p => p.theme.clickableColour};
+    &:hover {
+        background: #eee;
+    }
+`;
+
 export interface OpenEditor {
     id: number;
     topLevel: string;
@@ -36,44 +54,81 @@ interface EditorStackProps {
     editors: OpenEditor[];
 }
 
+function useDebounce<T>(value: T, delayMs: number) {
+    const [debouncedValue, setDebouncedValue] = useState(value);
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedValue(value);
+        }, delayMs);
+        return () => {
+            clearTimeout(handler);
+        };
+    }, [value, delayMs]);
+    return debouncedValue;
+}
+
+function MinimapItem({ editor }: { editor: OpenEditor }) {
+    const theme = useTheme();
+    const workspace = assertSome(useContext(Workspace));
+    const expr = useDebounce(assertFunc(workspace.get(editor.topLevel)).expr, 1000);
+    return (
+        <MinimapItemStack
+            key={editor.id}
+            onClick={() => alert(`Focus on ${editor.id} (${editor.topLevel})`)}
+        >
+            <span>{editor.topLevel}</span>
+            <ExprView frozen theme={theme} scale={0.2} expr={expr} />
+        </MinimapItemStack>
+    );
+}
+
 export default function EditorStack({ onClose, editors }: EditorStackProps) {
     const dbg = assertSome(useContext(Debugger));
-    return (
-        <Box gridArea="editor" height="100%" overflow="auto">
-            {editors.length === 0 && <NonIdealText>No editors open</NonIdealText>}
-            <AnimatePresence>
-                {editors.map((editor, i) => (
-                    <motion.div
-                        key={editor.id}
-                        initial={false}
-                        exit={{ opacity: 0, scale: 0 }}
-                        transition={{ duration: 0.1, ease: "easeIn" }}
-                        positionTransition={{ duration: 0.1, ease: "easeIn" }}
-                        style={{ width: "max-content" }}
+    function renderEditor(editor: OpenEditor, i: number) {
+        return (
+            <motion.div
+                key={editor.id}
+                initial={false}
+                exit={{ opacity: 0, scale: 0 }}
+                transition={{ duration: 0.1, ease: "easeIn" }}
+                positionTransition={{ duration: 0.1, ease: "easeIn" }}
+                style={{ width: "max-content" }}
+            >
+                <EditorHeader>
+                    <EditorHeading>{editor.topLevel}</EditorHeading>
+                    <IconButton onClick={() => onClose(i)}>
+                        <AiOutlineCloseCircle />
+                    </IconButton>
+                    <IconButton
+                        onClick={() => dbg.evalFunction(editor.topLevel)}
+                        disabled={dbg.interpreter != null}
                     >
-                        <EditorHeader>
-                            <EditorHeading>{editor.topLevel}</EditorHeading>
-                            <IconButton onClick={() => onClose(i)}>
-                                <AiOutlineCloseCircle />
-                            </IconButton>
-                            <IconButton
-                                onClick={() => dbg.evalFunction(editor.topLevel)}
-                                disabled={dbg.interpreter != null}
-                            >
-                                <AiOutlinePlayCircle />
-                            </IconButton>
-                        </EditorHeader>
-                        <Box marginTop={10} marginBottom={20}>
-                            <InnerEditor
-                                topLevelName={editor.topLevel}
-                                //TODO: This seems reasonable but not sure if needed.
-                                key={editor.topLevel}
-                                stealFocus={i === 0}
-                            />
-                        </Box>
-                    </motion.div>
+                        <AiOutlinePlayCircle />
+                    </IconButton>
+                </EditorHeader>
+                <Box marginTop={10} marginBottom={20}>
+                    <InnerEditor
+                        topLevelName={editor.topLevel}
+                        //TODO: This seems reasonable but not sure if needed.
+                        key={editor.topLevel}
+                        stealFocus={i === 0}
+                    />
+                </Box>
+            </motion.div>
+        );
+    }
+
+    return (
+        <Stack gap={20} height="100%" justifyContent="space-between" overflow="auto">
+            <Box gridArea="editor" height="100%">
+                {editors.length === 0 && <NonIdealText>No editors open</NonIdealText>}
+                <AnimatePresence>{editors.map(renderEditor)}</AnimatePresence>
+            </Box>
+            <MinimapStack>
+                {editors.map(editor => (
+                    <MinimapItem key={editor.id} editor={editor} />
                 ))}
-            </AnimatePresence>
-        </Box>
+            </MinimapStack>
+        </Stack>
     );
 }

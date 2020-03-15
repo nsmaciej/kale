@@ -17,7 +17,7 @@ const InlineEditorInput = styled.input`
     line-height: 1;
     outline: 0;
     border: 0;
-    background: ${p => p.theme.selection.highlight.fill(true)};
+    background: ${p => p.theme.selection.highlight.fill(false)};
 `;
 
 interface InlineEditorProps {

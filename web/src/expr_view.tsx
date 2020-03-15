@@ -53,6 +53,7 @@ interface ExprViewProps {
 
     // Looks.
     maxWidth?: number;
+    scale?: number;
     frozen?: boolean;
     foldComments?: boolean;
 
@@ -82,6 +83,7 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
         // This is blindly called each render, so we mightn't have areas.
         if (expr == null || areas[expr] == null) return;
         if (!isSelection && !this.props.focused) return;
+        //TODO: Make this dynamic, we need less padding if there are no underlines.
         const rect = assertSome(areas[expr].rect).pad(this.theme.selection.paddingPx);
 
         const isHole = this.props.expr.withId(expr) instanceof E.Blank;
@@ -219,7 +221,9 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
             : [selectionRect, highlightRect];
 
         const { width, height } = size.pad(padding.scale(2));
-        const scale = Math.min(this.props.maxWidth ?? width, width) / width;
+        const scale = this.props.maxWidth
+            ? Math.min(this.props.maxWidth ?? width, width) / width
+            : this.props.scale ?? 1;
         return (
             <>
                 <svg
