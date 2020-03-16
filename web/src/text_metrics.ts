@@ -1,8 +1,8 @@
 import { Size } from "geometry";
 import { KaleTheme } from "theme";
 
-interface TextStyle {
-    bold?: boolean;
+export interface TextStyle {
+    weight?: number;
     italic?: boolean;
 }
 
@@ -13,11 +13,12 @@ export default class TextMetrics {
     private readonly _textElement: SVGTextElement;
 
     static async loadGlobal(theme: KaleTheme): Promise<void> {
+        const font = `${theme.fontSizePx}px ${theme.fontFamily}`;
         // Types provided by types/font_loading.d.ts
-        await document.fonts.load(`${theme.fontSizePx}px ${theme.fontFamily}`);
-        await document.fonts.load(`italic ${theme.fontSizePx}px ${theme.fontFamily}`);
-        await document.fonts.load(`bold ${theme.fontSizePx}px ${theme.fontFamily}`);
-        await document.fonts.load(`bold italic ${theme.fontSizePx}px ${theme.fontFamily}`);
+        await document.fonts.load(font);
+        await document.fonts.load(`italic ${font}`);
+        await document.fonts.load(`bold ${font}`);
+        await document.fonts.load(`bold italic ${font}`);
         TextMetrics.global = new TextMetrics(theme);
     }
 
@@ -40,8 +41,9 @@ export default class TextMetrics {
         return this.measure("\xa0");
     }
 
-    measure(text: string, { bold = false, italic = false }: TextStyle = {}): Size {
-        const key = [+bold, +italic, text].join("");
+    measure(text: string, { weight = 400, italic = false }: TextStyle = {}): Size {
+        // Font-weight of 400 is the same as normal.
+        const key = [weight, +italic, text].join("");
         const HEIGHT_FUDGE_FACTOR = 1.3;
         // I don't why, but this is important to the text lining up with inline editors.
         const height = Math.round(this.theme.fontSizePx * HEIGHT_FUDGE_FACTOR);
@@ -50,7 +52,7 @@ export default class TextMetrics {
         }
         const nbsp = "\xa0"; // Without this we can't measure trailing spaces.
         this._textElement.textContent = text.replace(/ /g, nbsp);
-        this._textElement.style.fontWeight = bold ? "bold" : "normal";
+        this._textElement.style.fontWeight = weight.toString();
         this._textElement.style.fontStyle = italic ? "italic" : "normal";
         const width = Math.round(this._textElement.getComputedTextLength());
         this._metricsCache[key] = width;

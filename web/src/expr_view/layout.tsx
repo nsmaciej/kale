@@ -128,7 +128,7 @@ class ExprLayout implements ExprVisitor<Layout> {
         text: string,
         props: TextProperties & { mainText?: boolean } = {},
     ) {
-        const { italic, colour, title, bold, offset, commentIndicator, mainText } = props;
+        const { italic, colour, title, weight, offset, commentIndicator, mainText } = props;
         const disabled = expr.data.disabled || this.state.hasDisabledParent;
         const layout = new Layout(
             (
@@ -136,7 +136,7 @@ class ExprLayout implements ExprVisitor<Layout> {
                     // Note: if changing this, also update the propagated text props below.
                     fill={disabled ? this.t.disabledExprColour : colour}
                     fontStyle={italic ? "italic" : undefined}
-                    fontWeight={bold ? "bold" : undefined}
+                    fontWeight={weight}
                     x={offset?.x}
                     y={(offset?.y ?? 0) + this.t.fontSizePx}
                     {...this.exprProps(expr)}
@@ -147,7 +147,7 @@ class ExprLayout implements ExprVisitor<Layout> {
                     {commentIndicator && <CommentIndicator>?</CommentIndicator>}
                 </Code>
             ),
-            TextMetrics.global.measure(text, { italic, bold }),
+            TextMetrics.global.measure(text, props),
         );
         layout.inline = true;
         if (mainText) {
@@ -286,7 +286,7 @@ class ExprLayout implements ExprVisitor<Layout> {
         const fnName = hstack(
             this.t.createCircle.maxRadius,
             this.layoutText(expr, expr.fn, {
-                bold: !inline,
+                weight: inline ? 700 : 400,
                 commentIndicator: expr.data.comment != null && this.props.foldComments,
                 colour: this.t.callColour,
                 mainText: true,

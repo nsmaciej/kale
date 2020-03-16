@@ -67,11 +67,12 @@ export default function InlineEditor({
         onChange(e.target.value);
     }
 
-    const { offset, colour, italic, bold } = exprArea.textProps ?? {};
+    const textProps = exprArea.textProps ?? {};
+    const { offset, colour, italic, weight } = textProps;
     const origin = exprArea.rect.origin;
     // Make sure the input is always at least wide enough to show the cursor.
     const widthFudge = 2;
-    const width = TextMetrics.global.measure(value, { bold, italic }).width + widthFudge;
+    const width = TextMetrics.global.measure(value, textProps).width + widthFudge;
     return (
         <Container
             style={{
@@ -86,7 +87,7 @@ export default function InlineEditor({
                     width,
                     color: colour,
                     fontStyle: italic ? "italic" : undefined,
-                    fontWeight: bold ? "bold" : undefined,
+                    fontWeight: weight,
                 }}
                 ref={r => r?.focus()}
                 //TODO: Stop the editor from doing stuff, should check for focus instead.

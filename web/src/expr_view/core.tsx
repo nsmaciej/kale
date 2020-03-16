@@ -4,10 +4,9 @@ import { Size, Offset, Rect } from "geometry";
 import { Optional, max, assert } from "utils";
 import { SvgGroup } from "expr_view/components";
 import Expr from "expr";
+import { TextStyle } from "text_metrics";
 
-export interface TextProperties {
-    italic?: boolean;
-    bold?: boolean;
+export interface TextProperties extends TextStyle {
     colour?: string;
     title?: Optional<string>;
     offset?: Offset;
