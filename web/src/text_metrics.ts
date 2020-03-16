@@ -31,6 +31,10 @@ export default class TextMetrics {
         const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
         text.style.fontFamily = this.theme.fontFamily;
         text.style.fontSize = `${this.theme.fontSizePx}px`;
+        // This is very important, otherwise inline editing breaks on trailing spaces. Before this
+        // my approach was replacing every space with NBSP, but the kerning would often work out
+        // differently.
+        text.style.whiteSpace = "pre";
         svg.appendChild(text);
         this._textElement = text;
         document.body.appendChild(svg);
@@ -50,8 +54,7 @@ export default class TextMetrics {
         if (key in this._metricsCache) {
             return new Size(this._metricsCache[key], height);
         }
-        const nbsp = "\xa0"; // Without this we can't measure trailing spaces.
-        this._textElement.textContent = text.replace(/ /g, nbsp);
+        this._textElement.textContent = text;
         this._textElement.style.fontWeight = weight.toString();
         this._textElement.style.fontStyle = italic ? "italic" : "normal";
         const width = Math.round(this._textElement.getComputedTextLength());
