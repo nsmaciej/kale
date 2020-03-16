@@ -362,10 +362,6 @@ class Editor extends Component<EditorProps, EditorState> {
         this.setState({ selection });
     };
 
-    private readonly focusChanged = () => {
-        this.setState({ focused: document.activeElement === this.containerRef.current });
-    };
-
     private readonly startEditing = (expr: ExprId) => {
         this.createInlineEditor(expr, false);
     };
@@ -382,6 +378,12 @@ class Editor extends Component<EditorProps, EditorState> {
             forwardedRef(element);
         } else if (forwardedRef != null) {
             (forwardedRef as React.MutableRefObject<HTMLDivElement>).current = element;
+        }
+    };
+
+    private readonly onFocusEvent = (event: React.FocusEvent) => {
+        if (event.target === this.containerRef.current) {
+            this.setState({ focused: event.type === "focus" });
         }
     };
 
@@ -450,8 +452,8 @@ class Editor extends Component<EditorProps, EditorState> {
                 onKeyDown={this.keyDown}
                 tabIndex={0}
                 ref={this.attachRef}
-                onBlur={this.focusChanged}
-                onFocus={this.focusChanged}
+                onFocus={this.onFocusEvent}
+                onBlur={this.onFocusEvent}
                 // Needed for positioning the inline editor.
                 style={{ position: "relative" }}
             >

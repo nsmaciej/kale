@@ -81,7 +81,7 @@ export default function InlineEditor({
         >
             <InlineEditorInput
                 value={value}
-                onBlur={() => onDismiss()}
+                onBlur={onDismiss}
                 style={{
                     width,
                     color: colour,
