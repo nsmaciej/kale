@@ -250,6 +250,10 @@ class Editor extends Component<EditorProps, EditorState> {
             });
         },
         edit: (e: ExprId) => this.startEditing(e),
+        openEditor: (e: ExprId) => {
+            const selected = this.expr.withId(e);
+            if (selected instanceof E.Call) this.props.openEditor(selected.fn);
+        },
         // Demo things that should be moved to the toy-box.
         demoAddCall: (e: ExprId) => this.replaceAndEdit(e, new E.Call("")),
         demoAddVariable: (e: ExprId) => this.replaceAndEdit(e, new E.Variable("")),
@@ -270,6 +274,7 @@ class Editor extends Component<EditorProps, EditorState> {
         i: "insert",
         I: "insertBefore",
         m: "move",
+        o: "openEditor",
         q: "comment",
         r: "replace",
         s: "shuffle",
@@ -305,9 +310,11 @@ class Editor extends Component<EditorProps, EditorState> {
     };
 
     //TODO: Ideally the names would also be dynamic.
-    private readonly enableForCallAndList = (expr: Expr) =>
+    private readonly enableForCalls = (expr: Expr) => expr instanceof E.Call;
+    private readonly enableForCallsAndLists = (expr: Expr) =>
         expr instanceof E.Call || expr instanceof E.List;
     private readonly disableForBlanks = (expr: Expr) => !(expr instanceof E.Blank);
+
     private readonly exprMenu: Optional<{
         label: string;
         action: keyof Editor["actions"];
@@ -315,18 +322,20 @@ class Editor extends Component<EditorProps, EditorState> {
     }>[] = [
         { action: "edit", label: "Edit..." },
         { action: "copy", label: "Copy" },
+        { action: "openEditor", label: "Open definition...", enabled: this.enableForCalls },
         null,
         { action: "delete", label: "Delete" },
         { action: "move", label: "Delete and Copy" },
         { action: "replace", label: "Replace" },
         { action: "shuffle", label: "Replace and Copy" },
         null,
-        { action: "append", label: "Add Argument", enabled: this.enableForCallAndList },
+        { action: "append", label: "Add Argument", enabled: this.enableForCallsAndLists },
         { action: "insert", label: "New Line" },
         { action: "insertBefore", label: "New Line Before" },
         null,
         { action: "comment", label: "Comment..." },
         { action: "disable", label: "Disable", enabled: this.disableForBlanks },
+        // Move this into some sort of editor-wide menu.
         { action: "foldComments", label: "Fold Comments" },
         null,
         { action: "demoAddCall", label: "Make a Call" },
