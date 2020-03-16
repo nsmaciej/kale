@@ -25,7 +25,7 @@ export interface Func {
 export interface Builtin {
     help?: string;
     args: (string | null)[];
-    builtin: (...args: Value[]) => Value;
+    builtin: (args: Value[]) => Value;
 }
 
 export type Workspace = ReadonlyMap<string, Value<Builtin | Func>>;

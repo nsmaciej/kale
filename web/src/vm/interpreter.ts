@@ -2,6 +2,7 @@ import * as E from "expr";
 import Expr, { ExprId, UnvisitableExpr } from "expr";
 import { asyncForEach } from "utils";
 import {
+    VmError,
     Value,
     Workspace,
     WorkspaceRef,
@@ -92,13 +93,14 @@ export default class Interpreter {
     private async evalBuiltin(expr: E.Call, scope: Scope): Promise<Value> {
         const builtin = assertBuiltin(scope.get(expr.fn));
         const args = await Promise.all(expr.args.map(x => this.eval(x, scope)));
+        vmAssert(builtin.args.length === args.length, `Wrong number of arguments for ${expr.fn}`);
         builtin.args.forEach((type, i) =>
             vmAssert(
                 type === null || type === args[i].type,
                 `Expected type ${args[i].type}, found ${type}`,
             ),
         );
-        return builtin.builtin(...args);
+        return builtin.builtin(args);
     }
 
     private async evalRawCall(expr: E.Call, scope: Scope): Promise<Value> {
@@ -109,7 +111,10 @@ export default class Interpreter {
             return specials[fn](this.eval.bind(this), args, scope);
         }
 
-        const value = scope.get(fn);
+        //TODO: In the future maybe allow nested named function.
+        const value = this.workspaceRef.current.get(fn);
+        if (value == null) throw new VmError("Unrecognised function");
+
         // Handle builtins.
         if (value.type === Type.Builtin) {
             return this.evalBuiltin(expr, scope);
