@@ -14,15 +14,16 @@ const MenuPopover = styled.div<{ subtle: boolean }>`
     backdrop-filter: brightness(150%) blur(20px);
 `;
 
-const MenuItemContainer = styled.div<{ selected: boolean }>`
+const MenuItemContainer = styled.div<{ selected: boolean; enabled: boolean }>`
     user-select: none;
-    background: ${p => (p.selected ? p.theme.clickableColour : "transparent")};
+    background: ${p => (p.enabled && p.selected ? p.theme.clickableColour : "transparent")};
     display: flex;
     align-items: center;
     & > svg {
         margin-right: 5px;
     }
-    color: ${p => (p.selected ? "white" : p.theme.mainTextColour)};
+    color: ${p =>
+        p.enabled ? (p.selected ? "white" : p.theme.mainTextColour) : p.theme.disabledColour};
     overflow: hidden;
 `;
 
@@ -35,6 +36,7 @@ export const MenuTextWrapper = styled.div`
 
 export interface MenuItem {
     id: string;
+    enabled: boolean;
 }
 
 interface MenuProps<I> {
@@ -58,16 +60,18 @@ export default function Menu<I extends MenuItem>(props: MenuProps<I>) {
                 minWidth: props.width ?? "max-content",
             }}
         >
-            {props.items.map((x, i) => {
+            {props.items.map((item, i) => {
                 const minimalPadding = props.minimalPadding?.(i) ?? false;
                 return (
                     <MenuItemContainer
-                        key={x.id}
+                        key={item.id}
                         onMouseDown={e => e.preventDefault()} // Don't blur.
-                        onClick={() => props.onClick(x, i)}
+                        onClick={() => props.onClick(item, i)}
                         onContextMenu={e => e.preventDefault()} // Can't right click.
                         onMouseMove={() => props.setSelected(i)}
                         onMouseLeave={() => props.setSelected(null)}
+                        // Styling.
+                        enabled={item.enabled}
                         selected={i === props.selected}
                         style={{
                             paddingTop: minimalPadding ? 1 : 6,
@@ -76,7 +80,7 @@ export default function Menu<I extends MenuItem>(props: MenuProps<I>) {
                             paddingRight: minimalPadding ? 0 : 10,
                         }}
                     >
-                        {props.children(x)}
+                        {props.children(item)}
                     </MenuItemContainer>
                 );
             })}

@@ -36,12 +36,14 @@ export default function useSuggestions(
             id: name,
             original: false,
             special: false,
+            enabled: true,
         }));
         const special = Array.from(showSpecials ? specialFunctions.values() : [], name => ({
             name,
             id: name,
             original: false,
             special: true,
+            enabled: true,
         }));
         return new Fuse([...functions, ...special], { keys: ["name"], findAllMatches: true });
     }, [disable, workspace.functions, showSpecials]);
@@ -60,6 +62,7 @@ export default function useSuggestions(
                 id: value,
                 original: true,
                 special: false,
+                enabled: true,
             });
         }
         if (!results?.length) {

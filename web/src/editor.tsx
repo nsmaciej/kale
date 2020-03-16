@@ -304,7 +304,15 @@ class Editor extends Component<EditorProps, EditorState> {
         Tab: this.selectionAction(Select.nextBlank),
     };
 
-    private readonly exprMenu: Optional<{ label: string; action: keyof Editor["actions"] }>[] = [
+    //TODO: Ideally the names would also be dynamic.
+    private readonly enableForCallAndList = (expr: Expr) =>
+        expr instanceof E.Call || expr instanceof E.List;
+    private readonly disableForBlanks = (expr: Expr) => !(expr instanceof E.Blank);
+    private readonly exprMenu: Optional<{
+        label: string;
+        action: keyof Editor["actions"];
+        enabled?(expr: Expr): boolean;
+    }>[] = [
         { action: "edit", label: "Edit..." },
         { action: "copy", label: "Copy" },
         null,
@@ -313,27 +321,29 @@ class Editor extends Component<EditorProps, EditorState> {
         { action: "replace", label: "Replace" },
         { action: "shuffle", label: "Replace and Copy" },
         null,
-        { action: "append", label: "Add Argument" },
+        { action: "append", label: "Add Argument", enabled: this.enableForCallAndList },
         { action: "insert", label: "New Line" },
         { action: "insertBefore", label: "New Line Before" },
         null,
         { action: "comment", label: "Comment..." },
-        { action: "disable", label: "Disable" },
+        { action: "disable", label: "Disable", enabled: this.disableForBlanks },
         { action: "foldComments", label: "Fold Comments" },
         null,
-        { action: "demoAddCall", label: "Add a Call" },
-        { action: "demoAddVariable", label: "Add a Variable" },
-        { action: "demoAddString", label: "Add a String" },
+        { action: "demoAddCall", label: "Make a Call" },
+        { action: "demoAddVariable", label: "Make a Variable" },
+        { action: "demoAddString", label: "Make a String" },
     ];
 
     // Bound methods.
     private readonly menuKeyEquivalentForAction = reverseObject(this.menuKeyEquivalents);
-    contextMenuFor = (expr: ExprId): ContextMenuItem[] => {
+    contextMenuFor = (exprId: ExprId): ContextMenuItem[] => {
+        const expr = assertSome(this.expr.withId(exprId));
         return this.exprMenu.map((item, i) => ({
             id: item?.action ?? i.toString(),
             label: item?.label,
-            action: item?.action && (() => this.actions[item.action](expr)),
+            action: item?.action && (() => this.actions[item.action](exprId)),
             keyEquivalent: item?.action && this.menuKeyEquivalentForAction[item.action],
+            enabled: item?.enabled?.(expr) ?? true,
         }));
     };
 
