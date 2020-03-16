@@ -76,7 +76,7 @@ export default function EditorStack({
                         functionName={editor.name}
                         openEditor={openEditor}
                         ref={editor.ref}
-                        //TODO: This seems reasonable but not sure if needed.
+                        // It's proably easiest to just create a new editor for each function.
                         key={editor.name}
                     />
                 </Box>

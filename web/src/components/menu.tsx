@@ -44,12 +44,12 @@ interface MenuProps<I> {
     width?: number;
     subtle?: boolean;
     selected: Optional<number>;
-    setSelected: (index: number | null) => void;
-    onClick: (item: I, index: number) => void;
+    setSelected(index: number | null): void;
+    onClick(item: I, index: number): void;
     // Function-children to render a menu item in a flexbox context.
-    children: (item: I) => ReactNode;
+    children(item: I): ReactNode;
     // Special function for the context menu.
-    minimalPadding?: (index: number) => boolean;
+    minimalPadding?(index: number): boolean;
 }
 
 export default function Menu<I extends MenuItem>(props: MenuProps<I>) {

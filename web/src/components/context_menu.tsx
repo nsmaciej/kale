@@ -29,7 +29,7 @@ export interface ContextMenuItem extends MenuItem {
 }
 
 interface ContextMenuProps {
-    dismissMenu: () => void;
+    dismissMenu(): void;
     items: ContextMenuItem[];
     origin: Offset;
 }

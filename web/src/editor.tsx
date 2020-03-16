@@ -274,6 +274,7 @@ class Editor extends Component<EditorProps, EditorState> {
         i: "insert",
         I: "insertBefore",
         m: "move",
+        //TODO: Add openEditorInPlaceOfThisOne.
         o: "openEditor",
         q: "comment",
         r: "replace",

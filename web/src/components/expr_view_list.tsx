@@ -46,7 +46,7 @@ interface ExprViewListProps<E> {
     items: E[];
     frozen?: boolean;
     fallback?: ReactNode;
-    extras?: (item: E) => ReactNode;
+    extras?(item: E): ReactNode;
 }
 
 export default function ExprViewList<E extends ShortcutExpr>({

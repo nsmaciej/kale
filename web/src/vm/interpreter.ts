@@ -136,7 +136,7 @@ export default class Interpreter {
     }
 
     private async evalRaw(expr: Expr, scope: Scope): Promise<Value> {
-        //TODO: In the future allow users to fill in blanks.
+        //TODO: Break and allow users to fill in the blanks.
         vmAssert(!(expr instanceof E.Blank), "Cannot execute functions with blanks");
 
         if (expr instanceof E.Literal) {

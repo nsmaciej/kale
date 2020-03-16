@@ -10,8 +10,8 @@ import { layoutExpr } from "expr_view/layout";
 import { SvgGroup } from "expr_view/components";
 
 interface DragAndDropSurfaceContext {
-    maybeStartDrag: (start: Offset, exprStart: Offset, expr: Expr) => void;
-    dismissDrag: () => void;
+    maybeStartDrag(start: Offset, exprStart: Offset, expr: Expr): void;
+    dismissDrag(): void;
 }
 
 interface DragAndDropSurfaceState {
