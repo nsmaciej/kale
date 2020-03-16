@@ -34,14 +34,14 @@
 
     "rules": {
         "react-hooks/rules-of-hooks": "error",
-        "react-hooks/exhaustive-deps": "warn",
+        "react-hooks/exhaustive-deps": "error",
 
-        "capitalized-comments": ["warn", "always", { "ignoreConsecutiveComments": true }],
         "curly": ["error", "multi-line", "consistent"],
         "eqeqeq": ["error", "always", { "null": "ignore" }],
         "spaced-comment": ["error", "always", { "markers": ["TODO:"] }],
         "no-shadow": "error",
         "prefer-const": "error",
+        "no-console": ["warn", { "allow": ["info"] }],
 
         // This is just a pain to have on.
         "@typescript-eslint/explicit-function-return-type": "off",
