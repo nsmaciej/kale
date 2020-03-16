@@ -363,7 +363,7 @@ class Editor extends Component<EditorProps, EditorState> {
     };
 
     private readonly focusChanged = () => {
-        this.setState({ focused: document.activeElement?.id === "editor" });
+        this.setState({ focused: document.activeElement === this.containerRef.current });
     };
 
     private readonly startEditing = (expr: ExprId) => {
@@ -372,6 +372,17 @@ class Editor extends Component<EditorProps, EditorState> {
 
     private readonly focus = () => {
         this.containerRef.current?.focus();
+    };
+
+    // This seems messy but it's the only way https://github.com/facebook/react/issues/13029
+    private readonly attachRef = (element: HTMLDivElement) => {
+        (this.containerRef as React.MutableRefObject<HTMLDivElement>).current = element;
+        const { forwardedRef } = this.props;
+        if (typeof forwardedRef === "function") {
+            forwardedRef(element);
+        } else if (forwardedRef != null) {
+            (forwardedRef as React.MutableRefObject<HTMLDivElement>).current = element;
+        }
     };
 
     componentDidUpdate(prevProps: EditorProps, prevState: EditorState) {
@@ -438,10 +449,9 @@ class Editor extends Component<EditorProps, EditorState> {
             <div
                 onKeyDown={this.keyDown}
                 tabIndex={0}
-                ref={this.props.forwardedRef}
+                ref={this.attachRef}
                 onBlur={this.focusChanged}
                 onFocus={this.focusChanged}
-                id="editor"
                 // Needed for positioning the inline editor.
                 style={{ position: "relative" }}
             >

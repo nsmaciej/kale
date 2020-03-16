@@ -137,13 +137,13 @@ function App() {
         <React.StrictMode>
             <StyleSheetManager disableVendorPrefixes>
                 <ThemeProvider theme={DefaultTheme}>
+                    <GlobalStyle />
                     <ToastProvider>
                         <ErrorBoundary>
                             <DragAndDropSurface>
                                 <WorkspaceProvider>
                                     <DebuggerProvider>
                                         <ClipboardProvider>
-                                            <GlobalStyle />
                                             <Kale />
                                         </ClipboardProvider>
                                     </DebuggerProvider>
