@@ -286,7 +286,7 @@ class ExprLayout implements ExprVisitor<Layout> {
         const fnName = hstack(
             this.t.createCircle.maxRadius,
             this.layoutText(expr, expr.fn, {
-                weight: inline ? 700 : 400,
+                weight: 700,
                 commentIndicator: expr.data.comment != null && this.props.foldComments,
                 colour: this.t.callColour,
                 mainText: true,
