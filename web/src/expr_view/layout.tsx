@@ -133,6 +133,7 @@ class ExprLayout implements ExprVisitor<Layout> {
         const layout = new Layout(
             (
                 <Code
+                    // Note: if changing this, also update the propagated text props below.
                     fill={disabled ? this.t.disabledExprColour : colour}
                     fontStyle={italic ? "italic" : undefined}
                     fontWeight={bold ? "bold" : undefined}
@@ -151,6 +152,9 @@ class ExprLayout implements ExprVisitor<Layout> {
         layout.inline = true;
         if (mainText) {
             layout.text = props;
+            if (disabled) {
+                layout.text.colour = this.t.disabledExprColour;
+            }
         }
         return layout;
     }
