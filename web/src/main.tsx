@@ -1,22 +1,24 @@
-import * as ReactDOM from "react-dom";
-import React, { useState } from "react";
-import { ToastProvider } from "react-toast-notifications";
 import { AiOutlineGithub } from "react-icons/ai";
+import { ToastProvider } from "react-toast-notifications";
+import * as ReactDOM from "react-dom";
+import React, { useState, useRef } from "react";
 import styled, { ThemeProvider, StyleSheetManager, createGlobalStyle } from "styled-components";
 
+import { DefaultTheme } from "theme";
+import { removeIndex } from "utils";
+import { Stack, Box } from "components";
 import DragAndDropSurface from "drag_and_drop";
 import TextMetrics from "text_metrics";
-import { DefaultTheme } from "theme";
+
 import { ClipboardProvider } from "contexts/clipboard";
 import { WorkspaceProvider } from "contexts/workspace";
-import { Stack, Box } from "components";
-import EditorStack, { OpenedFunction } from "components/editor_stack";
-import { removeIndex } from "utils";
-import ToyBox from "components/toy_box";
+
+import { DebuggerProvider } from "contexts/debugger";
 import ClipboardList from "components/clipboard_list";
+import EditorStack, { OpenedFunction } from "components/editor_stack";
 import EditorSuggestions from "components/editor_suggestions";
 import ErrorBoundary from "components/error_boundary";
-import { DebuggerProvider } from "contexts/debugger";
+import ToyBox from "components/toy_box";
 
 const GlobalStyle = createGlobalStyle`
 #main {
@@ -99,8 +101,23 @@ function Kale() {
         { name: "Sample-1", id: GlobalEditorId++ },
         { name: "Sample-2", id: GlobalEditorId++ },
     ]);
+    const functionSearchRef = useRef<HTMLInputElement>(null);
+
+    function keyDown(event: React.KeyboardEvent) {
+        if (event.key === "N") {
+            functionSearchRef.current?.focus();
+            event.preventDefault();
+            event.stopPropagation();
+        }
+    }
+
+    function createEditor(name: string) {
+        setFunctions(xs => [{ name, id: GlobalEditorId++ }, ...xs]);
+        functionSearchRef.current?.blur();
+    }
+
     return (
-        <Container>
+        <Container onKeyDown={keyDown}>
             <HeaderGrid>
                 <Stack gap={15} alignItems="center" width="300px" gridArea="branding">
                     <MainHeading>Kale</MainHeading>
@@ -110,11 +127,7 @@ function Kale() {
                     </p>
                 </Stack>
                 <Box gridArea="search">
-                    <EditorSuggestions
-                        onCreateEditor={name =>
-                            setFunctions(xs => [{ name, id: GlobalEditorId++ }, ...xs])
-                        }
-                    />
+                    <EditorSuggestions ref={functionSearchRef} onCreateEditor={createEditor} />
                 </Box>
                 <Box gridArea="menu" justifySelf="end">
                     <a href="https://github.com/mgoszcz2/kale">

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useContext } from "react";
+import React, { useState, useContext, Ref } from "react";
 import styled from "styled-components";
 import { AiOutlinePlusCircle } from "react-icons/ai";
 
@@ -28,19 +28,19 @@ interface NewEditorInputProps {
     onCreateEditor: (topLevel: string) => void;
 }
 
-export default function EditorSuggestions({ onCreateEditor }: NewEditorInputProps) {
+export default React.forwardRef(function EditorSuggestions(
+    { onCreateEditor }: NewEditorInputProps,
+    ref: Ref<HTMLInputElement>,
+) {
     const [value, setValue] = useState("");
     const [hasFocus, setHasFocus] = useState(false);
     const { ensureExists } = assertSome(useContext(Workspace));
     const { setSelection, selection, suggestions, moveSelection } = useSuggestions(value, {
         showValue: true,
     });
-    const inputRef = useRef<HTMLInputElement>(null);
-
     function selectEditor(name: string) {
         ensureExists(name);
         onCreateEditor(name);
-        inputRef.current?.blur();
         setValue("");
         setSelection(0);
     }
@@ -81,7 +81,7 @@ export default function EditorSuggestions({ onCreateEditor }: NewEditorInputProp
                         setHasFocus(true);
                     }}
                     onBlur={() => setHasFocus(false)}
-                    ref={inputRef}
+                    ref={ref}
                     value={value}
                     placeholder="Open a function&hellip;"
                     spellCheck={false}
@@ -112,4 +112,4 @@ export default function EditorSuggestions({ onCreateEditor }: NewEditorInputProp
             </SubtleButton>
         </Stack>
     );
-}
+});
