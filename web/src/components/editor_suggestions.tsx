@@ -24,12 +24,12 @@ const EditorInput = styled.input`
     padding: 8px 5px;
 `;
 
-interface NewEditorInputProps {
-    onCreateEditor: (topLevel: string) => void;
+interface EditorSuggestionsProps {
+    onOpenEditor(name: string): void;
 }
 
 export default React.forwardRef(function EditorSuggestions(
-    { onCreateEditor }: NewEditorInputProps,
+    { onOpenEditor }: EditorSuggestionsProps,
     ref: Ref<HTMLInputElement>,
 ) {
     const [value, setValue] = useState("");
@@ -38,9 +38,10 @@ export default React.forwardRef(function EditorSuggestions(
     const { setSelection, selection, suggestions, moveSelection } = useSuggestions(value, {
         showValue: true,
     });
+
     function selectEditor(name: string) {
         ensureExists(name);
-        onCreateEditor(name);
+        onOpenEditor(name);
         setValue("");
         setSelection(0);
     }

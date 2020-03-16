@@ -15,10 +15,11 @@ import { WorkspaceProvider } from "contexts/workspace";
 
 import { DebuggerProvider } from "contexts/debugger";
 import ClipboardList from "components/clipboard_list";
-import EditorStack, { OpenedFunction } from "components/editor_stack";
+import EditorStack, { OpenedEditor } from "components/editor_stack";
 import EditorSuggestions from "components/editor_suggestions";
 import ErrorBoundary from "components/error_boundary";
 import ToyBox from "components/toy_box";
+import { useIndex } from "hooks";
 
 const GlobalStyle = createGlobalStyle`
 #main {
@@ -87,7 +88,6 @@ const HeaderGrid = styled.div`
 
 const MainHeading = styled.h1`
     font-weight: 900;
-    font-size: 25px;
     color: #0ba902;
     letter-spacing: 2px;
 `;
@@ -95,25 +95,39 @@ const MainHeading = styled.h1`
 let GlobalEditorId = 1;
 
 function Kale() {
-    const [functions, setFunctions] = useState<OpenedFunction[]>([
-        { name: "Sample-1", id: GlobalEditorId++ },
-        { name: "Hello-World", id: GlobalEditorId++ },
-        { name: "Sample-1", id: GlobalEditorId++ },
-        { name: "Sample-2", id: GlobalEditorId++ },
+    const [editors, setEditors] = useState<OpenedEditor[]>(() => [
+        { name: "Hello-World", key: GlobalEditorId++, ref: React.createRef() },
+        { name: "Sample-1", key: GlobalEditorId++, ref: React.createRef() },
+        { name: "Sample-2", key: GlobalEditorId++, ref: React.createRef() },
     ]);
     const functionSearchRef = useRef<HTMLInputElement>(null);
+    const [focused, setFocused, moveFocused] = useIndex(editors.length, 0);
 
     function keyDown(event: React.KeyboardEvent) {
         if (event.key === "N") {
             functionSearchRef.current?.focus();
-            event.preventDefault();
-            event.stopPropagation();
+        } else if (event.key === "J") {
+            moveFocused(1);
+        } else if (event.key === "K") {
+            moveFocused(-1);
+        } else {
+            return;
         }
+        event.preventDefault();
+        event.stopPropagation();
     }
 
     function createEditor(name: string) {
-        setFunctions(xs => [{ name, id: GlobalEditorId++ }, ...xs]);
-        functionSearchRef.current?.blur();
+        setEditors(xs => [{ name, key: GlobalEditorId++, ref: React.createRef() }, ...xs]);
+        setFocused(0);
+    }
+
+    function closeEditor(index: number) {
+        setEditors(xs => removeIndex(xs, index));
+        // Right now every way we can close an editor already does this, but in the future it might
+        // be possible to close an editor without switching focus.
+        //TODO: Try select a sibling editor instead.
+        setFocused(null);
     }
 
     return (
@@ -127,7 +141,7 @@ function Kale() {
                     </p>
                 </Stack>
                 <Box gridArea="search">
-                    <EditorSuggestions ref={functionSearchRef} onCreateEditor={createEditor} />
+                    <EditorSuggestions ref={functionSearchRef} onOpenEditor={createEditor} />
                 </Box>
                 <Box gridArea="menu" justifySelf="end">
                     <a href="https://github.com/mgoszcz2/kale">
@@ -137,8 +151,11 @@ function Kale() {
             </HeaderGrid>
             <ToyBox />
             <EditorStack
-                editors={functions}
-                onClose={i => setFunctions(xs => removeIndex(xs, i))}
+                editors={editors}
+                focused={focused}
+                changeFocus={setFocused}
+                closeEditor={closeEditor}
+                openEditor={createEditor}
             />
             <ClipboardList />
         </Container>

@@ -151,20 +151,27 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
             e.stopPropagation();
             assertSome(this.context).dismissDrag();
         },
+        // Note we do not stopPropagation if we aren't asked to handle something.
         onDoubleClick: e => {
-            e.stopPropagation();
-            this.props.onDoubleClick?.(expr.id);
+            if (this.props.onDoubleClick != null) {
+                e.stopPropagation();
+                this.props.onDoubleClick?.(expr.id);
+            }
         },
         onClick: e => {
-            e.stopPropagation();
-            this.props.onClick?.(expr.id);
+            if (this.props.onClick != null) {
+                e.stopPropagation();
+                this.props.onClick?.(expr.id);
+            }
         },
     });
 
     private readonly onClickCreateCircle = (event: React.MouseEvent, expr: Expr) => {
-        //TODO: Might make sense to have a better delegation mechanism.
-        event.stopPropagation();
-        this.props.onClickCreateCircle?.(expr.id);
+        // Again, as above, do not stop propegation if not asked to.
+        if (this.props.onClickCreateCircle != null) {
+            event.stopPropagation();
+            this.props.onClickCreateCircle?.(expr.id);
+        }
     };
 
     private updateExprAreaMapRef() {

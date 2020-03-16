@@ -1,5 +1,5 @@
 import { mod } from "utils";
-import { Type, Value, Builtin, VmError, assertNumber, Func } from "vm/types";
+import { Type, Value, Builtin, VmError, assertNumber } from "vm/types";
 
 function rawBuiltin(
     args: (string | null)[],
@@ -99,6 +99,7 @@ export default {
     Print: builtin(
         Type.Null,
         [Type.Str],
+        // eslint-disable-next-line no-console
         show => console.log(show),
         "Prints a piece of text to the browser's console",
     ),

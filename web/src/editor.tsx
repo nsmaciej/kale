@@ -26,7 +26,8 @@ interface EditorState {
 }
 
 interface EditorWrapperProps {
-    topLevelName: string;
+    functionName: string;
+    openEditor(name: string): void;
 }
 
 interface EditorProps extends EditorWrapperProps {
@@ -48,7 +49,7 @@ class Editor extends Component<EditorProps, EditorState> {
     };
 
     private get expr(): Expr {
-        const func = this.props.workspace.get(this.props.topLevelName);
+        const func = this.props.workspace.get(this.props.functionName);
         assert(func.type === Type.Func);
         return (func.value as Func).expr;
     }
@@ -56,7 +57,7 @@ class Editor extends Component<EditorProps, EditorState> {
     // Editor internal APIs.
     private update(child: Optional<ExprId>, updater: (expr: Expr) => Optional<Expr>) {
         this.props.workspace.update(
-            this.props.topLevelName,
+            this.props.functionName,
             expr =>
                 expr.update(child ?? expr.id, updater) ??
                 new E.Blank(E.exprData("Double click me")),
@@ -109,7 +110,6 @@ class Editor extends Component<EditorProps, EditorState> {
                     x => new E.Blank(E.exprData(x)),
                 );
                 blanks.forEach(arg => this.insertAsChildOf(exprId, arg, true));
-                console.log(blanks, blanks[0]);
                 this.selectExpr(blanks[0].id);
             }
         } else if (expr != null && newValue != null) {
@@ -347,8 +347,6 @@ class Editor extends Component<EditorProps, EditorState> {
         } else if (Object.prototype.hasOwnProperty.call(this.editorShortcuts, key)) {
             this.editorShortcuts[key](this.state.selection);
             event.preventDefault();
-        } else {
-            console.log("Did not handle", event.key);
         }
     };
 
@@ -389,12 +387,12 @@ class Editor extends Component<EditorProps, EditorState> {
 
     componentDidUpdate(prevProps: EditorProps, prevState: EditorState) {
         assert(
-            prevProps.topLevelName === this.props.topLevelName,
+            prevProps.functionName === this.props.functionName,
             "Use a key to create a new Editor component instead",
         );
         if (this.expr.contains(this.state.selection)) return;
         // Ensure the selection is always valid.
-        const prevExpr = assertFunc(prevProps.workspace.get(prevProps.topLevelName)).expr;
+        const prevExpr = assertFunc(prevProps.workspace.get(prevProps.functionName)).expr;
         const candidates: Expr[][] = [];
 
         // Maybe we just tried updating the selection to something that doesn't exist. Use the
@@ -425,7 +423,7 @@ class Editor extends Component<EditorProps, EditorState> {
         for (const shortcut of Object.keys(this.menuKeyEquivalents)) {
             assert(!(shortcut in this.editorShortcuts), "Shortcut conflict");
         }
-        assert(!specialFunctions.has(props.topLevelName), "Cannot edit special functions");
+        assert(!specialFunctions.has(props.functionName), "Cannot edit special functions");
     }
 
     renderInlineEditor() {
