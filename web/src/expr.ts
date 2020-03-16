@@ -10,8 +10,8 @@ export interface ExprData {
 
 let GlobalExprId = 1;
 // Construct simple ExprData for sample Exprs. Not very exciting right now.
-export function exprData(comment?: Optional<string>): ExprData {
-    return { comment, id: GlobalExprId++, disabled: false };
+export function exprData(comment?: Optional<string>, disabled = false): ExprData {
+    return { comment, id: GlobalExprId++, disabled };
 }
 
 export interface ExprVisitor<R = void> {

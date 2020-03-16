@@ -1,23 +1,24 @@
 import { Call, List, Blank, Literal, Variable, exprData } from "expr";
+import { Type } from "vm/types";
 
 const sample1 = new Call(
     "If",
     [
-        new Call("=", [new Variable("n"), new Literal("0", "number")]),
+        new Call("=", [new Variable("n"), new Literal("0", Type.Num)]),
         new List([
             new Call(
                 "Print",
                 [
                     new Literal(
                         "This literal has a comment",
-                        "string",
+                        Type.Str,
                         exprData("A literal comment"),
                     ),
-                    new Literal("Some other long string to test line breaking", "string"),
+                    new Literal("Some other long string to test line breaking", Type.Str),
                 ],
                 exprData("This is a call comment inside a list"),
             ),
-            new Literal("1", "number"),
+            new Literal("1", Type.Num),
         ]),
         new Call("Id", [
             new List(
@@ -26,7 +27,7 @@ const sample1 = new Call(
                     new Call("*", [
                         new Variable("n"),
                         new Call("fact", [
-                            new Call("-", [new Variable("n"), new Literal("1", "number")]),
+                            new Call("-", [new Variable("n"), new Literal("1", Type.Num)]),
                         ]),
                     ]),
                 ],
@@ -39,18 +40,22 @@ const sample1 = new Call(
     exprData("Find a factorial of n. (https://example.com)"),
 );
 
+//TODO: Add a symbol type.
 const sample2 = new Call("object", [
     new Literal("name", "symbol"),
     new Variable("name"),
     new Literal("age", "symbol"),
-    new Literal("42", "number"),
+    new Literal("42", Type.Num),
     new Literal("long", "symbol"),
-    new Literal("48557177334.32", "number"),
+    new Literal("48557177334.32", Type.Num),
 ]);
 
 const sample3 = new List([
-    new Call("Let", [new Variable("msg"), new Literal("Hello World", "string")]),
-    new Call("Print", [new Variable("msg")]),
+    new Call("Let", [new Variable("msg"), new Literal("Hello World", Type.Str)]),
+    new Call("Print", [
+        new Literal("This will not be printed", Type.Str, exprData(null, true)),
+        new Variable("msg"),
+    ]),
 ]);
 
 export const SAMPLE_1 = sample1.validate();

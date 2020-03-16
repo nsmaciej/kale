@@ -83,6 +83,9 @@ export default class Interpreter {
     }
 
     private async eval(expr: Expr, scope: Scope): Promise<Value> {
+        if (expr.data.disabled) {
+            return nullValue();
+        }
         const promise = this.evalRaw(expr, scope);
         if (this.breakpoints.has(expr.id)) {
             await new Promise(resolve => this.callbacks.onBreakpoint(resolve));
@@ -90,21 +93,23 @@ export default class Interpreter {
         return promise;
     }
 
-    private async evalBuiltin(expr: E.Call, scope: Scope): Promise<Value> {
-        const builtin = assertBuiltin(scope.get(expr.fn));
-        const args = await Promise.all(expr.args.map(x => this.eval(x, scope)));
-        vmAssert(builtin.args.length === args.length, `Wrong number of arguments for ${expr.fn}`);
+    private async evalBuiltin(fn: string, args: Expr[], scope: Scope): Promise<Value> {
+        const builtin = assertBuiltin(scope.get(fn));
+        const evaluatedArgs = await Promise.all(args.map(x => this.eval(x, scope)));
+        vmAssert(builtin.args.length === args.length, `Wrong number of arguments for ${fn}`);
         builtin.args.forEach((type, i) =>
             vmAssert(
-                type === null || type === args[i].type,
-                `Expected type ${args[i].type}, found ${type}`,
+                type === null || type === evaluatedArgs[i].type,
+                `Expected type ${evaluatedArgs[i].type}, found ${type}`,
             ),
         );
-        return builtin.builtin(args);
+        return builtin.builtin(evaluatedArgs);
     }
 
     private async evalRawCall(expr: E.Call, scope: Scope): Promise<Value> {
-        const { fn, args } = expr;
+        const { fn } = expr;
+        // We pretend as if disabled arguments aren't there.
+        const args = expr.args.filter(x => !x.data.disabled);
 
         // Handle specials.
         if (Object.prototype.hasOwnProperty.call(specials, fn)) {
@@ -117,7 +122,7 @@ export default class Interpreter {
 
         // Handle builtins.
         if (value.type === Type.Builtin) {
-            return this.evalBuiltin(expr, scope);
+            return this.evalBuiltin(fn, args, scope);
         }
 
         // The actual call.

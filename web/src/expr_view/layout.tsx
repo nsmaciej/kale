@@ -208,17 +208,8 @@ class ExprLayout implements ExprVisitor<Layout> {
     }
 
     visitLiteral(expr: E.Literal): Layout {
-        const content = expr.content;
-        //TODO: Enable later.
-        // if (expr.type === "str") {
-        //     content = `"${expr.content}"`;
-        // } else if (expr.type === "symbol") {
-        //     content = expr.content + ":";
-        // } else if (expr.type === "int") {
-        //     content = new Intl.NumberFormat().format(parseFloat(expr.content));
-        // }
-
-        return this.layoutText(expr, content, {
+        //TODO: Add more pretty printing for literals.
+        return this.layoutText(expr, expr.content, {
             title: expr.data.comment ?? undefined,
             colour: this.t.literalColour,
             italic: expr.type === "symbol",
