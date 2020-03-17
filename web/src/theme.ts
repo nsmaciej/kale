@@ -74,7 +74,7 @@ export const DefaultTheme = {
 
     highlight: {
         padding: new Padding(3),
-        mainPadding: new Padding(0, 20, 0, 3),
+        mainPadding: new Padding(3, 20, 3, 3),
         radius: 3,
         selection: fillStroke("#f2f7ff", "#4375f9", "#fcfdff", "#b8ccff"),
         hover: fillStroke(undefined, "#cecece"),
@@ -89,7 +89,7 @@ export const DefaultTheme = {
     layout: {
         lineBreakPoint: 300,
         underlineSpacing: 3,
-        lineSpacing: 6, // Should be bigger than the selection padding.
+        lineSpacing: 7, // Should be bigger than the selection padding.
     },
 
     features: {
@@ -98,9 +98,15 @@ export const DefaultTheme = {
     },
 };
 
-// Selection padding needs to fit in the line-height.
-assert(DefaultTheme.highlight.padding.bottom < DefaultTheme.layout.lineSpacing);
-assert(DefaultTheme.highlight.padding.top < DefaultTheme.layout.lineSpacing);
+assert(
+    DefaultTheme.highlight.padding.bottom + DefaultTheme.highlight.padding.top <
+        DefaultTheme.layout.lineSpacing,
+    "Vertical highlight padding needs to fit in the line-height",
+);
+assert(
+    DefaultTheme.highlight.mainPadding.contains(DefaultTheme.highlight.padding),
+    "Main padding needs to be at least as big as the normal padding",
+);
 
 export type KaleTheme = typeof DefaultTheme;
 
