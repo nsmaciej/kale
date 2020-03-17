@@ -8,7 +8,7 @@ import Menu, { MenuItem } from "components/menu";
 
 const ContextMenuSeparator = styled.div`
     height: 1px;
-    background: ${p => p.theme.disabledColour};
+    background: ${p => p.theme.colour.disabled};
     width: 100%;
 `;
 

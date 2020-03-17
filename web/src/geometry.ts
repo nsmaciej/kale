@@ -91,12 +91,24 @@ export class Padding {
         readonly left = right,
     ) {}
 
-    get topLeft() {
+    /** Returns the offset that would need to be applied to a Rect to apply this padding */
+    get topLeft(): Offset {
         return new Offset(this.left, this.top);
     }
 
-    get css() {
+    /** Returns a string suitable as a value of margin/padding */
+    get css(): string {
         return `${this.top}px ${this.right}px ${this.bottom}px ${this.left}px`;
+    }
+
+    /** Combines the mangnitude of two paddings */
+    add(rhs: Padding) {
+        return new Padding(
+            this.top + rhs.top,
+            this.right + rhs.right,
+            this.bottom + rhs.bottom,
+            this.left + rhs.left,
+        );
     }
 
     contains(rhs: Padding) {
@@ -144,7 +156,10 @@ export class Rect {
     }
 
     padding({ top, right, bottom, left }: Padding) {
-        return new Rect(this.origin.dy(-top).dx(-left), this.size.pad(new Offset(right, bottom)));
+        return new Rect(
+            this.origin.dy(-top).dx(-left),
+            this.size.pad(new Offset(left + right, top + bottom)),
+        );
     }
 
     shift(offset: Offset) {

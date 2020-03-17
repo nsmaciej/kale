@@ -79,15 +79,19 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
         return this.props.theme;
     }
 
-    private drawRect(expr: Optional<ExprId>, isSelection: boolean, areas: ExprAreaMap) {
+    private drawRect(exprId: Optional<ExprId>, isSelection: boolean, areas: ExprAreaMap) {
         // This is blindly called each render, so we mightn't have areas.
-        if (expr == null || areas[expr] == null) return;
+        if (exprId == null || areas[exprId] == null) return;
         if (!isSelection && !this.props.focused) return;
         //TODO: Make this dynamic, we need less padding if there are no underlines.
-        const rect = assertSome(areas[expr].rect).padding(this.theme.selection.paddingPx);
+        const rect = assertSome(areas[exprId].rect).padding(
+            this.props.expr.id === exprId
+                ? this.theme.highlight.mainPadding
+                : this.theme.highlight.padding,
+        );
 
-        const isHole = this.props.expr.withId(expr) instanceof E.Blank;
-        const highlight = isSelection ? this.theme.selection.highlight : this.theme.hoverHighlight;
+        const isHole = this.props.expr.withId(exprId) instanceof E.Blank;
+        const highlight = isSelection ? this.theme.highlight.selection : this.theme.highlight.hover;
         return (
             <motion.rect
                 animate={{
@@ -98,7 +102,7 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
                     opacity: isHole ? 0 : 1, // +!isHole
                 }}
                 key={+isSelection}
-                rx={this.theme.selection.radiusPx}
+                rx={this.theme.highlight.radius}
                 fill={highlight.fill(this.props.focused === true)}
                 stroke={highlight.stroke(this.props.focused === true)}
                 initial={false}
@@ -203,7 +207,9 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
         });
 
         // Selection and highlight drawing logic.
-        const padding = this.theme.exprViewPaddingPx;
+        const padding = this.props.frozen
+            ? this.theme.exprView.frozenPadding
+            : this.theme.exprView.padding;
         // Spooky in React's Concurrent Mode, but it's ok since we'll only use this when
         // we commit and it doesn't depend on any previous calls to render.
         this.pendingExprAreaMap = flattenArea({

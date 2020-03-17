@@ -11,7 +11,7 @@ import { Debugger } from "contexts/debugger";
 
 const EditorHeading = styled.h2`
     ${EditorHeadingStyle}
-    margin-left: ${p => p.theme.exprViewPaddingPx.left}px;
+    margin-left: ${p => p.theme.exprView.padding.left}px;
 `;
 
 const EditorHeader = styled(Stack).attrs({ gap: 5 })`
@@ -19,7 +19,7 @@ const EditorHeader = styled(Stack).attrs({ gap: 5 })`
     top: 0;
     background: #ffffff;
     padding-bottom: 5px;
-    border-bottom: 1px solid ${p => p.theme.grey};
+    border-bottom: 1px solid ${p => p.theme.colour.grey};
     align-items: center;
     z-index: 50;
     & > *:last-child {

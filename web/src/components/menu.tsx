@@ -5,7 +5,7 @@ import { Optional } from "utils";
 
 const MenuPopover = styled.div<{ subtle: boolean }>`
     background: #ffffff30;
-    border-radius: ${p => p.theme.borderRadiusPx}px;
+    border-radius: ${p => p.theme.borderRadius}px;
     box-shadow: 0 0 0 1px #10161a1a, 0 2px 4px #10161a33, 0 8px 24px #10161a33;
     ${p => !p.subtle && "padding: 6px 0"};
     z-index: 1000;
@@ -16,14 +16,14 @@ const MenuPopover = styled.div<{ subtle: boolean }>`
 
 const MenuItemContainer = styled.div<{ selected: boolean; enabled: boolean }>`
     user-select: none;
-    background: ${p => (p.enabled && p.selected ? p.theme.clickableColour : "transparent")};
+    background: ${p => (p.enabled && p.selected ? p.theme.colour.clickable : "transparent")};
     display: flex;
     align-items: center;
     & > svg {
         margin-right: 5px;
     }
     color: ${p =>
-        p.enabled ? (p.selected ? "white" : p.theme.mainTextColour) : p.theme.disabledColour};
+        p.enabled ? (p.selected ? "white" : p.theme.colour.mainText) : p.theme.colour.disabled};
     overflow: hidden;
 `;
 

@@ -64,7 +64,7 @@ export const Shortcut = styled.kbd<ShortcutProps>`
     text-align: center;
     font-family: inherit;
     /* Ensure we always look snazzy no matter the context */
-    color: ${p => p.theme.mainTextColour};
+    color: ${p => p.theme.colour.mainText};
     line-height: 1;
     & + & {
         margin-left: 1ex;
@@ -81,7 +81,7 @@ export const SubtleButton = styled.button`
     background: none;
     border: none;
     font-weight: 600;
-    color: ${p => p.theme.clickableColour};
+    color: ${p => p.theme.colour.clickable};
     outline: none;
     transition: color 0.1s;
     &:hover,
@@ -89,7 +89,7 @@ export const SubtleButton = styled.button`
         text-decoration: underline;
     }
     &:disabled {
-        color: ${p => p.theme.disabledExprColour};
+        color: ${p => p.theme.colour.disabled};
         text-decoration: none !important;
     }
 `;
@@ -98,23 +98,23 @@ export const SubtleButton = styled.button`
 export const IconButton = styled.button`
     background: none;
     border: none;
-    color: ${p => p.theme.clickableColour};
+    color: ${p => p.theme.colour.clickable};
     & > svg {
         width: 2em;
         height: 2em;
     }
     &:hover,
     &:focus {
-        color: ${p => p.theme.activeColour};
+        color: ${p => p.theme.colour.active};
     }
     &:disabled {
-        color: ${p => p.theme.disabledExprColour};
+        color: ${p => p.theme.colour.disabled};
     }
 `;
 
 export const NonIdealText = styled.p`
     text-align: center;
-    color: ${p => p.theme.subtleTextColour};
+    color: ${p => p.theme.colour.subtleText};
 `;
 
 export const EditorHeadingStyle = css`

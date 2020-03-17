@@ -13,7 +13,7 @@ export default class TextMetrics {
     private readonly _textElement: SVGTextElement;
 
     static async loadGlobal(theme: KaleTheme): Promise<void> {
-        const font = `${theme.fontSizePx}px ${theme.fontFamily}`;
+        const font = `${theme.expr.fontSizePx}px ${theme.expr.fontFamily}`;
         // Types provided by types/font_loading.d.ts
         await document.fonts.load(font);
         await document.fonts.load(`italic ${font}`);
@@ -29,8 +29,8 @@ export default class TextMetrics {
         svg.style.position = "absolute";
 
         const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-        text.style.fontFamily = this.theme.fontFamily;
-        text.style.fontSize = `${this.theme.fontSizePx}px`;
+        text.style.fontFamily = this.theme.expr.fontFamily;
+        text.style.fontSize = `${this.theme.expr.fontSizePx}px`;
         // This is very important, otherwise inline editing breaks on trailing spaces. Before this
         // my approach was replacing every space with NBSP, but the kerning would often work out
         // differently.
@@ -50,7 +50,7 @@ export default class TextMetrics {
         const key = [weight, +italic, text].join("");
         const HEIGHT_FUDGE_FACTOR = 1.3;
         // I don't why, but this is important to the text lining up with inline editors.
-        const height = Math.round(this.theme.fontSizePx * HEIGHT_FUDGE_FACTOR);
+        const height = Math.round(this.theme.expr.fontSizePx * HEIGHT_FUDGE_FACTOR);
         if (key in this._metricsCache) {
             return new Size(this._metricsCache[key], height);
         }

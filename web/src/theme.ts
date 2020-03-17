@@ -23,32 +23,48 @@ export function fillStroke(
 }
 
 export const DefaultTheme = {
-    // Text.
-    fontSizePx: 12,
-    fontFamily: "iA Writer Quattro",
-    mainTextColour: "#404040",
-    subtleTextColour: "#7b7b7b",
+    borderRadius: 4,
 
-    // Generic settings.
-    grey: "#e4e4e4",
-    disabledColour: "#d8d8d8",
-    clickableColour: "#1b65f1",
-    clickableSubtleColour: "#ccc",
-    activeColour: "#003fb7",
-    borderRadiusPx: 4,
+    colour: {
+        mainText: "#404040",
+        subtleText: "#7b7b7b",
+        grey: "#e4e4e4",
+        disabled: "#d8d8d8",
+        active: "#003fb7",
+        clickable: "#1b65f1",
+        subtleClickable: "#ccc",
+    },
 
-    // Interface and decoration colours.
-    decorationColour: "#6a6a6a",
-    listRulerStroke: "#000000",
-    exprViewPaddingPx: new Padding(8),
-    exprListBorderRadiusPx: 8,
-    disabledExprColour: "#cccccc",
+    expr: {
+        fontSizePx: 12,
+        fontFamily: "iA Writer Quattro",
+    },
 
-    // Code colours.
-    callColour: "#000000",
-    commentColour: "#00b508",
-    variableColour: "#248af0",
-    literalColour: "#ef6c00",
+    exprList: {
+        borderRadius: 8,
+        padding: new Padding(4),
+    },
+
+    exprView: {
+        // This can be used to horizontally align things like headings to the text inside ExprView.
+        get padding() {
+            return DefaultTheme.highlight.mainPadding.add(new Padding(1));
+        },
+        get frozenPadding() {
+            return DefaultTheme.highlight.padding.add(new Padding(1));
+        },
+    },
+
+    syntaxColour: {
+        call: "#000000",
+        comment: "#00b508",
+        variable: "#248af0",
+        literal: "#ef6c00",
+        disabled: "#cccccc",
+        underline: "#6a6a6a",
+        listRuler: "#000000",
+    },
+
     blanks: {
         padding: new Padding(0, 10),
         highlight: fillStroke("#f7f7f7", "#dcdcdc"),
@@ -56,35 +72,35 @@ export const DefaultTheme = {
         textColour: "#909090",
     },
 
-    // Selection and highlights.
-    hoverHighlight: fillStroke(undefined, "#cecece"),
-    selection: {
-        paddingPx: new Padding(3),
-        radiusPx: 3,
-        highlight: fillStroke("#f2f7ff", "#4375f9", "#fcfdff", "#b8ccff"),
+    highlight: {
+        padding: new Padding(3),
+        mainPadding: new Padding(0, 20, 0, 3),
+        radius: 3,
+        selection: fillStroke("#f2f7ff", "#4375f9", "#fcfdff", "#b8ccff"),
+        hover: fillStroke(undefined, "#cecece"),
     },
 
-    // Create Circle.
     createCircle: {
+        stroke: "#6a6a6a",
         radius: 2,
         maxRadius: 6, //TODO: This should be based on the current text size.
     },
 
-    // Layout.
-    lineBreakPointPx: 300,
-    underlineSpacingPx: 3,
-    lineSpacingPx: 6, // Should be bigger than the selection padding.
+    layout: {
+        lineBreakPoint: 300,
+        underlineSpacing: 3,
+        lineSpacing: 6, // Should be bigger than the selection padding.
+    },
 
-    // Settings.
-    showingShortcuts: true,
-    showingToyBox: true,
+    features: {
+        exprListShortcuts: true,
+        toyBox: true,
+    },
 };
 
-// The main padding needs to be greather than the selection padding.
-assert(DefaultTheme.exprViewPaddingPx.contains(DefaultTheme.selection.paddingPx));
 // Selection padding needs to fit in the line-height.
-assert(DefaultTheme.selection.paddingPx.bottom < DefaultTheme.lineSpacingPx);
-assert(DefaultTheme.selection.paddingPx.top < DefaultTheme.lineSpacingPx);
+assert(DefaultTheme.highlight.padding.bottom < DefaultTheme.layout.lineSpacing);
+assert(DefaultTheme.highlight.padding.top < DefaultTheme.layout.lineSpacing);
 
 export type KaleTheme = typeof DefaultTheme;
 

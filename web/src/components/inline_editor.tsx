@@ -12,12 +12,12 @@ const Container = styled.div`
 `;
 
 const InlineEditorInput = styled.input`
-    font-family: ${p => p.theme.fontFamily};
-    font-size: ${p => p.theme.fontSizePx}px;
+    font-family: ${p => p.theme.expr.fontFamily};
+    font-size: ${p => p.theme.expr.fontSizePx}px;
     line-height: 1;
     outline: 0;
     border: 0;
-    background: ${p => p.theme.selection.highlight.fill(false)};
+    background: ${p => p.theme.highlight.selection.fill(false)};
 `;
 
 interface InlineEditorProps {

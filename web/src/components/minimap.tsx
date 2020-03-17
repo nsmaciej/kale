@@ -11,13 +11,13 @@ import { Workspace } from "contexts/workspace";
 
 const MinimapItemStack = styled(Stack).attrs({ gap: 8, vertical: true })<{ focused: boolean }>`
     user-select: none;
-    border-radius: ${p => p.theme.borderRadiusPx}px;
+    border-radius: ${p => p.theme.borderRadius}px;
     padding: 5px;
-    color: ${p => p.theme.clickableColour};
+    color: ${p => p.theme.colour.clickable};
     ${p => p.focused && "background: #f9f9f9;"}
     border: 1px solid ${p => (p.focused ? "#e4e4e4" : "transparent")};
     &:hover {
-        border: 1px solid ${p => p.theme.grey};
+        border: 1px solid ${p => p.theme.colour.grey};
     }
 `;
 

@@ -4,25 +4,25 @@ import { motion } from "framer-motion";
 
 import { KaleTheme } from "theme";
 import { Optional, max } from "utils";
-import { Offset, Size, Rect, Padding } from "geometry";
+import { Offset, Size, Rect } from "geometry";
 import Expr, { ExprId, ExprVisitor } from "expr";
 import * as E from "expr";
 import TextMetrics from "text_metrics";
 
 import { Layout, TextProperties, hstack, vstack, Area } from "expr_view/core";
-import { UnderlineLine, SvgLine, HitBox, HoverHitBox, SvgGroup } from "expr_view/components";
+import { UnderlineLine, SvgLine, HitBox, HoverHitBox } from "expr_view/components";
 
 // See https://vanseodesign.com/web-design/svg-text-baseline-alignment/ for excellent discussion
 // on SVG text aligment properties.
 const Code = styled.text`
-    font-size: ${p => p.theme.fontSizePx}px;
-    font-family: ${p => p.theme.fontFamily};
+    font-size: ${p => p.theme.expr.fontSizePx}px;
+    font-family: ${p => p.theme.expr.fontFamily};
 `;
 
 const CommentIndicator = styled.tspan`
     baseline-shift: super;
-    fill: ${p => p.theme.commentColour};
-    font-size: ${p => Math.round(p.theme.fontSizePx * 0.6)}px;
+    fill: ${p => p.theme.syntaxColour.comment};
+    font-size: ${p => Math.round(p.theme.expr.fontSizePx * 0.6)}px;
     font-weight: normal;
 `;
 
@@ -31,14 +31,14 @@ function CreateCircle({ onClick }: { onClick: (e: React.MouseEvent) => void }) {
     const r = theme.createCircle.radius;
     const maxR = theme.createCircle.maxRadius;
     const cx = r;
-    const cy = theme.fontSizePx / 2 + 3;
+    const cy = theme.expr.fontSizePx / 2 + 3;
     const rect = new Rect(new Offset(cx - maxR, cy - maxR), new Size(maxR * 2));
     return (
         <HoverHitBox area={rect} onClick={onClick} title="Add an argument...">
             {mouseOver => (
                 <motion.circle
                     fill="none"
-                    stroke={theme.decorationColour}
+                    stroke={theme.createCircle.stroke}
                     strokeWidth={1}
                     animate={{ r: mouseOver ? maxR : r }}
                     r={r}
@@ -66,7 +66,7 @@ function setAreasHeightInPlace(areas: Area[], height: number) {
 
 function materialiseUnderlines(theme: KaleTheme, parent: Layout) {
     const layout = parent.withNoUnderlines();
-    const gap = theme.underlineSpacingPx;
+    const gap = theme.layout.underlineSpacing;
     parent.underlines.forEach((x, i) => {
         const pos = new Offset(x.offset, parent.size.height + x.level * gap);
         layout.nodes.push(<UnderlineLine start={pos} end={pos.dx(x.length)} key={"U" + i} />);
@@ -90,7 +90,7 @@ function isCallInline(theme: KaleTheme, args: readonly Layout[]): boolean {
     }
     // Do we need a line break?
     const lineWidth = args.map(x => x.size.width).reduce((x, y) => x + y, 0);
-    if (lineWidth > theme.lineBreakPointPx && args.length > 0) {
+    if (lineWidth > theme.layout.lineBreakPoint && args.length > 0) {
         return false;
     }
     // Is the expression too nested?
@@ -134,11 +134,11 @@ class ExprLayout implements ExprVisitor<Layout> {
             (
                 <Code
                     // Note: if changing this, also update the propagated text props below.
-                    fill={disabled ? this.t.disabledExprColour : colour}
+                    fill={disabled ? this.t.syntaxColour.disabled : colour}
                     fontStyle={italic ? "italic" : undefined}
                     fontWeight={weight}
                     x={offset?.x}
-                    y={(offset?.y ?? 0) + this.t.fontSizePx}
+                    y={(offset?.y ?? 0) + this.t.expr.fontSizePx}
                     {...this.exprProps(expr)}
                     key={0}
                 >
@@ -153,7 +153,7 @@ class ExprLayout implements ExprVisitor<Layout> {
         if (mainText) {
             layout.text = props;
             if (disabled) {
-                layout.text.colour = this.t.disabledExprColour;
+                layout.text.colour = this.t.syntaxColour.disabled;
             }
         }
         return layout;
@@ -163,7 +163,7 @@ class ExprLayout implements ExprVisitor<Layout> {
         if (this.props.frozen) return;
         return new Layout(
             (<CreateCircle onClick={e => this.props.onClickCreateCircle?.(e, expr)} key={0} />),
-            new Size(this.t.createCircle.maxRadius, this.t.fontSizePx),
+            new Size(this.t.createCircle.maxRadius, this.t.expr.fontSizePx),
         );
     }
 
@@ -171,7 +171,7 @@ class ExprLayout implements ExprVisitor<Layout> {
         if (expr.data.comment == null || this.props.foldComments) return null;
         return this.layoutText(expr, expr.data.comment, {
             italic: true,
-            colour: this.t.commentColour,
+            colour: this.t.syntaxColour.comment,
         });
     }
 
@@ -189,7 +189,7 @@ class ExprLayout implements ExprVisitor<Layout> {
 
     visitList(expr: E.List): Layout {
         const layout = vstack(
-            this.t.lineSpacingPx,
+            this.t.layout.lineSpacing,
             expr.list.map(x => materialiseUnderlines(this.t, this.layoutInner(expr, x))),
         );
         const line = new Rect(new Offset(3, 5), new Size(0, layout.size.height - 8));
@@ -200,12 +200,12 @@ class ExprLayout implements ExprVisitor<Layout> {
                 <SvgLine
                     start={line.origin}
                     end={line.bottomRight}
-                    stroke={disabled ? this.t.disabledExprColour : this.t.listRulerStroke}
+                    stroke={disabled ? this.t.syntaxColour.disabled : this.t.syntaxColour.listRuler}
                 />
             </HitBox>
         );
         return vstack(
-            this.t.lineSpacingPx,
+            this.t.layout.lineSpacing,
             this.layoutComment(expr),
             hstack(0, new Layout(ruler, new Size(10, 0)), layout),
         );
@@ -215,7 +215,7 @@ class ExprLayout implements ExprVisitor<Layout> {
         //TODO: Add more pretty printing for literals.
         return this.layoutText(expr, expr.content, {
             title: expr.data.comment ?? undefined,
-            colour: this.t.literalColour,
+            colour: this.t.syntaxColour.literal,
             italic: expr.type === "symbol",
             commentIndicator: expr.data.comment != null,
             mainText: true,
@@ -226,7 +226,7 @@ class ExprLayout implements ExprVisitor<Layout> {
         return this.layoutText(expr, expr.name, {
             title: expr.data.comment,
             commentIndicator: expr.data.comment != null,
-            colour: this.t.variableColour,
+            colour: this.t.syntaxColour.variable,
             mainText: true,
         });
     }
@@ -245,7 +245,7 @@ class ExprLayout implements ExprVisitor<Layout> {
         const selected = this.props.selection === expr.id;
         const pill = (mouseOver: boolean) => {
             const highlight = selected
-                ? this.t.selection.highlight
+                ? this.t.highlight.selection
                 : mouseOver && !this.props.frozen
                 ? this.t.blanks.hover
                 : this.t.blanks.highlight;
@@ -288,7 +288,7 @@ class ExprLayout implements ExprVisitor<Layout> {
             this.layoutText(expr, expr.fn, {
                 weight: 700,
                 commentIndicator: expr.data.comment != null && this.props.foldComments,
-                colour: this.t.callColour,
+                colour: this.t.syntaxColour.call,
                 mainText: true,
             }),
             this.layoutCreateCircle(expr),
@@ -306,19 +306,17 @@ class ExprLayout implements ExprVisitor<Layout> {
                 TextMetrics.global.space.width,
                 fnName,
                 vstack(
-                    this.t.lineSpacingPx,
+                    this.t.layout.lineSpacing,
                     args.map(x => materialiseUnderlines(this.t, x)),
                 ),
             );
         }
 
         const comment = this.layoutComment(expr);
-        return vstack(this.t.lineSpacingPx, comment, layout);
+        return vstack(this.t.layout.lineSpacing, comment, layout);
     }
 }
 
 export function layoutExpr(theme: KaleTheme, expr: Expr, props: LayoutProps): Layout {
-    return materialiseUnderlines(theme, new ExprLayout(theme, props).layout(expr)).pad(
-        new Padding(0, 20, 0, 3),
-    );
+    return materialiseUnderlines(theme, new ExprLayout(theme, props).layout(expr));
 }

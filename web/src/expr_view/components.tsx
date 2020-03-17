@@ -47,7 +47,7 @@ export function UnderlineLine(props: Omit<LineProps, "shapeRendering" | "stroke"
         <SvgLine
             strokeWidth={0.5}
             shapeRendering="crsipEdges"
-            stroke={theme.decorationColour}
+            stroke={theme.syntaxColour.underline}
             {...props}
         />
     );

@@ -79,18 +79,6 @@ export class Layout {
         return r;
     }
 
-    pad(padding: Padding): Layout {
-        const copy = this.copy();
-        copy.nodes = [
-            <SvgGroup key="main" translate={padding.topLeft}>
-                {this.nodes}
-            </SvgGroup>,
-        ];
-        copy.size = this.size.padding(padding);
-        copy.areas = this.areas.map(x => shiftArea(x, padding.topLeft));
-        return copy;
-    }
-
     place(origin: Offset, layout: Layout, index = this.nodes.length) {
         this.size = this.size.extend(origin, layout.size);
         this.nodes.splice(

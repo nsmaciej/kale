@@ -36,7 +36,7 @@ const GlobalStyle = createGlobalStyle`
 }
 body {
     font: 14px/1 "Nunito", sans-serif;
-    color: ${p => p.theme.mainTextColour};
+    color: ${p => p.theme.colour.mainText};
 }
 p {
     line-height: 1.8;
@@ -50,13 +50,13 @@ h1, h2, h3 {
     user-select: none;
 }
 a {
-    color: ${p => p.theme.clickableColour};
+    color: ${p => p.theme.colour.clickable};
     display: inline-block;
     text-decoration: none;
     /* In case we embed SVGs etc. */
     cursor: pointer;
     &:hover {
-        color: ${p => p.theme.activeColour};
+        color: ${p => p.theme.colour.active};
     }
 }
 `;
@@ -77,7 +77,7 @@ const HeaderGrid = styled.div`
     grid-area: nav;
     display: grid;
     padding-bottom: 15px;
-    border-bottom: 1px solid ${p => p.theme.grey};
+    border-bottom: 1px solid ${p => p.theme.colour.grey};
     grid-template: "branding search menu" / minmax(max-content, 1fr) max-content minmax(
             max-content,
             1fr
