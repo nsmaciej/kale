@@ -9,7 +9,7 @@ import { Shortcut } from "components";
 const ExprListItem = styled(motion.div)`
     grid-column: expr;
     justify-self: left;
-    border: 1px solid #dfe1e5;
+    border: 1px solid ${p => p.theme.colour.subtleClickable};
     border-radius: ${p => p.theme.exprList.borderRadius}px;
     display: flex;
     padding: ${p => p.theme.exprList.padding.css};
@@ -62,7 +62,7 @@ export default function ExprViewList<E extends ShortcutExpr>({
     const renderItem = (item: E) => (
         // This has to be a fragment. Otherwise the items won't layout in a grid.
         <Fragment key={item.expr.id}>
-            {item.shortcut && theme.features.exprListShortcuts && (
+            {item.shortcut && theme.feature.exprListShortcuts && (
                 <ExprListShortcut>{item.shortcut}</ExprListShortcut>
             )}
             <ExprListItem

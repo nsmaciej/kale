@@ -23,7 +23,7 @@ export function SvgGroup({
 }
 
 type LineProps = CustomSvgProps<SVGLineElement, { start: Offset; end: Offset }>;
-export function SvgLine({ start, end, stroke = "#000000", ...props }: LineProps) {
+export function SvgLine({ start, end, stroke, ...props }: LineProps) {
     return <line x1={start.x} x2={end.x} y1={start.y} y2={end.y} stroke={stroke} {...props} />;
 }
 

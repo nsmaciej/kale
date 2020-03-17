@@ -14,10 +14,10 @@ const MinimapItemStack = styled(Stack).attrs({ gap: 8, vertical: true })<{ focus
     border-radius: ${p => p.theme.borderRadius}px;
     padding: 5px;
     color: ${p => p.theme.colour.clickable};
-    ${p => p.focused && "background: #f9f9f9;"}
-    border: 1px solid ${p => (p.focused ? "#e4e4e4" : "transparent")};
+    ${p => p.focused && `background: ${p.theme.colour.innerBackground};`}
+    border: 1px solid ${p => (p.focused ? p.theme.colour.grey : "transparent")};
     &:hover {
-        border: 1px solid ${p => p.theme.colour.grey};
+        border: 1px solid ${p => p.theme.colour.subtleClickable};
     }
 `;
 

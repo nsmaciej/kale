@@ -37,6 +37,7 @@ const GlobalStyle = createGlobalStyle`
 body {
     font: 14px/1 "Nunito", sans-serif;
     color: ${p => p.theme.colour.mainText};
+    background: ${p => p.theme.colour.background};
 }
 p {
     line-height: 1.8;
@@ -88,7 +89,7 @@ const HeaderGrid = styled.div`
 
 const MainHeading = styled.h1`
     font-weight: 900;
-    color: #0ba902;
+    color: ${p => p.theme.colour.brand};
     letter-spacing: 2px;
 `;
 

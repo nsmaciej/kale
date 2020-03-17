@@ -21,7 +21,7 @@ const toyBoxExprs = [
 
 export default function ToyBox() {
     const theme = useTheme();
-    if (!theme.features.toyBox) return null;
+    if (!theme.feature.toyBox) return null;
     return (
         <Box gridArea="toybox" overflow="auto">
             <PaneHeading>Blocks</PaneHeading>

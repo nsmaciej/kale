@@ -11,17 +11,17 @@ import { assertSome } from "utils";
 const inputWidthPx = 400;
 
 const EditorInput = styled.input`
-    border: 0;
     font: inherit;
     color: inherit;
     border: 1px solid ${p => p.theme.colour.subtleClickable};
     border-radius: ${p => p.theme.borderRadius}px;
     width: ${inputWidthPx}px;
+    position: relative;
+    padding: 8px 5px;
+    background: ${p => p.theme.colour.background};
     &:focus {
         border: 1px solid ${p => p.theme.colour.clickable};
     }
-    position: relative;
-    padding: 8px 5px;
 `;
 
 interface EditorSuggestionsProps {
@@ -74,7 +74,10 @@ export default React.forwardRef(function EditorSuggestions(
 
     return (
         <Stack gap={10} alignItems="center">
-            <Shortcut>N</Shortcut>
+            <div>
+                <Shortcut>Shift</Shortcut>
+                <Shortcut>N</Shortcut>
+            </div>
             <Box position="relative">
                 <EditorInput
                     onFocus={() => {

@@ -232,9 +232,9 @@ class ExprLayout implements ExprVisitor<Layout> {
     }
 
     visitBlank(expr: E.Blank): Layout {
-        const padding = this.t.blanks.padding;
+        const padding = this.t.blank.padding;
         const text = this.layoutText(expr, expr.data.comment ?? "?", {
-            colour: this.t.blanks.textColour,
+            colour: this.t.blank.textColour,
             offset: padding.topLeft,
         });
         let rect = new Rect(Offset.zero, text.size.padding(padding));
@@ -247,8 +247,8 @@ class ExprLayout implements ExprVisitor<Layout> {
             const highlight = selected
                 ? this.t.highlight.selection
                 : mouseOver && !this.props.frozen
-                ? this.t.blanks.hover
-                : this.t.blanks.highlight;
+                ? this.t.blank.hover
+                : this.t.blank.highlight;
             return (
                 <motion.rect
                     {...{ width, height, x, y }}

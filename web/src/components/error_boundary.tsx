@@ -5,7 +5,7 @@ import { Optional } from "utils";
 
 const ErrorScreen = styled.div`
     font-size: 60px;
-    color: #f44336;
+    color: ${p => p.theme.colour.error};
     padding: 60px 0 0 50px;
     font-weight: 700;
 `;

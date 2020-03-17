@@ -26,13 +26,17 @@ export const DefaultTheme = {
     borderRadius: 4,
 
     colour: {
-        mainText: "#404040",
-        subtleText: "#7b7b7b",
+        clickable: "#1b65f1",
+        active: "#003fb7",
+        brand: "#0ba902",
+        error: "#f44336",
+        background: "#ffffff",
+        innerBackground: "#f9f9f9",
         grey: "#e4e4e4",
         disabled: "#d8d8d8",
-        active: "#003fb7",
-        clickable: "#1b65f1",
-        subtleClickable: "#ccc",
+        subtleClickable: "#cccccc",
+        subtleText: "#7b7b7b",
+        mainText: "#404040",
     },
 
     expr: {
@@ -65,7 +69,7 @@ export const DefaultTheme = {
         listRuler: "#000000",
     },
 
-    blanks: {
+    blank: {
         padding: new Padding(0, 10),
         highlight: fillStroke("#f7f7f7", "#dcdcdc"),
         hover: fillStroke("#efefef", "#dcdcdc"),
@@ -92,7 +96,7 @@ export const DefaultTheme = {
         lineSpacing: 7, // Should be bigger than the selection padding.
     },
 
-    features: {
+    feature: {
         exprListShortcuts: true,
         toyBox: true,
     },

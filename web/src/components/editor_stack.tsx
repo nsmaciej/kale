@@ -17,7 +17,7 @@ const EditorHeading = styled.h2`
 const EditorHeader = styled(Stack).attrs({ gap: 5 })`
     position: sticky;
     top: 0;
-    background: #ffffff;
+    background: ${p => p.theme.colour.background};
     padding-bottom: 5px;
     border-bottom: 1px solid ${p => p.theme.colour.grey};
     align-items: center;
