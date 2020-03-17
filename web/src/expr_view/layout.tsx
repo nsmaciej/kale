@@ -4,13 +4,13 @@ import { motion } from "framer-motion";
 
 import { KaleTheme } from "theme";
 import { Optional, max } from "utils";
-import { Offset, Size, Rect } from "geometry";
+import { Offset, Size, Rect, Padding } from "geometry";
 import Expr, { ExprId, ExprVisitor } from "expr";
 import * as E from "expr";
 import TextMetrics from "text_metrics";
 
 import { Layout, TextProperties, hstack, vstack, Area } from "expr_view/core";
-import { UnderlineLine, SvgLine, HitBox, HoverHitBox } from "expr_view/components";
+import { UnderlineLine, SvgLine, HitBox, HoverHitBox, SvgGroup } from "expr_view/components";
 
 // See https://vanseodesign.com/web-design/svg-text-baseline-alignment/ for excellent discussion
 // on SVG text aligment properties.
@@ -192,7 +192,7 @@ class ExprLayout implements ExprVisitor<Layout> {
             this.t.lineSpacingPx,
             expr.list.map(x => materialiseUnderlines(this.t, this.layoutInner(expr, x))),
         );
-        const line = new Rect(new Offset(3, 5), new Size(0, layout.size.height - 5));
+        const line = new Rect(new Offset(3, 5), new Size(0, layout.size.height - 8));
         // Only thing outside layoutText checking this.
         const disabled = expr.data.disabled || this.state.hasDisabledParent;
         const ruler = (
@@ -235,9 +235,9 @@ class ExprLayout implements ExprVisitor<Layout> {
         const padding = this.t.blanks.padding;
         const text = this.layoutText(expr, expr.data.comment ?? "?", {
             colour: this.t.blanks.textColour,
-            offset: padding,
+            offset: padding.topLeft,
         });
-        let rect = new Rect(padding, text.size).pad(padding);
+        let rect = new Rect(Offset.zero, text.size.padding(padding));
         if (rect.width < rect.height) {
             rect = rect.withSize(new Size(rect.height)); // Make the pill square.
         }
@@ -318,5 +318,7 @@ class ExprLayout implements ExprVisitor<Layout> {
 }
 
 export function layoutExpr(theme: KaleTheme, expr: Expr, props: LayoutProps): Layout {
-    return materialiseUnderlines(theme, new ExprLayout(theme, props).layout(expr));
+    return materialiseUnderlines(theme, new ExprLayout(theme, props).layout(expr)).pad(
+        new Padding(0, 20, 0, 3),
+    );
 }

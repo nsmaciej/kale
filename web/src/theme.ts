@@ -1,4 +1,4 @@
-import { Offset } from "geometry";
+import { Padding } from "geometry";
 import { assert } from "utils";
 
 export interface Highlight {
@@ -40,7 +40,8 @@ export const DefaultTheme = {
     // Interface and decoration colours.
     decorationColour: "#6a6a6a",
     listRulerStroke: "#000000",
-    exprViewPaddingPx: 8,
+    exprViewPaddingPx: new Padding(8),
+    exprListBorderRadiusPx: 8,
     disabledExprColour: "#cccccc",
 
     // Code colours.
@@ -49,7 +50,7 @@ export const DefaultTheme = {
     variableColour: "#248af0",
     literalColour: "#ef6c00",
     blanks: {
-        padding: new Offset(10, 0),
+        padding: new Padding(0, 10),
         highlight: fillStroke("#f7f7f7", "#dcdcdc"),
         hover: fillStroke("#efefef", "#dcdcdc"),
         textColour: "#909090",
@@ -58,7 +59,7 @@ export const DefaultTheme = {
     // Selection and highlights.
     hoverHighlight: fillStroke(undefined, "#cecece"),
     selection: {
-        paddingPx: new Offset(3),
+        paddingPx: new Padding(3),
         radiusPx: 3,
         highlight: fillStroke("#f2f7ff", "#4375f9", "#fcfdff", "#b8ccff"),
     },
@@ -80,10 +81,10 @@ export const DefaultTheme = {
 };
 
 // The main padding needs to be greather than the selection padding.
-assert(DefaultTheme.exprViewPaddingPx >= DefaultTheme.selection.paddingPx.x);
-assert(DefaultTheme.exprViewPaddingPx >= DefaultTheme.selection.paddingPx.y);
+assert(DefaultTheme.exprViewPaddingPx.contains(DefaultTheme.selection.paddingPx));
 // Selection padding needs to fit in the line-height.
-assert(DefaultTheme.selection.paddingPx.y < DefaultTheme.lineSpacingPx);
+assert(DefaultTheme.selection.paddingPx.bottom < DefaultTheme.lineSpacingPx);
+assert(DefaultTheme.selection.paddingPx.top < DefaultTheme.lineSpacingPx);
 
 export type KaleTheme = typeof DefaultTheme;
 

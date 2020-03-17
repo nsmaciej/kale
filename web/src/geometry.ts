@@ -67,6 +67,10 @@ export class Size {
         return new Size(this.width + x, this.height + y);
     }
 
+    padding({ top, right, bottom, left }: Padding) {
+        return new Size(this.width + left + right, this.height + top + bottom);
+    }
+
     isZero() {
         return this.width === 0 && this.height === 0;
     }
@@ -75,6 +79,32 @@ export class Size {
         return new Size(
             Math.max(this.width, offset.x + size.width),
             Math.max(this.height, offset.y + size.height),
+        );
+    }
+}
+
+export class Padding {
+    constructor(
+        readonly top: number,
+        readonly right = top,
+        readonly bottom = top,
+        readonly left = right,
+    ) {}
+
+    get topLeft() {
+        return new Offset(this.left, this.top);
+    }
+
+    get css() {
+        return `${this.top}px ${this.right}px ${this.bottom}px ${this.left}px`;
+    }
+
+    contains(rhs: Padding) {
+        return (
+            rhs.bottom <= this.bottom &&
+            rhs.left <= this.left &&
+            rhs.right <= this.right &&
+            rhs.top <= this.top
         );
     }
 }
@@ -111,6 +141,10 @@ export class Rect {
 
     pad(d: Offset) {
         return new Rect(this.origin.dy(-d.y).dx(-d.x), this.size.pad(d.scale(2)));
+    }
+
+    padding({ top, right, bottom, left }: Padding) {
+        return new Rect(this.origin.dy(-top).dx(-left), this.size.pad(new Offset(right, bottom)));
     }
 
     shift(offset: Offset) {

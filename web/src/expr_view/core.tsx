@@ -1,6 +1,6 @@
 import React, { ReactNode } from "react";
 
-import { Size, Offset, Rect } from "geometry";
+import { Size, Offset, Rect, Padding } from "geometry";
 import { Optional, max, assert } from "utils";
 import { SvgGroup } from "expr_view/components";
 import Expr from "expr";
@@ -33,6 +33,10 @@ function shiftText(props: TextProperties, origin: Offset): TextProperties {
     return { ...kept, offset: offset?.add(origin) ?? origin };
 }
 
+function shiftArea({ rect, ...rest }: Area, origin: Offset) {
+    return { ...rest, rect: rect.shift(origin) };
+}
+
 export class Layout {
     // Do not forget to update withNoUnderlines when adding properties.
     size: Size;
@@ -40,7 +44,6 @@ export class Layout {
     underlines: Underline[] = [];
     areas: Area[] = [];
     isUnderlined = false;
-    inlineExprs = new Set<Expr>();
 
     // Things that will get copied to areas.
     expr: Optional<Expr>;
@@ -54,14 +57,38 @@ export class Layout {
         this.size = size;
     }
 
-    withNoUnderlines() {
-        const layout = new Layout(this.nodes.slice(), this.size);
-        layout.areas = this.areas;
-        layout.expr = this.expr;
-        layout.text = this.text;
-        layout.inlineExprs = this.inlineExprs;
-        // Note: This turns off .inline.
+    withNoUnderlines(): Layout {
+        const layout = this.copy();
+        layout.underlines = [];
+        layout.isUnderlined = false;
+        layout.inline = false;
+        layout.text = null;
         return layout;
+    }
+
+    copy(): Layout {
+        const r = new Layout();
+        r.size = this.size;
+        r.nodes = this.nodes.slice();
+        r.underlines = this.underlines.slice();
+        r.areas = this.areas.slice();
+        r.isUnderlined = this.isUnderlined;
+        r.expr = this.expr;
+        r.inline = this.inline;
+        r.text = this.text == null ? null : Object.assign({}, this.text);
+        return r;
+    }
+
+    pad(padding: Padding): Layout {
+        const copy = this.copy();
+        copy.nodes = [
+            <SvgGroup key="main" translate={padding.topLeft}>
+                {this.nodes}
+            </SvgGroup>,
+        ];
+        copy.size = this.size.padding(padding);
+        copy.areas = this.areas.map(x => shiftArea(x, padding.topLeft));
+        return copy;
     }
 
     place(origin: Offset, layout: Layout, index = this.nodes.length) {
@@ -79,14 +106,6 @@ export class Layout {
             </SvgGroup>,
         );
 
-        // Handle inline children.
-        if (layout.inline && layout.expr != null) {
-            this.inlineExprs.add(layout.expr);
-        }
-        if (layout.inlineExprs.size > 0) {
-            this.inlineExprs = new Set([...this.inlineExprs, ...layout.inlineExprs]);
-        }
-
         // Handle underlines.
         for (const x of layout.underlines) {
             this.underlines.push({
@@ -96,11 +115,7 @@ export class Layout {
             });
         }
         if (layout.isUnderlined) {
-            this.underlines.push({
-                level: 0,
-                length: layout.size.width,
-                offset: origin.x,
-            });
+            this.underlines.push({ level: 0, length: layout.size.width, offset: origin.x });
         }
 
         // Handle hover/drop areas.
@@ -114,11 +129,7 @@ export class Layout {
             });
         } else {
             // Adopt the areas.
-            const orphans = layout.areas.map(({ rect, ...rest }) => ({
-                ...rest,
-                rect: rect.shift(origin),
-            }));
-            this.areas.push(...orphans);
+            this.areas.push(...layout.areas.map(x => shiftArea(x, origin)));
             // Copy the text over while stacking children of exprs.
             if (layout.text != null) {
                 assert(this.text == null, "Multiple text properties");

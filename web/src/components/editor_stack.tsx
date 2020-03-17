@@ -11,7 +11,7 @@ import { Debugger } from "contexts/debugger";
 
 const EditorHeading = styled.h2`
     ${EditorHeadingStyle}
-    margin-left: ${p => p.theme.exprViewPaddingPx}px;
+    margin-left: ${p => p.theme.exprViewPaddingPx.left}px;
 `;
 
 const EditorHeader = styled(Stack).attrs({ gap: 5 })`
@@ -57,7 +57,6 @@ export default function EditorStack({
                 exit={{ opacity: 0, scale: 0 }}
                 transition={{ duration: 0.1, ease: "easeIn" }}
                 positionTransition={{ duration: 0.1, ease: "easeIn" }}
-                style={{ width: "max-content" }}
             >
                 <EditorHeader>
                     <EditorHeading>{editor.name}</EditorHeading>
@@ -71,7 +70,7 @@ export default function EditorStack({
                         <AiOutlinePlayCircle />
                     </IconButton>
                 </EditorHeader>
-                <Box marginTop={10} marginBottom={20}>
+                <Box marginTop={10} marginBottom={20} overflowX="auto">
                     <EditorWrapper
                         functionName={editor.name}
                         openEditor={openEditor}
@@ -103,16 +102,17 @@ export default function EditorStack({
             gap={20}
             height="100%"
             justifyContent="space-between"
-            overflow="auto"
+            overflowX="hidden"
             onFocus={focus}
             // This is weird, but React lets the blur event bubble.
             onBlur={() => changeFocus(null)}
+            gridArea="editor"
         >
-            <Box gridArea="editor" height="100%">
+            <Stack vertical overflowX="hidden" flex="auto">
                 {editors.length === 0 && <NonIdealText>No editors open</NonIdealText>}
                 <AnimatePresence>{editors.map(renderEditor)}</AnimatePresence>
-            </Box>
-            <Box top={0} position="sticky">
+            </Stack>
+            <Box top={0} position="sticky" flex="none">
                 <Minimap editors={editors} focused={focused} changeFocus={changeFocus} />
             </Box>
         </Stack>

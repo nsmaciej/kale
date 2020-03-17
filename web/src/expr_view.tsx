@@ -84,7 +84,7 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
         if (expr == null || areas[expr] == null) return;
         if (!isSelection && !this.props.focused) return;
         //TODO: Make this dynamic, we need less padding if there are no underlines.
-        const rect = assertSome(areas[expr].rect).pad(this.theme.selection.paddingPx);
+        const rect = assertSome(areas[expr].rect).padding(this.theme.selection.paddingPx);
 
         const isHole = this.props.expr.withId(expr) instanceof E.Blank;
         const highlight = isSelection ? this.theme.selection.highlight : this.theme.hoverHighlight;
@@ -203,13 +203,13 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
         });
 
         // Selection and highlight drawing logic.
-        const padding = new Offset(this.theme.exprViewPaddingPx);
+        const padding = this.theme.exprViewPaddingPx;
         // Spooky in React's Concurrent Mode, but it's ok since we'll only use this when
         // we commit and it doesn't depend on any previous calls to render.
         this.pendingExprAreaMap = flattenArea({
             expr: this.props.expr,
             children: areas,
-            rect: new Rect(padding, size),
+            rect: new Rect(padding.topLeft, size),
             inline: false,
             text,
         });
@@ -227,7 +227,7 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
             ? [highlightRect, selectionRect]
             : [selectionRect, highlightRect];
 
-        const { width, height } = size.pad(padding.scale(2));
+        const { width, height } = size.padding(padding);
         const scale = this.props.maxWidth
             ? Math.min(this.props.maxWidth ?? width, width) / width
             : this.props.scale ?? 1;
@@ -246,7 +246,7 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
                     style={{ cursor: "default" }}
                 >
                     {layers}
-                    <SvgGroup translate={padding}>{nodes}</SvgGroup>
+                    <SvgGroup translate={padding.topLeft}>{nodes}</SvgGroup>
                 </svg>
                 {this.state.showingMenu && (
                     <ContextMenu

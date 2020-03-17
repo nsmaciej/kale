@@ -57,7 +57,7 @@ export default {
     "+": op((a, b) => a + b, "Adds two numbers together"),
 
     // Number tests.
-    "/=": test((a, b) => a !== b, "Check if two values are not stricly equal"),
+    "/=": test((a, b) => a !== b, "Check if two values are not strictly equal"),
     "<": test((a, b) => a < b, "Checks if one number is less than another"),
     "<=": test((a, b) => a <= b, "Checks if one number is less or equal to another"),
     "=": test((a, b) => a === b, "Checks if two values are strictly equal"),

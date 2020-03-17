@@ -66,7 +66,7 @@ const Container = styled.div`
     grid-template:
         "nav nav nav" min-content
         "toybox editor history" 1fr /
-        max-content minmax(min-content, 1fr) max-content;
+        max-content 1fr max-content;
     gap: 20px 40px;
     padding: 15px 20px 0;
     height: 100%;
@@ -103,20 +103,6 @@ function Kale() {
     const functionSearchRef = useRef<HTMLInputElement>(null);
     const [focused, setFocused, moveFocused] = useIndex(editors.length, 0);
 
-    function keyDown(event: React.KeyboardEvent) {
-        if (event.key === "N") {
-            functionSearchRef.current?.focus();
-        } else if (event.key === "J") {
-            moveFocused(1);
-        } else if (event.key === "K") {
-            moveFocused(-1);
-        } else {
-            return;
-        }
-        event.preventDefault();
-        event.stopPropagation();
-    }
-
     function createEditor(name: string) {
         setEditors(xs => [{ name, key: GlobalEditorId++, ref: React.createRef() }, ...xs]);
         setFocused(0);
@@ -128,6 +114,22 @@ function Kale() {
         // be possible to close an editor without switching focus.
         //TODO: Try select a sibling editor instead.
         setFocused(null);
+    }
+
+    function keyDown(event: React.KeyboardEvent) {
+        if (event.key === "N") {
+            functionSearchRef.current?.focus();
+        } else if (event.key === "J") {
+            moveFocused(1);
+        } else if (event.key === "K") {
+            moveFocused(-1);
+        } else if (event.key === "D") {
+            if (focused != null) closeEditor(focused);
+        } else {
+            return;
+        }
+        event.preventDefault();
+        event.stopPropagation();
     }
 
     return (

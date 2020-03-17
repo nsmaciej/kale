@@ -34,8 +34,8 @@ const sample1 = new Call(
                 exprData("This list has a comment of large width"),
             ),
         ]),
-        new Call("sample-call-2", [new Blank(exprData("Missing argument"))]),
-        new Call("sample-call"),
+        new Call("Sample-2", [new Blank(exprData("Missing argument"))]),
+        new Call("Sample-1"),
     ],
     exprData("Find a factorial of n. (https://example.com)"),
 );

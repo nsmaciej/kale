@@ -10,14 +10,14 @@ const ExprListItem = styled(motion.div)`
     grid-column: expr;
     justify-self: left;
     border: 1px solid #dfe1e5;
-    border-radius: ${p => p.theme.exprViewPaddingPx}px;
+    border-radius: ${p => p.theme.exprListBorderRadiusPx}px;
     display: flex;
 `;
 
 const ExprListShortcut = styled(Shortcut)`
     grid-column: shortcut;
     justify-self: right;
-    margin-top: ${p => p.theme.exprViewPaddingPx / 2}px;
+    margin-top: ${p => p.theme.exprViewPaddingPx.top / 2}px;
 `;
 
 const ExprList = styled.div`
@@ -32,7 +32,7 @@ const ExprList = styled.div`
 `;
 
 const Extras = styled.div`
-    margin: ${p => p.theme.exprViewPaddingPx}px !important;
+    margin: ${p => p.theme.exprViewPaddingPx.css} !important;
 `;
 
 interface ShortcutExpr {
