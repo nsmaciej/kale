@@ -64,6 +64,10 @@ export default abstract class Expr {
         return this.find(x => x.id === id);
     }
 
+    replace(id: ExprId, next: Optional<Expr>): Optional<Expr> {
+        return this.update(id, () => next);
+    }
+
     update(id: ExprId, update: (expr: Expr) => Optional<Expr>): Optional<Expr> {
         return this.filterMap(x => (x.id === id ? update(x) : x));
     }
@@ -136,10 +140,21 @@ export default abstract class Expr {
         return parent == null ? null : this.parentOf(parent.id);
     }
 
+    hasChildren(): boolean {
+        return this instanceof List || this instanceof Call;
+    }
+
     children(): readonly Expr[] {
         if (this instanceof Call) return this.args;
         if (this instanceof List) return this.list;
         return [];
+    }
+
+    /** Replace children with another array. Throws if this is not possible */
+    updateChildren(updater: (children: readonly Expr[]) => readonly Expr[]): Expr {
+        if (this instanceof Call) return new Call(this.fn, updater(this.args), this.data);
+        if (this instanceof List) return new List(updater(this.list), this.data);
+        throw new UnvisitableExpr(this);
     }
 
     siblings(id: ExprId): [readonly Expr[], Optional<number>] {

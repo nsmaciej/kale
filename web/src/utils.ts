@@ -11,6 +11,11 @@ export function assertSome<T>(value: Optional<T>, message?: string): T {
     return value;
 }
 
+export function assertFound(index: number): number {
+    assert(index >= 0, "Search returned -1");
+    return index;
+}
+
 export function filterMap<T, R>(array: readonly T[], predicate: (element: T) => Optional<R>): R[] {
     const acc: R[] = [];
     for (const x of array) {
@@ -68,4 +73,17 @@ export async function asyncForEach<T>(
     for (let index = 0; index < array.length; index++) {
         await callback(array[index], index);
     }
+}
+
+export function insertSibling<T>(
+    array: readonly T[],
+    predicate: (item: T) => boolean,
+    value: T,
+    after: boolean,
+): readonly T[] {
+    const index = array.findIndex(predicate);
+    if (index >= 0) {
+        return [...array.slice(0, index + +after), value, ...array.slice(index + +after)];
+    }
+    return array;
 }

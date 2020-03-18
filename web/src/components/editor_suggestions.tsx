@@ -75,8 +75,7 @@ export default React.forwardRef(function EditorSuggestions(
     return (
         <Stack gap={10} alignItems="center">
             <div>
-                <Shortcut>Shift</Shortcut>
-                <Shortcut>N</Shortcut>
+                <Shortcut>/</Shortcut>
             </div>
             <Box position="relative">
                 <EditorInput

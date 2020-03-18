@@ -1,12 +1,11 @@
 import React, { Component, Ref, useContext } from "react";
 import { useTheme } from "styled-components";
-import produce from "immer";
 
 import * as E from "expr";
 import * as Select from "selection";
 import Expr, { ExprId } from "expr";
 import ExprView, { ExprAreaMap } from "expr_view";
-import { Optional, assertSome, reverseObject, assert } from "utils";
+import { Optional, assertSome, reverseObject, assert, insertSibling } from "utils";
 import { KaleTheme } from "theme";
 
 import { Type, Func, assertFunc } from "vm/types";
@@ -134,47 +133,52 @@ class Editor extends Component<EditorProps, EditorState> {
     }
 
     // Complex functions.
-    private insertAsChildOf(target: ExprId, toInsert: Expr, last: boolean) {
-        function updateList(list: readonly Expr[]) {
-            return last ? [...list, toInsert] : [toInsert, ...list];
-        }
+    private insertAsChildOf(target: ExprId, toInsert: Expr, last: boolean): void {
         this.update(target, parent => {
-            if (parent instanceof E.Call) {
-                return new E.Call(parent.fn, updateList(parent.args), parent.data);
-            } else if (parent instanceof E.List) {
-                return new E.List(updateList(parent.list), parent.data);
+            if (parent.hasChildren()) {
+                return parent.updateChildren(xs => (last ? [...xs, toInsert] : [toInsert, ...xs]));
             }
             return parent;
         });
     }
 
-    private selectAndInsertAsSiblingOf(sibling: ExprId, toInsert: Expr, right: boolean) {
-        const currentParent = this.expr.parentOf(sibling)?.id;
-        const ixDelta = right ? 1 : 0;
-
-        if (currentParent == null) {
-            this.update(null, main => new E.List(right ? [main, toInsert] : [toInsert, main]));
-            this.selectExpr(toInsert.id);
-            return;
-        }
-
-        this.update(currentParent, parent => {
-            if (parent instanceof E.Call) {
-                const ix = parent.args.findIndex(x => x.id === sibling);
-                return new E.Call(
-                    parent.fn,
-                    produce(parent.args, draft => void draft.splice(ix + ixDelta, 0, toInsert)),
-                    parent.data,
+    private selectAndInsertAsSiblingOf(sibling: ExprId, toInsert: Expr, right: boolean): void {
+        this.selectExpr(toInsert.id);
+        this.update(null, mainExpr => {
+            const parent = this.expr.parentOf(sibling);
+            if (parent == null) {
+                return new E.List(right ? [mainExpr, toInsert] : [toInsert, mainExpr]);
+            } else if (parent.hasChildren()) {
+                return mainExpr.replace(
+                    parent.id,
+                    parent.updateChildren(xs =>
+                        insertSibling(xs, x => x.id === sibling, toInsert, right),
+                    ),
                 );
-            } else if (parent instanceof E.List) {
-                const ix = parent.list.findIndex(x => x.id === sibling);
-                return new E.List(
-                    produce(parent.list, draft => void draft.splice(ix + ixDelta, 0, toInsert)),
-                    parent.data,
+            } else {
+                return mainExpr;
+            }
+        });
+    }
+
+    private insertNewLine(target: ExprId, below: boolean): void {
+        const toInsert = new E.Blank();
+        this.update(null, mainExpr => {
+            const expr = assertSome(mainExpr.withId(target));
+            const parent = mainExpr.parentOf(target);
+            if (parent instanceof E.List) {
+                return mainExpr.replace(
+                    parent.id,
+                    parent.updateChildren(xs =>
+                        insertSibling(xs, x => x.id === target, toInsert, below),
+                    ),
+                );
+            } else {
+                return mainExpr.replace(
+                    target,
+                    new E.List(below ? [expr, toInsert] : [toInsert, expr]),
                 );
             }
-            // Parent always has to be one of these.
-            throw new E.UnvisitableExpr(parent);
         });
         this.selectExpr(toInsert.id);
     }
@@ -231,7 +235,6 @@ class Editor extends Component<EditorProps, EditorState> {
             this.replaceExpr(e, new E.Blank());
         },
         copy: (e: ExprId) => this.addToClipboard(e),
-        append: (e: ExprId) => this.createChildBlank(e),
         insert: (e: ExprId) => this.insertBlankAsSiblingOf(e, true),
         insertBefore: (e: ExprId) => this.insertBlankAsSiblingOf(e, false),
         foldComments: () => this.setState(state => ({ foldingComments: !state.foldingComments })),
@@ -254,6 +257,8 @@ class Editor extends Component<EditorProps, EditorState> {
             const selected = this.expr.withId(e);
             if (selected instanceof E.Call) this.props.onOpenEditor(selected.fn);
         },
+        newLine: (e: ExprId) => this.insertNewLine(e, true),
+        newLineBefore: (e: ExprId) => this.insertNewLine(e, false),
         // Demo things that should be moved to the toy-box.
         demoAddCall: (e: ExprId) => this.replaceAndEdit(e, new E.Call("")),
         demoAddVariable: (e: ExprId) => this.replaceAndEdit(e, new E.Variable("")),
@@ -263,9 +268,8 @@ class Editor extends Component<EditorProps, EditorState> {
     // See https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values.
     // Keep these sorted.
     private readonly menuKeyEquivalents: { [key: string]: keyof Editor["actions"] } = {
-        "/": "disable",
+        "\\": "disable",
         "#": "foldComments",
-        a: "append",
         c: "copy",
         d: "delete",
         Enter: "edit",
@@ -274,6 +278,8 @@ class Editor extends Component<EditorProps, EditorState> {
         i: "insert",
         I: "insertBefore",
         m: "move",
+        n: "newLine",
+        N: "newLineBefore",
         //TODO: Add openEditorInPlaceOfThisOne.
         o: "openEditor",
         q: "comment",
@@ -312,8 +318,6 @@ class Editor extends Component<EditorProps, EditorState> {
 
     //TODO: Ideally the names would also be dynamic.
     private readonly enableForCalls = (expr: Expr) => expr instanceof E.Call;
-    private readonly enableForCallsAndLists = (expr: Expr) =>
-        expr instanceof E.Call || expr instanceof E.List;
     private readonly disableForBlanks = (expr: Expr) => !(expr instanceof E.Blank);
 
     private readonly exprMenu: Optional<{
@@ -330,9 +334,10 @@ class Editor extends Component<EditorProps, EditorState> {
         { action: "replace", label: "Replace" },
         { action: "shuffle", label: "Replace and Copy" },
         null,
-        { action: "append", label: "Add Argument", enabled: this.enableForCallsAndLists },
-        { action: "insert", label: "New Line" },
-        { action: "insertBefore", label: "New Line Before" },
+        { action: "insert", label: "New Argument Before", enabled: this.enableForCalls },
+        { action: "insertBefore", label: "New Argument After", enabled: this.enableForCalls },
+        { action: "newLine", label: "New Line Below" },
+        { action: "newLineBefore", label: "New Line Above" },
         null,
         { action: "comment", label: "Comment..." },
         { action: "disable", label: "Disable", enabled: this.disableForBlanks },
@@ -363,11 +368,13 @@ class Editor extends Component<EditorProps, EditorState> {
         const key = event.key;
         if (Object.prototype.hasOwnProperty.call(this.menuKeyEquivalents, key)) {
             this.actions[this.menuKeyEquivalents[key]](this.state.selection);
-            event.preventDefault();
         } else if (Object.prototype.hasOwnProperty.call(this.editorShortcuts, key)) {
             this.editorShortcuts[key](this.state.selection);
-            event.preventDefault();
+        } else {
+            return;
         }
+        event.preventDefault();
+        event.stopPropagation();
     };
 
     private readonly createChildBlank = (parentId: ExprId) => {

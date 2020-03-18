@@ -108,7 +108,7 @@ function Kale() {
 
     function keyDown(event: React.KeyboardEvent) {
         const key = event.key;
-        if (key === "N") {
+        if (key === "/") {
             functionSearchRef.current?.focus();
         } else if (key === "J" || (key === "ArrowDown" && event.shiftKey)) {
             moveFocus(1);
