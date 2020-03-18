@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, RefObject } from "react";
+import React, { useContext, RefObject } from "react";
 import styled from "styled-components";
 import { motion, AnimatePresence } from "framer-motion";
 import { AiOutlineCloseCircle, AiOutlinePlayCircle } from "react-icons/ai";
@@ -33,20 +33,20 @@ export interface OpenedEditor {
     ref: RefObject<HTMLDivElement>;
 }
 
-interface EditorStackProps extends MinimapProps {
-    editors: OpenedEditor[];
-    closeEditor(index: number): void;
-    openEditor(name: string): void;
-    changeFocus(index: number | null): void;
+interface EditorListProps extends MinimapProps {
+    editors: readonly OpenedEditor[];
+    onCloseEditor(index: number): void;
+    onOpenEditor(index: number, name: string): void;
+    onChangeFocus(index: number | null): void;
 }
 
 export default function EditorStack({
     focused,
     editors,
-    closeEditor,
-    openEditor,
-    changeFocus,
-}: EditorStackProps) {
+    onCloseEditor,
+    onOpenEditor,
+    onChangeFocus,
+}: EditorListProps) {
     const dbg = assertSome(useContext(Debugger));
 
     function renderEditor(editor: OpenedEditor, i: number) {
@@ -60,7 +60,7 @@ export default function EditorStack({
             >
                 <EditorHeader>
                     <EditorHeading>{editor.name}</EditorHeading>
-                    <IconButton onClick={() => closeEditor(i)}>
+                    <IconButton onClick={() => onCloseEditor(i)}>
                         <AiOutlineCloseCircle />
                     </IconButton>
                     <IconButton
@@ -73,7 +73,7 @@ export default function EditorStack({
                 <Box marginTop={10} marginBottom={20} overflowX="auto">
                     <EditorWrapper
                         functionName={editor.name}
-                        openEditor={openEditor}
+                        onOpenEditor={name => onOpenEditor(i, name)}
                         ref={editor.ref}
                         // It's proably easiest to just create a new editor for each function.
                         key={editor.name}
@@ -86,16 +86,9 @@ export default function EditorStack({
     function focus(e: React.FocusEvent) {
         // Check if focused landed on of the editors.
         editors.forEach((editor, i) => {
-            if (editor.ref.current === e.target) changeFocus(i);
+            if (editor.ref.current === e.target) onChangeFocus(i);
         });
     }
-
-    // Focus on the first editor when we mount.
-    useEffect(() => {
-        if (focused != null) {
-            editors[focused]?.ref.current?.focus();
-        }
-    }, [editors, focused]);
 
     return (
         <Stack
@@ -105,7 +98,7 @@ export default function EditorStack({
             overflowX="hidden"
             onFocus={focus}
             // This is weird, but React lets the blur event bubble.
-            onBlur={() => changeFocus(null)}
+            onBlur={() => onChangeFocus(null)}
             gridArea="editor"
         >
             <Stack vertical overflowX="hidden" flex="auto">
@@ -113,7 +106,7 @@ export default function EditorStack({
                 <AnimatePresence>{editors.map(renderEditor)}</AnimatePresence>
             </Stack>
             <Box top={0} position="sticky" flex="none">
-                <Minimap editors={editors} focused={focused} changeFocus={changeFocus} />
+                <Minimap editors={editors} focused={focused} onChangeFocus={onChangeFocus} />
             </Box>
         </Stack>
     );

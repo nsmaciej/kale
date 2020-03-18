@@ -1,11 +1,10 @@
 import { AiOutlineGithub } from "react-icons/ai";
 import { ToastProvider } from "react-toast-notifications";
 import * as ReactDOM from "react-dom";
-import React, { useState, useRef } from "react";
+import React, { useRef, useEffect } from "react";
 import styled, { ThemeProvider, StyleSheetManager, createGlobalStyle } from "styled-components";
 
 import { DefaultTheme } from "theme";
-import { removeIndex } from "utils";
 import { Stack, Box } from "components";
 import DragAndDropSurface from "drag_and_drop";
 import TextMetrics from "text_metrics";
@@ -15,11 +14,11 @@ import { WorkspaceProvider } from "contexts/workspace";
 
 import { DebuggerProvider } from "contexts/debugger";
 import ClipboardList from "components/clipboard_list";
-import EditorStack, { OpenedEditor } from "components/editor_stack";
+import EditorList from "components/editor_list";
 import EditorSuggestions from "components/editor_suggestions";
 import ErrorBoundary from "components/error_boundary";
 import ToyBox from "components/toy_box";
-import { useIndex } from "hooks";
+import useEditorStack from "hooks/editor_stack";
 
 const GlobalStyle = createGlobalStyle`
 #main {
@@ -93,45 +92,44 @@ const MainHeading = styled.h1`
     letter-spacing: 2px;
 `;
 
-let GlobalEditorId = 1;
-
 function Kale() {
-    const [editors, setEditors] = useState<OpenedEditor[]>(() => [
-        { name: "Hello-World", key: GlobalEditorId++, ref: React.createRef() },
-        { name: "Sample-1", key: GlobalEditorId++, ref: React.createRef() },
-        { name: "Sample-2", key: GlobalEditorId++, ref: React.createRef() },
-    ]);
     const functionSearchRef = useRef<HTMLInputElement>(null);
-    const [focused, setFocused, moveFocused] = useIndex(editors.length, 0);
-
-    function createEditor(name: string) {
-        setEditors(xs => [{ name, key: GlobalEditorId++, ref: React.createRef() }, ...xs]);
-        setFocused(0);
-    }
-
-    function closeEditor(index: number) {
-        setEditors(xs => removeIndex(xs, index));
-        // Right now every way we can close an editor already does this, but in the future it might
-        // be possible to close an editor without switching focus.
-        //TODO: Try select a sibling editor instead.
-        setFocused(null);
-    }
+    const {
+        focus,
+        stack,
+        focusEditor,
+        createEditor,
+        openEditor,
+        closeEditor,
+        jumpBack,
+        moveFocus,
+        closeFocusedEditor,
+    } = useEditorStack();
 
     function keyDown(event: React.KeyboardEvent) {
-        if (event.key === "N") {
+        const key = event.key;
+        if (key === "N") {
             functionSearchRef.current?.focus();
-        } else if (event.key === "J") {
-            moveFocused(1);
-        } else if (event.key === "K") {
-            moveFocused(-1);
-        } else if (event.key === "D") {
-            if (focused != null) closeEditor(focused);
+        } else if (key === "J" || (key === "ArrowDown" && event.shiftKey)) {
+            moveFocus(1);
+        } else if (key === "K" || (key === "ArrowUp" && event.shiftKey)) {
+            moveFocus(-1);
+        } else if (key === "D") {
+            closeFocusedEditor();
+        } else if (key === "Backspace") {
+            jumpBack();
         } else {
             return;
         }
         event.preventDefault();
         event.stopPropagation();
     }
+
+    useEffect(() => {
+        if (focus != null) {
+            stack[focus]?.ref.current?.focus();
+        }
+    }, [focus, stack]);
 
     return (
         <Container onKeyDown={keyDown}>
@@ -153,12 +151,12 @@ function Kale() {
                 </Box>
             </HeaderGrid>
             <ToyBox />
-            <EditorStack
-                editors={editors}
-                focused={focused}
-                changeFocus={setFocused}
-                closeEditor={closeEditor}
-                openEditor={createEditor}
+            <EditorList
+                editors={stack}
+                focused={focus}
+                onChangeFocus={focusEditor}
+                onCloseEditor={closeEditor}
+                onOpenEditor={openEditor}
             />
             <ClipboardList />
         </Container>

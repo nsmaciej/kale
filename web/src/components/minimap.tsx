@@ -47,19 +47,19 @@ export interface MinimapEditor {
 }
 
 export interface MinimapProps {
-    editors: MinimapEditor[];
+    editors: readonly MinimapEditor[];
     focused: number | null;
-    changeFocus(index: number): void;
+    onChangeFocus(index: number): void;
 }
 
-export default function Minimap({ editors, focused, changeFocus }: MinimapProps) {
+export default function Minimap({ editors, focused, onChangeFocus }: MinimapProps) {
     return (
         <Stack vertical gap={15}>
             {editors.map((editor, i) => (
                 <MinimapItem
                     key={editor.key}
                     editor={editor}
-                    onClick={() => changeFocus(i)}
+                    onClick={() => onChangeFocus(i)}
                     focused={i === focused}
                 />
             ))}

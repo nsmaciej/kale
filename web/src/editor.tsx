@@ -27,7 +27,7 @@ interface EditorState {
 
 interface EditorWrapperProps {
     functionName: string;
-    openEditor(name: string): void;
+    onOpenEditor(name: string): void;
 }
 
 interface EditorProps extends EditorWrapperProps {
@@ -252,7 +252,7 @@ class Editor extends Component<EditorProps, EditorState> {
         edit: (e: ExprId) => this.startEditing(e),
         openEditor: (e: ExprId) => {
             const selected = this.expr.withId(e);
-            if (selected instanceof E.Call) this.props.openEditor(selected.fn);
+            if (selected instanceof E.Call) this.props.onOpenEditor(selected.fn);
         },
         // Demo things that should be moved to the toy-box.
         demoAddCall: (e: ExprId) => this.replaceAndEdit(e, new E.Call("")),
@@ -389,7 +389,8 @@ class Editor extends Component<EditorProps, EditorState> {
     };
 
     // This seems messy but it's the only way https://github.com/facebook/react/issues/13029
-    private readonly attachRef = (element: HTMLDivElement) => {
+    private readonly attachRef = (element: HTMLDivElement | null) => {
+        if (element === null) return;
         (this.containerRef as React.MutableRefObject<HTMLDivElement>).current = element;
         const { forwardedRef } = this.props;
         if (typeof forwardedRef === "function") {

@@ -4,7 +4,7 @@ import { AiOutlinePlusCircle } from "react-icons/ai";
 
 import { SubtleButton, Shortcut, Box, Stack } from "components";
 import Menu, { MenuTextWrapper } from "components/menu";
-import useSuggestions from "suggestions";
+import useSuggestions from "hooks/suggestions";
 import { Workspace } from "contexts/workspace";
 import { assertSome } from "utils";
 
