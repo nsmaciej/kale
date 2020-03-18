@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useLayoutEffect } from "react";
 import styled from "styled-components";
 
 import { Shortcut } from "components";
 import { Optional, mod, assert, delay } from "utils";
 import { Offset } from "geometry";
 import Menu, { MenuItem } from "components/menu";
+import { useDisableScrolling } from "hooks";
 
 const ContextMenuSeparator = styled.div`
     height: 1px;
@@ -36,6 +37,7 @@ interface ContextMenuProps {
 
 export default function ContextMenu({ items, origin, dismissMenu }: ContextMenuProps) {
     assert(items.length > 0);
+    useDisableScrolling();
     const [selection, setSelection] = useState(null as Optional<number>);
     const [blinking, setBlinking] = useState(false);
 
