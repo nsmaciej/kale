@@ -145,7 +145,7 @@ class Editor extends Component<EditorProps, EditorState> {
     private selectAndInsertAsSiblingOf(sibling: ExprId, toInsert: Expr, right: boolean): void {
         this.selectExpr(toInsert.id);
         this.update(null, mainExpr => {
-            const parent = this.expr.parentOf(sibling);
+            const parent = mainExpr.parentOf(sibling);
             if (parent == null) {
                 return new E.List(right ? [mainExpr, toInsert] : [toInsert, mainExpr]);
             } else if (parent.hasChildren()) {
