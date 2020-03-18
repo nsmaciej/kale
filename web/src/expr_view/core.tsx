@@ -62,7 +62,6 @@ export class Layout {
         layout.underlines = [];
         layout.isUnderlined = false;
         layout.inline = false;
-        layout.text = null;
         return layout;
     }
 

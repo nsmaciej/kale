@@ -2,7 +2,7 @@ import React, { PureComponent } from "react";
 import { motion } from "framer-motion";
 
 import { Optional, assert, assertSome } from "utils";
-import { Offset, Rect } from "geometry";
+import { Offset, Rect, Size } from "geometry";
 import Expr, { ExprId } from "expr";
 import * as E from "expr";
 import { KaleTheme } from "theme";
@@ -11,7 +11,7 @@ import ContextMenu, { ContextMenuItem } from "components/context_menu";
 
 import { Area, TextProperties } from "expr_view/core";
 import { layoutExpr } from "expr_view/layout";
-import { SvgGroup } from "expr_view/components";
+import { SvgGroup, SvgRect } from "expr_view/components";
 
 export interface ExprArea {
     inline: boolean;
@@ -65,6 +65,8 @@ interface ExprViewProps {
 interface ExprViewState {
     highlight: Optional<ExprId>;
     showingMenu: Optional<{ menu: ContextMenuItem[]; at: Offset }>;
+    // You can trigger this with the React Dev Tools.
+    debugShowAreas: boolean;
 }
 
 // This needs to be a class component so we can nicely pass it to the layout helper.
@@ -72,11 +74,40 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
     static contextType = DragAndDrop;
     declare context: React.ContextType<typeof DragAndDrop>;
 
-    state: ExprViewState = { highlight: null, showingMenu: null };
+    state: ExprViewState = { highlight: null, showingMenu: null, debugShowAreas: false };
     private pendingExprAreaMap: ExprAreaMap = {};
 
     get theme() {
         return this.props.theme;
+    }
+
+    private debugRenderAreas(areas: ExprAreaMap) {
+        const exprs = Object.entries(areas).map(([k, v]) => (
+            <SvgRect
+                key={`e${k}`}
+                rect={v.rect}
+                fill="none"
+                stroke={v.inline ? "blue" : "red"}
+                opacity="0.7"
+            />
+        ));
+        const texts = Object.entries(areas)
+            .filter(x => x[1].textProps != null)
+            .map(([k, v]) => (
+                <SvgRect
+                    key={`t${k}`}
+                    rect={
+                        new Rect(
+                            v.rect.origin.add(v.textProps?.offset ?? new Offset(0)),
+                            new Size(5),
+                        )
+                    }
+                    fill="limegreen"
+                    stroke="none"
+                    opacity="0.7"
+                />
+            ));
+        return exprs.concat(texts);
     }
 
     private drawRect(exprId: Optional<ExprId>, isSelection: boolean, areas: ExprAreaMap) {
@@ -253,6 +284,7 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
                 >
                     {layers}
                     <SvgGroup translate={padding.topLeft}>{nodes}</SvgGroup>
+                    {this.state.debugShowAreas && this.debugRenderAreas(this.pendingExprAreaMap)}
                 </svg>
                 {this.state.showingMenu && (
                     <ContextMenu
