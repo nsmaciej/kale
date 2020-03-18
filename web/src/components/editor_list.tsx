@@ -1,4 +1,4 @@
-import React, { useContext, RefObject } from "react";
+import React, { useContext } from "react";
 import styled from "styled-components";
 import { motion, AnimatePresence } from "framer-motion";
 import { AiOutlineCloseCircle, AiOutlinePlayCircle } from "react-icons/ai";
@@ -8,6 +8,7 @@ import Minimap, { MinimapProps } from "components/minimap";
 import EditorWrapper from "editor";
 import { assertSome } from "utils";
 import { Debugger } from "contexts/debugger";
+import { OpenedEditor } from "hooks/editor_stack";
 
 const EditorHeading = styled.h2`
     ${EditorHeadingStyle}
@@ -27,14 +28,9 @@ const EditorHeader = styled(Stack).attrs({ gap: 5 })`
     }
 `;
 
-export interface OpenedEditor {
-    key: number;
-    name: string;
-    ref: RefObject<HTMLDivElement>;
-}
-
 interface EditorListProps extends MinimapProps {
     editors: readonly OpenedEditor[];
+    editorRefs: ReadonlyMap<number, React.MutableRefObject<HTMLDivElement>>;
     onCloseEditor(index: number): void;
     onOpenEditor(index: number, name: string): void;
     onChangeFocus(index: number | null): void;
@@ -43,6 +39,7 @@ interface EditorListProps extends MinimapProps {
 export default function EditorStack({
     focused,
     editors,
+    editorRefs,
     onCloseEditor,
     onOpenEditor,
     onChangeFocus,
@@ -74,7 +71,7 @@ export default function EditorStack({
                     <EditorWrapper
                         functionName={editor.name}
                         onOpenEditor={name => onOpenEditor(i, name)}
-                        ref={editor.ref}
+                        ref={editorRefs.get(editor.key)}
                         // It's proably easiest to just create a new editor for each function.
                         key={editor.name}
                     />
@@ -86,7 +83,7 @@ export default function EditorStack({
     function focus(e: React.FocusEvent) {
         // Check if focused landed on of the editors.
         editors.forEach((editor, i) => {
-            if (editor.ref.current === e.target) onChangeFocus(i);
+            if (editorRefs.get(editor.key)?.current === e.target) onChangeFocus(i);
         });
     }
 

@@ -1,4 +1,4 @@
-import React, { useState, useLayoutEffect } from "react";
+import React, { useState } from "react";
 import styled from "styled-components";
 
 import { Shortcut } from "components";

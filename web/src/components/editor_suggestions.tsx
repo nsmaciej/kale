@@ -54,6 +54,7 @@ export default React.forwardRef(function EditorSuggestions(
     }
 
     function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+        e.stopPropagation();
         if (e.key === "Enter") {
             selectCurrent();
         } else if (e.key === "ArrowDown") {
@@ -64,7 +65,6 @@ export default React.forwardRef(function EditorSuggestions(
             return;
         }
         e.preventDefault();
-        e.stopPropagation();
     }
 
     function onChange(e: React.ChangeEvent<HTMLInputElement>) {

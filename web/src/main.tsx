@@ -96,6 +96,7 @@ function Kale() {
     const functionSearchRef = useRef<HTMLInputElement>(null);
     const {
         focus,
+        refs,
         stack,
         focusEditor,
         createEditor,
@@ -125,11 +126,13 @@ function Kale() {
         event.stopPropagation();
     }
 
+    // Beware, focus logic relies on being cosistant, if for any reason the focus state
+    // does not match the element being focused, a horrible infinite loop might occur.
     useEffect(() => {
         if (focus != null) {
-            stack[focus]?.ref.current?.focus();
+            refs.get(stack[focus].key)?.current?.focus();
         }
-    }, [focus, stack]);
+    }, [focus, stack, refs]);
 
     return (
         <Container onKeyDown={keyDown}>
@@ -153,6 +156,7 @@ function Kale() {
             <ToyBox />
             <EditorList
                 editors={stack}
+                editorRefs={refs}
                 focused={focus}
                 onChangeFocus={focusEditor}
                 onCloseEditor={closeEditor}

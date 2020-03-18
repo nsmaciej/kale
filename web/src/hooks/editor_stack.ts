@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import { useState } from "react";
 
 import { removeIndex, mod } from "utils";
-import { OpenedEditor } from "components/editor_list";
 import produce from "immer";
+import { useRefMap } from "hooks";
 
 function findNearestIndex<T>(
     list: readonly T[],
@@ -20,8 +20,15 @@ function findNearestIndex<T>(
 
 let GlobalEditorId = 1;
 
+export type EditorKey = number;
+
+export interface OpenedEditor {
+    key: EditorKey;
+    name: string;
+}
+
 interface EditorStack {
-    jumpList: readonly number[];
+    jumpList: readonly EditorKey[];
     stack: readonly OpenedEditor[];
     focus: number | null;
 }
@@ -41,9 +48,9 @@ function focusEditor(state: EditorStack, index: number | null): EditorStack {
 
 function createAndFocusEditor(state: EditorStack, name: string): EditorStack {
     const updated = produce(state, draft => {
-        draft.stack.push({ name, key: GlobalEditorId++, ref: React.createRef() });
+        draft.stack.unshift({ name, key: GlobalEditorId++ });
     });
-    return focusEditor(updated, updated.stack.length - 1);
+    return focusEditor(updated, 0);
 }
 
 function jumpBack(state: EditorStack) {
@@ -79,15 +86,19 @@ export default function useEditorStack() {
     const [editors, setEditors] = useState<EditorStack>(() => ({
         jumpList: [],
         stack: [
-            { name: "Hello-World", key: GlobalEditorId++, ref: React.createRef() },
-            { name: "Sample-1", key: GlobalEditorId++, ref: React.createRef() },
-            { name: "Sample-2", key: GlobalEditorId++, ref: React.createRef() },
+            { name: "Hello-World", key: GlobalEditorId++ },
+            { name: "Sample-1", key: GlobalEditorId++ },
+            { name: "Sample-2", key: GlobalEditorId++ },
         ],
         focus: 0,
     }));
+    // This is needed because React freezes the state, so it cannot contain refs. This hooks simply
+    // syncs a map of refs with the existing editor-stack keys.
+    const refs = useRefMap<EditorKey, HTMLDivElement>(editors.stack.map(x => x.key));
 
     return {
         ...editors,
+        refs,
         createEditor(name: string) {
             setEditors(state => createAndFocusEditor(state, name));
         },

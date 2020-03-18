@@ -35,6 +35,7 @@
     "rules": {
         "react-hooks/rules-of-hooks": "error",
         "react-hooks/exhaustive-deps": "error",
+        "react/prop-types": "off", // Doesn't work too well with TypeScript.
 
         "curly": ["error", "multi-line", "consistent"],
         "eqeqeq": ["error", "always", { "null": "ignore" }],
