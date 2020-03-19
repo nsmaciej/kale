@@ -93,6 +93,8 @@ const MainHeading = styled.h1`
 `;
 
 function Kale() {
+    // eslint-disable-next-line no-console
+    console.log("Rendering everything");
     const functionSearchRef = useRef<HTMLInputElement>(null);
     const {
         focus,

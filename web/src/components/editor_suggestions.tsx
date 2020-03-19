@@ -1,12 +1,10 @@
-import React, { useState, useContext, Ref } from "react";
+import React, { useState, Ref } from "react";
 import styled from "styled-components";
 import { AiOutlinePlusCircle } from "react-icons/ai";
 
 import { SubtleButton, Shortcut, Box, Stack } from "components";
 import Menu, { MenuTextWrapper } from "components/menu";
 import useSuggestions from "hooks/suggestions";
-import { Workspace } from "contexts/workspace";
-import { assertSome } from "utils";
 
 const inputWidthPx = 400;
 
@@ -34,13 +32,11 @@ export default React.forwardRef(function EditorSuggestions(
 ) {
     const [value, setValue] = useState("");
     const [hasFocus, setHasFocus] = useState(false);
-    const { ensureExists } = assertSome(useContext(Workspace));
     const { setSelection, selection, suggestions, moveSelection } = useSuggestions(value, {
         showValue: true,
     });
 
     function selectEditor(name: string) {
-        ensureExists(name);
         onOpenEditor(name);
         setValue("");
         setSelection(0);

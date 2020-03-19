@@ -1,8 +1,10 @@
-import { useState } from "react";
-
-import { removeIndex, mod } from "utils";
+import { useState, useContext } from "react";
 import produce from "immer";
+
+import { removeIndex, mod, assertSome } from "utils";
 import { useRefMap } from "hooks";
+import { builtinFunctions } from "vm/interpreter";
+import { Workspace } from "contexts/workspace";
 
 function findNearestIndex<T>(
     list: readonly T[],
@@ -23,6 +25,7 @@ let GlobalEditorId = 1;
 export type EditorKey = number;
 
 export interface OpenedEditor {
+    type: "builtin" | "user";
     key: EditorKey;
     name: string;
 }
@@ -48,7 +51,11 @@ function focusEditor(state: EditorStack, index: number | null): EditorStack {
 
 function createAndFocusEditor(state: EditorStack, name: string): EditorStack {
     const updated = produce(state, draft => {
-        draft.stack.unshift({ name, key: GlobalEditorId++ });
+        draft.stack.unshift({
+            name,
+            key: GlobalEditorId++,
+            type: builtinFunctions.has(name) ? "builtin" : "user",
+        });
     });
     return focusEditor(updated, 0);
 }
@@ -82,13 +89,15 @@ function moveFocus(state: EditorStack, move: 1 | -1) {
     });
 }
 
+//TODO: This hook's function change like crazy with focus, re-rendering the whole app. Fix it.
 export default function useEditorStack() {
+    const workspace = assertSome(useContext(Workspace));
     const [editors, setEditors] = useState<EditorStack>(() => ({
         jumpList: [],
         stack: [
-            { name: "Hello-World", key: GlobalEditorId++ },
-            { name: "Sample-1", key: GlobalEditorId++ },
-            { name: "Sample-2", key: GlobalEditorId++ },
+            { name: "Hello-World", key: GlobalEditorId++, type: "user" },
+            { name: "Sample-1", key: GlobalEditorId++, type: "user" },
+            { name: "Sample-2", key: GlobalEditorId++, type: "user" },
         ],
         focus: 0,
     }));
@@ -100,14 +109,19 @@ export default function useEditorStack() {
         ...editors,
         refs,
         createEditor(name: string) {
-            setEditors(state => createAndFocusEditor(state, name));
+            setEditors(state => {
+                workspace.ensureExists(name);
+                return createAndFocusEditor(state, name);
+            });
         },
         openEditor(index: number, name: string) {
             setEditors(state => {
                 const existing = findNearestIndex(state.stack, index, x => x.name === name);
-                return existing == null
-                    ? createAndFocusEditor(state, name)
-                    : focusEditor(state, existing);
+                if (existing == null) {
+                    workspace.ensureExists(name);
+                    return createAndFocusEditor(state, name);
+                }
+                return focusEditor(state, existing);
             });
         },
         closeEditor(index: number) {

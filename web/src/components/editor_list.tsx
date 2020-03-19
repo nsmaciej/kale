@@ -23,9 +23,10 @@ const EditorHeader = styled(Stack).attrs({ gap: 5 })`
     border-bottom: 1px solid ${p => p.theme.colour.grey};
     align-items: center;
     z-index: 50;
-    & > *:last-child {
-        margin-left: auto;
-    }
+`;
+
+const RightGroup = styled.div`
+    margin-left: auto;
 `;
 
 interface EditorListProps extends MinimapProps {
@@ -45,8 +46,7 @@ export default function EditorStack({
     onChangeFocus,
 }: EditorListProps) {
     const dbg = assertSome(useContext(Debugger));
-
-    function renderEditor(editor: OpenedEditor, i: number) {
+    function renderSection(editor: OpenedEditor, i: number) {
         return (
             <motion.div
                 key={editor.key}
@@ -60,21 +60,29 @@ export default function EditorStack({
                     <IconButton onClick={() => onCloseEditor(i)}>
                         <AiOutlineCloseCircle />
                     </IconButton>
-                    <IconButton
-                        onClick={() => dbg.evalFunction(editor.name)}
-                        disabled={dbg.interpreter != null}
-                    >
-                        <AiOutlinePlayCircle />
-                    </IconButton>
+                    <RightGroup>
+                        {editor.type === "user" && (
+                            <IconButton
+                                onClick={() => dbg.evalFunction(editor.name)}
+                                disabled={dbg.interpreter != null}
+                            >
+                                <AiOutlinePlayCircle />
+                            </IconButton>
+                        )}
+                    </RightGroup>
                 </EditorHeader>
                 <Box marginTop={10} marginBottom={20} overflowX="auto">
-                    <EditorWrapper
-                        functionName={editor.name}
-                        onOpenEditor={name => onOpenEditor(i, name)}
-                        ref={editorRefs.get(editor.key)}
-                        // It's proably easiest to just create a new editor for each function.
-                        key={editor.name}
-                    />
+                    {editor.type === "builtin" ? (
+                        <p>{editor.name} is a builtin function.</p>
+                    ) : (
+                        <EditorWrapper
+                            functionName={editor.name}
+                            onOpenEditor={name => onOpenEditor(i, name)}
+                            ref={editorRefs.get(editor.key)}
+                            // It's proably easiest to just create a new editor for each function.
+                            key={editor.name}
+                        />
+                    )}
                 </Box>
             </motion.div>
         );
@@ -100,10 +108,14 @@ export default function EditorStack({
         >
             <Stack vertical overflowX="hidden" flex="auto">
                 {editors.length === 0 && <NonIdealText>No editors open</NonIdealText>}
-                <AnimatePresence>{editors.map(renderEditor)}</AnimatePresence>
+                <AnimatePresence>{editors.map(renderSection)}</AnimatePresence>
             </Stack>
             <Box top={0} position="sticky" flex="none">
-                <Minimap editors={editors} focused={focused} onChangeFocus={onChangeFocus} />
+                <Minimap
+                    editors={editors.filter(x => x.type === "user")}
+                    focused={focused}
+                    onChangeFocus={onChangeFocus}
+                />
             </Box>
         </Stack>
     );

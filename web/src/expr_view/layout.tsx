@@ -252,7 +252,7 @@ class ExprLayout implements ExprVisitor<Layout> {
         const { x, y, width, height } = rect;
         const layout = new Layout(
             (
-                <g {...this.exprProps(expr)}>
+                <g {...this.exprProps(expr)} key="0">
                     <motion.rect
                         {...{ width, height, x, y }}
                         animate={{

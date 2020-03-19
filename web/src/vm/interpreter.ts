@@ -13,6 +13,7 @@ import {
     assertBoolean,
     assertBuiltin,
 } from "vm/types";
+import Builtins from "vm/builtins";
 
 interface InterpreterCallbacks {
     onBreakpoint(continueEval: () => void): void;
@@ -58,6 +59,7 @@ const specials: {
     },
 };
 
+export const builtinFunctions = new Set(Object.keys(Builtins)) as ReadonlySet<string>;
 export const specialFunctions = new Set(Object.keys(specials)) as ReadonlySet<string>;
 
 export default class Interpreter {
