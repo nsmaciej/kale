@@ -6,6 +6,7 @@ import TextMetrics from "text_metrics";
 import { ExprArea } from "expr_view";
 import useSuggestions from "hooks/suggestions";
 import Menu from "components/menu";
+import { useDisableScrolling } from "hooks";
 
 const Container = styled.div`
     position: absolute;
@@ -37,6 +38,7 @@ export default function InlineEditor({
     onSubmit,
     onDismiss,
 }: InlineEditorProps) {
+    useDisableScrolling();
     const { setSelection, selection, suggestions, moveSelection } = useSuggestions(value, {
         showSpecials: true,
         disable: disableSuggestions,

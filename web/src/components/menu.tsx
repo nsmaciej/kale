@@ -9,7 +9,7 @@ const MenuPopover = styled.div<{ subtle: boolean }>`
     box-shadow: 0 0 0 1px #10161a1a, 0 2px 4px #10161a33, 0 8px 24px #10161a33;
     ${p => !p.subtle && "padding: 6px 0"};
     z-index: 1000;
-    position: absolute;
+    position: fixed;
     overflow: auto;
 `;
 
