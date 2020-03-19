@@ -123,6 +123,22 @@ export class Padding {
 
 export class Rect {
     constructor(readonly origin: Offset, readonly size: Size) {}
+
+    /** Construct a new Rect from something like DOMRect */
+    static fromBoundingRect({
+        left,
+        top,
+        width,
+        height,
+    }: {
+        width: number;
+        height: number;
+        left: number;
+        top: number;
+    }) {
+        return new Rect(new Offset(left, top), new Size(width, height));
+    }
+
     get x() {
         return this.origin.x;
     }

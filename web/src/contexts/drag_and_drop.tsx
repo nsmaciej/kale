@@ -9,16 +9,20 @@ import Expr from "expr";
 import layoutExpr from "expr_view/layout";
 import { SvgGroup } from "expr_view/components";
 
-interface DragAndDropSurfaceContext {
+type Listener = (point: Offset | null) => void;
+
+export interface DragAndDropValue {
     maybeStartDrag(start: Offset, exprStart: Offset, expr: Expr): void;
     dismissDrag(): void;
+    addListener(listener: Listener): void;
+    removeListener(listener: Listener): void;
 }
 
 interface DragAndDropSurfaceState {
     position: Optional<Offset>;
 }
 
-export const DragAndDrop = React.createContext<Optional<DragAndDropSurfaceContext>>(null);
+export const DragAndDrop = React.createContext<Optional<DragAndDropValue>>(null);
 
 // There are three states to a drag.
 // 1. Not dragging - drag and state.position is null.
@@ -34,10 +38,6 @@ export default class DragAndDropSurface extends Component<{}, DragAndDropSurface
     `;
     state: DragAndDropSurfaceState = { position: null };
 
-    private readonly contextValue: DragAndDropSurfaceContext = {
-        dismissDrag: this.dismissDrag.bind(this),
-        maybeStartDrag: this.maybeStartDrag.bind(this),
-    };
     private drag: Optional<{
         start: Offset; // Where the maybe-drag started.
         delta: Optional<Offset>; // How much to offset the expr when showing the drag.
@@ -45,15 +45,16 @@ export default class DragAndDropSurface extends Component<{}, DragAndDropSurface
         expr: Expr;
     }>;
 
-    private maybeStartDrag(start: Offset, exprStart: Offset, expr: Expr) {
-        this.drag = { start, expr, exprStart, delta: null };
-    }
+    private readonly listeners = new Set<Listener>();
 
-    private dismissDrag() {
+    private readonly dismissDrag = () => {
         this.drag = null;
         // Premature optimisation. This method is called on every other mouse move.
-        if (this.state.position != null) this.setState({ position: null });
-    }
+        if (this.state.position != null) {
+            this.listeners.forEach(f => f(null));
+            this.setState({ position: null });
+        }
+    };
 
     private readonly onMouseMove = (event: MouseEvent) => {
         // Ensure left mouse button is held down.
@@ -73,6 +74,8 @@ export default class DragAndDropSurface extends Component<{}, DragAndDropSurface
         } else {
             // Update a drag.
             this.setState({ position });
+            const exprCorner = position.add(this.drag.delta);
+            this.listeners.forEach(f => f(exprCorner));
         }
     };
 
@@ -90,6 +93,19 @@ export default class DragAndDropSurface extends Component<{}, DragAndDropSurface
             </ThemeConsumer>
         );
     }
+
+    private readonly contextValue: DragAndDropValue = {
+        dismissDrag: this.dismissDrag,
+        maybeStartDrag: (start: Offset, exprStart: Offset, expr: Expr) => {
+            this.drag = { start, expr, exprStart, delta: null };
+        },
+        addListener: (listener: Listener) => {
+            this.listeners.add(listener);
+        },
+        removeListener: (listener: Listener) => {
+            this.listeners.delete(listener);
+        },
+    };
 
     render() {
         let surface: React.ReactNode;

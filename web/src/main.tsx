@@ -6,7 +6,7 @@ import styled, { ThemeProvider, StyleSheetManager, createGlobalStyle } from "sty
 
 import { DefaultTheme } from "theme";
 import { Stack, Box } from "components";
-import DragAndDropSurface from "drag_and_drop";
+import DragAndDropSurface from "contexts/drag_and_drop";
 import TextMetrics from "text_metrics";
 
 import { ClipboardProvider } from "contexts/clipboard";

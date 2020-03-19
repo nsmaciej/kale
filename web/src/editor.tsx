@@ -13,17 +13,21 @@ import { specialFunctions } from "vm/interpreter";
 
 import { Clipboard, ClipboardValue } from "contexts/clipboard";
 import { Workspace, WorkspaceValue } from "contexts/workspace";
+import { DragAndDrop, DragAndDropValue } from "contexts/drag_and_drop";
 
 import { ContextMenuItem } from "components/context_menu";
 import InlineEditor from "components/inline_editor";
 import { EditorStackActions } from "hooks/editor_stack";
+import { Offset, Rect } from "geometry";
 
 interface EditorState {
     focused: boolean;
-    selection: ExprId;
-    hoverHighlight: Optional<ExprId>;
     foldingComments: boolean;
     editing: Optional<{ expr: ExprId; created: boolean }>;
+    // Highlights.
+    selection: ExprId;
+    hoverHighlight: Optional<ExprId>;
+    droppable: Optional<ExprId>;
 }
 
 interface EditorWrapperProps {
@@ -35,6 +39,7 @@ interface EditorWrapperProps {
 interface EditorProps extends EditorWrapperProps {
     workspace: WorkspaceValue;
     clipboard: ClipboardValue;
+    dragAndDrop: DragAndDropValue;
     theme: KaleTheme;
     forwardedRef: Ref<HTMLDivElement>;
 }
@@ -44,11 +49,13 @@ class Editor extends PureComponent<EditorProps, EditorState> {
     private readonly exprAreaMapRef = React.createRef<ExprAreaMap>();
 
     state: EditorState = {
-        selection: this.expr.id,
-        hoverHighlight: null,
         focused: false,
         foldingComments: false,
         editing: null,
+        // Highlights.
+        selection: this.expr.id,
+        hoverHighlight: null,
+        droppable: null,
     };
 
     private get expr(): Expr {
@@ -434,6 +441,31 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         }
     };
 
+    private readonly dragAndDropUpdate = (point: Offset | null) => {
+        if (this.containerRef.current === null) return;
+        const editorRect = Rect.fromBoundingRect(this.containerRef.current.getBoundingClientRect());
+        const dropTarget = this.expr.id;
+        this.setState(state => {
+            if (point !== null && editorRect.contains(point)) {
+                if (state.droppable == null || state.droppable !== dropTarget) {
+                    return { ...state, droppable: dropTarget };
+                }
+            } else {
+                if (state.droppable != null) {
+                    return { ...state, droppable: null };
+                }
+            }
+            return state;
+        });
+    };
+
+    componentDidMount() {
+        this.props.dragAndDrop.addListener(this.dragAndDropUpdate);
+    }
+    componentWillUnmount() {
+        this.props.dragAndDrop.removeListener(this.dragAndDropUpdate);
+    }
+
     componentDidUpdate(prevProps: EditorProps, prevState: EditorState) {
         assert(
             prevProps.functionName === this.props.functionName,
@@ -498,12 +530,15 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         const highlights: [ExprId, Highlight][] = [];
         const hl = this.props.theme.highlight;
         // Highlights pushed later have higher priority.
-        if (this.state.hoverHighlight) {
+        if (this.state.hoverHighlight != null) {
             highlights.push([this.state.hoverHighlight, hl.hover]);
         }
         // Preferablly this would be above the hover-highlight, but the blank hover-highlight has a
         // solid background, which would cover the blue-selection effect.
         highlights.push([this.state.selection, hl.selection]);
+        if (this.state.droppable != null) {
+            highlights.push([this.state.droppable, hl.droppable]);
+        }
 
         // Sort the highlights by their containment.
         const lut: { [id in ExprId]: Expr } = {};
@@ -561,6 +596,7 @@ export default React.forwardRef(function EditorWrapper(
             {...props}
             workspace={assertSome(useContext(Workspace))}
             clipboard={assertSome(useContext(Clipboard))}
+            dragAndDrop={assertSome(useContext(DragAndDrop))}
             theme={assertSome(useTheme())}
             forwardedRef={ref}
         />

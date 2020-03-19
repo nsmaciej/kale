@@ -1,4 +1,4 @@
-import { useReducer } from "react";
+import { useReducer, useEffect } from "react";
 import produce from "immer";
 
 import { removeIndex, mod, createReducer, findNearestIndex } from "utils";
@@ -113,6 +113,8 @@ export default function useEditorStack() {
         stack: [],
         focus: null,
     });
+    // Makes it easier to test.
+    useEffect(() => dispatch({ type: "createEditor", name: "Hello-World" }), []);
     // This is needed because React freezes the state, so it cannot contain refs. This hooks simply
     // syncs a map of refs with the existing editor-stack keys.
     const refs = useRefMap<EditorKey, HTMLDivElement>(state.stack.map(x => x.key));

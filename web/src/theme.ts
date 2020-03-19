@@ -104,6 +104,7 @@ export const DefaultTheme = {
         ),
         hover: new Highlight("hover", undefined, "#cecece").blank("#efefef", "#dcdcdc"),
         contextMenu: new Highlight("context", undefined, "#0000ff").withStrokeWidth(1),
+        droppable: new Highlight("droppable", "green", "lime"),
     },
 
     createCircle: {

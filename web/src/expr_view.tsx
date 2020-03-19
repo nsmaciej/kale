@@ -6,7 +6,7 @@ import { Offset, Rect, Size } from "geometry";
 import Expr, { ExprId } from "expr";
 import * as E from "expr";
 import { KaleTheme, Highlight } from "theme";
-import { DragAndDrop } from "drag_and_drop";
+import { DragAndDrop } from "contexts/drag_and_drop";
 import ContextMenu, { ContextMenuItem } from "components/context_menu";
 
 import { Area, TextProperties } from "expr_view/core";
