@@ -13,7 +13,7 @@ export function useDebounce<T>(value: T, delayMs: number): T {
     return debouncedValue;
 }
 
-export function useDisableScrolling() {
+export function useDisableScrolling(): void {
     useLayoutEffect(() => {
         const preventDefault = (e: Event) => e.preventDefault();
         window.addEventListener("wheel", preventDefault, { passive: false });

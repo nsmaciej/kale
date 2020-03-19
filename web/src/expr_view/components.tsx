@@ -11,10 +11,7 @@ type CustomSvgProps<Element, CustomProps> = CustomProps &
 export function SvgGroup({
     children,
     translate = Offset.zero,
-}: {
-    children: ReactNode;
-    translate?: Offset;
-}) {
+}: CustomSvgProps<SVGGElement, { translate?: Offset }>) {
     return (
         <g transform={`translate(${Math.round(translate.x)} ${Math.round(translate.y)})`}>
             {children}
@@ -31,7 +28,7 @@ export function SvgRect({
     rect: { x, y, width, height },
     children,
     ...props
-}: CustomSvgProps<SVGRectElement, { rect: Rect }> & { children?: ReactNode }) {
+}: CustomSvgProps<SVGRectElement, { rect: Rect }>) {
     return (
         <rect {...{ x, y, width, height }} {...props}>
             {children}

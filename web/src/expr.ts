@@ -52,15 +52,19 @@ export default abstract class Expr {
     }
 
     contains(expr: ExprId): boolean {
-        return this.withId(expr) != null;
+        return this.findId(expr) != null;
     }
 
     some(fn: (expr: Expr) => boolean) {
         return this.find(fn) != null;
     }
 
-    // Find a sub-expr with an id.
-    withId(id: ExprId): Optional<Expr> {
+    /** Find the expr with an id, throwing if not found. */
+    get(id: ExprId): Expr {
+        return assertSome(this.findId(id));
+    }
+
+    findId(id: ExprId): Optional<Expr> {
         return this.find(x => x.id === id);
     }
 

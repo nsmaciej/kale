@@ -2,8 +2,8 @@ import React from "react";
 import styled, { useTheme } from "styled-components";
 import { motion } from "framer-motion";
 
-import { KaleTheme } from "theme";
-import { Optional, max } from "utils";
+import { KaleTheme, Highlight } from "theme";
+import { max } from "utils";
 import { Offset, Size, Rect } from "geometry";
 import Expr, { ExprId, ExprVisitor } from "expr";
 import * as E from "expr";
@@ -104,7 +104,7 @@ export interface LayoutProps {
     onClickCreateCircle?(e: React.MouseEvent, expr: Expr): void;
     frozen?: boolean;
     focused?: boolean;
-    selection?: Optional<ExprId>;
+    highlights?: readonly [ExprId, Highlight][];
     foldComments?: boolean;
 }
 
@@ -237,42 +237,35 @@ class ExprLayout implements ExprVisitor<Layout> {
             colour: this.t.blank.textColour,
             offset: padding.topLeft,
         });
+
+        let highlight = this.t.blank.resting;
+        if (this.props.highlights != null) {
+            for (const [exprId, hl] of this.props.highlights) {
+                if (exprId === expr.id) highlight = hl;
+            }
+        }
+
         let rect = new Rect(Offset.zero, text.size.padding(padding));
         if (rect.width < rect.height) {
             rect = rect.withSize(new Size(rect.height)); // Make the pill square.
         }
         const { x, y, width, height } = rect;
-        const selected = this.props.selection === expr.id;
-        const pill = (mouseOver: boolean) => {
-            const highlight = selected
-                ? this.t.highlight.selection
-                : mouseOver && !this.props.frozen
-                ? this.t.blank.hover
-                : this.t.blank.highlight;
-            return (
-                <motion.rect
-                    {...{ width, height, x, y }}
-                    animate={{
-                        // Here we recreate the selection rect colouring logic.
-                        fill: highlight.fill(this.props.focused === true),
-                    }}
-                    initial={false}
-                    rx={rect.height / 2}
-                    strokeWidth={1}
-                    stroke={highlight.stroke(this.props.focused === true)}
-                />
-            );
-        };
         const layout = new Layout(
             (
-                <HoverHitBox area={rect} {...this.exprProps(expr)} key={0}>
-                    {mouseOver => (
-                        <>
-                            {pill(mouseOver)}
-                            {text.nodes}
-                        </>
-                    )}
-                </HoverHitBox>
+                <g {...this.exprProps(expr)}>
+                    <motion.rect
+                        {...{ width, height, x, y }}
+                        animate={{
+                            // Here we recreate the selection rect colouring logic.
+                            fill: highlight.blankFill(this.props.focused === true),
+                        }}
+                        initial={false}
+                        rx={rect.height / 2}
+                        strokeWidth={highlight.strokeWidth}
+                        stroke={highlight.blankStroke(this.props.focused === true)}
+                    />
+                    {text.nodes}
+                </g>
             ),
             rect.size,
         );

@@ -5,7 +5,7 @@ import { Optional, assert, assertSome } from "utils";
 import { Offset, Rect, Size } from "geometry";
 import Expr, { ExprId } from "expr";
 import * as E from "expr";
-import { KaleTheme } from "theme";
+import { KaleTheme, Highlight } from "theme";
 import { DragAndDrop } from "drag_and_drop";
 import ContextMenu, { ContextMenuItem } from "components/context_menu";
 
@@ -43,6 +43,7 @@ interface ExprViewProps {
 
     // Callbacks.
     onClick?(expr: ExprId): void;
+    onHover?(expr: Optional<ExprId>): void;
     onDoubleClick?(expr: ExprId): void;
     onClickCreateCircle?(expr: ExprId): void;
     // The expr has been focused on.
@@ -59,12 +60,11 @@ interface ExprViewProps {
 
     //TODO: Handle these in the generalised selection mechanism.
     focused?: boolean;
-    selection?: Optional<ExprId>;
+    highlights?: readonly [ExprId, Highlight][];
 }
 
 interface ExprViewState {
-    highlight: Optional<ExprId>;
-    showingMenu: Optional<{ menu: ContextMenuItem[]; at: Offset }>;
+    showingMenu: Optional<{ menu: ContextMenuItem[]; at: Offset; expr: ExprId }>;
     // You can trigger this with the React Dev Tools.
     debugShowAreas: boolean;
 }
@@ -74,7 +74,7 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
     static contextType = DragAndDrop;
     declare context: React.ContextType<typeof DragAndDrop>;
 
-    state: ExprViewState = { highlight: null, showingMenu: null, debugShowAreas: false };
+    state: ExprViewState = { showingMenu: null, debugShowAreas: false };
     private pendingExprAreaMap: ExprAreaMap = {};
 
     get theme() {
@@ -110,19 +110,15 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
         return exprs.concat(texts);
     }
 
-    private drawRect(exprId: Optional<ExprId>, isSelection: boolean, areas: ExprAreaMap) {
-        // This is blindly called each render, so we mightn't have areas.
-        if (exprId == null || areas[exprId] == null) return;
-        if (!isSelection && !this.props.focused) return;
-        //TODO: Make this dynamic, we need less padding if there are no underlines.
-        const rect = assertSome(areas[exprId].rect).padding(
+    private drawRect(exprId: ExprId, highlight: Highlight, areas: ExprAreaMap) {
+        if (areas[exprId] == null) return;
+        const rect = areas[exprId].rect.padding(
             this.props.expr.id === exprId
                 ? this.theme.highlight.mainPadding
                 : this.theme.highlight.padding,
         );
-
-        const isHole = this.props.expr.withId(exprId) instanceof E.Blank;
-        const highlight = isSelection ? this.theme.highlight.selection : this.theme.highlight.hover;
+        // Hack: Blanks draw their own highlights.
+        const isBlank = this.props.expr.findId(exprId) instanceof E.Blank;
         return (
             <motion.rect
                 animate={{
@@ -130,15 +126,15 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
                     y: rect.y,
                     width: rect.width,
                     height: rect.height,
-                    opacity: isHole ? 0 : 1, // +!isHole
+                    opacity: isBlank ? 0 : 1, // +!isBlank
                 }}
-                key={+isSelection}
+                key={`highlight-${highlight.name}`}
                 rx={this.theme.highlight.radius}
-                fill={highlight.fill(this.props.focused === true)}
-                stroke={highlight.stroke(this.props.focused === true)}
+                fill={highlight.fill(this.props.focused === true) ?? "none"}
+                stroke={highlight.stroke(this.props.focused === true) ?? "none"}
                 initial={false}
-                strokeWidth={0.5}
-                transition={{ type: "tween", ease: "easeIn", duration: 0.1 }}
+                strokeWidth={highlight.strokeWidth}
+                transition={{ type: "tween", ease: "easeIn", duration: 0.08 }}
             />
         );
     }
@@ -167,14 +163,17 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
             showingMenu: {
                 at: Offset.fromPage(e),
                 menu: this.props.contextMenuFor?.(expr.id),
+                expr: expr.id,
             },
         });
     }
 
     // Change the highlighted expr.
     private onHoverExpr(event: React.MouseEvent, expr: Optional<Expr>) {
-        event.stopPropagation();
-        if (!this.props.frozen) this.setState({ highlight: expr?.id });
+        if (this.props.onHover != null) {
+            event.stopPropagation();
+            this.props.onHover(expr?.id);
+        }
     }
 
     private readonly exprPropsFor = (expr: Expr): Partial<React.DOMAttributes<Element>> => ({
@@ -190,13 +189,13 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
         onDoubleClick: e => {
             if (this.props.onDoubleClick != null) {
                 e.stopPropagation();
-                this.props.onDoubleClick?.(expr.id);
+                this.props.onDoubleClick(expr.id);
             }
         },
         onClick: e => {
             if (this.props.onClick != null) {
                 e.stopPropagation();
-                this.props.onClick?.(expr.id);
+                this.props.onClick(expr.id);
             }
         },
     });
@@ -227,13 +226,18 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
     }
 
     render() {
+        const highlights = this.props.highlights?.slice() ?? [];
+        if (this.state.showingMenu != null) {
+            highlights.push([this.state.showingMenu.expr, this.theme.highlight.contextMenu]);
+        }
+
         const { nodes, size, areas, text } = layoutExpr(this.theme, this.props.expr, {
             exprPropsFor: this.exprPropsFor,
             onClickCreateCircle: this.onClickCreateCircle,
             // Passed through props.
             frozen: this.props.frozen,
             focused: this.props.focused,
-            selection: this.props.selection,
+            highlights,
             foldComments: this.props.foldComments,
         });
 
@@ -251,18 +255,12 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
             text,
         });
 
-        // Note: A similar check has to be perfomed in expr_layout for blanks.
-        const highlight = this.props.frozen ? null : this.state.highlight;
-        const selection = this.props.selection;
-        const highlightRect = this.drawRect(highlight, false, this.pendingExprAreaMap);
-        const selectionRect = this.drawRect(selection, true, this.pendingExprAreaMap);
-        const highlightContainsSelection =
-            highlight != null && selection != null
-                ? this.props.expr.withId(highlight)?.contains(selection)
-                : false;
-        const layers = highlightContainsSelection
-            ? [highlightRect, selectionRect]
-            : [selectionRect, highlightRect];
+        const highlightRects = [];
+        if (this.props.highlights != null) {
+            for (const [exprId, highlight] of highlights) {
+                highlightRects.push(this.drawRect(exprId, highlight, this.pendingExprAreaMap));
+            }
+        }
 
         const { width, height } = size.padding(padding);
         const scale = this.props.maxWidth
@@ -282,7 +280,7 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
                     onContextMenu={e => this.props.contextMenuFor && e.preventDefault()}
                     style={{ cursor: "default" }}
                 >
-                    {layers}
+                    {highlightRects}
                     <SvgGroup translate={padding.topLeft}>{nodes}</SvgGroup>
                     {this.state.debugShowAreas && this.debugRenderAreas(this.pendingExprAreaMap)}
                 </svg>

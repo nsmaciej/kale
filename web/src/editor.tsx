@@ -5,8 +5,8 @@ import * as E from "expr";
 import * as Select from "selection";
 import Expr, { ExprId } from "expr";
 import ExprView, { ExprAreaMap } from "expr_view";
-import { Optional, assertSome, reverseObject, assert, insertSibling } from "utils";
-import { KaleTheme } from "theme";
+import { Optional, assertSome, reverseObject, assert, insertSibling, arrayEquals } from "utils";
+import { KaleTheme, Highlight } from "theme";
 
 import { Type, Func, assertFunc } from "vm/types";
 import { specialFunctions } from "vm/interpreter";
@@ -20,6 +20,7 @@ import InlineEditor from "components/inline_editor";
 interface EditorState {
     focused: boolean;
     selection: ExprId;
+    hoverHighlight: Optional<ExprId>;
     foldingComments: boolean;
     editing: Optional<{ expr: ExprId; created: boolean }>;
 }
@@ -42,6 +43,7 @@ class Editor extends Component<EditorProps, EditorState> {
 
     state: EditorState = {
         selection: this.expr.id,
+        hoverHighlight: null,
         focused: false,
         foldingComments: false,
         editing: null,
@@ -64,7 +66,7 @@ class Editor extends Component<EditorProps, EditorState> {
     }
 
     private addToClipboard(expr: ExprId) {
-        const selected = this.expr.withId(expr);
+        const selected = this.expr.findId(expr);
         if (selected) {
             this.props.clipboard.add({ expr: selected, pinned: false });
         }
@@ -79,7 +81,7 @@ class Editor extends Component<EditorProps, EditorState> {
     }
 
     private createInlineEditor(exprId: ExprId, created: boolean) {
-        const expr = this.expr.withId(exprId);
+        const expr = this.expr.findId(exprId);
         // Only things with a value can be edited.
         if (expr != null && expr.value() != null) {
             this.setState({ editing: { expr: exprId, created } });
@@ -91,7 +93,7 @@ class Editor extends Component<EditorProps, EditorState> {
         this.setState({ editing: null }, () => this.focus());
 
         const { expr: exprId, created } = assertSome(this.state.editing);
-        const expr = this.expr.withId(exprId);
+        const expr = this.expr.findId(exprId);
         const value = newValue ?? expr?.value();
         if (!value) {
             // If empty (or null for some reason).
@@ -164,9 +166,14 @@ class Editor extends Component<EditorProps, EditorState> {
     private insertNewLine(target: ExprId, below: boolean): void {
         const toInsert = new E.Blank();
         this.update(null, mainExpr => {
-            const expr = assertSome(mainExpr.withId(target));
+            const expr = assertSome(mainExpr.findId(target));
             const parent = mainExpr.parentOf(target);
-            if (parent instanceof E.List) {
+            if (expr instanceof E.List) {
+                return mainExpr.replace(
+                    expr.id,
+                    expr.updateChildren(xs => (below ? [...xs, toInsert] : [toInsert, ...xs])),
+                );
+            } else if (parent instanceof E.List) {
                 return mainExpr.replace(
                     parent.id,
                     parent.updateChildren(xs =>
@@ -204,7 +211,7 @@ class Editor extends Component<EditorProps, EditorState> {
     }
 
     private readonly smartSpace = (target: ExprId) => {
-        const expr = this.expr.withId(target);
+        const expr = this.expr.findId(target);
         if (expr instanceof E.Call || expr instanceof E.List) {
             const blank = new E.Blank();
             this.insertAsChildOf(target, blank, false);
@@ -239,7 +246,7 @@ class Editor extends Component<EditorProps, EditorState> {
         insertBefore: (e: ExprId) => this.insertBlankAsSiblingOf(e, false),
         foldComments: () => this.setState(state => ({ foldingComments: !state.foldingComments })),
         comment: (e: ExprId) => {
-            const selected = this.expr.withId(e);
+            const selected = this.expr.findId(e);
             if (selected != null) {
                 // Empty string _should_ be null.
                 const comment = prompt("Comment?", selected.data.comment ?? "") || null;
@@ -254,7 +261,7 @@ class Editor extends Component<EditorProps, EditorState> {
         },
         edit: (e: ExprId) => this.startEditing(e),
         openEditor: (e: ExprId) => {
-            const selected = this.expr.withId(e);
+            const selected = this.expr.findId(e);
             if (selected instanceof E.Call) this.props.onOpenEditor(selected.fn);
         },
         newLine: (e: ExprId) => this.insertNewLine(e, true),
@@ -352,7 +359,7 @@ class Editor extends Component<EditorProps, EditorState> {
     // Bound methods.
     private readonly menuKeyEquivalentForAction = reverseObject(this.menuKeyEquivalents);
     contextMenuFor = (exprId: ExprId): ContextMenuItem[] => {
-        const expr = assertSome(this.expr.withId(exprId));
+        const expr = assertSome(this.expr.findId(exprId));
         return this.exprMenu.map((item, i) => ({
             id: item?.action ?? i.toString(),
             label: item?.label,
@@ -385,6 +392,10 @@ class Editor extends Component<EditorProps, EditorState> {
 
     private readonly selectExpr = (selection: ExprId) => {
         this.setState({ selection });
+    };
+
+    private readonly onHover = (hoverHighlight: Optional<ExprId>) => {
+        this.setState({ hoverHighlight });
     };
 
     private readonly startEditing = (expr: ExprId) => {
@@ -425,7 +436,7 @@ class Editor extends Component<EditorProps, EditorState> {
 
         // Maybe we just tried updating the selection to something that doesn't exist. Use the
         // old selection instead.
-        const oldSelection = prevExpr.withId(prevState.selection);
+        const oldSelection = prevExpr.findId(prevState.selection);
         if (oldSelection != null) {
             candidates.push([oldSelection]);
         }
@@ -457,7 +468,7 @@ class Editor extends Component<EditorProps, EditorState> {
     renderInlineEditor() {
         if (this.exprAreaMapRef.current == null || this.state.editing == null) return;
         const exprId = this.state.editing.expr;
-        const expr = assertSome(this.expr.withId(exprId));
+        const expr = assertSome(this.expr.findId(exprId));
         return (
             <InlineEditor
                 exprArea={this.exprAreaMapRef.current[exprId]}
@@ -472,6 +483,32 @@ class Editor extends Component<EditorProps, EditorState> {
         );
     }
 
+    lastHighlights: [ExprId, Highlight][] = [];
+    memoizedHighlights(): [ExprId, Highlight][] {
+        const highlights: [ExprId, Highlight][] = [];
+        const hl = this.props.theme.highlight;
+        // Highlights pushed later have higher priority.
+        if (this.state.hoverHighlight) {
+            highlights.push([this.state.hoverHighlight, hl.hover]);
+        }
+        // Preferablly this would be above the hover-highlight, but the blank hover-highlight has a
+        // solid background, which would cover the blue-selection effect.
+        highlights.push([this.state.selection, hl.selection]);
+
+        // Sort the highlights by their containment.
+        const lut: { [id in ExprId]: Expr } = {};
+        for (const pair of highlights) {
+            lut[pair[0]] = this.expr.get(pair[0]);
+        }
+        highlights.sort((lhs, rhs) => {
+            if (lhs[0] === rhs[0]) return 0;
+            return lut[lhs[0]].contains(rhs[0]) ? -1 : 1;
+        });
+        if (arrayEquals(highlights, this.lastHighlights)) return this.lastHighlights;
+        this.lastHighlights = highlights;
+        return highlights;
+    }
+
     render() {
         return (
             <div
@@ -484,9 +521,9 @@ class Editor extends Component<EditorProps, EditorState> {
                 style={{ position: "relative" }}
             >
                 <ExprView
-                    // This is heavy pure component, don't create new objects.
+                    // This is heavy pure component, don't create new objects here.
                     expr={this.expr}
-                    selection={this.state.selection}
+                    highlights={this.memoizedHighlights()}
                     focused={this.state.focused}
                     foldComments={this.state.foldingComments}
                     theme={this.props.theme}
@@ -494,6 +531,7 @@ class Editor extends Component<EditorProps, EditorState> {
                     // Callbacks.
                     contextMenuFor={this.contextMenuFor}
                     onClick={this.selectExpr}
+                    onHover={this.onHover}
                     onDoubleClick={this.startEditing}
                     onClickCreateCircle={this.createChildBlank}
                     onFocus={this.focus}

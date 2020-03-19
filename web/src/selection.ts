@@ -22,11 +22,11 @@ export const rightSibling: SelectFn = (expr, sel) => {
 };
 
 export const firstChild: SelectFn = (expr, sel) => {
-    return expr.withId(sel)?.children()[0]?.id;
+    return expr.findId(sel)?.children()[0]?.id;
 };
 
 export const lastChild: SelectFn = (expr, sel) => {
-    const children = expr.withId(sel)?.children();
+    const children = expr.findId(sel)?.children();
     if (children == null) return null;
     return children[children.length - 1]?.id;
 };

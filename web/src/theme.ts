@@ -1,25 +1,44 @@
 import { Padding } from "geometry";
 import { assert } from "utils";
 
-export interface Highlight {
-    fill(focused: boolean): string;
-    stroke(focused: boolean): string;
-}
+type HighlightPair = [string | undefined, string | undefined];
 
-export function fillStroke(
-    fill = "none",
-    stroke = "none",
-    blurredFill = fill,
-    blurredStroke = stroke,
-): Highlight {
-    return {
-        fill(focused: boolean) {
-            return focused ? fill : blurredFill;
-        },
-        stroke(focused: boolean) {
-            return focused ? stroke : blurredStroke;
-        },
-    };
+export class Highlight {
+    strokeWidth = 0.5;
+    private readonly focusedPair: HighlightPair;
+    private blurredPair: HighlightPair;
+    private blankPair?: HighlightPair;
+
+    constructor(readonly name: string, fill?: string, stroke?: string) {
+        this.focusedPair = [fill, stroke];
+        this.blurredPair = [fill, stroke];
+    }
+
+    withStrokeWidth(strokeWidth: number): this {
+        this.strokeWidth = strokeWidth;
+        return this;
+    }
+    blurred(fill?: string, stroke?: string): this {
+        this.blurredPair = [fill, stroke];
+        return this;
+    }
+    blank(fill?: string, stroke?: string): this {
+        this.blankPair = [fill, stroke];
+        return this;
+    }
+
+    fill(focused: boolean) {
+        return (focused ? this.focusedPair : this.blurredPair)[0];
+    }
+    stroke(focused: boolean) {
+        return (focused ? this.focusedPair : this.blurredPair)[1];
+    }
+    blankFill(focused: boolean): string | undefined {
+        return this.blankPair?.[0] ?? this.fill(focused);
+    }
+    blankStroke(focused: boolean): string | undefined {
+        return this.blankPair?.[1] ?? this.stroke(focused);
+    }
 }
 
 export const DefaultTheme = {
@@ -71,17 +90,20 @@ export const DefaultTheme = {
 
     blank: {
         padding: new Padding(0, 10),
-        highlight: fillStroke("#f7f7f7", "#dcdcdc"),
-        hover: fillStroke("#efefef", "#dcdcdc"),
         textColour: "#909090",
+        resting: new Highlight("selection", "#f7f7f7", "#dcdcdc"),
     },
 
     highlight: {
         padding: new Padding(3),
         mainPadding: new Padding(3, 20, 3, 3),
         radius: 3,
-        selection: fillStroke("#f5f9ff", "#0000ff", "#fcfdff", "#b8ccff"),
-        hover: fillStroke(undefined, "#cecece"),
+        selection: new Highlight("selection", "#f5f9ff80", "#0000ff").blurred(
+            "#fcfdff80",
+            "#b8ccff",
+        ),
+        hover: new Highlight("hover", undefined, "#cecece").blank("#efefef", "#dcdcdc"),
+        contextMenu: new Highlight("context", undefined, "#0000ff").withStrokeWidth(1),
     },
 
     createCircle: {
