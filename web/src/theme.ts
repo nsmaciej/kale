@@ -80,7 +80,7 @@ export const DefaultTheme = {
         padding: new Padding(3),
         mainPadding: new Padding(3, 20, 3, 3),
         radius: 3,
-        selection: fillStroke("#f2f7ff", "#4375f9", "#fcfdff", "#b8ccff"),
+        selection: fillStroke("#f5f9ff", "#0000ff", "#fcfdff", "#b8ccff"),
         hover: fillStroke(undefined, "#cecece"),
     },
 
