@@ -15,6 +15,7 @@
         "framer-motion": "^1.8.4",
         "fuse.js": "^4.0.4-beta",
         "immer": "^6.0.1",
+        "memoize-one": "^5.1.1",
         "react": "^16.13.0",
         "react-dom": "^16.13.0",
         "react-icons": "^3.9.0",

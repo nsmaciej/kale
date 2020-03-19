@@ -19,7 +19,7 @@ const toyBoxExprs = [
     { expr: new E.Literal("42", "int") },
 ];
 
-export default function ToyBox() {
+export default React.memo(function ToyBox() {
     const theme = useTheme();
     if (!theme.feature.toyBox) return null;
     return (
@@ -28,4 +28,4 @@ export default function ToyBox() {
             <ExprViewList frozen items={toyBoxExprs} />
         </Box>
     );
-}
+});

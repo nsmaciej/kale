@@ -1,10 +1,13 @@
-import React, { useState, Ref } from "react";
+import React, { useState, Ref, useContext } from "react";
 import styled from "styled-components";
 import { AiOutlinePlusCircle } from "react-icons/ai";
 
 import { SubtleButton, Shortcut, Box, Stack } from "components";
 import Menu, { MenuTextWrapper } from "components/menu";
 import useSuggestions from "hooks/suggestions";
+import { EditorStackActions } from "hooks/editor_stack";
+import { assertSome } from "utils";
+import { Workspace } from "contexts/workspace";
 
 const inputWidthPx = 400;
 
@@ -23,11 +26,11 @@ const EditorInput = styled.input`
 `;
 
 interface EditorSuggestionsProps {
-    onOpenEditor(name: string): void;
+    editorStackDispatch: React.Dispatch<EditorStackActions>;
 }
 
 export default React.forwardRef(function EditorSuggestions(
-    { onOpenEditor }: EditorSuggestionsProps,
+    { editorStackDispatch }: EditorSuggestionsProps,
     ref: Ref<HTMLInputElement>,
 ) {
     const [value, setValue] = useState("");
@@ -35,9 +38,12 @@ export default React.forwardRef(function EditorSuggestions(
     const { setSelection, selection, suggestions, moveSelection } = useSuggestions(value, {
         showValue: true,
     });
+    const workspace = assertSome(useContext(Workspace));
 
     function selectEditor(name: string) {
-        onOpenEditor(name);
+        //TODO: This should be handled somewhere better, but cannot do it in the reducer.
+        editorStackDispatch({ type: "createEditor", name });
+        workspace.ensureExists(name);
         setValue("");
         setSelection(0);
     }

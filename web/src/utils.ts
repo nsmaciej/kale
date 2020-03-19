@@ -87,3 +87,30 @@ export function insertSibling<T>(
     }
     return array;
 }
+
+export function createReducer<
+    State,
+    Actions extends { type: string },
+    Types extends string = Actions["type"]
+>(
+    reducers: {
+        [type in Types]: (state: State, type: Extract<Actions, { type: type }>) => State;
+    },
+): (state: State, action: Actions) => State {
+    return (state, action) =>
+        reducers[action.type as Types](state, action as Extract<Actions, { type: Types }>);
+}
+
+export function findNearestIndex<T>(
+    list: readonly T[],
+    index: number,
+    predicate: (item: T) => boolean,
+): number | null {
+    for (let i = index; i >= 0; --i) {
+        if (predicate(list[i])) return i;
+    }
+    for (let i = index + 1; i < list.length; ++i) {
+        if (predicate(list[i])) return i;
+    }
+    return null;
+}

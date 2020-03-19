@@ -8,6 +8,7 @@ import { assertFunc } from "vm/types";
 import { useDebounce } from "hooks";
 
 import { Workspace } from "contexts/workspace";
+import { EditorStackActions } from "hooks/editor_stack";
 
 const MinimapItemStack = styled(Stack).attrs({ gap: 8, vertical: true })<{ focused: boolean }>`
     user-select: none;
@@ -49,17 +50,17 @@ export interface MinimapEditor {
 export interface MinimapProps {
     editors: readonly MinimapEditor[];
     focused: number | null;
-    onChangeFocus(index: number): void;
+    editorStackDispatch: React.Dispatch<EditorStackActions>;
 }
 
-export default function Minimap({ editors, focused, onChangeFocus }: MinimapProps) {
+export default function Minimap({ editors, focused, editorStackDispatch }: MinimapProps) {
     return (
         <Stack vertical gap={15}>
             {editors.map((editor, i) => (
                 <MinimapItem
                     key={editor.key}
                     editor={editor}
-                    onClick={() => onChangeFocus(i)}
+                    onClick={() => editorStackDispatch({ type: "focusEditor", index: i })}
                     focused={i === focused}
                 />
             ))}

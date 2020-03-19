@@ -6,7 +6,7 @@ import { Optional, assertSome } from "utils";
 import { Offset } from "geometry";
 import Expr from "expr";
 
-import { layoutExpr } from "expr_view/layout";
+import layoutExpr from "expr_view/layout";
 import { SvgGroup } from "expr_view/components";
 
 interface DragAndDropSurfaceContext {

@@ -10,7 +10,7 @@ import { DragAndDrop } from "drag_and_drop";
 import ContextMenu, { ContextMenuItem } from "components/context_menu";
 
 import { Area, TextProperties } from "expr_view/core";
-import { layoutExpr } from "expr_view/layout";
+import layoutExpr from "expr_view/layout";
 import { SvgGroup, SvgRect } from "expr_view/components";
 
 export interface ExprArea {
@@ -237,7 +237,8 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
             // Passed through props.
             frozen: this.props.frozen,
             focused: this.props.focused,
-            highlights,
+            // Pass something that can be momoized if we can.
+            highlights: this.state.showingMenu ? highlights : this.props.highlights,
             foldComments: this.props.foldComments,
         });
 

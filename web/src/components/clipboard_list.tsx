@@ -6,7 +6,7 @@ import { assertSome, mod } from "utils";
 import { Box, Stack, SubtleButton, NonIdealText, PaneHeading, Shortcut } from "components";
 import ExprViewList from "components/expr_view_list";
 
-export default function ClipboardList() {
+export default React.memo(function ClipboardList() {
     const clipboard = assertSome(useContext(Clipboard));
     const history = clipboard.clipboard.map((x, i) => ({
         ...x,
@@ -43,4 +43,4 @@ export default function ClipboardList() {
             />
         </Box>
     );
-}
+});

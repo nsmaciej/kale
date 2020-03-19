@@ -8,10 +8,12 @@ import Minimap, { MinimapProps } from "components/minimap";
 import EditorWrapper from "editor";
 import { assertSome } from "utils";
 import { Debugger } from "contexts/debugger";
-import { OpenedEditor } from "hooks/editor_stack";
+import { OpenedEditor, EditorStackActions } from "hooks/editor_stack";
 
 const EditorHeading = styled.h2`
-    ${EditorHeadingStyle}
+    font-weight: 700;
+    font-size: 20px;
+    font-variant-numeric: oldstyle-nums;
     margin-left: ${p => p.theme.exprView.padding.left}px;
 `;
 
@@ -32,18 +34,13 @@ const RightGroup = styled.div`
 interface EditorListProps extends MinimapProps {
     editors: readonly OpenedEditor[];
     editorRefs: ReadonlyMap<number, React.MutableRefObject<HTMLDivElement>>;
-    onCloseEditor(index: number): void;
-    onOpenEditor(index: number, name: string): void;
-    onChangeFocus(index: number | null): void;
 }
 
 export default function EditorStack({
     focused,
     editors,
     editorRefs,
-    onCloseEditor,
-    onOpenEditor,
-    onChangeFocus,
+    editorStackDispatch,
 }: EditorListProps) {
     const dbg = assertSome(useContext(Debugger));
     function renderSection(editor: OpenedEditor, i: number) {
@@ -57,7 +54,9 @@ export default function EditorStack({
             >
                 <EditorHeader>
                     <EditorHeading>{editor.name}</EditorHeading>
-                    <IconButton onClick={() => onCloseEditor(i)}>
+                    <IconButton
+                        onClick={() => editorStackDispatch({ type: "closeEditor", index: i })}
+                    >
                         <AiOutlineCloseCircle />
                     </IconButton>
                     <RightGroup>
@@ -77,7 +76,8 @@ export default function EditorStack({
                     ) : (
                         <EditorWrapper
                             functionName={editor.name}
-                            onOpenEditor={name => onOpenEditor(i, name)}
+                            editorStackDispatch={editorStackDispatch}
+                            editorStackIndex={i}
                             ref={editorRefs.get(editor.key)}
                             // It's proably easiest to just create a new editor for each function.
                             key={editor.name}
@@ -91,7 +91,9 @@ export default function EditorStack({
     function focus(e: React.FocusEvent) {
         // Check if focused landed on of the editors.
         editors.forEach((editor, i) => {
-            if (editorRefs.get(editor.key)?.current === e.target) onChangeFocus(i);
+            if (editorRefs.get(editor.key)?.current === e.target) {
+                editorStackDispatch({ type: "focusEditor", index: i });
+            }
         });
     }
 
@@ -103,7 +105,7 @@ export default function EditorStack({
             overflowX="hidden"
             onFocus={focus}
             // This is weird, but React lets the blur event bubble.
-            onBlur={() => onChangeFocus(null)}
+            onBlur={() => editorStackDispatch({ type: "focusEditor", index: null })}
             gridArea="editor"
         >
             <Stack vertical overflowX="hidden" flex="auto">
@@ -114,7 +116,7 @@ export default function EditorStack({
                 <Minimap
                     editors={editors.filter(x => x.type === "user")}
                     focused={focused}
-                    onChangeFocus={onChangeFocus}
+                    editorStackDispatch={editorStackDispatch}
                 />
             </Box>
         </Stack>

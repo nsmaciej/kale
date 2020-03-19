@@ -1,6 +1,7 @@
 import React from "react";
 import styled, { useTheme } from "styled-components";
 import { motion } from "framer-motion";
+import memoizeOne from "memoize-one";
 
 import { KaleTheme, Highlight } from "theme";
 import { max } from "utils";
@@ -97,15 +98,6 @@ function isCallInline(theme: KaleTheme, args: readonly Layout[]): boolean {
     const underlinesHeight = max(args.map(x => x.underlinesHeight()));
     const MAX_NESTING_LEVEL = 3;
     return underlinesHeight < MAX_NESTING_LEVEL;
-}
-
-export interface LayoutProps {
-    exprPropsFor?(expr: Expr): Partial<React.DOMAttributes<Element>>;
-    onClickCreateCircle?(e: React.MouseEvent, expr: Expr): void;
-    frozen?: boolean;
-    focused?: boolean;
-    highlights?: readonly [ExprId, Highlight][];
-    foldComments?: boolean;
 }
 
 interface LayoutState {
@@ -310,6 +302,47 @@ class ExprLayout implements ExprVisitor<Layout> {
     }
 }
 
-export function layoutExpr(theme: KaleTheme, expr: Expr, props: LayoutProps): Layout {
-    return materialiseUnderlines(theme, new ExprLayout(theme, props).layout(expr));
+export interface LayoutProps {
+    exprPropsFor?(expr: Expr): Partial<React.DOMAttributes<Element>>;
+    onClickCreateCircle?(e: React.MouseEvent, expr: Expr): void;
+    frozen?: boolean;
+    focused?: boolean;
+    highlights?: readonly [ExprId, Highlight][];
+    foldComments?: boolean;
 }
+
+type LayoutExprArgs = [KaleTheme, Expr, LayoutProps];
+
+function argsEquals(prev: LayoutExprArgs, next: LayoutExprArgs) {
+    const lhs = prev[2];
+    const rhs = next[2];
+    const quickCheck =
+        prev[0] === next[0] &&
+        prev[1] === next[1] &&
+        lhs.exprPropsFor === rhs.exprPropsFor &&
+        lhs.onClickCreateCircle === rhs.onClickCreateCircle &&
+        lhs.frozen === rhs.frozen &&
+        lhs.foldComments === rhs.foldComments;
+    if (!quickCheck) return false;
+
+    // By the quickCheck the two exprs must be equal.
+    const expr = next[1];
+    // Check if either state has any blanks highlighted.
+    function highlightsBlanks(part: LayoutProps) {
+        if (part.highlights == null) return false;
+        for (const pair of part.highlights) {
+            if (expr.get(pair[0]) instanceof E.Blank) return true;
+        }
+        return false;
+    }
+    return !highlightsBlanks(lhs) && !highlightsBlanks(rhs);
+}
+
+export default memoizeOne(
+    function layoutExpr(theme: KaleTheme, expr: Expr, props: LayoutProps): Layout {
+        return materialiseUnderlines(theme, new ExprLayout(theme, props).layout(expr));
+    },
+    // This library is badly typed.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    argsEquals as (lhs: any[], rhs: any[]) => boolean,
+);

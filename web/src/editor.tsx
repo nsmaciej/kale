@@ -1,4 +1,4 @@
-import React, { Component, Ref, useContext } from "react";
+import React, { Component, Ref, useContext, PureComponent } from "react";
 import { useTheme } from "styled-components";
 
 import * as E from "expr";
@@ -16,6 +16,7 @@ import { Workspace, WorkspaceValue } from "contexts/workspace";
 
 import { ContextMenuItem } from "components/context_menu";
 import InlineEditor from "components/inline_editor";
+import { EditorStackActions } from "hooks/editor_stack";
 
 interface EditorState {
     focused: boolean;
@@ -27,7 +28,8 @@ interface EditorState {
 
 interface EditorWrapperProps {
     functionName: string;
-    onOpenEditor(name: string): void;
+    editorStackIndex: number;
+    editorStackDispatch: React.Dispatch<EditorStackActions>;
 }
 
 interface EditorProps extends EditorWrapperProps {
@@ -37,7 +39,7 @@ interface EditorProps extends EditorWrapperProps {
     forwardedRef: Ref<HTMLDivElement>;
 }
 
-class Editor extends Component<EditorProps, EditorState> {
+class Editor extends PureComponent<EditorProps, EditorState> {
     private readonly containerRef = React.createRef<HTMLDivElement>();
     private readonly exprAreaMapRef = React.createRef<ExprAreaMap>();
 
@@ -262,7 +264,15 @@ class Editor extends Component<EditorProps, EditorState> {
         edit: (e: ExprId) => this.startEditing(e),
         openEditor: (e: ExprId) => {
             const selected = this.expr.findId(e);
-            if (selected instanceof E.Call) this.props.onOpenEditor(selected.fn);
+            if (selected instanceof E.Call) {
+                //TODO: This should be handled somewhere better, but cannot do it in the reducer.
+                this.props.workspace.ensureExists(selected.fn);
+                this.props.editorStackDispatch({
+                    type: "openEditor",
+                    name: selected.fn,
+                    index: this.props.editorStackIndex,
+                });
+            }
         },
         newLine: (e: ExprId) => this.insertNewLine(e, true),
         newLineBefore: (e: ExprId) => this.insertNewLine(e, false),

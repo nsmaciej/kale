@@ -96,31 +96,20 @@ function Kale() {
     // eslint-disable-next-line no-console
     console.log("Rendering everything");
     const functionSearchRef = useRef<HTMLInputElement>(null);
-    const {
-        focus,
-        refs,
-        stack,
-        focusEditor,
-        createEditor,
-        openEditor,
-        closeEditor,
-        jumpBack,
-        moveFocus,
-        closeFocusedEditor,
-    } = useEditorStack();
+    const { focus, refs, stack, dispatch } = useEditorStack();
 
     function keyDown(event: React.KeyboardEvent) {
         const key = event.key;
         if (key === "/") {
             functionSearchRef.current?.focus();
         } else if (key === "J" || (key === "ArrowDown" && event.shiftKey)) {
-            moveFocus(1);
+            dispatch({ type: "moveFocus", move: 1 });
         } else if (key === "K" || (key === "ArrowUp" && event.shiftKey)) {
-            moveFocus(-1);
+            dispatch({ type: "moveFocus", move: -1 });
         } else if (key === "D") {
-            closeFocusedEditor();
+            dispatch({ type: "closeFocusedEditor" });
         } else if (key === "Backspace") {
-            jumpBack();
+            dispatch({ type: "jumpBack" });
         } else {
             return;
         }
@@ -147,7 +136,7 @@ function Kale() {
                     </p>
                 </Stack>
                 <Box gridArea="search">
-                    <EditorSuggestions ref={functionSearchRef} onOpenEditor={createEditor} />
+                    <EditorSuggestions ref={functionSearchRef} editorStackDispatch={dispatch} />
                 </Box>
                 <Box gridArea="menu" justifySelf="end">
                     <a href="https://github.com/mgoszcz2/kale">
@@ -160,9 +149,7 @@ function Kale() {
                 editors={stack}
                 editorRefs={refs}
                 focused={focus}
-                onChangeFocus={focusEditor}
-                onCloseEditor={closeEditor}
-                onOpenEditor={openEditor}
+                editorStackDispatch={dispatch}
             />
             <ClipboardList />
         </Container>
