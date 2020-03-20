@@ -540,6 +540,10 @@ class Editor extends PureComponent<EditorProps, EditorState> {
             highlights.push([this.state.droppable, hl.droppable]);
         }
 
+        // Remove higlights that do not exist. Iterating backwards makes this easy.
+        for (let i = highlights.length - 1; i >= 0; --i) {
+            if (!this.expr.contains(highlights[i][0])) highlights.splice(i, 1);
+        }
         // Sort the highlights by their containment.
         const lut: { [id in ExprId]: Expr } = {};
         for (const pair of highlights) {
