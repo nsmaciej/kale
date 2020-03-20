@@ -8,6 +8,7 @@ export class Highlight {
     private readonly focusedPair: HighlightPair;
     private blurredPair: HighlightPair;
     private blankPair?: HighlightPair;
+    animates = false;
 
     constructor(readonly name: string, fill?: string, stroke?: string) {
         this.focusedPair = [fill, stroke];
@@ -16,6 +17,10 @@ export class Highlight {
 
     withStrokeWidth(strokeWidth: number): this {
         this.strokeWidth = strokeWidth;
+        return this;
+    }
+    withAnimation(): this {
+        this.animates = true;
         return this;
     }
     blurred(fill?: string, stroke?: string): this {
@@ -98,13 +103,13 @@ export const DefaultTheme = {
         padding: new Padding(3),
         mainPadding: new Padding(3, 20, 3, 3),
         radius: 3,
-        selection: new Highlight("selection", "#f5f9ff80", "#0000ff").blurred(
-            "#fcfdff80",
-            "#b8ccff",
-        ),
+        selection: new Highlight("selection", "#f5f9ff80", "#0000ff")
+            .blurred("#fcfdff80", "#b8ccff")
+            .withAnimation(),
         hover: new Highlight("hover", undefined, "#cecece").blank("#efefef", "#dcdcdc"),
         contextMenu: new Highlight("context", undefined, "#0000ff").withStrokeWidth(1),
-        droppable: new Highlight("droppable", "green", "lime"),
+        // This is actually the branding colour.
+        droppable: new Highlight("droppable", "#ffffff00", "#0ba902").withStrokeWidth(1),
     },
 
     createCircle: {

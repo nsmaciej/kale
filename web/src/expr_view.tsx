@@ -130,7 +130,11 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
                 stroke={highlight.stroke(this.props.focused === true) ?? "none"}
                 initial={false}
                 strokeWidth={highlight.strokeWidth}
-                transition={{ type: "tween", ease: "easeIn", duration: 0.08 }}
+                transition={{
+                    type: "tween",
+                    ease: "easeIn",
+                    duration: highlight.animates ? 0.08 : 0,
+                }}
             />
         );
     }
@@ -185,10 +189,6 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
         onMouseLeave: e => this.onHoverExpr(e, null),
         onContextMenu: e => this.onContextMenu(e, expr),
         onMouseDown: e => this.onMouseDown(e, expr),
-        onMouseUp: e => {
-            e.stopPropagation();
-            assertSome(this.context).dismissDrag();
-        },
         // Note we do not stopPropagation if we aren't asked to handle something.
         onDoubleClick: e => {
             if (this.props.onDoubleClick != null) {

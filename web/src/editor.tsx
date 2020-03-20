@@ -5,7 +5,7 @@ import * as E from "expr";
 import * as Select from "selection";
 import { EditorStackActions } from "hooks/editor_stack";
 import { KaleTheme, Highlight } from "theme";
-import { Offset, Rect } from "geometry";
+import { Offset, Rect, ClientOffset } from "geometry";
 import { Optional, assertSome, reverseObject, assert, insertSibling, arrayEquals } from "utils";
 import Expr, { ExprId } from "expr";
 import ExprView, { Area, ExprAreaMap } from "expr_view";
@@ -14,7 +14,7 @@ import { Type, Func, assertFunc } from "vm/types";
 import { specialFunctions } from "vm/interpreter";
 
 import { Clipboard, ClipboardValue } from "contexts/clipboard";
-import { DragAndDrop, DragAndDropValue } from "contexts/drag_and_drop";
+import { DragAndDrop, DragAndDropValue, DropListener } from "contexts/drag_and_drop";
 import { Workspace, WorkspaceValue } from "contexts/workspace";
 
 import { ContextMenuItem } from "components/context_menu";
@@ -442,12 +442,13 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         }
     };
 
-    private readonly dragAndDropUpdate = (absolutePoint: Offset | null) => {
-        if (this.containerRef.current === null || this.exprAreaRef.current === null) return;
+    private clientOffsetToExpr(absolutePoint: ClientOffset | null): ExprId | null {
+        if (this.containerRef.current === null || this.exprAreaRef.current === null) {
+            return null;
+        }
         const editorRect = Rect.fromBoundingRect(this.containerRef.current.getBoundingClientRect());
         if (absolutePoint === null || !editorRect.contains(absolutePoint)) {
-            this.setState({ droppable: null });
-            return;
+            return null;
         }
 
         // Find the drop target. Keep in mind each nested area is offset relative to its parent.
@@ -464,14 +465,34 @@ class Editor extends PureComponent<EditorProps, EditorState> {
             }
             break;
         }
-        this.setState({ droppable: currentArea.expr.id });
+        return currentArea.expr.id;
+    }
+
+    private readonly dropUpdate = (absolutePoint: ClientOffset | null) => {
+        this.setState({
+            droppable: this.clientOffsetToExpr(absolutePoint),
+        });
+    };
+
+    private readonly dropExecute = (absolutePoint: ClientOffset | null, expr: Expr) => {
+        const target = this.clientOffsetToExpr(absolutePoint);
+        if (target != null) {
+            this.replaceExpr(target, expr);
+            this.selectExpr(target);
+            this.focus();
+        }
+    };
+
+    private readonly dragListener: DropListener = {
+        update: this.dropUpdate,
+        drop: this.dropExecute,
     };
 
     componentDidMount() {
-        this.props.dragAndDrop.addListener(this.dragAndDropUpdate);
+        this.props.dragAndDrop.addListener(this.dragListener);
     }
     componentWillUnmount() {
-        this.props.dragAndDrop.removeListener(this.dragAndDropUpdate);
+        this.props.dragAndDrop.removeListener(this.dragListener);
     }
 
     componentDidUpdate(prevProps: EditorProps, prevState: EditorState) {

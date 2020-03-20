@@ -2,20 +2,22 @@ import React, { Component } from "react";
 import ReactDOM from "react-dom";
 import styled, { ThemeConsumer } from "styled-components";
 
-import { Optional, assertSome } from "utils";
+import { Optional, assertSome, assert } from "utils";
 import { ClientOffset } from "geometry";
 import Expr from "expr";
 
 import layoutExpr from "expr_view/layout";
 import { SvgGroup } from "expr_view/components";
 
-type Listener = (point: ClientOffset | null) => void;
+export interface DropListener {
+    update(point: ClientOffset | null): void;
+    drop(point: ClientOffset | null, expr: Expr): void;
+}
 
 export interface DragAndDropValue {
     maybeStartDrag(start: ClientOffset, exprStart: ClientOffset, expr: Expr): void;
-    dismissDrag(): void;
-    addListener(listener: Listener): void;
-    removeListener(listener: Listener): void;
+    addListener(listener: DropListener): void;
+    removeListener(listener: DropListener): void;
 }
 
 interface DragAndDropSurfaceState {
@@ -45,13 +47,20 @@ export default class DragAndDropSurface extends Component<{}, DragAndDropSurface
         expr: Expr;
     }>;
 
-    private readonly listeners = new Set<Listener>();
+    private readonly listeners = new Set<DropListener>();
 
     private readonly dismissDrag = () => {
+        // Note this calls both .drop and then .update on the listeners.
+
+        if (this.drag?.delta != null) {
+            const exprCorner = assertSome(this.state.position).add(this.drag.delta);
+            const expr = this.drag.expr;
+            this.listeners.forEach(x => x.drop(exprCorner, expr));
+        }
         this.drag = null;
         // Premature optimisation. This method is called on every other mouse move.
         if (this.state.position != null) {
-            this.listeners.forEach(f => f(null));
+            this.listeners.forEach(f => f.update(null));
             this.setState({ position: null });
         }
     };
@@ -72,10 +81,10 @@ export default class DragAndDropSurface extends Component<{}, DragAndDropSurface
                 this.setState({ position });
             }
         } else {
-            // Update a drag.
+            // Update the drag.
             this.setState({ position });
             const exprCorner = position.add(this.drag.delta);
-            this.listeners.forEach(f => f(exprCorner));
+            this.listeners.forEach(x => x.update(exprCorner));
         }
     };
 
@@ -95,14 +104,13 @@ export default class DragAndDropSurface extends Component<{}, DragAndDropSurface
     }
 
     private readonly contextValue: DragAndDropValue = {
-        dismissDrag: this.dismissDrag,
         maybeStartDrag: (start: ClientOffset, exprStart: ClientOffset, expr: Expr) => {
             this.drag = { start, expr, exprStart, delta: null };
         },
-        addListener: (listener: Listener) => {
+        addListener: (listener: DropListener) => {
             this.listeners.add(listener);
         },
-        removeListener: (listener: Listener) => {
+        removeListener: (listener: DropListener) => {
             this.listeners.delete(listener);
         },
     };
