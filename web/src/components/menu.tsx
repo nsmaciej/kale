@@ -6,7 +6,7 @@ import { Optional } from "utils";
 const MenuPopover = styled.div<{ subtle: boolean }>`
     background: ${p => p.theme.colour.background};
     border-radius: ${p => p.theme.borderRadius}px;
-    box-shadow: 0 0 0 1px #10161a1a, 0 2px 4px #10161a33, 0 8px 24px #10161a33;
+    box-shadow: ${p => p.theme.boxShadow};
     ${p => !p.subtle && "padding: 6px 0"};
     z-index: 1000;
     position: fixed;

@@ -6,8 +6,18 @@ import { Optional, assertSome, assert } from "utils";
 import { ClientOffset } from "geometry";
 import Expr from "expr";
 
-import layoutExpr from "expr_view/layout";
-import { SvgGroup } from "expr_view/components";
+import layoutExpr, { LayoutProps } from "expr_view/layout";
+import { KaleTheme } from "theme";
+
+const Container = styled.svg`
+    position: absolute;
+    background: ${p => p.theme.colour.background};
+    box-shadow: ${p => p.theme.boxShadow};
+    padding: ${p => p.theme.exprList.padding.add(p.theme.highlight.padding).css};
+    border-radius: ${p => p.theme.exprList.borderRadius}px;
+    box-sizing: content-box;
+    z-index: 1000;
+`;
 
 export interface DropListener {
     update(point: ClientOffset | null): void;
@@ -31,13 +41,6 @@ export const DragAndDrop = React.createContext<Optional<DragAndDropValue>>(null)
 // 2. Maybe-drag - drag is now initialised, except for delta.
 // 3. Drag - Delta is now initialised, state.position follows the mouse.
 export default class DragAndDropSurface extends Component<{}, DragAndDropSurfaceState> {
-    static readonly Svg = styled.svg`
-        width: 100%;
-        height: 100%;
-        position: absolute;
-        top: 0;
-        left: 0;
-    `;
     state: DragAndDropSurfaceState = { position: null };
 
     private drag: Optional<{
@@ -95,14 +98,6 @@ export default class DragAndDropSurface extends Component<{}, DragAndDropSurface
         document.removeEventListener("mousemove", this.onMouseMove);
     }
 
-    renderExpr(expr: Expr) {
-        return (
-            <ThemeConsumer>
-                {theme => layoutExpr(theme, expr, { frozen: true }).nodes}
-            </ThemeConsumer>
-        );
-    }
-
     private readonly contextValue: DragAndDropValue = {
         maybeStartDrag: (start: ClientOffset, exprStart: ClientOffset, expr: Expr) => {
             this.drag = { start, expr, exprStart, delta: null };
@@ -115,18 +110,35 @@ export default class DragAndDropSurface extends Component<{}, DragAndDropSurface
         },
     };
 
+    // layoutExpr is now memoized, save these in advance.
+    exprLayoutProps: LayoutProps = { frozen: true };
+
+    private renderExpr(theme: KaleTheme) {
+        assert(this.drag?.delta != null);
+        const pos = assertSome(this.state.position).add(this.drag.delta);
+        const { nodes, size } = layoutExpr(theme, this.drag.expr, this.exprLayoutProps);
+        return (
+            <Container
+                xmlns="http://www.w3.org/2000/svg"
+                onMouseUp={this.dismissDrag}
+                style={{
+                    top: pos.y,
+                    left: pos.x,
+                    width: size.width,
+                    height: size.height,
+                }}
+            >
+                {nodes}
+            </Container>
+        );
+    }
+
     render() {
         let surface: React.ReactNode;
 
         if (this.drag?.delta != null) {
-            const pos = assertSome(this.state.position).add(this.drag.delta);
             surface = ReactDOM.createPortal(
-                <DragAndDropSurface.Svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    onMouseUp={this.dismissDrag.bind(this)}
-                >
-                    <SvgGroup translate={pos}>{this.renderExpr(this.drag.expr)}</SvgGroup>
-                </DragAndDropSurface.Svg>,
+                <ThemeConsumer>{theme => this.renderExpr(theme)}</ThemeConsumer>,
                 document.body,
             );
         }

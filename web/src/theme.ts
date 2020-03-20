@@ -48,6 +48,7 @@ export class Highlight {
 
 export const DefaultTheme = {
     borderRadius: 4,
+    boxShadow: "0 0 0 1px #10161a1a, 0 2px 4px #10161a33, 0 8px 24px #10161a33",
 
     colour: {
         clickable: "#1b65f1",

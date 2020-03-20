@@ -8,12 +8,10 @@ import Minimap, { MinimapProps } from "components/minimap";
 import EditorWrapper from "editor";
 import { assertSome } from "utils";
 import { Debugger } from "contexts/debugger";
-import { OpenedEditor, EditorStackActions } from "hooks/editor_stack";
+import { OpenedEditor } from "hooks/editor_stack";
 
 const EditorHeading = styled.h2`
-    font-weight: 700;
-    font-size: 20px;
-    font-variant-numeric: oldstyle-nums;
+    ${EditorHeadingStyle};
     margin-left: ${p => p.theme.exprView.padding.left}px;
 `;
 
