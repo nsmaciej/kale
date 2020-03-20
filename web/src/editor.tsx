@@ -474,7 +474,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         });
     };
 
-    private readonly dropExecute = (absolutePoint: ClientOffset | null, expr: Expr) => {
+    private readonly dropExecute = (absolutePoint: ClientOffset, expr: Expr) => {
         const target = this.clientOffsetToExpr(absolutePoint);
         if (target != null) {
             this.replaceExpr(target, expr);

@@ -32,8 +32,15 @@ const ExprList = styled.div`
     margin: 20px 0 40px;
 `;
 
+const DropMarker = styled.div`
+    grid-column: 1 / -1;
+    background: ${p => p.theme.colour.clickable};
+    height: 1px;
+    box-shadow: 0 0 3px ${p => p.theme.colour.clickable};
+`;
+
 const Extras = styled.div`
-    margin: ${p => p.theme.exprView.padding.css} !important;
+    margin: ${p => p.theme.exprView.frozenPadding.css} !important;
 `;
 
 interface ShortcutExpr {
@@ -47,6 +54,7 @@ interface ExprViewListProps<E> {
     items: E[];
     frozen?: boolean;
     fallback?: ReactNode;
+    showDropMarker?: boolean;
     extras?(item: E): ReactNode;
 }
 
@@ -57,6 +65,7 @@ export default function ExprViewList<E extends ShortcutExpr>({
     fallback,
     maxWidth,
     extras,
+    showDropMarker,
 }: ExprViewListProps<E>) {
     const theme = useTheme();
     const renderItem = (item: E) => (
@@ -77,6 +86,7 @@ export default function ExprViewList<E extends ShortcutExpr>({
     );
     return (
         <ExprList>
+            {showDropMarker && <DropMarker />}
             {items.length === 0 && fallback}
             {items.map(renderItem)}
         </ExprList>

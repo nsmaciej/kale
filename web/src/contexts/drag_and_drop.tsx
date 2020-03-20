@@ -1,13 +1,12 @@
-import React, { Component } from "react";
+import React, { Component, useEffect, useContext, useRef, useState } from "react";
 import ReactDOM from "react-dom";
 import styled, { ThemeConsumer } from "styled-components";
 
-import { Optional, assertSome, assert } from "utils";
-import { ClientOffset } from "geometry";
-import Expr from "expr";
-
-import layoutExpr, { LayoutProps } from "expr_view/layout";
+import { ClientOffset, Rect } from "geometry";
 import { KaleTheme } from "theme";
+import { Optional, assertSome, assert } from "utils";
+import Expr from "expr";
+import layoutExpr, { LayoutProps } from "expr_view/layout";
 
 const Container = styled.svg`
     position: absolute;
@@ -21,7 +20,7 @@ const Container = styled.svg`
 
 export interface DropListener {
     update(point: ClientOffset | null): void;
-    drop(point: ClientOffset | null, expr: Expr): void;
+    drop(point: ClientOffset, expr: Expr): void;
 }
 
 export interface DragAndDropValue {
@@ -150,4 +149,33 @@ export default class DragAndDropSurface extends Component<{}, DragAndDropSurface
             </DragAndDrop.Provider>
         );
     }
+}
+
+export function useDrop(listener: DropListener) {
+    const dragAndDrop = assertSome(useContext(DragAndDrop));
+    useEffect(() => {
+        dragAndDrop.addListener(listener);
+        return () => dragAndDrop.removeListener(listener);
+    }, [dragAndDrop, listener]);
+}
+
+export function useSimpleDrop(
+    ref: React.RefObject<HTMLElement>,
+    onDrop: (expr: Expr) => void,
+): boolean {
+    const [lastContains, setLastContains] = useState(false);
+    function getRect() {
+        const clientRect = ref.current?.getBoundingClientRect();
+        return clientRect === undefined ? null : Rect.fromBoundingRect(clientRect);
+    }
+    useDrop({
+        update(point) {
+            const contains = (point !== null && getRect()?.contains(point)) ?? false;
+            setLastContains(contains);
+        },
+        drop(point, expr) {
+            if (getRect()?.contains(point)) onDrop(expr);
+        },
+    });
+    return lastContains;
 }
