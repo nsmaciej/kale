@@ -9,6 +9,7 @@ import EditorWrapper from "editor";
 import { assertSome } from "utils";
 import { Debugger } from "contexts/debugger";
 import { OpenedEditor } from "hooks/editor_stack";
+import builtins from "vm/builtins";
 
 const EditorHeading = styled.h2`
     ${EditorHeadingStyle};
@@ -70,7 +71,11 @@ export default function EditorStack({
                 </EditorHeader>
                 <Box marginTop={10} marginBottom={20} overflowX="auto">
                     {editor.type === "builtin" ? (
-                        <p>{editor.name} is a builtin function.</p>
+                        <p>
+                            {editor.name} is a builtin function.
+                            <br />
+                            <b>{builtins[editor.name].value.help}</b>
+                        </p>
                     ) : (
                         <EditorWrapper
                             functionName={editor.name}

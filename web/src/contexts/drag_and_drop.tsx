@@ -1,4 +1,4 @@
-import React, { Component, useEffect, useContext, useRef, useState } from "react";
+import React, { Component, useEffect, useContext, useState } from "react";
 import ReactDOM from "react-dom";
 import styled, { ThemeConsumer } from "styled-components";
 

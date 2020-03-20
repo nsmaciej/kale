@@ -1,33 +1,45 @@
 import React, { useState, useContext, ReactNode } from "react";
+import { useToasts } from "react-toast-notifications";
 
-import { Optional, assertSome } from "utils";
+import { assertSome } from "utils";
 import Interpreter from "vm/interpreter";
 import { Workspace } from "contexts/workspace";
+import { VmError } from "vm/types";
 
 export function useDebugProvider() {
     const workspace = assertSome(useContext(Workspace));
-    const [continueEval, setContinueEval] = useState<Optional<() => void>>(null);
-    const [interpreter, setInterpeter] = useState<Optional<Interpreter>>(null);
+    const { addToast } = useToasts();
+    const [continueEval, setContinueEval] = useState<(() => void) | null>(null);
+    const [interpreter, setInterpeter] = useState<Interpreter | null>(null);
     return {
         interpreter,
         continueEval() {
             continueEval?.();
             setContinueEval(null);
         },
-        evalFunction(name: string) {
+        async evalFunction(name: string) {
             const int = new Interpreter({
                 onBreakpoint: cc => setContinueEval(cc),
                 onTerminated: () => setInterpeter(null),
             });
             int.setWorkspace(workspace.globals);
-            int.evalFunction(name);
             setInterpeter(int);
+            try {
+                await int.evalFunction(name);
+            } catch (error) {
+                if (error instanceof VmError) {
+                    addToast(error.message, { appearance: "error", autoDismiss: true });
+                    setInterpeter(null);
+                } else {
+                    throw error;
+                }
+            }
         },
     };
 }
 
 export type DebuggerValue = ReturnType<typeof useDebugProvider>;
-export const Debugger = React.createContext<Optional<DebuggerValue>>(null);
+export const Debugger = React.createContext<DebuggerValue | null>(null);
 
 export function DebuggerProvider(props: { children: ReactNode }) {
     return <Debugger.Provider value={useDebugProvider()}>{props.children}</Debugger.Provider>;

@@ -79,7 +79,7 @@ export default class Interpreter {
 
     async evalFunction(name: string) {
         const func = assertFunc(this.globalScope.get(name));
-        vmAssert(func.args.length === 0, "No arguments provided");
+        vmAssert(func.args.length === 0, `No arguments provided to '${name}'`);
         await this.eval(func.expr, this.globalScope);
         this.callbacks.onTerminated();
     }
@@ -98,7 +98,10 @@ export default class Interpreter {
     private async evalBuiltin(fn: string, args: Expr[], scope: Scope): Promise<Value> {
         const builtin = assertBuiltin(scope.get(fn));
         const evaluatedArgs = await Promise.all(args.map(x => this.eval(x, scope)));
-        vmAssert(builtin.args.length === args.length, `Wrong number of arguments for ${fn}`);
+        vmAssert(
+            builtin.args.length === args.length,
+            `Wrong number of arguments for builtin function '${fn}'`,
+        );
         builtin.args.forEach((type, i) =>
             vmAssert(
                 type === null || type === evaluatedArgs[i].type,
@@ -120,7 +123,7 @@ export default class Interpreter {
 
         //TODO: In the future maybe allow nested named function.
         const value = this.workspaceRef.current.get(fn);
-        if (value == null) throw new VmError("Unrecognised function");
+        if (value == null) throw new VmError(`Unrecognised function '${fn}'`);
 
         // Handle builtins.
         if (value.type === Type.Builtin) {
@@ -129,7 +132,10 @@ export default class Interpreter {
 
         // The actual call.
         const func = assertFunc(value);
-        vmAssert(func.args.length === args.length - 1, `Wrong number of arguments for ${fn}`);
+        vmAssert(
+            func.args.length === args.length,
+            `Wrong number of arguments for function '${fn}'`,
+        );
         const callScope = new Scope(func.scope);
         await asyncForEach(func.args, async (arg, i) => {
             callScope.define(arg, await this.eval(args[i + 1], scope));

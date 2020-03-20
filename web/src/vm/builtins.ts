@@ -100,11 +100,11 @@ export default {
         Type.Null,
         [Type.Str],
         // eslint-disable-next-line no-console
-        show => console.log(show),
-        "Prints a piece of text to the browser's console",
+        show => alert(show),
+        "Show a message in the browser",
     ),
 
     // Functional programming.
-    Id: rawBuiltin([null], x => x[0]),
+    Id: rawBuiltin([null], x => x[0], "Returns whatever value is passed to it"),
     //TODO: Add call and something to retrive a Func/Builtin from the workspace by name.
 } as { [name: string]: Value<Builtin> };

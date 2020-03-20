@@ -1,6 +1,5 @@
 import React, { useContext, useRef } from "react";
 import { AiOutlinePushpin, AiFillPushpin } from "react-icons/ai";
-import styled from "styled-components";
 
 import { assertSome, mod } from "utils";
 import { Box, Stack, SubtleButton, NonIdealText, PaneHeading, Shortcut } from "components";
