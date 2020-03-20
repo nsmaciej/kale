@@ -1,15 +1,16 @@
 import React, { useContext } from "react";
 import styled from "styled-components";
 import { motion, AnimatePresence } from "framer-motion";
-import { AiOutlineCloseCircle, AiOutlinePlayCircle } from "react-icons/ai";
+import { AiOutlineCloseCircle, AiOutlinePlayCircle, AiOutlineUndo } from "react-icons/ai";
 
-import { Box, Stack, NonIdealText, EditorHeadingStyle, IconButton } from "components";
-import Minimap, { MinimapProps } from "components/minimap";
-import EditorWrapper from "editor";
 import { assertSome } from "utils";
+import { Box, Stack, NonIdealText, EditorHeadingStyle, IconButton } from "components";
 import { Debugger } from "contexts/debugger";
 import { OpenedEditor } from "hooks/editor_stack";
+import { Workspace } from "contexts/workspace";
 import builtins from "vm/builtins";
+import EditorWrapper from "editor";
+import Minimap, { MinimapProps } from "components/minimap";
 
 const EditorHeading = styled.h2`
     ${EditorHeadingStyle};
@@ -42,7 +43,10 @@ export default function EditorStack({
     editorStackDispatch,
 }: EditorListProps) {
     const dbg = assertSome(useContext(Debugger));
+    const { workspace, dispatch } = assertSome(useContext(Workspace));
+
     function renderSection(editor: OpenedEditor, i: number) {
+        const canUndo = (workspace.history.get(editor.name)?.length ?? 0) > 0;
         return (
             <motion.div
                 key={editor.key}
@@ -57,6 +61,11 @@ export default function EditorStack({
                         onClick={() => editorStackDispatch({ type: "closeEditor", index: i })}
                     >
                         <AiOutlineCloseCircle />
+                    </IconButton>
+                    <IconButton disabled={!canUndo}>
+                        <AiOutlineUndo
+                            onClick={() => dispatch({ type: "undo", name: editor.name })}
+                        />
                     </IconButton>
                     <RightGroup>
                         {editor.type === "user" && (

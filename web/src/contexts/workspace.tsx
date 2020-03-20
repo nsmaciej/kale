@@ -1,8 +1,8 @@
-import produce, { enableMapSet } from "immer";
-import React, { ReactNode, useReducer } from "react";
+import produce, { enableMapSet, original } from "immer";
+import React, { ReactNode, useReducer, useEffect } from "react";
 
 import * as Sample from "sample";
-import { assertSome, createReducer } from "utils";
+import { assertSome, createReducer, assert } from "utils";
 import { Type, Value, Func, Workspace as InterpterWorkspace, Builtin, assertFunc } from "vm/types";
 import Builtins from "vm/builtins";
 import Expr, { Blank } from "expr";
@@ -11,48 +11,59 @@ function asFunc(expr: Expr): Value<Func> {
     return { type: Type.Func, value: { expr, scope: null, args: [] } };
 }
 
+/** Populate the workspace with the builtin functions */
 function initWorkspace() {
-    const scope: Map<string, Value<Builtin | Func>> = new Map([
-        ["Sample-1", asFunc(Sample.SAMPLE_1)],
-        ["Sample-2", asFunc(Sample.SAMPLE_2)],
-        ["Hello-World", asFunc(Sample.HELLO_WORLD)],
-    ]);
+    const scope = new Map<string, Value<Builtin | Func>>();
     for (const [name, builtin] of Object.entries(Builtins)) {
         scope.set(name, builtin);
     }
-    // Functions helps useSuggestions to not run as much, keys aren't reference stable.
-    return { scope: scope as InterpterWorkspace, functions: Array.from(scope.keys()) };
+    return {
+        scope: scope as InterpterWorkspace,
+        functions: Array.from(scope.keys()),
+        history: new Map(),
+    };
 }
 
 interface WorkspaceValue {
     scope: InterpterWorkspace;
+    // Functions helps useSuggestions to not run as much, keys aren't reference stable.
     functions: readonly string[];
+    history: ReadonlyMap<string, Expr[]>;
 }
 
 type WorkspaceActions =
-    | { type: "ensureExists"; name: string }
-    | { type: "remove"; name: string }
-    | { type: "update"; name: string; updater: (expr: Expr) => Expr };
+    | { type: "ensureExists"; name: string; initial?: Expr }
+    | { type: "update"; name: string; updater: (expr: Expr) => Expr }
+    | { type: "undo"; name: string };
 
 enableMapSet();
 const workspaceReducer = createReducer<WorkspaceValue, WorkspaceActions>({
-    ensureExists(state, { name }) {
+    ensureExists(state, { name, initial }) {
         if (state.scope.has(name)) return state;
         return produce(state, draft => {
-            draft.scope.set(name, asFunc(new Blank()));
+            draft.scope.set(name, asFunc(initial ?? new Blank()));
             draft.functions = Array.from(draft.scope.keys());
+            draft.history.set(name, []);
         });
     },
     update(state, { updater, name }) {
         return produce(state, draft => {
-            const next = asFunc(updater(assertFunc(assertSome(draft.scope.get(name))).expr));
-            draft.scope.set(name, next);
+            const currentExpr = assertFunc(assertSome(draft.scope.get(name))).expr;
+            draft.scope.set(name, asFunc(updater(currentExpr)));
+
+            // Update the undo history.
+            const historyLimit = 50;
+            const history = assertSome(draft.history.get(name));
+            history.push(currentExpr);
+            // Keep the last historyLimit items.
+            history.splice(0, history.length - historyLimit);
         });
     },
-    remove(state, { name }) {
+    undo(state, { name }) {
         return produce(state, draft => {
-            draft.scope.delete(name);
-            draft.functions = Array.from(draft.scope.keys());
+            const lastState = draft.history.get(name)?.pop();
+            assert(lastState !== undefined, "There is nothing to undo");
+            draft.scope.set(name, asFunc(lastState as Expr));
         });
     },
 });
@@ -65,6 +76,12 @@ export type WorkspaceContext = {
 export const Workspace = React.createContext<WorkspaceContext | null>(null);
 
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
-    const [workspace, dispatch] = useReducer(workspaceReducer, initWorkspace());
+    const [workspace, dispatch] = useReducer(workspaceReducer, null, initWorkspace);
+    // Load all the samples.
+    useEffect(() => {
+        dispatch({ type: "ensureExists", name: "Sample-1", initial: Sample.SAMPLE_1 });
+        dispatch({ type: "ensureExists", name: "Sample-2", initial: Sample.SAMPLE_2 });
+        dispatch({ type: "ensureExists", name: "Hello-World", initial: Sample.HELLO_WORLD });
+    }, []);
     return <Workspace.Provider value={{ workspace, dispatch }}>{children}</Workspace.Provider>;
 }
