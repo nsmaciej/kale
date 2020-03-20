@@ -10,12 +10,12 @@ import { Optional, assertSome, reverseObject, assert, insertSibling, arrayEquals
 import Expr, { ExprId } from "expr";
 import ExprView, { Area, ExprAreaMap } from "expr_view";
 
-import { Type, Func, assertFunc } from "vm/types";
+import { Type, Func, assertFunc, Value, Builtin } from "vm/types";
 import { specialFunctions } from "vm/interpreter";
 
 import { Clipboard, ClipboardValue } from "contexts/clipboard";
 import { DragAndDrop, DragAndDropValue, DropListener } from "contexts/drag_and_drop";
-import { Workspace, WorkspaceValue } from "contexts/workspace";
+import { Workspace, WorkspaceContext } from "contexts/workspace";
 
 import { ContextMenuItem } from "components/context_menu";
 import InlineEditor from "components/inline_editor";
@@ -37,7 +37,7 @@ interface EditorWrapperProps {
 }
 
 interface EditorProps extends EditorWrapperProps {
-    workspace: WorkspaceValue;
+    workspace: WorkspaceContext;
     clipboard: ClipboardValue;
     dragAndDrop: DragAndDropValue;
     theme: KaleTheme;
@@ -60,19 +60,29 @@ class Editor extends PureComponent<EditorProps, EditorState> {
     };
 
     private get expr(): Expr {
-        const func = this.props.workspace.get(this.props.functionName);
-        assert(func.type === Type.Func);
-        return (func.value as Func).expr;
+        return this.getWorkspaceFunc(this.props.workspace, this.props.functionName);
     }
 
     // Editor internal APIs.
     private update(child: Optional<ExprId>, updater: (expr: Expr) => Optional<Expr>) {
-        this.props.workspace.update(
-            this.props.functionName,
-            expr =>
+        this.props.workspace.dispatch({
+            type: "update",
+            name: this.props.functionName,
+            updater: expr =>
                 expr.update(child ?? expr.id, updater) ??
                 new E.Blank(E.exprData("Double click me")),
-        );
+        });
+    }
+
+    private getWorkspaceValue(
+        workspace: WorkspaceContext,
+        name: string,
+    ): Value<Builtin | Func> | undefined {
+        return workspace.workspace.scope.get(name);
+    }
+
+    private getWorkspaceFunc(workspace: WorkspaceContext, name: string): Expr {
+        return assertFunc(assertSome(this.getWorkspaceValue(workspace, name))).expr;
     }
 
     private addToClipboard(expr: ExprId) {
@@ -115,8 +125,8 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         if (created && expr instanceof E.Call) {
             // Auto-insert the right amount of blanks for this function.
             // Note at this point expr still might have some old value.
-            const func = this.props.workspace.globals.get(value)?.value;
-            if (func != null && !specialFunctions.has(value)) {
+            const func = this.getWorkspaceValue(this.props.workspace, value)?.value;
+            if (func !== undefined && !specialFunctions.has(value)) {
                 const blanks = (func.args as (string | null)[]).map(
                     x => new E.Blank(E.exprData(x)),
                 );
@@ -271,7 +281,10 @@ class Editor extends PureComponent<EditorProps, EditorState> {
             const selected = this.expr.findId(e);
             if (selected instanceof E.Call) {
                 //TODO: This should be handled somewhere better, but cannot do it in the reducer.
-                this.props.workspace.ensureExists(selected.fn);
+                this.props.workspace.dispatch({
+                    type: "ensureExists",
+                    name: selected.fn,
+                });
                 this.props.editorStackDispatch({
                     type: "openEditor",
                     name: selected.fn,
@@ -499,7 +512,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         );
         if (this.expr.contains(this.state.selection)) return;
         // Ensure the selection is always valid.
-        const prevExpr = assertFunc(prevProps.workspace.get(prevProps.functionName)).expr;
+        const prevExpr = this.getWorkspaceFunc(prevProps.workspace, prevProps.functionName);
         const candidates: Expr[][] = [];
 
         // Maybe we just tried updating the selection to something that doesn't exist. Use the

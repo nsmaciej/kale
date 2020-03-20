@@ -2,7 +2,7 @@ import { AiOutlineGithub } from "react-icons/ai";
 import { ToastProvider } from "react-toast-notifications";
 import * as ReactDOM from "react-dom";
 import React, { useRef, useEffect } from "react";
-import styled, { ThemeProvider, StyleSheetManager, createGlobalStyle } from "styled-components";
+import styled, { ThemeProvider, createGlobalStyle } from "styled-components";
 
 import { DefaultTheme } from "theme";
 import { Stack, Box } from "components";

@@ -31,8 +31,8 @@ function MinimapItem({
     onClick(): void;
 }) {
     const theme = useTheme();
-    const workspace = assertSome(useContext(Workspace));
-    const expr = useDebounce(assertFunc(workspace.get(editor.name)).expr, 1000);
+    const workspace = assertSome(useContext(Workspace)).workspace;
+    const expr = useDebounce(assertFunc(assertSome(workspace.scope.get(editor.name))).expr, 1000);
     return (
         <MinimapItemStack key={editor.key} onClick={onClick} focused={focused}>
             <span>{editor.name}</span>

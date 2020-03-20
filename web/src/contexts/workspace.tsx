@@ -1,18 +1,17 @@
-import { enableMapSet } from "immer";
-import { useImmer } from "use-immer";
-import React, { ReactNode } from "react";
+import produce, { enableMapSet } from "immer";
+import React, { ReactNode, useReducer } from "react";
 
-import { Optional, assertSome } from "utils";
+import * as Sample from "sample";
+import { assertSome, createReducer } from "utils";
+import { Type, Value, Func, Workspace as InterpterWorkspace, Builtin, assertFunc } from "vm/types";
 import Builtins from "vm/builtins";
 import Expr, { Blank } from "expr";
-import * as Sample from "sample";
-import { Type, Value, Func, Workspace as InterpterWorkspace, Builtin, assertFunc } from "vm/types";
 
 function asFunc(expr: Expr): Value<Func> {
     return { type: Type.Func, value: { expr, scope: null, args: [] } };
 }
 
-function initialWorkspace() {
+function initWorkspace() {
     const scope: Map<string, Value<Builtin | Func>> = new Map([
         ["Sample-1", asFunc(Sample.SAMPLE_1)],
         ["Sample-2", asFunc(Sample.SAMPLE_2)],
@@ -25,40 +24,47 @@ function initialWorkspace() {
     return { scope: scope as InterpterWorkspace, functions: Array.from(scope.keys()) };
 }
 
-enableMapSet();
-export function useWorkSpaceProvider() {
-    const [globals, setGlobals] = useImmer(initialWorkspace);
-    return {
-        globals: globals.scope,
-        functions: globals.functions,
-        ensureExists(name: string) {
-            if (globals.scope.has(name)) return;
-            setGlobals(draft => {
-                draft.scope.set(name, asFunc(new Blank()));
-                draft.functions = Array.from(draft.scope.keys());
-            });
-        },
-        get(name: string): Value<Func | Builtin> {
-            return assertSome(globals.scope.get(name));
-        },
-        remove(name: string): void {
-            setGlobals(draft => {
-                draft.scope.delete(name);
-                draft.functions = Array.from(draft.scope.keys());
-            });
-        },
-        update(name: string, update: (expr: Expr) => Expr): void {
-            setGlobals(draft => {
-                const next = asFunc(update(assertFunc(assertSome(draft.scope.get(name))).expr));
-                draft.scope.set(name, next);
-            });
-        },
-    };
+interface WorkspaceValue {
+    scope: InterpterWorkspace;
+    functions: readonly string[];
 }
 
-export type WorkspaceValue = ReturnType<typeof useWorkSpaceProvider>;
-export const Workspace = React.createContext<Optional<WorkspaceValue>>(null);
+type WorkspaceActions =
+    | { type: "ensureExists"; name: string }
+    | { type: "remove"; name: string }
+    | { type: "update"; name: string; updater: (expr: Expr) => Expr };
 
-export function WorkspaceProvider(props: { children: ReactNode }) {
-    return <Workspace.Provider value={useWorkSpaceProvider()}>{props.children}</Workspace.Provider>;
+enableMapSet();
+const workspaceReducer = createReducer<WorkspaceValue, WorkspaceActions>({
+    ensureExists(state, { name }) {
+        if (state.scope.has(name)) return state;
+        return produce(state, draft => {
+            draft.scope.set(name, asFunc(new Blank()));
+            draft.functions = Array.from(draft.scope.keys());
+        });
+    },
+    update(state, { updater, name }) {
+        return produce(state, draft => {
+            const next = asFunc(updater(assertFunc(assertSome(draft.scope.get(name))).expr));
+            draft.scope.set(name, next);
+        });
+    },
+    remove(state, { name }) {
+        return produce(state, draft => {
+            draft.scope.delete(name);
+            draft.functions = Array.from(draft.scope.keys());
+        });
+    },
+});
+
+export type WorkspaceContext = {
+    workspace: WorkspaceValue;
+    dispatch: React.Dispatch<WorkspaceActions>;
+};
+
+export const Workspace = React.createContext<WorkspaceContext | null>(null);
+
+export function WorkspaceProvider({ children }: { children: ReactNode }) {
+    const [workspace, dispatch] = useReducer(workspaceReducer, initWorkspace());
+    return <Workspace.Provider value={{ workspace, dispatch }}>{children}</Workspace.Provider>;
 }

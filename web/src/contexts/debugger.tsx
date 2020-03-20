@@ -22,7 +22,7 @@ export function useDebugProvider() {
                 onBreakpoint: cc => setContinueEval(cc),
                 onTerminated: () => setInterpeter(null),
             });
-            int.setWorkspace(workspace.globals);
+            int.setWorkspace(workspace.workspace.scope);
             setInterpeter(int);
             try {
                 await int.evalFunction(name);
