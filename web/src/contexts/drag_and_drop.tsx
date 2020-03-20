@@ -8,7 +8,7 @@ import { Optional, assertSome, assert } from "utils";
 import Expr from "expr";
 import layoutExpr, { LayoutProps } from "expr_view/layout";
 
-const Container = styled.svg`
+const Container = styled.div`
     position: absolute;
     background: ${p => p.theme.colour.background};
     box-shadow: ${p => p.theme.boxShadow};
@@ -68,6 +68,7 @@ export default class DragAndDropSurface extends Component<{}, DragAndDropSurface
     };
 
     private readonly onMouseMove = (event: MouseEvent) => {
+        event.preventDefault();
         // Ensure left mouse button is held down.
         if (event.buttons !== 1 || this.drag == null) {
             this.dismissDrag();
@@ -117,17 +118,12 @@ export default class DragAndDropSurface extends Component<{}, DragAndDropSurface
         const pos = assertSome(this.state.position).add(this.drag.delta);
         const { nodes, size } = layoutExpr(theme, this.drag.expr, this.exprLayoutProps);
         return (
-            <Container
-                xmlns="http://www.w3.org/2000/svg"
-                onMouseUp={this.dismissDrag}
-                style={{
-                    top: pos.y,
-                    left: pos.x,
-                    width: size.width,
-                    height: size.height,
-                }}
-            >
-                {nodes}
+            // Bug: Safari doesn't like drawing box-shadows on SVGs (it leaves a ghost trail), draw
+            // it on a div instead.
+            <Container onMouseUp={this.dismissDrag} style={{ top: pos.y, left: pos.x }}>
+                <svg xmlns="http://www.w3.org/2000/svg" width={size.width} height={size.height}>
+                    {nodes}
+                </svg>
             </Container>
         );
     }

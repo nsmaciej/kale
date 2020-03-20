@@ -1,12 +1,12 @@
-import React, { ReactNode } from "react";
 import { enableMapSet } from "immer";
 import { useImmer } from "use-immer";
+import React, { ReactNode } from "react";
 
-import Expr, { Blank } from "expr";
 import { Optional, assertSome } from "utils";
-import { Type, Value, Func, Workspace as InterpterWorkspace, Builtin, assertFunc } from "vm/types";
 import Builtins from "vm/builtins";
+import Expr, { Blank } from "expr";
 import * as Sample from "sample";
+import { Type, Value, Func, Workspace as InterpterWorkspace, Builtin, assertFunc } from "vm/types";
 
 function asFunc(expr: Expr): Value<Func> {
     return { type: Type.Func, value: { expr, scope: null, args: [] } };
@@ -47,7 +47,7 @@ export function useWorkSpaceProvider() {
                 draft.functions = Array.from(draft.scope.keys());
             });
         },
-        update(name: string, update: (expr: Expr) => Expr) {
+        update(name: string, update: (expr: Expr) => Expr): void {
             setGlobals(draft => {
                 const next = asFunc(update(assertFunc(assertSome(draft.scope.get(name))).expr));
                 draft.scope.set(name, next);

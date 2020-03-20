@@ -11,7 +11,6 @@ import { Workspace } from "contexts/workspace";
 import { EditorStackActions } from "hooks/editor_stack";
 
 const MinimapItemStack = styled(Stack).attrs({ gap: 8, vertical: true })<{ focused: boolean }>`
-    user-select: none;
     border-radius: ${p => p.theme.borderRadius}px;
     padding: 5px;
     color: ${p => p.theme.colour.clickable};

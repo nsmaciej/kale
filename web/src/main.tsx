@@ -37,17 +37,13 @@ body {
     font: 14px/1 "Nunito", sans-serif;
     color: ${p => p.theme.colour.mainText};
     background: ${p => p.theme.colour.background};
+    /* Nothing is selectable by default. This used to not be true, but Safari is overzealous with
+    selection while dragging. In the future this should be fixed to allow selecting p and a. */
+    user-select: none;
 }
 p {
     line-height: 1.8;
     font-variant-numeric: oldstyle-nums;
-}
-/* Nothing inside svgs should be selectable */
-svg * {
-    user-select: none;
-}
-h1, h2, h3 {
-    user-select: none;
 }
 a {
     color: ${p => p.theme.colour.clickable};
@@ -159,24 +155,22 @@ function Kale() {
 function App() {
     return (
         <React.StrictMode>
-            <StyleSheetManager disableVendorPrefixes>
-                <ThemeProvider theme={DefaultTheme}>
-                    <GlobalStyle />
-                    <ToastProvider>
-                        <ErrorBoundary>
-                            <DragAndDropSurface>
-                                <WorkspaceProvider>
-                                    <DebuggerProvider>
-                                        <ClipboardProvider>
-                                            <Kale />
-                                        </ClipboardProvider>
-                                    </DebuggerProvider>
-                                </WorkspaceProvider>
-                            </DragAndDropSurface>
-                        </ErrorBoundary>
-                    </ToastProvider>
-                </ThemeProvider>
-            </StyleSheetManager>
+            <ThemeProvider theme={DefaultTheme}>
+                <GlobalStyle />
+                <ToastProvider>
+                    <ErrorBoundary>
+                        <DragAndDropSurface>
+                            <WorkspaceProvider>
+                                <DebuggerProvider>
+                                    <ClipboardProvider>
+                                        <Kale />
+                                    </ClipboardProvider>
+                                </DebuggerProvider>
+                            </WorkspaceProvider>
+                        </DragAndDropSurface>
+                    </ErrorBoundary>
+                </ToastProvider>
+            </ThemeProvider>
         </React.StrictMode>
     );
 }

@@ -14,7 +14,6 @@ const MenuPopover = styled.div<{ subtle: boolean }>`
 `;
 
 const MenuItemContainer = styled.div<{ selected: boolean; enabled: boolean }>`
-    user-select: none;
     background: ${p => (p.enabled && p.selected ? p.theme.colour.clickable : "transparent")};
     display: flex;
     align-items: center;
