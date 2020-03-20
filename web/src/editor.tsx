@@ -124,11 +124,8 @@ class Editor extends PureComponent<EditorProps, EditorState> {
                 this.selectExpr(blanks[0].id);
             }
         } else if (expr != null && newValue != null) {
-            // Auto-select the next sibling (if we submitted).
-            const [siblings, ix] = this.expr.siblings(expr.id);
-            if (ix != null && ix + 1 < siblings.length) {
-                this.selectExpr(siblings[ix + 1].id);
-            }
+            // Auto-select the next pre-order sibling (if we submitted).
+            this.selectionAction(Select.rightSmart)();
         }
     }
 

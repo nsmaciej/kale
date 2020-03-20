@@ -36,21 +36,26 @@ const specials: {
         scope: Scope,
     ) => Promise<Value>;
 } = {
+    // Be careful and check if all arguments exist here, typescript doesn't.
     async Let(evalExpr, args, scope) {
+        vmAssert(args.length === 2, "Let needs two arguments");
         const value = await evalExpr(args[1], scope);
         scope.define(assertVariable(args[0]), value);
         return value;
     },
     async Set(evalExpr, args, scope) {
+        vmAssert(args.length === 2, "Set needs two arguments");
         const value = await evalExpr(args[1], scope);
         scope.assign(assertVariable(args[0]), value);
         return value;
     },
     async If(evalExpr, args, scope) {
+        vmAssert(args.length === 2, "If needs three arguments");
         const condition = await evalExpr(args[0], scope);
         return await evalExpr(assertBoolean(condition) ? args[1] : args[2], scope);
     },
     async While(evalExpr, args, scope) {
+        vmAssert(args.length === 2, "While needs two arguments");
         let r = nullValue();
         while (assertBoolean(await evalExpr(args[0], scope))) {
             r = await evalExpr(args[1], scope);
