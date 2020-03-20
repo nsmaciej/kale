@@ -5,13 +5,6 @@ export class Offset {
 
     constructor(readonly x: number, readonly y = x) {}
 
-    static fromPage(e: { pageX: number; pageY: number }) {
-        return new Offset(e.pageX, e.pageY);
-    }
-    static fromBoundingRect(rect: { left: number; top: number }) {
-        return new Offset(rect.left, rect.top);
-    }
-
     get neg() {
         return new Offset(-this.x, -this.y);
     }
@@ -45,6 +38,16 @@ export class Offset {
     }
     dy(d: number) {
         return new Offset(this.x, this.y + d);
+    }
+}
+
+export class ClientOffset extends Offset {
+    /** Construct a new ClientOffset from something like DOMRect */
+    static fromBoundingRect(rect: { left: number; top: number }): ClientOffset {
+        return new Offset(rect.left, rect.top);
+    }
+    static fromClient(rect: { clientX: number; clientY: number }): ClientOffset {
+        return new Offset(rect.clientX, rect.clientY);
     }
 }
 

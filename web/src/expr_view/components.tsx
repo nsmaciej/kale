@@ -1,6 +1,6 @@
 import React, { ReactNode, useState } from "react";
 
-import { Offset, Rect } from "geometry";
+import { Offset, Rect, Size } from "geometry";
 import { useTheme } from "styled-components";
 
 // A type for components that have custom props but pass everything else on.
@@ -99,5 +99,16 @@ export function HoverHitBox({
                 {title && <title>{title}</title>}
             </SvgRect>
         </>
+    );
+}
+
+export function DebugRect({ origin, colour = "limegreen" }: { origin?: Offset; colour?: string }) {
+    return (
+        <SvgRect
+            rect={new Rect(origin ?? new Offset(0), new Size(5))}
+            fill={colour}
+            stroke="none"
+            opacity="0.7"
+        />
     );
 }

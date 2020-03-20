@@ -302,6 +302,7 @@ class ExprLayout implements ExprVisitor<Layout> {
     }
 }
 
+// Make sure to update argsEqual when adding or removing properties form this.
 export interface LayoutProps {
     exprPropsFor?(expr: Expr): Partial<React.DOMAttributes<Element>>;
     onClickCreateCircle?(e: React.MouseEvent, expr: Expr): void;

@@ -1,24 +1,24 @@
-import React, { Component, Ref, useContext, PureComponent } from "react";
+import React, { Ref, useContext, PureComponent } from "react";
 import { useTheme } from "styled-components";
 
 import * as E from "expr";
 import * as Select from "selection";
-import Expr, { ExprId } from "expr";
-import ExprView, { ExprAreaMap } from "expr_view";
-import { Optional, assertSome, reverseObject, assert, insertSibling, arrayEquals } from "utils";
+import { EditorStackActions } from "hooks/editor_stack";
 import { KaleTheme, Highlight } from "theme";
+import { Offset, Rect } from "geometry";
+import { Optional, assertSome, reverseObject, assert, insertSibling, arrayEquals } from "utils";
+import Expr, { ExprId } from "expr";
+import ExprView, { Area, ExprAreaMap } from "expr_view";
 
 import { Type, Func, assertFunc } from "vm/types";
 import { specialFunctions } from "vm/interpreter";
 
 import { Clipboard, ClipboardValue } from "contexts/clipboard";
-import { Workspace, WorkspaceValue } from "contexts/workspace";
 import { DragAndDrop, DragAndDropValue } from "contexts/drag_and_drop";
+import { Workspace, WorkspaceValue } from "contexts/workspace";
 
 import { ContextMenuItem } from "components/context_menu";
 import InlineEditor from "components/inline_editor";
-import { EditorStackActions } from "hooks/editor_stack";
-import { Offset, Rect } from "geometry";
 
 interface EditorState {
     focused: boolean;
@@ -47,6 +47,7 @@ interface EditorProps extends EditorWrapperProps {
 class Editor extends PureComponent<EditorProps, EditorState> {
     private readonly containerRef = React.createRef<HTMLDivElement>();
     private readonly exprAreaMapRef = React.createRef<ExprAreaMap>();
+    private readonly exprAreaRef = React.createRef<Area>();
 
     state: EditorState = {
         focused: false,
@@ -441,22 +442,29 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         }
     };
 
-    private readonly dragAndDropUpdate = (point: Offset | null) => {
-        if (this.containerRef.current === null) return;
+    private readonly dragAndDropUpdate = (absolutePoint: Offset | null) => {
+        if (this.containerRef.current === null || this.exprAreaRef.current === null) return;
         const editorRect = Rect.fromBoundingRect(this.containerRef.current.getBoundingClientRect());
-        const dropTarget = this.expr.id;
-        this.setState(state => {
-            if (point !== null && editorRect.contains(point)) {
-                if (state.droppable == null || state.droppable !== dropTarget) {
-                    return { ...state, droppable: dropTarget };
-                }
-            } else {
-                if (state.droppable != null) {
-                    return { ...state, droppable: null };
+        if (absolutePoint === null || !editorRect.contains(absolutePoint)) {
+            this.setState({ droppable: null });
+            return;
+        }
+
+        // Find the drop target. Keep in mind each nested area is offset relative to its parent.
+        const point = absolutePoint.difference(editorRect.origin);
+        let currentArea = this.exprAreaRef.current;
+        let areaStart = Offset.zero;
+        main: for (;;) {
+            for (const subArea of currentArea.children) {
+                if (subArea.rect.shift(areaStart).contains(point)) {
+                    currentArea = subArea;
+                    areaStart = areaStart.add(subArea.rect.origin);
+                    continue main;
                 }
             }
-            return state;
-        });
+            break;
+        }
+        this.setState({ droppable: currentArea.expr.id });
     };
 
     componentDidMount() {
@@ -577,6 +585,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
                     foldComments={this.state.foldingComments}
                     theme={this.props.theme}
                     exprAreaMapRef={this.exprAreaMapRef}
+                    exprAreaRef={this.exprAreaRef}
                     // Callbacks.
                     contextMenuFor={this.contextMenuFor}
                     onClick={this.selectExpr}

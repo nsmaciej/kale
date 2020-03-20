@@ -2,7 +2,7 @@ import React, { PureComponent } from "react";
 import { motion } from "framer-motion";
 
 import { Optional, assert, assertSome } from "utils";
-import { Offset, Rect, Size } from "geometry";
+import { Offset, Rect, ClientOffset } from "geometry";
 import Expr, { ExprId } from "expr";
 import * as E from "expr";
 import { KaleTheme, Highlight } from "theme";
@@ -11,8 +11,9 @@ import ContextMenu, { ContextMenuItem } from "components/context_menu";
 
 import { Area, TextProperties } from "expr_view/core";
 import layoutExpr from "expr_view/layout";
-import { SvgGroup, SvgRect } from "expr_view/components";
+import { SvgGroup, SvgRect, DebugRect } from "expr_view/components";
 
+export { Area } from "expr_view/core";
 export interface ExprArea {
     inline: boolean;
     rect: Rect;
@@ -40,6 +41,7 @@ interface ExprViewProps {
     expr: Expr;
     theme: KaleTheme;
     exprAreaMapRef?: React.RefObject<ExprAreaMap>;
+    exprAreaRef?: React.RefObject<Area>;
 
     // Callbacks.
     onClick?(expr: ExprId): void;
@@ -64,7 +66,7 @@ interface ExprViewProps {
 }
 
 interface ExprViewState {
-    showingMenu: Optional<{ menu: ContextMenuItem[]; at: Offset; expr: ExprId }>;
+    showingMenu: Optional<{ menu: ContextMenuItem[]; at: ClientOffset; expr: ExprId }>;
     // You can trigger this with the React Dev Tools.
     debugShowAreas: boolean;
 }
@@ -75,7 +77,9 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
     declare context: React.ContextType<typeof DragAndDrop>;
 
     state: ExprViewState = { showingMenu: null, debugShowAreas: false };
-    private pendingExprAreaMap: ExprAreaMap = {};
+    private readonly containerRef = React.createRef<SVGSVGElement>();
+    private pendingExprAreaMap: ExprAreaMap | null = null;
+    private pendingExprArea: Area | null = null;
 
     get theme() {
         return this.props.theme;
@@ -94,17 +98,9 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
         const texts = Object.entries(areas)
             .filter(x => x[1].textProps != null)
             .map(([k, v]) => (
-                <SvgRect
+                <DebugRect
                     key={`t${k}`}
-                    rect={
-                        new Rect(
-                            v.rect.origin.add(v.textProps?.offset ?? new Offset(0)),
-                            new Size(5),
-                        )
-                    }
-                    fill="limegreen"
-                    stroke="none"
-                    opacity="0.7"
+                    origin={v.rect.origin.add(v.textProps?.offset ?? Offset.zero)}
                 />
             ));
         return exprs.concat(texts);
@@ -142,16 +138,24 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
     // Handler for the mousedown event.
     private onMouseDown(event: React.MouseEvent, expr: Expr) {
         assert(event.type === "mousedown");
-        if (event.buttons !== 1) return;
+        if (
+            event.buttons !== 1 ||
+            this.pendingExprAreaMap === null ||
+            this.containerRef.current === null
+        ) {
+            return;
+        }
+
         event.stopPropagation();
-        const rect = (event.target as SVGElement).getBoundingClientRect();
+        const containerOrigin = ClientOffset.fromBoundingRect(
+            this.containerRef.current?.getBoundingClientRect(),
+        );
+        // Frozen expressions drag everything.
+        const dragExpr = this.props.frozen ? this.props.expr : expr;
         assertSome(this.context).maybeStartDrag(
-            Offset.fromPage(event),
-            //TODO: This only really works well for the top-left element of an expr. For example
-            // this doesn't work for functions with comments on top of them, since the offset is
-            // relative to the function name instead of the whole expression.
-            Offset.fromBoundingRect(rect),
-            this.props.frozen ? this.props.expr : expr,
+            ClientOffset.fromClient(event),
+            this.pendingExprAreaMap[dragExpr.id].rect.origin.add(containerOrigin),
+            dragExpr,
         );
     }
 
@@ -161,7 +165,7 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
         e.stopPropagation();
         this.setState({
             showingMenu: {
-                at: Offset.fromPage(e),
+                at: ClientOffset.fromClient(e),
                 menu: this.props.contextMenuFor?.(expr.id),
                 expr: expr.id,
             },
@@ -209,13 +213,16 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
     };
 
     private updateExprAreaMapRef() {
-        if (this.props.exprAreaMapRef) {
+        if (this.props.exprAreaMapRef !== undefined && this.pendingExprAreaMap !== null) {
             // See https://github.com/DefinitelyTyped/DefinitelyTyped/issues/31065
             // As far as I can see React's users are free to modify .current, but the typings do not
             // respect that.
             (this.props.exprAreaMapRef as React.MutableRefObject<
                 ExprAreaMap
             >).current = this.pendingExprAreaMap;
+        }
+        if (this.props.exprAreaRef !== undefined && this.pendingExprArea !== null) {
+            (this.props.exprAreaRef as React.MutableRefObject<Area>).current = this.pendingExprArea;
         }
     }
     componentDidMount() {
@@ -248,13 +255,14 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
             : this.theme.exprView.padding;
         // Spooky in React's Concurrent Mode, but it's ok since we'll only use this when
         // we commit and it doesn't depend on any previous calls to render.
-        this.pendingExprAreaMap = flattenArea({
+        this.pendingExprArea = {
             expr: this.props.expr,
             children: areas,
             rect: new Rect(padding.topLeft, size),
             inline: false,
             text,
-        });
+        };
+        this.pendingExprAreaMap = flattenArea(this.pendingExprArea);
 
         const highlightRects = [];
         if (this.props.highlights != null) {
@@ -271,6 +279,7 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
             <>
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
+                    ref={this.containerRef}
                     width={width * scale}
                     height={height * scale}
                     // SVGs are inline by default, this leads to a scourge of invisible space

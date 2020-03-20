@@ -3,23 +3,23 @@ import ReactDOM from "react-dom";
 import styled, { ThemeConsumer } from "styled-components";
 
 import { Optional, assertSome } from "utils";
-import { Offset } from "geometry";
+import { ClientOffset } from "geometry";
 import Expr from "expr";
 
 import layoutExpr from "expr_view/layout";
 import { SvgGroup } from "expr_view/components";
 
-type Listener = (point: Offset | null) => void;
+type Listener = (point: ClientOffset | null) => void;
 
 export interface DragAndDropValue {
-    maybeStartDrag(start: Offset, exprStart: Offset, expr: Expr): void;
+    maybeStartDrag(start: ClientOffset, exprStart: ClientOffset, expr: Expr): void;
     dismissDrag(): void;
     addListener(listener: Listener): void;
     removeListener(listener: Listener): void;
 }
 
 interface DragAndDropSurfaceState {
-    position: Optional<Offset>;
+    position: Optional<ClientOffset>;
 }
 
 export const DragAndDrop = React.createContext<Optional<DragAndDropValue>>(null);
@@ -39,9 +39,9 @@ export default class DragAndDropSurface extends Component<{}, DragAndDropSurface
     state: DragAndDropSurfaceState = { position: null };
 
     private drag: Optional<{
-        start: Offset; // Where the maybe-drag started.
-        delta: Optional<Offset>; // How much to offset the expr when showing the drag.
-        exprStart: Offset; // Page space coordinates of the expr.
+        start: ClientOffset; // Where the maybe-drag started.
+        delta: Optional<ClientOffset>; // How much to offset the expr when showing the drag.
+        exprStart: ClientOffset; // Where is the corner of the xpr.
         expr: Expr;
     }>;
 
@@ -64,7 +64,7 @@ export default class DragAndDropSurface extends Component<{}, DragAndDropSurface
         }
 
         const DRAG_THRESHOLD = 4; // Based on Windows default, DragHeight registry.
-        const position = Offset.fromPage(event);
+        const position = ClientOffset.fromClient(event);
         if (this.drag.delta == null) {
             // Consider starting a drag.
             if (this.drag.start.distance(position) > DRAG_THRESHOLD) {
@@ -96,7 +96,7 @@ export default class DragAndDropSurface extends Component<{}, DragAndDropSurface
 
     private readonly contextValue: DragAndDropValue = {
         dismissDrag: this.dismissDrag,
-        maybeStartDrag: (start: Offset, exprStart: Offset, expr: Expr) => {
+        maybeStartDrag: (start: ClientOffset, exprStart: ClientOffset, expr: Expr) => {
             this.drag = { start, expr, exprStart, delta: null };
         },
         addListener: (listener: Listener) => {
