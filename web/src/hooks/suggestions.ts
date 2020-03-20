@@ -2,9 +2,9 @@ import { useContext, useState, useMemo } from "react";
 import Fuse from "fuse.js";
 
 import { assertSome, Optional, mod } from "utils";
-import { Workspace } from "contexts/workspace";
 import { MenuItem } from "components/menu";
 import { specialFunctions } from "vm/interpreter";
+import { Workspace } from "contexts/workspace";
 
 // Using MenuItem is just convenient.
 interface Suggestion extends MenuItem {

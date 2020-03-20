@@ -1,8 +1,8 @@
 import React, { Component } from "react";
 
+import * as E from "expr";
 import { Optional, partition } from "utils";
 import Expr, { ExprId } from "expr";
-import * as E from "expr";
 
 interface ClipboardEntry {
     pinned: boolean;

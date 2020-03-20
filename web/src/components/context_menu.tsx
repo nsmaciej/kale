@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import styled from "styled-components";
 
-import { Shortcut } from "components";
-import { Optional, mod, assert, delay } from "utils";
 import { Offset } from "geometry";
-import Menu, { MenuItem } from "components/menu";
+import { Optional, mod, assert, delay } from "utils";
+import { Shortcut } from "components";
 import { useDisableScrolling } from "hooks";
+import Menu, { MenuItem } from "components/menu";
 
 const ContextMenuSeparator = styled.div`
     height: 1px;

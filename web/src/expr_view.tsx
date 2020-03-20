@@ -1,17 +1,17 @@
 import React, { PureComponent } from "react";
 import { motion } from "framer-motion";
 
-import { Optional, assert, assertSome } from "utils";
-import { Offset, Rect, ClientOffset } from "geometry";
-import Expr, { ExprId } from "expr";
 import * as E from "expr";
-import { KaleTheme, Highlight } from "theme";
 import { DragAndDrop } from "contexts/drag_and_drop";
+import { KaleTheme, Highlight } from "theme";
+import { Offset, Rect, ClientOffset } from "geometry";
+import { Optional, assert, assertSome } from "utils";
 import ContextMenu, { ContextMenuItem } from "components/context_menu";
+import Expr, { ExprId } from "expr";
 
 import { Area, TextProperties } from "expr_view/core";
-import layoutExpr from "expr_view/layout";
 import { SvgGroup, SvgRect, DebugRect } from "expr_view/components";
+import layoutExpr from "expr_view/layout";
 
 export { Area } from "expr_view/core";
 export interface ExprArea {

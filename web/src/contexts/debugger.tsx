@@ -2,9 +2,9 @@ import React, { useState, useContext, ReactNode } from "react";
 import { useToasts } from "react-toast-notifications";
 
 import { assertSome } from "utils";
-import Interpreter from "vm/interpreter";
-import { Workspace } from "contexts/workspace";
 import { VmError } from "vm/types";
+import { Workspace } from "contexts/workspace";
+import Interpreter from "vm/interpreter";
 
 export function useDebugProvider() {
     const workspace = assertSome(useContext(Workspace));

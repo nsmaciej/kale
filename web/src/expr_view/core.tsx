@@ -1,10 +1,10 @@
 import React, { ReactNode } from "react";
 
-import { Size, Offset, Rect, Padding } from "geometry";
 import { Optional, max, assert } from "utils";
+import { Size, Offset, Rect } from "geometry";
 import { SvgGroup } from "expr_view/components";
-import Expr from "expr";
 import { TextStyle } from "text_metrics";
+import Expr from "expr";
 
 export interface TextProperties extends TextStyle {
     colour?: string;

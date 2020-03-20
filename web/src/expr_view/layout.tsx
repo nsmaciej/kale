@@ -1,13 +1,13 @@
-import React from "react";
-import styled, { useTheme } from "styled-components";
 import { motion } from "framer-motion";
 import memoizeOne from "memoize-one";
+import React from "react";
+import styled, { useTheme } from "styled-components";
 
+import * as E from "expr";
 import { KaleTheme, Highlight } from "theme";
 import { max } from "utils";
 import { Offset, Size, Rect } from "geometry";
 import Expr, { ExprId, ExprVisitor } from "expr";
-import * as E from "expr";
 import TextMetrics from "text_metrics";
 
 import { Layout, TextProperties, hstack, vstack, Area } from "expr_view/core";

@@ -1,7 +1,7 @@
 import * as E from "expr";
-import Expr, { ExprId } from "expr";
 import { ExprAreaMap } from "expr_view";
 import { Optional } from "utils";
+import Expr, { ExprId } from "expr";
 
 export type SelectFn = (expr: Expr, sel: ExprId, areas: ExprAreaMap) => Optional<ExprId>;
 
