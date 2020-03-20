@@ -64,15 +64,15 @@ export default abstract class Expr {
         return assertSome(this.findId(id));
     }
 
-    findId(id: ExprId): Optional<Expr> {
+    findId(id: ExprId): Expr | null {
         return this.find(x => x.id === id);
     }
 
-    replace(id: ExprId, next: Optional<Expr>): Optional<Expr> {
+    replace(id: ExprId, next: Optional<Expr>): Expr | null {
         return this.update(id, () => next);
     }
 
-    update(id: ExprId, update: (expr: Expr) => Optional<Expr>): Optional<Expr> {
+    update(id: ExprId, update: (expr: Expr) => Optional<Expr>): Expr | null {
         return this.filterMap(x => (x.id === id ? update(x) : x));
     }
 
@@ -96,8 +96,8 @@ export default abstract class Expr {
         return this.assignToData({ id });
     }
 
-    find(predicate: (expr: Expr) => boolean): Optional<Expr> {
-        let found: Optional<Expr>;
+    find(predicate: (expr: Expr) => boolean): Expr | null {
+        let found: Expr | null = null;
         this.forEach(x => {
             if (found == null && predicate(x)) found = x;
         });
@@ -112,7 +112,7 @@ export default abstract class Expr {
         return result;
     }
 
-    forEach(callback: (x: Expr) => void) {
+    forEach(callback: (x: Expr) => void): void {
         this.filterMap(x => {
             callback(x);
             return x;
@@ -131,7 +131,7 @@ export default abstract class Expr {
         return parents;
     }
 
-    parentOf(id: ExprId): Optional<Expr> {
+    parentOf(id: ExprId): Expr | null {
         return this.find(
             x =>
                 (x instanceof Call && x.args.some(i => i.id === id)) ||
@@ -139,7 +139,7 @@ export default abstract class Expr {
         );
     }
 
-    grandparentOf(id: ExprId): Optional<Expr> {
+    grandparentOf(id: ExprId): Expr | null {
         const parent = this.parentOf(id);
         return parent == null ? null : this.parentOf(parent.id);
     }
@@ -179,15 +179,15 @@ export default abstract class Expr {
         return this;
     }
 
-    filterMap(fn: (expr: Expr) => Optional<Expr>): Optional<Expr> {
-        return this.visit(new ExprFilterMap(fn));
+    filterMap(fn: (expr: Expr) => Optional<Expr>): Expr | null {
+        return this.visit(new ExprFilterMap(fn)) ?? null;
     }
 
-    remove(id: ExprId): Optional<Expr> {
-        return this.update(id, () => null);
+    remove(id: ExprId): Expr | null {
+        return this.update(id, () => null) ?? null;
     }
 
-    value(): Optional<string> {
+    value(): string | null {
         if (this instanceof Blank || this instanceof List) {
             return null;
         }
