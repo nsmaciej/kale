@@ -47,6 +47,9 @@ function closeEditor(state: EditorStack, index: number) {
     return produce(state, draft => {
         draft.jumpList = draft.jumpList.filter(x => x !== draft.stack[index].key);
         draft.stack = removeIndex(draft.stack, index);
+        if (!draft.stack.length) {
+            draft.focus = null;
+        }
     });
 }
 
