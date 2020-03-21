@@ -318,6 +318,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
     private readonly menuKeyEquivalents: { [key: string]: keyof Editor["actions"] } = {
         "\\": "disable",
         "#": "foldComments",
+        Backspace: "delete",
         c: "copy",
         d: "delete",
         Enter: "edit",

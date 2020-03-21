@@ -104,7 +104,8 @@ function Kale() {
             dispatch({ type: "moveFocus", move: -1 });
         } else if (key === "D") {
             dispatch({ type: "closeFocusedEditor" });
-        } else if (key === "Backspace") {
+        } else if (key === "O") {
+            // The 'opposite' of 'Open definition'.
             dispatch({ type: "jumpBack" });
         } else {
             return;
