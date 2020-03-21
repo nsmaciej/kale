@@ -19,6 +19,7 @@ import { Workspace, WorkspaceContext } from "contexts/workspace";
 
 import { ContextMenuItem } from "components/context_menu";
 import InlineEditor from "components/inline_editor";
+import Popover from "components/popover";
 
 interface EditorState {
     focused: boolean;
@@ -28,6 +29,7 @@ interface EditorState {
     selection: ExprId;
     hoverHighlight: Optional<ExprId>;
     droppable: Optional<ExprId>;
+    blankPopover: ExprId | null;
 }
 
 interface EditorWrapperProps {
@@ -57,6 +59,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         selection: this.expr.id,
         hoverHighlight: null,
         droppable: null,
+        blankPopover: null,
     };
 
     private get expr(): Expr {
@@ -102,9 +105,12 @@ class Editor extends PureComponent<EditorProps, EditorState> {
 
     private createInlineEditor(exprId: ExprId, created: boolean) {
         const expr = this.expr.findId(exprId);
+        if (expr === null) return;
         // Only things with a value can be edited.
-        if (expr != null && expr.value() != null) {
+        if (expr.value() != null) {
             this.setState({ editing: { expr: exprId, created } });
+        } else if (expr instanceof E.Blank) {
+            this.setState({ blankPopover: exprId });
         }
     }
 
@@ -546,8 +552,8 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         assert(!specialFunctions.has(props.functionName), "Cannot edit special functions");
     }
 
-    renderInlineEditor() {
-        if (this.exprAreaMapRef.current == null || this.state.editing == null) return;
+    private renderInlineEditor() {
+        if (this.exprAreaMapRef.current === null || this.state.editing == null) return;
         const exprId = this.state.editing.expr;
         const expr = assertSome(this.expr.findId(exprId));
         return (
@@ -561,6 +567,26 @@ class Editor extends PureComponent<EditorProps, EditorState> {
                 onDismiss={() => this.stopEditing(null)}
                 onSubmit={value => this.stopEditing(value)}
             />
+        );
+    }
+
+    private renderBlankPopover() {
+        if (
+            this.exprAreaMapRef.current === null ||
+            this.state.blankPopover === null ||
+            this.containerRef.current === null
+        ) {
+            return;
+        }
+        const exprRect = this.exprAreaMapRef.current[this.state.blankPopover].rect;
+        const editorOrigin = ClientOffset.fromBoundingRect(
+            this.containerRef.current.getBoundingClientRect(),
+        );
+        const origin = editorOrigin.add(exprRect.bottomLeft);
+        return (
+            <Popover origin={origin} onDismiss={() => this.setState({ blankPopover: null })}>
+                Hello this is a test popover.
+            </Popover>
         );
     }
 
@@ -626,6 +652,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
                     onFocus={this.focus}
                 />
                 {this.renderInlineEditor()}
+                {this.renderBlankPopover()}
             </div>
         );
     }

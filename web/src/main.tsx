@@ -1,6 +1,6 @@
+import ReactDOM from "react-dom";
 import { AiOutlineGithub } from "react-icons/ai";
 import { ToastProvider } from "react-toast-notifications";
-import * as ReactDOM from "react-dom";
 import React, { useRef, useEffect } from "react";
 import styled, { ThemeProvider, createGlobalStyle } from "styled-components";
 

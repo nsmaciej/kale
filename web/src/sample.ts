@@ -56,7 +56,7 @@ const sample3 = new List([
         new Literal("This will not be printed", Type.Str, exprData(null, true)),
         new Variable("msg"),
     ]),
-    new Call("Sample-1"),
+    new Call("Sample-1", [new Blank(exprData("An argument blank"))]),
 ]);
 
 export const SAMPLE_1 = sample1.validate();
