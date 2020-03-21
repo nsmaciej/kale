@@ -13,7 +13,7 @@ import ExprView, { Area, ExprAreaMap } from "expr_view";
 import { Type, Func, assertFunc, Value, Builtin } from "vm/types";
 import { specialFunctions } from "vm/interpreter";
 
-import { Clipboard, ClipboardValue } from "contexts/clipboard";
+import { Clipboard, ClipboardContext } from "contexts/clipboard";
 import { DragAndDrop, DragAndDropValue, DropListener } from "contexts/drag_and_drop";
 import { Workspace, WorkspaceContext } from "contexts/workspace";
 
@@ -39,7 +39,7 @@ interface EditorWrapperProps {
 
 interface EditorProps extends EditorWrapperProps {
     workspace: WorkspaceContext;
-    clipboard: ClipboardValue;
+    clipboard: ClipboardContext;
     dragAndDrop: DragAndDropValue;
     theme: KaleTheme;
     forwardedRef: Ref<HTMLDivElement>;
@@ -90,7 +90,10 @@ class Editor extends PureComponent<EditorProps, EditorState> {
     private addToClipboard(expr: ExprId) {
         const selected = this.expr.findId(expr);
         if (selected) {
-            this.props.clipboard.add({ expr: selected, pinned: false });
+            this.props.clipboard.dispatch({
+                type: "add",
+                entry: { expr: selected, pinned: false },
+            });
         }
     }
 
@@ -224,10 +227,10 @@ class Editor extends PureComponent<EditorProps, EditorState> {
 
     private pasteAction(ix: number): () => void {
         return () => {
-            const clipboard = this.props.clipboard.clipboard;
+            const clipboard = this.props.clipboard.value;
             if (ix < clipboard.length) {
                 this.replaceExpr(this.state.selection, clipboard[ix].expr);
-                this.props.clipboard.use(clipboard[ix].expr.id);
+                this.props.clipboard.dispatch({ type: "use", expr: clipboard[ix].expr.id });
             }
         };
     }

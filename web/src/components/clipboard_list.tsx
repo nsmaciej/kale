@@ -13,10 +13,10 @@ export default React.memo(function ClipboardList() {
     const clipboard = assertSome(useContext(Clipboard));
 
     const draggingOver = useSimpleDrop(containerRef, expr =>
-        clipboard.add({ pinned: false, expr }),
+        clipboard.dispatch({ type: "add", entry: { pinned: false, expr } }),
     );
 
-    const history = clipboard.clipboard.map((x, i) => ({
+    const history = clipboard.value.map((x, i) => ({
         ...x,
         shortcut: i < 10 ? mod(i + 1, 10).toString() : undefined,
     }));
@@ -25,8 +25,8 @@ export default React.memo(function ClipboardList() {
             <Stack gap={10} alignItems="baseline" justifyContent="space-between">
                 <PaneHeading>History</PaneHeading>
                 <SubtleButton
-                    onClick={() => clipboard.clear()}
-                    disabled={!clipboard.canBeCleared()}
+                    onClick={() => clipboard.dispatch({ type: "clear" })}
+                    disabled={clipboard.value.every(x => x.pinned)}
                 >
                     Clear All
                 </SubtleButton>
@@ -45,7 +45,11 @@ export default React.memo(function ClipboardList() {
                     </NonIdealText>
                 }
                 extras={item => (
-                    <SubtleButton onClick={() => clipboard.togglePinned(item.expr.id)}>
+                    <SubtleButton
+                        onClick={() =>
+                            clipboard.dispatch({ type: "togglePinned", expr: item.expr.id })
+                        }
+                    >
                         {item.pinned ? <AiFillPushpin /> : <AiOutlinePushpin />}
                     </SubtleButton>
                 )}
