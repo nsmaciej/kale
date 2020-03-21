@@ -27,6 +27,7 @@ export interface ContextMenuItem extends MenuItem {
     label: Optional<string>;
     action: Optional<() => void>;
     keyEquivalent?: Optional<string>;
+    hidden?: boolean;
 }
 
 interface ContextMenuProps {
@@ -41,6 +42,7 @@ export default function ContextMenu({ items, origin, dismissMenu, popover }: Con
     useDisableScrolling();
     const [selection, setSelection] = useState<number | null>(null);
     const [blinking, setBlinking] = useState(false);
+    const [showingHidden, setShowingHidden] = useState(false);
 
     // Move selection skipping past separators, if the menu consists of only separators,
     // bad things(tm) will happen.
@@ -72,11 +74,22 @@ export default function ContextMenu({ items, origin, dismissMenu, popover }: Con
         item.action?.();
     }
 
+    function onKeyUp(e: React.KeyboardEvent) {
+        if (e.ctrlKey || e.metaKey) return;
+        e.stopPropagation();
+        if (e.key === "Alt") setShowingHidden(false);
+    }
+
     function onKeyDown(e: React.KeyboardEvent) {
-        if (e.ctrlKey || e.altKey || e.metaKey) return;
+        if (e.ctrlKey || e.metaKey) return;
+        // Pressing Alt allows showing hidden menu items.
+        if (e.altKey && e.key !== "Alt") return;
         e.stopPropagation();
         e.preventDefault();
         switch (e.key) {
+            case "Alt":
+                setShowingHidden(true);
+                break;
             case "ArrowDown":
                 moveSelection(1);
                 break;
@@ -97,7 +110,7 @@ export default function ContextMenu({ items, origin, dismissMenu, popover }: Con
                 let i = 0;
                 for (const item of items) {
                     if (item.keyEquivalent === e.key) {
-                        if (item.disabled) onClick(item, i);
+                        if (!item.disabled) onClick(item, i);
                         return;
                     }
                     i++;
@@ -123,10 +136,7 @@ export default function ContextMenu({ items, origin, dismissMenu, popover }: Con
         <div
             style={{ position: "fixed", left: origin.x, top: origin.y, zIndex: 100 }}
             onKeyDown={onKeyDown}
-            onKeyUp={e => {
-                e.preventDefault();
-                e.stopPropagation();
-            }}
+            onKeyUp={onKeyUp}
             tabIndex={0}
             onBlur={dismissMenu}
             ref={el => el?.focus()}
@@ -140,17 +150,20 @@ export default function ContextMenu({ items, origin, dismissMenu, popover }: Con
                 setSelected={i =>
                     blinking || setSelection(i != null && items[i].label != null ? i : null)
                 }
-                minimalPadding={i => items[i].label == null}
+                minimalPadding={i =>
+                    items[i].label == null || (items[i].hidden === true && !showingHidden)
+                }
             >
                 {item =>
-                    item.label ? (
+                    (!item.hidden || showingHidden) &&
+                    (item.label ? (
                         <ContextMenuItemContainer>
                             <span>{item.label}</span>
                             {renderShortcut(item.keyEquivalent)}
                         </ContextMenuItemContainer>
                     ) : (
                         <ContextMenuSeparator />
-                    )
+                    ))
                 }
             </Menu>
         </div>

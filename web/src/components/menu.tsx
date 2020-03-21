@@ -45,7 +45,7 @@ const Arrow = styled.div`
 `;
 
 const MenuItemContainer = styled.div<{ selected: boolean; disabled: boolean }>`
-    background: ${p => (p.disabled && p.selected ? p.theme.colour.clickable : "transparent")};
+    background: ${p => (!p.disabled && p.selected ? p.theme.colour.clickable : "transparent")};
     display: flex;
     align-items: center;
     & > svg {

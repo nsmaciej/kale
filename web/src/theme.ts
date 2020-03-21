@@ -127,7 +127,7 @@ export const DefaultTheme = {
         mainPadding: new Padding(3, 20, 3, 3),
         radius: 3,
         selection: new Highlight("selection", "#f5f9ff", "#364ee0")
-            .blurred("#fcfdff", "#b8ccff")
+            .blurred("#fcfdff", "#edeffc")
             .withAnimation(),
         hover: new Highlight("hover", undefined, "#cecece").blank("#efefef", "#dcdcdc"),
         contextMenu: new Highlight("context", undefined, "#364ee0").withStrokeWidth(0.5),

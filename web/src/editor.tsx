@@ -24,11 +24,12 @@ interface EditorState {
     focused: boolean;
     foldingComments: boolean;
     editing: Optional<{ expr: ExprId; created: boolean }>;
+    showingDebugOverlay: boolean;
+    blankPopover: ExprId | null;
     // Highlights.
     selection: ExprId;
     hoverHighlight: Optional<ExprId>;
     droppable: Optional<ExprId>;
-    blankPopover: ExprId | null;
 }
 
 interface EditorWrapperProps {
@@ -54,11 +55,12 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         focused: false,
         foldingComments: false,
         editing: null,
+        blankPopover: null,
+        showingDebugOverlay: false,
         // Highlights.
         selection: this.expr.id,
         hoverHighlight: null,
         droppable: null,
-        blankPopover: null,
     };
 
     private get expr(): Expr {
@@ -311,6 +313,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         // Demo things that should be moved to the toy-box.
         demoAddVariable: (e: ExprId) => this.replaceAndEdit(e, new E.Variable(""), true),
         demoAddString: (e: ExprId) => this.replaceAndEdit(e, new E.Literal("", Type.Str), true),
+        showDebugOverlay: () => this.setState({ showingDebugOverlay: true }),
     };
 
     // See https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values.
@@ -373,10 +376,12 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         label: string;
         action: keyof Editor["actions"];
         enabled?(expr: Expr): boolean;
+        hidden?: boolean;
     }>[] = [
         { action: "edit", label: "Edit..." },
         { action: "copy", label: "Copy" },
         { action: "openEditor", label: "Open definition...", enabled: this.enableForCalls },
+        { action: "showDebugOverlay", label: "Show the Debug Overlay", hidden: true },
         null,
         { action: "delete", label: "Delete" },
         { action: "move", label: "Delete and Copy" },
@@ -408,6 +413,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
             action: item?.action && (() => this.actions[item.action](exprId)),
             keyEquivalent: item?.action && this.menuKeyEquivalentForAction[item.action],
             disabled: !(item?.enabled?.(expr) ?? true),
+            hidden: item?.hidden,
         }));
     };
 
@@ -668,6 +674,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
                     theme={this.props.theme}
                     exprAreaMapRef={this.exprAreaMapRef}
                     exprAreaRef={this.exprAreaRef}
+                    showDebugOverlay={this.state.showingDebugOverlay}
                     // Callbacks.
                     contextMenuFor={this.contextMenuFor}
                     onClick={this.selectExpr}

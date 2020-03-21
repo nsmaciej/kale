@@ -59,6 +59,7 @@ interface ExprViewProps {
     scale?: number;
     frozen?: boolean;
     foldComments?: boolean;
+    showDebugOverlay?: boolean;
 
     //TODO: Handle these in the generalised selection mechanism.
     focused?: boolean;
@@ -67,8 +68,6 @@ interface ExprViewProps {
 
 interface ExprViewState {
     showingMenu: Optional<{ menu: ContextMenuItem[]; at: ClientOffset; expr: ExprId }>;
-    // You can trigger this with the React Dev Tools.
-    debugShowAreas: boolean;
 }
 
 // This needs to be a class component so we can nicely pass it to the layout helper.
@@ -76,7 +75,7 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
     static contextType = DragAndDrop;
     declare context: React.ContextType<typeof DragAndDrop>;
 
-    state: ExprViewState = { showingMenu: null, debugShowAreas: false };
+    state: ExprViewState = { showingMenu: null };
     private readonly containerRef = React.createRef<SVGSVGElement>();
     private pendingExprAreaMap: ExprAreaMap | null = null;
     private pendingExprArea: Area | null = null;
@@ -301,7 +300,7 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
                     </filter>
                     {highlightRects}
                     <SvgGroup translate={padding.topLeft}>{nodes}</SvgGroup>
-                    {this.state.debugShowAreas && this.debugRenderAreas(this.pendingExprAreaMap)}
+                    {this.props.showDebugOverlay && this.debugRenderAreas(this.pendingExprAreaMap)}
                 </svg>
                 {this.state.showingMenu && (
                     <ContextMenu
