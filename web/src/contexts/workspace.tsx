@@ -62,8 +62,9 @@ const workspaceReducer = createReducer<WorkspaceValue, WorkspaceActions>({
     undo(state, { name }) {
         return produce(state, draft => {
             const lastState = draft.history.get(name)?.pop();
-            assert(lastState !== undefined, "There is nothing to undo");
-            draft.scope.set(name, asFunc(lastState as Expr));
+            if (lastState !== undefined) {
+                draft.scope.set(name, asFunc(lastState as Expr));
+            }
         });
     },
 });
