@@ -78,16 +78,14 @@ export class Layout {
         return r;
     }
 
-    place(origin: Offset, layout: Layout, index = this.nodes.length) {
+    place(origin: Offset, layout: Layout) {
         this.size = this.size.extend(origin, layout.size);
-        this.nodes.splice(
-            index,
-            0,
+        this.nodes.push(
             <SvgGroup
                 translate={origin}
                 // The logic is as follows: Either this is some random layout, in which case we let
                 // React be inefficent, or it's an expr layout.
-                key={layout.expr == null ? this.nodes.length : "E" + layout.expr.id}
+                key={layout.expr == null ? this.nodes.length : `expr-${layout.expr.id}`}
             >
                 {layout.nodes.flat()}
             </SvgGroup>,
