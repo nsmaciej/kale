@@ -147,12 +147,12 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         }
     }
 
-    private replaceAndEdit(expr: ExprId, next: Expr) {
+    private replaceAndEdit(expr: ExprId, next: Expr, created: boolean) {
         // Replace expr but using the callback.
         this.replaceExpr(expr, next);
         //TODO: Remove this.
         // ReplaceExpr will re-use the expr ID.
-        this.forceUpdate(() => this.createInlineEditor(expr, true));
+        this.forceUpdate(() => this.createInlineEditor(expr, created));
     }
 
     private insertBlankAsSiblingOf(target: ExprId, right: boolean) {
@@ -271,12 +271,9 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         insertBefore: (e: ExprId) => this.insertBlankAsSiblingOf(e, false),
         foldComments: () => this.setState(state => ({ foldingComments: !state.foldingComments })),
         comment: (e: ExprId) => {
-            const selected = this.expr.findId(e);
-            if (selected != null) {
-                // Empty string _should_ be null.
-                const comment = prompt("Comment?", selected.data.comment ?? "") || null;
-                this.update(e, expr => expr.assignToData({ comment: comment }));
-            }
+            // Empty string _should_ be null.
+            const comment = prompt("Comment?", this.expr.get(e).data.comment ?? "") || null;
+            this.update(e, expr => expr.assignToData({ comment: comment }));
         },
         disable: (e: ExprId) => {
             this.update(e, expr => {
@@ -302,10 +299,18 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         },
         newLine: (e: ExprId) => this.insertNewLine(e, true),
         newLineBefore: (e: ExprId) => this.insertNewLine(e, false),
+        smartMakeCall: (e: ExprId) => {
+            const target = this.expr.get(e);
+            if (target instanceof E.Blank) {
+                this.replaceAndEdit(e, new E.Call(""), true);
+            } else {
+                const fn = new E.Call("", [target]);
+                this.replaceAndEdit(e, fn, false);
+            }
+        },
         // Demo things that should be moved to the toy-box.
-        demoAddCall: (e: ExprId) => this.replaceAndEdit(e, new E.Call("")),
-        demoAddVariable: (e: ExprId) => this.replaceAndEdit(e, new E.Variable("")),
-        demoAddString: (e: ExprId) => this.replaceAndEdit(e, new E.Literal("", Type.Str)),
+        demoAddVariable: (e: ExprId) => this.replaceAndEdit(e, new E.Variable(""), true),
+        demoAddString: (e: ExprId) => this.replaceAndEdit(e, new E.Literal("", Type.Str), true),
     };
 
     // See https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values.
@@ -316,7 +321,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         c: "copy",
         d: "delete",
         Enter: "edit",
-        f: "demoAddCall",
+        f: "smartMakeCall",
         g: "demoAddString",
         i: "insert",
         I: "insertBefore",
@@ -387,7 +392,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         // Move this into some sort of editor-wide menu.
         { action: "foldComments", label: "Fold Comments" },
         null,
-        { action: "demoAddCall", label: "Make a Call" },
+        { action: "smartMakeCall", label: "Turn Into a Function Call..." },
         { action: "demoAddVariable", label: "Make a Variable" },
         { action: "demoAddString", label: "Make a String" },
     ];
@@ -602,7 +607,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
                 items={exprs.map(x => ({
                     id: x.label,
                     label: x.label,
-                    action: () => this.replaceAndEdit(target, x.expr),
+                    action: () => this.replaceAndEdit(target, x.expr, true),
                     enabled: true,
                     keyEquivalent: x.keyEquivalent,
                 }))}
