@@ -4,11 +4,12 @@ import { assert } from "utils";
 type HighlightPair = [string | undefined, string | undefined];
 
 export class Highlight {
-    strokeWidth = 0.5;
+    strokeWidth = 1;
+    animates = false;
+    droppable = false;
     private readonly focusedPair: HighlightPair;
     private blurredPair: HighlightPair;
     private blankPair?: HighlightPair;
-    animates = false;
 
     constructor(readonly name: string, fill?: string, stroke?: string) {
         this.focusedPair = [fill, stroke];
@@ -19,14 +20,22 @@ export class Highlight {
         this.strokeWidth = strokeWidth;
         return this;
     }
+    /** This highlight should animate when changed. */
     withAnimation(): this {
         this.animates = true;
         return this;
     }
+    /** Enable drawing the drobbale-shadow for this highlight. */
+    withDroppable(): this {
+        this.droppable = true;
+        return this;
+    }
+    /** Sets an alternative blurred appearance. */
     blurred(fill?: string, stroke?: string): this {
         this.blurredPair = [fill, stroke];
         return this;
     }
+    /** Sets an alternative appearance for blanks. */
     blank(fill?: string, stroke?: string): this {
         this.blankPair = [fill, stroke];
         return this;
@@ -46,24 +55,35 @@ export class Highlight {
     }
 }
 
+const colour = {
+    clickable: "#1b65f1",
+    active: "#003fb7",
+    brand: "#0ba902",
+    error: "#f44336",
+    background: "#ffffff",
+    innerBackground: "#f9f9f9",
+    grey: "#e4e4e4",
+    disabled: "#d8d8d8",
+    subtleClickable: "#cccccc",
+    subtleText: "#7b7b7b",
+    mainText: "#404040",
+};
+
+// This needs to be shared between SVG and HTML.
+const droppable = {
+    radius: 3,
+    colour: colour.clickable,
+};
+
 export const DefaultTheme = {
     borderRadius: 4,
-    boxShadow: "0 0 0 1px #10161a1a, 0 2px 4px #10161a33, 0 8px 24px #10161a33",
-    // Mostly used by popover's triangle, since the 24px spread shadow above clips.
-    boxShadowSmall: "0 0 0 1px #10161a1a, 0 2px 4px #10161a33",
+    colour,
+    droppable,
 
-    colour: {
-        clickable: "#1b65f1",
-        active: "#003fb7",
-        brand: "#0ba902",
-        error: "#f44336",
-        background: "#ffffff",
-        innerBackground: "#f9f9f9",
-        grey: "#e4e4e4",
-        disabled: "#d8d8d8",
-        subtleClickable: "#cccccc",
-        subtleText: "#7b7b7b",
-        mainText: "#404040",
+    shadow: {
+        normal: "0 0 0 1px #10161a1a, 0 2px 4px #10161a33, 0 8px 24px #10161a33",
+        // Mostly used by popover's triangle, since the 24px spread shadow above clips.
+        small: "0 0 0 1px #10161a1a, 0 2px 4px #10161a33",
     },
 
     expr: {
@@ -79,10 +99,10 @@ export const DefaultTheme = {
     exprView: {
         // This can be used to horizontally align things like headings to the text inside ExprView.
         get padding() {
-            return DefaultTheme.highlight.mainPadding.add(new Padding(1));
+            return DefaultTheme.highlight.mainPadding.add(droppable.radius);
         },
         get frozenPadding() {
-            return DefaultTheme.highlight.padding.add(new Padding(1));
+            return DefaultTheme.highlight.padding.add(droppable.radius);
         },
     },
 
@@ -106,13 +126,12 @@ export const DefaultTheme = {
         padding: new Padding(3),
         mainPadding: new Padding(3, 20, 3, 3),
         radius: 3,
-        selection: new Highlight("selection", "#f5f9ff80", "#0000ff")
-            .blurred("#fcfdff80", "#b8ccff")
+        selection: new Highlight("selection", "#f5f9ff", "#364ee0")
+            .blurred("#fcfdff", "#b8ccff")
             .withAnimation(),
         hover: new Highlight("hover", undefined, "#cecece").blank("#efefef", "#dcdcdc"),
-        contextMenu: new Highlight("context", undefined, "#0000ff").withStrokeWidth(1),
-        // This is actually the branding colour.
-        droppable: new Highlight("droppable", "#ffffff00", "#0ba902").withStrokeWidth(1),
+        contextMenu: new Highlight("context", undefined, "#364ee0").withStrokeWidth(0.5),
+        droppable: new Highlight("droppable", "#ffffff00", colour.clickable).withDroppable(),
     },
 
     createCircle: {

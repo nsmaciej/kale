@@ -11,8 +11,8 @@ import layoutExpr, { LayoutProps } from "expr_view/layout";
 const Container = styled.div`
     position: absolute;
     background: ${p => p.theme.colour.background};
-    box-shadow: ${p => p.theme.boxShadow};
-    padding: ${p => p.theme.exprList.padding.add(p.theme.highlight.padding).css};
+    box-shadow: ${p => p.theme.shadow.normal};
+    padding: ${p => p.theme.exprList.padding.combine(p.theme.highlight.padding).css};
     border-radius: ${p => p.theme.exprList.borderRadius}px;
     box-sizing: content-box;
     z-index: 1000;

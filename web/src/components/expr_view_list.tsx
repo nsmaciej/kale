@@ -36,7 +36,7 @@ const DropMarker = styled.div`
     grid-column: 1 / -1;
     background: ${p => p.theme.colour.clickable};
     height: 1px;
-    box-shadow: 0 0 3px ${p => p.theme.colour.clickable};
+    box-shadow: 0 0 ${p => p.theme.droppable.radius}px ${p => p.theme.droppable.colour};
 `;
 
 const Extras = styled.div`

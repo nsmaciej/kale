@@ -6,7 +6,7 @@ import { Optional } from "utils";
 const Container = styled.div`
     background: ${p => p.theme.colour.background};
     border-radius: ${p => p.theme.borderRadius}px;
-    box-shadow: ${p => p.theme.boxShadow};
+    box-shadow: ${p => p.theme.shadow.normal};
     z-index: 1000;
     position: fixed;
 `;
@@ -35,7 +35,7 @@ const Arrow = styled.div`
         background: ${p => p.theme.colour.background};
         left: ${triangleSize / 2}px;
         top: ${triangleSize / 2}px;
-        box-shadow: ${p => p.theme.boxShadowSmall};
+        box-shadow: ${p => p.theme.shadow.small};
         position: absolute;
         transform: rotate(45deg);
         content: "";

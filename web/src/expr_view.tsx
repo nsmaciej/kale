@@ -130,6 +130,7 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
                 stroke={highlight.stroke(this.props.focused === true) ?? "none"}
                 initial={false}
                 strokeWidth={highlight.strokeWidth}
+                style={{ filter: highlight.droppable ? "url(#droppable)" : undefined }}
                 transition={{
                     type: "tween",
                     ease: "easeIn",
@@ -290,6 +291,14 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
                     onContextMenu={e => this.props.contextMenuFor && e.preventDefault()}
                     style={{ cursor: "default" }}
                 >
+                    <filter id="droppable">
+                        <feDropShadow
+                            dx="0"
+                            dy="0"
+                            stdDeviation={this.theme.droppable.radius / 2}
+                            floodColor={this.theme.droppable.colour}
+                        />
+                    </filter>
                     {highlightRects}
                     <SvgGroup translate={padding.topLeft}>{nodes}</SvgGroup>
                     {this.state.debugShowAreas && this.debugRenderAreas(this.pendingExprAreaMap)}

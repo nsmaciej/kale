@@ -105,13 +105,18 @@ export class Padding {
     }
 
     /** Combines the mangnitude of two paddings */
-    add(rhs: Padding) {
+    combine(rhs: Padding) {
         return new Padding(
             this.top + rhs.top,
             this.right + rhs.right,
             this.bottom + rhs.bottom,
             this.left + rhs.left,
         );
+    }
+
+    /** Adds a padding of `value` to each side. */
+    add(value: number) {
+        return this.combine(new Padding(value));
     }
 
     contains(rhs: Padding) {
