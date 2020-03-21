@@ -44,15 +44,15 @@ const Arrow = styled.div`
     }
 `;
 
-const MenuItemContainer = styled.div<{ selected: boolean; enabled: boolean }>`
-    background: ${p => (p.enabled && p.selected ? p.theme.colour.clickable : "transparent")};
+const MenuItemContainer = styled.div<{ selected: boolean; disabled: boolean }>`
+    background: ${p => (p.disabled && p.selected ? p.theme.colour.clickable : "transparent")};
     display: flex;
     align-items: center;
     & > svg {
         margin-right: 5px;
     }
     color: ${p =>
-        p.enabled ? (p.selected ? "white" : p.theme.colour.mainText) : p.theme.colour.disabled};
+        p.disabled ? p.theme.colour.disabled : p.selected ? "white" : p.theme.colour.mainText};
     overflow: hidden;
 `;
 
@@ -65,7 +65,7 @@ export const MenuTextWrapper = styled.div`
 
 export interface MenuItem {
     id: string;
-    enabled: boolean;
+    disabled?: boolean;
 }
 
 export interface MenuProps<I> {
@@ -106,7 +106,7 @@ export default function Menu<I extends MenuItem>(props: MenuProps<I>) {
                                 onMouseMove={() => props.setSelected(i)}
                                 onMouseLeave={() => props.setSelected(null)}
                                 // Styling.
-                                enabled={item.enabled}
+                                disabled={item.disabled ?? false}
                                 selected={i === props.selected}
                                 style={{
                                     paddingTop: minimalPadding ? 1 : 6,

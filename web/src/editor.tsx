@@ -407,7 +407,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
             label: item?.label,
             action: item?.action && (() => this.actions[item.action](exprId)),
             keyEquivalent: item?.action && this.menuKeyEquivalentForAction[item.action],
-            enabled: item?.enabled?.(expr) ?? true,
+            disabled: !(item?.enabled?.(expr) ?? true),
         }));
     };
 
@@ -609,7 +609,6 @@ class Editor extends PureComponent<EditorProps, EditorState> {
                     id: x.label,
                     label: x.label,
                     action: () => this.replaceAndEdit(target, x.expr, true),
-                    enabled: true,
                     keyEquivalent: x.keyEquivalent,
                 }))}
             />

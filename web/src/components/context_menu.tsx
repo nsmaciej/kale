@@ -13,7 +13,7 @@ const ContextMenuSeparator = styled.div`
     width: 100%;
 `;
 
-const ContextMenuItemContainer = styled.div<{ enabled: boolean }>`
+const ContextMenuItemContainer = styled.div`
     display: flex;
     align-items: center;
     width: 100%;
@@ -97,7 +97,7 @@ export default function ContextMenu({ items, origin, dismissMenu, popover }: Con
                 let i = 0;
                 for (const item of items) {
                     if (item.keyEquivalent === e.key) {
-                        if (item.enabled) onClick(item, i);
+                        if (item.disabled) onClick(item, i);
                         return;
                     }
                     i++;
@@ -144,7 +144,7 @@ export default function ContextMenu({ items, origin, dismissMenu, popover }: Con
             >
                 {item =>
                     item.label ? (
-                        <ContextMenuItemContainer enabled={item.enabled}>
+                        <ContextMenuItemContainer>
                             <span>{item.label}</span>
                             {renderShortcut(item.keyEquivalent)}
                         </ContextMenuItemContainer>
