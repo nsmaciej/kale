@@ -157,8 +157,8 @@ export class Rect {
     get atOrigin() {
         return new Rect(Offset.zero, this.size.pad(this.origin.neg));
     }
-    get bottomLeft() {
-        return this.origin.add(new Offset(0, this.height));
+    get bottomMiddle() {
+        return this.origin.add(new Offset(this.width / 2, this.height));
     }
     get bottomRight() {
         return this.origin.add(new Offset(this.width, this.height));

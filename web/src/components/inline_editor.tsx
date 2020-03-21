@@ -2,11 +2,11 @@ import React from "react";
 import styled from "styled-components";
 import { AiOutlineBulb, AiOutlineBlock } from "react-icons/ai";
 
-import TextMetrics from "text_metrics";
 import { ExprArea } from "expr_view";
-import useSuggestions from "hooks/suggestions";
-import Menu from "components/menu";
 import { useDisableScrolling } from "hooks";
+import Menu from "components/menu";
+import TextMetrics from "text_metrics";
+import useSuggestions from "hooks/suggestions";
 
 const Container = styled.div`
     position: absolute;
@@ -98,7 +98,7 @@ export default function InlineEditor({
             />
             {suggestions.length > 0 && (
                 <Menu
-                    subtle
+                    noPadding
                     items={suggestions}
                     selected={selection}
                     onClick={x => onSubmit(x.name)}

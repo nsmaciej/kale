@@ -2,12 +2,12 @@ import React, { useState, Ref, useContext } from "react";
 import styled from "styled-components";
 import { AiOutlinePlusCircle } from "react-icons/ai";
 
+import { assertSome } from "utils";
+import { EditorStackActions } from "hooks/editor_stack";
 import { SubtleButton, Shortcut, Box, Stack } from "components";
+import { Workspace } from "contexts/workspace";
 import Menu, { MenuTextWrapper } from "components/menu";
 import useSuggestions from "hooks/suggestions";
-import { EditorStackActions } from "hooks/editor_stack";
-import { assertSome } from "utils";
-import { Workspace } from "contexts/workspace";
 
 const inputWidthPx = 400;
 
@@ -95,9 +95,9 @@ export default React.forwardRef(function EditorSuggestions(
                 />
                 {hasFocus && suggestions.length > 0 && (
                     <Menu
+                        width={inputWidthPx}
                         items={suggestions}
                         selected={selection}
-                        width={inputWidthPx}
                         onClick={x => selectEditor(x.name)}
                         setSelected={i => setSelection(i)}
                     >

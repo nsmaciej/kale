@@ -3,14 +3,45 @@ import styled from "styled-components";
 
 import { Optional } from "utils";
 
-const MenuPopover = styled.div<{ subtle: boolean }>`
+const Container = styled.div`
     background: ${p => p.theme.colour.background};
     border-radius: ${p => p.theme.borderRadius}px;
     box-shadow: ${p => p.theme.boxShadow};
-    ${p => !p.subtle && "padding: 6px 0"};
     z-index: 1000;
     position: fixed;
-    overflow: auto;
+`;
+
+// Clips the highlight boxes, since Container needs to have overflow to potentially show the popover
+// arrow.
+const ContainerClip = styled.div`
+    border-radius: ${p => p.theme.borderRadius}px;
+    overflow: hidden;
+`;
+
+const triangleSize = 12;
+
+// See https://css-tricks.com/triangle-with-shadow/. We create a 45deg rotated square, then shift it
+// up and use overflow: hidden to chop the bottom bit off.
+const Arrow = styled.div`
+    position: absolute;
+    overflow: hidden;
+    height: ${triangleSize}px;
+    width: ${triangleSize * 2}px;
+    left: 50%;
+    transform: translateX(-50%);
+    top: -${triangleSize}px;
+
+    &::before {
+        background: ${p => p.theme.colour.background};
+        left: ${triangleSize / 2}px;
+        top: ${triangleSize / 2}px;
+        box-shadow: ${p => p.theme.boxShadowSmall};
+        position: absolute;
+        transform: rotate(45deg);
+        content: "";
+        width: ${triangleSize}px;
+        height: ${triangleSize}px;
+    }
 `;
 
 const MenuItemContainer = styled.div<{ selected: boolean; enabled: boolean }>`
@@ -37,10 +68,11 @@ export interface MenuItem {
     enabled: boolean;
 }
 
-interface MenuProps<I> {
+export interface MenuProps<I> {
     items: readonly I[];
     width?: number;
-    subtle?: boolean;
+    noPadding?: boolean;
+    popover?: boolean;
     selected: Optional<number>;
     setSelected(index: number | null): void;
     onClick(item: I, index: number): void;
@@ -52,36 +84,43 @@ interface MenuProps<I> {
 
 export default function Menu<I extends MenuItem>(props: MenuProps<I>) {
     return (
-        <MenuPopover
-            subtle={props.subtle ?? false}
-            style={{
-                minWidth: props.width ?? "max-content",
-            }}
-        >
-            {props.items.map((item, i) => {
-                const minimalPadding = props.minimalPadding?.(i) ?? false;
-                return (
-                    <MenuItemContainer
-                        key={item.id}
-                        onMouseDown={e => e.preventDefault()} // Don't blur.
-                        onClick={() => props.onClick(item, i)}
-                        onContextMenu={e => e.preventDefault()} // Can't right click.
-                        onMouseMove={() => props.setSelected(i)}
-                        onMouseLeave={() => props.setSelected(null)}
-                        // Styling.
-                        enabled={item.enabled}
-                        selected={i === props.selected}
-                        style={{
-                            paddingTop: minimalPadding ? 1 : 6,
-                            paddingBottom: minimalPadding ? 1 : 6,
-                            paddingLeft: minimalPadding ? 0 : 10,
-                            paddingRight: minimalPadding ? 0 : 10,
-                        }}
-                    >
-                        {props.children(item)}
-                    </MenuItemContainer>
-                );
-            })}
-        </MenuPopover>
+        // Shift the position: fixed container by popover triangle's size.
+        <div style={{ position: "relative", top: props.popover ? triangleSize : 0 }}>
+            <Container
+                style={{
+                    width: props.width ?? "max-content",
+                    transform: props.popover ? "translateX(-50%)" : undefined,
+                    padding: props.noPadding ? undefined : "padding: 6px 0",
+                }}
+            >
+                {props.popover && <Arrow />}
+                <ContainerClip>
+                    {props.items.map((item, i) => {
+                        const minimalPadding = props.minimalPadding?.(i) ?? false;
+                        return (
+                            <MenuItemContainer
+                                key={item.id}
+                                onMouseDown={e => e.preventDefault()} // Don't blur.
+                                onClick={() => props.onClick(item, i)}
+                                onContextMenu={e => e.preventDefault()} // Can't right click.
+                                onMouseMove={() => props.setSelected(i)}
+                                onMouseLeave={() => props.setSelected(null)}
+                                // Styling.
+                                enabled={item.enabled}
+                                selected={i === props.selected}
+                                style={{
+                                    paddingTop: minimalPadding ? 1 : 6,
+                                    paddingBottom: minimalPadding ? 1 : 6,
+                                    paddingLeft: minimalPadding ? 0 : 10,
+                                    paddingRight: minimalPadding ? 0 : 10,
+                                }}
+                            >
+                                {props.children(item)}
+                            </MenuItemContainer>
+                        );
+                    })}
+                </ContainerClip>
+            </Container>
+        </div>
     );
 }

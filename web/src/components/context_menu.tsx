@@ -33,12 +33,13 @@ interface ContextMenuProps {
     dismissMenu(): void;
     items: ContextMenuItem[];
     origin: Offset;
+    popover?: boolean;
 }
 
-export default function ContextMenu({ items, origin, dismissMenu }: ContextMenuProps) {
+export default function ContextMenu({ items, origin, dismissMenu, popover }: ContextMenuProps) {
     assert(items.length > 0);
     useDisableScrolling();
-    const [selection, setSelection] = useState(null as Optional<number>);
+    const [selection, setSelection] = useState<number | null>(null);
     const [blinking, setBlinking] = useState(false);
 
     // Move selection skipping past separators, if the menu consists of only separators,
@@ -127,10 +128,11 @@ export default function ContextMenu({ items, origin, dismissMenu }: ContextMenuP
                 e.stopPropagation();
             }}
             tabIndex={0}
-            onBlur={() => dismissMenu()}
+            onBlur={dismissMenu}
             ref={el => el?.focus()}
         >
             <Menu
+                popover={popover}
                 selected={selection}
                 items={items}
                 onClick={onClick}

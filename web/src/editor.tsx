@@ -17,9 +17,8 @@ import { Clipboard, ClipboardValue } from "contexts/clipboard";
 import { DragAndDrop, DragAndDropValue, DropListener } from "contexts/drag_and_drop";
 import { Workspace, WorkspaceContext } from "contexts/workspace";
 
-import { ContextMenuItem } from "components/context_menu";
+import ContextMenu, { ContextMenuItem } from "components/context_menu";
 import InlineEditor from "components/inline_editor";
-import Popover from "components/popover";
 
 interface EditorState {
     focused: boolean;
@@ -571,22 +570,40 @@ class Editor extends PureComponent<EditorProps, EditorState> {
     }
 
     private renderBlankPopover() {
+        const target = this.state.blankPopover;
         if (
+            target === null ||
             this.exprAreaMapRef.current === null ||
-            this.state.blankPopover === null ||
             this.containerRef.current === null
         ) {
             return;
         }
-        const exprRect = this.exprAreaMapRef.current[this.state.blankPopover].rect;
+        const exprRect = this.exprAreaMapRef.current[target].rect;
         const editorOrigin = ClientOffset.fromBoundingRect(
             this.containerRef.current.getBoundingClientRect(),
         );
-        const origin = editorOrigin.add(exprRect.bottomLeft);
+        const origin = editorOrigin.add(exprRect.bottomMiddle);
+
+        const exprs = [
+            { label: "Function Call", expr: new E.Call(""), keyEquivalent: "f" },
+            { label: "Variable", expr: new E.Variable(""), keyEquivalent: "v" },
+            { label: "Text", expr: new E.Literal("", Type.Str), keyEquivalent: "g" },
+            { label: "Number", expr: new E.Literal("", Type.Num) },
+        ];
+
         return (
-            <Popover origin={origin} onDismiss={() => this.setState({ blankPopover: null })}>
-                Hello this is a test popover.
-            </Popover>
+            <ContextMenu
+                popover
+                origin={origin}
+                dismissMenu={() => this.setState({ blankPopover: null })}
+                items={exprs.map(x => ({
+                    id: x.label,
+                    label: x.label,
+                    action: () => this.replaceAndEdit(target, x.expr),
+                    enabled: true,
+                    keyEquivalent: x.keyEquivalent,
+                }))}
+            />
         );
     }
 
