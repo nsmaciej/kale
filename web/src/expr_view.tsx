@@ -51,7 +51,7 @@ interface ExprViewState {
     showingMenu: Optional<{ menu: ContextMenuItem[]; at: ClientOffset; expr: ExprId }>;
 }
 
-// This needs to be a class component so we can nicely pass it to the layout helper.
+//TODO: Make a functional component.
 export default class ExprView extends PureComponent<ExprViewProps, ExprViewState> {
     static contextType = DragAndDrop;
     declare context: React.ContextType<typeof DragAndDrop>;
@@ -151,16 +151,19 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
     }
 
     private onContextMenu(e: React.MouseEvent, expr: Expr) {
-        if (this.props.contextMenuFor == null) return;
+        if (this.props.contextMenuFor === undefined) return;
         e.preventDefault();
         e.stopPropagation();
-        this.setState({
-            showingMenu: {
-                at: ClientOffset.fromClient(e),
-                menu: this.props.contextMenuFor?.(expr.id),
-                expr: expr.id,
-            },
-        });
+        const menu = this.props.contextMenuFor(expr.id);
+        if (menu.length > 0) {
+            this.setState({
+                showingMenu: {
+                    at: ClientOffset.fromClient(e),
+                    menu: this.props.contextMenuFor?.(expr.id),
+                    expr: expr.id,
+                },
+            });
+        }
     }
 
     // Change the highlighted expr.

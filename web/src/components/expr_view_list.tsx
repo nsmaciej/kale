@@ -1,10 +1,11 @@
+import { motion } from "framer-motion";
 import React, { Fragment, ReactNode, useCallback } from "react";
 import styled, { useTheme } from "styled-components";
-import { motion } from "framer-motion";
 
+import { ContextMenuItem } from "components/context_menu";
+import { Shortcut } from "components";
 import Expr from "expr";
 import ExprView from "expr_view";
-import { Shortcut } from "components";
 
 const ExprListItem = styled(motion.div)`
     grid-column: expr;
@@ -51,6 +52,7 @@ interface ShortcutExpr {
 interface ExprViewListItemProps<E> {
     maxWidth?: number;
     onDraggedOut?(item: E): void;
+    onContextMenu?(item: E): ContextMenuItem[];
 }
 
 interface ExprViewListProps<E> extends ExprViewListItemProps<E> {
@@ -66,20 +68,30 @@ function ExprViewListItem<E extends ShortcutExpr>({
     item,
     maxWidth,
     onDraggedOut,
+    onContextMenu,
 }: ExprViewListItemProps<E> & { item: E }) {
     const theme = useTheme();
-    const cb = useCallback(() => onDraggedOut?.(item), [onDraggedOut, item]);
-    return <ExprView frozen expr={item.expr} theme={theme} maxWidth={maxWidth} onDraggedOut={cb} />;
+    const draggedOut = useCallback(() => onDraggedOut?.(item), [onDraggedOut, item]);
+    const contextMenu = useCallback(() => onContextMenu?.(item) ?? [], [onContextMenu, item]);
+    return (
+        <ExprView
+            frozen
+            expr={item.expr}
+            theme={theme}
+            maxWidth={maxWidth}
+            onDraggedOut={draggedOut}
+            contextMenuFor={contextMenu}
+        />
+    );
 }
 
 export default function ExprViewList<E extends ShortcutExpr>({
     items,
     animate,
     fallback,
-    maxWidth,
     showDropMarker,
     onGetExtras,
-    onDraggedOut,
+    ...itemProps
 }: ExprViewListProps<E>) {
     const theme = useTheme();
 
@@ -94,7 +106,7 @@ export default function ExprViewList<E extends ShortcutExpr>({
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.1, ease: "easeIn" }}
             >
-                <ExprViewListItem item={item} maxWidth={maxWidth} onDraggedOut={onDraggedOut} />
+                <ExprViewListItem item={item} {...itemProps} />
                 {onGetExtras && <Extras>{onGetExtras(item)}</Extras>}
             </ExprListItem>
         </Fragment>

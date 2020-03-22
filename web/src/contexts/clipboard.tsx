@@ -15,6 +15,7 @@ export type ClipboardActions =
     | { type: "add"; entry: ClipboardEntry }
     | { type: "clear" }
     | { type: "use"; expr: ExprId }
+    | { type: "remove"; expr: ExprId }
     | { type: "togglePinned"; expr: ExprId };
 
 const clipboardReducer = createReducer<ClipboardState, ClipboardActions>({
@@ -26,6 +27,9 @@ const clipboardReducer = createReducer<ClipboardState, ClipboardActions>({
         const newClipboard = state.filter(x => x.expr.id !== entry.expr.id);
         const [pinned, notPinned] = partition(newClipboard, x => x.pinned);
         return [...pinned, { expr: entry.expr, pinned: false }, ...notPinned];
+    },
+    remove(state, { expr }) {
+        return state.filter(x => x.expr.id !== expr);
     },
     use(state, { expr }) {
         // Possibly remove an entry if it isn't pinned.

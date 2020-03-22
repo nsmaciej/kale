@@ -3,7 +3,7 @@ import React, { useContext, useRef } from "react";
 
 import { assertSome, mod } from "utils";
 import { Box, Stack, SubtleButton, NonIdealText, PaneHeading, Shortcut } from "components";
-import { Clipboard } from "contexts/clipboard";
+import { Clipboard, ClipboardEntry } from "contexts/clipboard";
 import { useSimpleDrop } from "hooks";
 import ExprViewList from "components/expr_view_list";
 
@@ -14,6 +14,10 @@ export default React.memo(function ClipboardList() {
     const draggingOver = useSimpleDrop(containerRef, expr =>
         clipboard.dispatch({ type: "add", entry: { pinned: false, expr } }),
     );
+
+    function togglePin(item: ClipboardEntry) {
+        clipboard.dispatch({ type: "togglePinned", expr: item.expr.id });
+    }
 
     const history = clipboard.value.map((x, i) => ({
         ...x,
@@ -38,6 +42,20 @@ export default React.memo(function ClipboardList() {
                 onDraggedOut={item => {
                     clipboard.dispatch({ type: "use", expr: item.expr.id });
                 }}
+                onContextMenu={item => [
+                    {
+                        id: "pin",
+                        label: "Toggle Pin",
+                        action: () => togglePin(item),
+                        keyEquivalent: "p",
+                    },
+                    {
+                        id: "remove",
+                        label: "Remove",
+                        action: () => clipboard.dispatch({ type: "remove", expr: item.expr.id }),
+                        keyEquivalent: "d",
+                    },
+                ]}
                 fallback={
                     <NonIdealText>
                         Nothing here yet.
@@ -46,11 +64,7 @@ export default React.memo(function ClipboardList() {
                     </NonIdealText>
                 }
                 onGetExtras={item => (
-                    <SubtleButton
-                        onClick={() =>
-                            clipboard.dispatch({ type: "togglePinned", expr: item.expr.id })
-                        }
-                    >
+                    <SubtleButton onClick={() => togglePin(item)}>
                         {item.pinned ? <AiFillPushpin /> : <AiOutlinePushpin />}
                     </SubtleButton>
                 )}
