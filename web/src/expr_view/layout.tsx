@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import memoizeOne from "memoize-one";
 import React from "react";
-import styled, { useTheme } from "styled-components";
+import styled from "styled-components";
 
 import * as E from "expr";
 import { KaleTheme, Highlight } from "theme";
@@ -11,7 +11,7 @@ import Expr, { ExprId, ExprVisitor } from "expr";
 import TextMetrics from "text_metrics";
 
 import { Layout, TextProperties, hstack, vstack, Area } from "expr_view/core";
-import { UnderlineLine, SvgLine, HitBox, HoverHitBox } from "expr_view/components";
+import { UnderlineLine, SvgLine, HitBox } from "expr_view/components";
 
 // See https://vanseodesign.com/web-design/svg-text-baseline-alignment/ for excellent discussion
 // on SVG text aligment properties.
@@ -26,31 +26,6 @@ const CommentIndicator = styled.tspan`
     font-size: ${p => Math.round(p.theme.expr.fontSizePx * 0.6)}px;
     font-weight: normal;
 `;
-
-function CreateCircle({ onClick }: { onClick: (e: React.MouseEvent) => void }) {
-    const theme = useTheme();
-    const r = theme.createCircle.radius;
-    const maxR = theme.createCircle.maxRadius;
-    const cx = r;
-    const cy = theme.expr.fontSizePx / 2 + 3;
-    const rect = new Rect(new Offset(cx - maxR, cy - maxR), new Size(maxR * 2));
-    return (
-        <HoverHitBox area={rect} onClick={onClick} title="Add an argument...">
-            {mouseOver => (
-                <motion.circle
-                    fill="none"
-                    stroke={theme.createCircle.stroke}
-                    strokeWidth={1}
-                    animate={{ r: mouseOver ? maxR : r }}
-                    r={r}
-                    cx={cx}
-                    cy={cy}
-                    transition={{ duration: 0.1 }}
-                />
-            )}
-        </HoverHitBox>
-    );
-}
 
 // This lets all inline child areas have the same height, preventing
 // the selection and highlight rects from overlapping with the lines.
@@ -149,14 +124,6 @@ class ExprLayout implements ExprVisitor<Layout> {
             }
         }
         return layout;
-    }
-
-    private layoutCreateCircle(expr: Expr) {
-        if (this.props.frozen) return;
-        return new Layout(
-            (<CreateCircle onClick={e => this.props.onClickCreateCircle?.(e, expr)} key={0} />),
-            new Size(this.t.createCircle.maxRadius, this.t.expr.fontSizePx),
-        );
     }
 
     private layoutComment(expr: Expr) {
@@ -269,16 +236,12 @@ class ExprLayout implements ExprVisitor<Layout> {
     visitCall(expr: E.Call): Layout {
         const args = expr.args.map(x => this.layoutInner(expr, x), this);
         const inline = isCallInline(this.t, args);
-        const fnName = hstack(
-            this.t.createCircle.maxRadius,
-            this.layoutText(expr, expr.fn, {
-                weight: 700,
-                commentIndicator: expr.data.comment != null && this.props.foldComments,
-                colour: this.t.syntaxColour.call,
-                mainText: true,
-            }),
-            this.layoutCreateCircle(expr),
-        );
+        const fnName = this.layoutText(expr, expr.fn, {
+            weight: 700,
+            commentIndicator: expr.data.comment != null && this.props.foldComments,
+            colour: this.t.syntaxColour.call,
+            mainText: true,
+        });
 
         let layout: Layout;
         // Adding a comment makes a call non-inline but not bold.
@@ -306,7 +269,6 @@ class ExprLayout implements ExprVisitor<Layout> {
 // Make sure to update argsEqual when adding or removing properties form this.
 export interface LayoutProps {
     exprPropsFor?(expr: Expr): Partial<React.DOMAttributes<Element>>;
-    onClickCreateCircle?(e: React.MouseEvent, expr: Expr): void;
     frozen?: boolean;
     focused?: boolean;
     highlights?: readonly [ExprId, Highlight][];
@@ -322,7 +284,6 @@ function argsEquals(prev: LayoutExprArgs, next: LayoutExprArgs) {
         prev[0] === next[0] &&
         prev[1] === next[1] &&
         lhs.exprPropsFor === rhs.exprPropsFor &&
-        lhs.onClickCreateCircle === rhs.onClickCreateCircle &&
         lhs.frozen === rhs.frozen &&
         lhs.foldComments === rhs.foldComments;
     if (!quickCheck) return false;

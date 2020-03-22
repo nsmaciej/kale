@@ -47,7 +47,6 @@ interface ExprViewProps {
     onClick?(expr: ExprId): void;
     onHover?(expr: Optional<ExprId>): void;
     onDoubleClick?(expr: ExprId): void;
-    onClickCreateCircle?(expr: ExprId): void;
     // The expr has been focused on.
     onFocus?(): void;
 
@@ -204,14 +203,6 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
         },
     });
 
-    private readonly onClickCreateCircle = (event: React.MouseEvent, expr: Expr) => {
-        // Again, as above, do not stop propegation if not asked to.
-        if (this.props.onClickCreateCircle != null) {
-            event.stopPropagation();
-            this.props.onClickCreateCircle?.(expr.id);
-        }
-    };
-
     private updateExprAreaMapRef() {
         if (this.props.exprAreaMapRef !== undefined && this.pendingExprAreaMap !== null) {
             // See https://github.com/DefinitelyTyped/DefinitelyTyped/issues/31065
@@ -240,7 +231,6 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
 
         const { nodes, size, areas, text } = layoutExpr(this.theme, this.props.expr, {
             exprPropsFor: this.exprPropsFor,
-            onClickCreateCircle: this.onClickCreateCircle,
             // Passed through props.
             frozen: this.props.frozen,
             focused: this.props.focused,

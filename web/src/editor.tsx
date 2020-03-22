@@ -680,7 +680,6 @@ class Editor extends PureComponent<EditorProps, EditorState> {
                     onClick={this.selectExpr}
                     onHover={this.onHover}
                     onDoubleClick={this.startEditing}
-                    onClickCreateCircle={this.createChildBlank}
                     onFocus={this.focus}
                 />
                 {this.renderInlineEditor()}

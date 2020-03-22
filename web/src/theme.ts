@@ -134,12 +134,6 @@ export const DefaultTheme = {
         droppable: new Highlight("droppable", "#ffffff00", colour.clickable).withDroppable(),
     },
 
-    createCircle: {
-        stroke: "#6a6a6a",
-        radius: 2,
-        maxRadius: 6, //TODO: This should be based on the current text size.
-    },
-
     layout: {
         lineBreakPoint: 300,
         underlineSpacing: 3,

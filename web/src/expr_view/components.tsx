@@ -67,41 +67,6 @@ export function HitBox({ children, area, title, ...rest }: HitBoxProps<ReactNode
     );
 }
 
-// Same idea as above, but with function as children.
-export function HoverHitBox({
-    children,
-    area,
-    title,
-    onMouseEnter,
-    onMouseLeave,
-    ...rest
-}: HitBoxProps<(hover: boolean) => void>) {
-    const [hover, setHover] = useState(false);
-    const mouseEnter = (e: React.MouseEvent<SVGRectElement>) => {
-        setHover(true);
-        onMouseEnter?.(e);
-    };
-    const mouseLeave = (e: React.MouseEvent<SVGRectElement>) => {
-        setHover(false);
-        onMouseLeave?.(e);
-    };
-    return (
-        <>
-            {children(hover)}
-            <SvgRect
-                rect={area}
-                fill="transparent"
-                strokeWidth="0"
-                onMouseEnter={mouseEnter}
-                onMouseLeave={mouseLeave}
-                {...rest}
-            >
-                {title && <title>{title}</title>}
-            </SvgRect>
-        </>
-    );
-}
-
 export function DebugRect({ origin, colour = "limegreen" }: { origin?: Offset; colour?: string }) {
     return (
         <SvgRect
