@@ -1,12 +1,11 @@
-import React, { useContext, useRef } from "react";
 import { AiOutlinePushpin, AiFillPushpin } from "react-icons/ai";
+import React, { useContext, useRef } from "react";
 
 import { assertSome, mod } from "utils";
 import { Box, Stack, SubtleButton, NonIdealText, PaneHeading, Shortcut } from "components";
-import ExprViewList from "components/expr_view_list";
-
 import { Clipboard } from "contexts/clipboard";
-import { useSimpleDrop } from "contexts/drag_and_drop";
+import { useSimpleDrop } from "hooks";
+import ExprViewList from "components/expr_view_list";
 
 export default React.memo(function ClipboardList() {
     const containerRef = useRef<HTMLDivElement>(null);

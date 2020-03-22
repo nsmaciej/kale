@@ -1,12 +1,11 @@
 import * as E from "expr";
 import { ExprAreaMap } from "expr_view";
-import { Optional } from "utils";
 import Expr, { ExprId } from "expr";
 
-export type SelectFn = (expr: Expr, sel: ExprId, areas: ExprAreaMap) => Optional<ExprId>;
+export type SelectFn = (expr: Expr, sel: ExprId, areas: ExprAreaMap) => ExprId | null;
 
 export const parent: SelectFn = (expr, sel) => {
-    return expr.parentOf(sel)?.id;
+    return expr.parentOf(sel)?.id ?? null;
 };
 
 export const leftSibling: SelectFn = (expr, sel) => {
@@ -22,7 +21,7 @@ export const rightSibling: SelectFn = (expr, sel) => {
 };
 
 export const firstChild: SelectFn = (expr, sel) => {
-    return expr.findId(sel)?.children()[0]?.id;
+    return expr.findId(sel)?.children()[0]?.id ?? null;
 };
 
 export const lastChild: SelectFn = (expr, sel) => {

@@ -46,7 +46,10 @@
 
         // This is just a pain to have on.
         "@typescript-eslint/explicit-function-return-type": "off",
-        "@typescript-eslint/no-use-before-define": ["error", { "classes": false }],
+        "@typescript-eslint/no-use-before-define": [
+            "error",
+            { "classes": false, "functions": false }
+        ],
         "@typescript-eslint/prefer-readonly": ["warn"]
     }
 }

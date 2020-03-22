@@ -1,4 +1,9 @@
-import React, { useState, useEffect, useLayoutEffect, MutableRefObject, useRef } from "react";
+import React, { MutableRefObject, useContext, useEffect, useRef, useState } from "react";
+
+import { assertSome } from "utils";
+import { DropListener, DragAndDrop } from "contexts/drag_and_drop";
+import { Rect } from "geometry";
+import Expr from "expr";
 
 export function useDebounce<T>(value: T, delayMs: number): T {
     const [debouncedValue, setDebouncedValue] = useState(value);
@@ -14,15 +19,9 @@ export function useDebounce<T>(value: T, delayMs: number): T {
 }
 
 export function useDisableScrolling(): void {
-    useLayoutEffect(() => {
-        const preventDefault = (e: Event) => e.preventDefault();
-        window.addEventListener("wheel", preventDefault, { passive: false });
-        window.addEventListener("touchmove", preventDefault, { passive: false });
-        return () => {
-            window.removeEventListener("wheel", preventDefault);
-            window.removeEventListener("touchmove", preventDefault);
-        };
-    });
+    const preventDefault = (e: Event) => e.preventDefault();
+    useDocumentEvent("wheel", preventDefault, { passive: false });
+    useDocumentEvent("touchmove", preventDefault, { passive: false });
 }
 
 export function useRefMap<K, T>(keys: Iterable<K>): ReadonlyMap<K, MutableRefObject<T>> {
@@ -40,4 +39,48 @@ export function useRefMap<K, T>(keys: Iterable<K>): ReadonlyMap<K, MutableRefObj
         }
     }
     return refs.current;
+}
+
+export function useDocumentEvent<K extends keyof DocumentEventMap>(
+    name: K,
+    listener: (event: DocumentEventMap[K]) => void,
+    options?: boolean | AddEventListenerOptions,
+) {
+    useEffect(() => {
+        document.addEventListener(name, listener, options);
+        return () => document.removeEventListener(name, listener);
+    }, [name, listener, options]);
+}
+
+function useDrop(listener: DropListener) {
+    const dragAndDrop = assertSome(useContext(DragAndDrop));
+    useEffect(() => {
+        dragAndDrop.addListener(listener);
+        return () => dragAndDrop.removeListener(listener);
+    }, [dragAndDrop, listener]);
+}
+
+export function useSimpleDrop(
+    ref: React.RefObject<HTMLElement>,
+    onDrop: (expr: Expr) => void,
+): boolean {
+    const [lastContains, setLastContains] = useState(false);
+    function getRect() {
+        const clientRect = ref.current?.getBoundingClientRect();
+        return clientRect === undefined ? null : Rect.fromBoundingRect(clientRect);
+    }
+    useDrop({
+        dragUpdate(point) {
+            const contains = (point !== null && getRect()?.contains(point)) ?? false;
+            setLastContains(contains);
+        },
+        acceptDrop(point, expr) {
+            if (getRect()?.contains(point)) {
+                onDrop(expr);
+                return "move";
+            }
+            return "reject";
+        },
+    });
+    return lastContains;
 }

@@ -162,7 +162,7 @@ export default abstract class Expr {
         throw new UnvisitableExpr(this);
     }
 
-    siblings(id: ExprId): [readonly Expr[], Optional<number>] {
+    siblings(id: ExprId): [readonly Expr[], number | null] {
         const siblings = this.parentOf(id)?.children() ?? [];
         const index = siblings.findIndex(x => x.id === id);
         return [siblings, index < 0 ? null : index];

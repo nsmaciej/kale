@@ -6,7 +6,7 @@ import * as Select from "selection";
 import { EditorStackActions } from "hooks/editor_stack";
 import { KaleTheme, Highlight } from "theme";
 import { Offset, Rect, ClientOffset } from "geometry";
-import { Optional, assertSome, reverseObject, assert, insertSibling, arrayEquals } from "utils";
+import { assertSome, reverseObject, assert, insertSibling, arrayEquals } from "utils";
 import Expr, { ExprId } from "expr";
 import ExprView, { ExprArea, ExprAreaMap } from "expr_view";
 
@@ -23,13 +23,13 @@ import InlineEditor from "components/inline_editor";
 interface EditorState {
     focused: boolean;
     foldingComments: boolean;
-    editing: Optional<{ expr: ExprId; created: boolean }>;
+    editing: { expr: ExprId; created: boolean } | null;
     showingDebugOverlay: boolean;
     blankPopover: ExprId | null;
     // Highlights.
     selection: ExprId;
-    hoverHighlight: Optional<ExprId>;
-    droppable: Optional<ExprId>;
+    hoverHighlight: ExprId | null;
+    droppable: ExprId | null;
 }
 
 interface EditorWrapperProps {
@@ -68,13 +68,15 @@ class Editor extends PureComponent<EditorProps, EditorState> {
     }
 
     // Editor internal APIs.
-    private update(child: Optional<ExprId>, updater: (expr: Expr) => Optional<Expr>) {
+    private update(childId: ExprId | null, transform: (expr: Expr) => Expr | null) {
+        function updater(main: Expr) {
+            const nextMain = main.update(childId ?? main.id, transform);
+            return nextMain ?? new E.Blank(E.exprData("Double click me"));
+        }
         this.props.workspace.dispatch({
             type: "update",
             name: this.props.functionName,
-            updater: expr =>
-                expr.update(child ?? expr.id, updater) ??
-                new E.Blank(E.exprData("Double click me")),
+            updater,
         });
     }
 
@@ -116,14 +118,14 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         const expr = this.expr.findId(exprId);
         if (expr === null) return;
         // Only things with a value can be edited.
-        if (expr.value() != null) {
+        if (expr.value() !== null) {
             this.setState({ editing: { expr: exprId, created } });
         } else if (expr instanceof E.Blank) {
             this.setState({ blankPopover: exprId });
         }
     }
 
-    private stopEditing(newValue: Optional<string>) {
+    private stopEditing(newValue: string | null) {
         // This will disable rendering the inline-editor, preventing it from firing onBlur.
         this.setState({ editing: null }, () => this.focus());
 
@@ -148,7 +150,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
                 blanks.forEach(arg => this.insertAsChildOf(exprId, arg, true));
                 this.selectExpr(blanks[0].id);
             }
-        } else if (expr != null && newValue != null) {
+        } else if (expr !== null && newValue !== null) {
             // Auto-select the next pre-order sibling (if we submitted).
             this.selectionAction(Select.rightSmart)();
         }
@@ -251,7 +253,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         } else if (expr instanceof E.Blank) {
             // Kinda like slurp. We don't create a new blank, rather move this one around.
             const parent = this.expr.parentOf(target);
-            if (parent != null) {
+            if (parent !== null) {
                 // Do not stack top-level lists.
                 if (this.expr.parentOf(parent.id) == null && this.expr instanceof E.List) return;
                 this.removeExpr(target);
@@ -377,12 +379,12 @@ class Editor extends PureComponent<EditorProps, EditorState> {
     private readonly enableForCalls = (expr: Expr) => expr instanceof E.Call;
     private readonly disableForBlanks = (expr: Expr) => !(expr instanceof E.Blank);
 
-    private readonly exprMenu: Optional<{
+    private readonly exprMenu: (null | {
         label: string;
         action: keyof Editor["actions"];
         enabled?(expr: Expr): boolean;
         hidden?: boolean;
-    }>[] = [
+    })[] = [
         { action: "edit", label: "Edit..." },
         { action: "copy", label: "Copy" },
         { action: "openEditor", label: "Open definition...", enabled: this.enableForCalls },
@@ -441,7 +443,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         this.setState({ selection });
     };
 
-    private readonly onHover = (hoverHighlight: Optional<ExprId>) => {
+    private readonly onHover = (hoverHighlight: ExprId | null) => {
         this.setState({ hoverHighlight });
     };
 
@@ -509,7 +511,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         },
         acceptDrop: (absolutePoint, draggedExpr) => {
             const dropTargetId = this.clientOffsetToExpr(absolutePoint);
-            if (dropTargetId != null) {
+            if (dropTargetId !== null) {
                 this.focus();
                 this.selectExpr(dropTargetId);
                 if (draggedExpr.contains(dropTargetId)) {
@@ -547,12 +549,12 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         // Maybe we just tried updating the selection to something that doesn't exist. Use the
         // old selection instead.
         const oldSelection = prevExpr.findId(prevState.selection);
-        if (oldSelection != null) {
+        if (oldSelection !== null) {
             candidates.push([oldSelection]);
         }
         // Try the siblings, going forward then back.
         const [siblings, ix] = prevExpr.siblings(this.state.selection);
-        if (ix != null) {
+        if (ix !== null) {
             candidates.push(siblings.slice(ix + 1));
             candidates.push(siblings.slice(0, ix).reverse());
         }
@@ -576,7 +578,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
     }
 
     private renderInlineEditor() {
-        if (this.exprAreaMapRef.current === null || this.state.editing == null) return;
+        if (this.exprAreaMapRef.current === null || this.state.editing === null) return;
         const exprId = this.state.editing.expr;
         const expr = assertSome(this.expr.findId(exprId));
         return (
@@ -635,7 +637,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         const highlights: [ExprId, Highlight][] = [];
         const hl = this.props.theme.highlight;
         // Highlights pushed later have higher priority.
-        if (this.state.hoverHighlight != null) {
+        if (this.state.hoverHighlight !== null) {
             highlights.push([this.state.hoverHighlight, hl.hover]);
         }
         // Preferablly this would be above the hover-highlight, but the blank hover-highlight has a
@@ -660,7 +662,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         });
 
         // Droppable highlight goes on last. Otherwise the shadow might clip other highlights.
-        if (this.state.droppable != null) {
+        if (this.state.droppable !== null) {
             highlights.push([this.state.droppable, hl.droppable]);
         }
         if (arrayEquals(highlights, this.lastHighlights)) return this.lastHighlights;
