@@ -393,7 +393,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
     })[] = [
         { action: "edit", label: "Edit..." },
         { action: "copy", label: "Copy" },
-        { action: "openEditor", label: "Open definition...", enabled: this.enableForCalls },
+        { action: "openEditor", label: "Open definition", enabled: this.enableForCalls },
         { action: "showDebugOverlay", label: "Toggle the Debug Overlay", hidden: true },
         null,
         { action: "delete", label: "Delete" },
@@ -411,9 +411,10 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         // Move this into some sort of editor-wide menu.
         { action: "foldComments", label: "Fold Comments" },
         null,
+        { action: "demoAddVariable", label: "Make a Variable..." },
+        { action: "demoAddString", label: "Make a String..." },
         { action: "smartMakeCall", label: "Turn Into a Function Call..." },
-        { action: "demoAddVariable", label: "Make a Variable" },
-        { action: "demoAddString", label: "Make a String" },
+        { action: "moveToParent", label: "Replace the parent" },
     ];
 
     // Bound methods.
