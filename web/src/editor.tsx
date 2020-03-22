@@ -488,7 +488,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
             for (const subArea of currentArea.children) {
                 if (subArea.rect.shift(areaStart).contains(point)) {
                     currentArea = subArea;
-                    areaStart = areaStart.add(subArea.rect.origin);
+                    areaStart = areaStart.offset(subArea.rect.origin);
                     continue main;
                 }
             }
@@ -606,7 +606,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         const editorOrigin = ClientOffset.fromBoundingRect(
             this.containerRef.current.getBoundingClientRect(),
         );
-        const origin = editorOrigin.add(exprRect.bottomMiddle);
+        const origin = editorOrigin.offset(exprRect.bottomMiddle);
 
         const exprs = [
             { label: "Function Call", expr: new E.Call(""), keyEquivalent: "f" },

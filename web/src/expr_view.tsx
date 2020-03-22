@@ -65,6 +65,10 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
         return this.props.theme;
     }
 
+    get padding() {
+        return this.props.frozen ? this.theme.exprView.frozenPadding : this.theme.exprView.padding;
+    }
+
     private debugRenderAreas(areas: ExprAreaMap) {
         const exprs = Object.entries(areas).map(([k, v]) => (
             <SvgRect
@@ -80,7 +84,7 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
             .map(([k, v]) => (
                 <DebugRect
                     key={`t${k}`}
-                    origin={v.rect.origin.add(v.text?.offset ?? Offset.zero)}
+                    origin={v.rect.origin.offset(v.text?.offset ?? Offset.zero)}
                 />
             ));
         return exprs.concat(texts);
@@ -138,7 +142,9 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
         const dragExpr = this.props.frozen ? this.props.expr : expr;
         assertSome(this.context).maybeStartDrag(
             ClientOffset.fromClient(event),
-            this.pendingExprAreaMap[dragExpr.id].rect.origin.add(containerOrigin),
+            this.pendingExprAreaMap[dragExpr.id].rect.origin
+                .offset(containerOrigin)
+                .offset(this.padding.topLeft.neg),
             this.props.frozen ? dragExpr.resetIds() : dragExpr,
             () => this.props.onDraggedOut?.(dragExpr.id),
         );
@@ -222,16 +228,12 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
             foldComments: this.props.foldComments,
         });
 
-        // Selection and highlight drawing logic.
-        const padding = this.props.frozen
-            ? this.theme.exprView.frozenPadding
-            : this.theme.exprView.padding;
         // Spooky in React's Concurrent Mode, but it's ok since we'll only use this when
         // we commit and it doesn't depend on any previous calls to render.
         this.pendingExprArea = {
             expr: this.props.expr,
             children: areas,
-            rect: new Rect(padding.topLeft, size),
+            rect: new Rect(this.padding.topLeft, size),
             inline: false,
             text,
         };
@@ -244,7 +246,7 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
             }
         }
 
-        const { width, height } = size.padding(padding);
+        const { width, height } = size.padding(this.padding);
         const scale = this.props.maxWidth
             ? Math.min(this.props.maxWidth ?? width, width) / width
             : this.props.scale ?? 1;
@@ -272,7 +274,7 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
                         />
                     </filter>
                     {highlightRects}
-                    <SvgGroup translate={padding.topLeft}>{nodes}</SvgGroup>
+                    <SvgGroup translate={this.padding.topLeft}>{nodes}</SvgGroup>
                     {this.props.showDebugOverlay && this.debugRenderAreas(this.pendingExprAreaMap)}
                 </svg>
                 {this.state.showingMenu && (

@@ -45,7 +45,7 @@ export function flattenArea(parent: ExprArea): ExprAreaMap {
             rect: area.rect.shift(origin),
             text: area.text,
         };
-        for (const child of area.children) traverse(child, area.rect.origin.add(origin));
+        for (const child of area.children) traverse(child, area.rect.origin.offset(origin));
     }
     traverse(parent, Offset.zero);
     return map;
@@ -53,7 +53,7 @@ export function flattenArea(parent: ExprArea): ExprAreaMap {
 
 function shiftText(props: TextProperties, origin: Offset): TextProperties {
     const { offset, ...kept } = props;
-    return { ...kept, offset: offset?.add(origin) ?? origin };
+    return { ...kept, offset: offset?.offset(origin) ?? origin };
 }
 
 function shiftArea({ rect, ...rest }: ExprArea, origin: Offset) {

@@ -10,11 +10,17 @@ export class Offset {
     }
 
     difference(other: Offset) {
-        return this.add(other.neg);
+        return this.offset(other.neg);
     }
-    add(other: Offset) {
+    /** Offsets by a numeric value . */
+    add(value: number) {
+        return this.offset(new Offset(value));
+    }
+    /** Offsets by offset. */
+    offset(other: Offset) {
         return new Offset(this.x + other.x, this.y + other.y);
     }
+    /** Scales the offset by a factor in both directions. */
     scale(factor: number) {
         return new Offset(this.x * factor, this.y * factor);
     }
@@ -163,10 +169,10 @@ export class Rect {
         return new Rect(Offset.zero, this.size.pad(this.origin.neg));
     }
     get bottomMiddle() {
-        return this.origin.add(new Offset(this.width / 2, this.height));
+        return this.origin.offset(new Offset(this.width / 2, this.height));
     }
     get bottomRight() {
-        return this.origin.add(new Offset(this.width, this.height));
+        return this.origin.offset(new Offset(this.width, this.height));
     }
 
     withSize(size: Size) {
@@ -174,7 +180,7 @@ export class Rect {
     }
 
     contains(point: Offset) {
-        const corner = this.size.bottomRight.add(this.origin);
+        const corner = this.size.bottomRight.offset(this.origin);
         return this.origin.lt(point) && corner.gt(point);
     }
 
@@ -190,6 +196,6 @@ export class Rect {
     }
 
     shift(offset: Offset) {
-        return new Rect(this.origin.add(offset), this.size);
+        return new Rect(this.origin.offset(offset), this.size);
     }
 }

@@ -66,7 +66,7 @@ export default class DragAndDropSurface extends Component<{}, DragAndDropSurface
         // Note this calls both .drop and then .update on the listeners.
 
         if (this.drag?.delta != null) {
-            const exprCorner = assertSome(this.state.position).add(this.drag.delta);
+            const exprCorner = assertSome(this.state.position).offset(this.drag.delta);
             const expr = this.drag.expr;
             for (const listener of this.listeners) {
                 const status = listener.acceptDrop(exprCorner, expr);
@@ -102,7 +102,7 @@ export default class DragAndDropSurface extends Component<{}, DragAndDropSurface
         } else {
             // Update the drag.
             this.setState({ position });
-            const exprCorner = position.add(this.drag.delta);
+            const exprCorner = position.offset(this.drag.delta);
             this.listeners.forEach(x => x.dragUpdate(exprCorner));
         }
     };
@@ -128,7 +128,7 @@ export default class DragAndDropSurface extends Component<{}, DragAndDropSurface
 
     private renderExpr(theme: KaleTheme) {
         assert(this.drag?.delta != null);
-        const pos = assertSome(this.state.position).add(this.drag.delta);
+        const pos = assertSome(this.state.position).offset(this.drag.delta);
         const { nodes, size } = layoutExpr(theme, this.drag.expr);
         return (
             // Cover the entire page in a div so we can always get the mouseUp event.
