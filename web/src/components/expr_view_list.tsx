@@ -52,6 +52,7 @@ interface ShortcutExpr {
 interface ExprViewListItemProps<E> {
     maxWidth?: number;
     onDraggedOut?(item: E): void;
+    //TODO: Draw our own menu with a large hitbox.
     onContextMenu?(item: E): ContextMenuItem[];
 }
 

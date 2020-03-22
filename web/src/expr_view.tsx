@@ -42,7 +42,6 @@ interface ExprViewProps {
     foldComments?: boolean;
     showDebugOverlay?: boolean;
 
-    //TODO: Handle these in the generalised selection mechanism.
     focused?: boolean;
     highlights?: readonly [ExprId, Highlight][];
 }

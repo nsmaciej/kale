@@ -41,7 +41,6 @@ export default React.forwardRef(function EditorSuggestions(
     const workspace = assertSome(useContext(Workspace));
 
     function selectEditor(name: string) {
-        //TODO: This should be handled somewhere better, but cannot do it in the reducer.
         editorStackDispatch({ type: "createEditor", name });
         workspace.dispatch({ type: "ensureExists", name });
         setValue("");

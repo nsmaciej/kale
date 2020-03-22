@@ -92,7 +92,6 @@ export default function InlineEditor({
                     fontWeight: weight,
                 }}
                 ref={r => r?.focus()}
-                //TODO: Stop the editor from doing stuff, should check for focus instead.
                 onKeyDown={onKeyDown}
                 onChange={onChangeEvent}
             />

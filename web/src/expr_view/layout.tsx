@@ -49,7 +49,9 @@ function materialiseUnderlines(theme: KaleTheme, parent: Layout) {
     });
     const height = max(parent.underlines.map(x => x.level)) * gap;
     layout.size = layout.size.pad(new Offset(0, height));
-    setAreasHeightInPlace(layout.areas, layout.size.height);
+    // Don't just use height, subtract the text offset in case there is a comment sitting on top of
+    // the text. (Like in the 'commented call in a list' case).
+    setAreasHeightInPlace(layout.areas, layout.size.height - (layout.text?.offset?.y ?? 0));
     return layout;
 }
 
@@ -76,14 +78,15 @@ function isCallInline(theme: KaleTheme, args: readonly Layout[]): boolean {
 }
 
 interface LayoutState {
-    hasDisabledParent: boolean;
+    hasDisableAncestor: boolean;
+    hasListParent: boolean;
 }
 
 class ExprLayout implements ExprVisitor<Layout> {
     constructor(
         private readonly t: KaleTheme,
         private readonly props: LayoutProps,
-        private readonly state: LayoutState = { hasDisabledParent: false },
+        private readonly state: LayoutState = { hasDisableAncestor: false, hasListParent: false },
     ) {}
 
     private exprProps(expr: Expr) {
@@ -96,7 +99,7 @@ class ExprLayout implements ExprVisitor<Layout> {
         props: TextProperties & { mainText?: boolean } = {},
     ) {
         const { italic, colour, title, weight, offset, commentIndicator, mainText } = props;
-        const disabled = expr.data.disabled || this.state.hasDisabledParent;
+        const disabled = expr.data.disabled || this.state.hasDisableAncestor;
         const layout = new Layout(
             (
                 <Code
@@ -142,7 +145,8 @@ class ExprLayout implements ExprVisitor<Layout> {
 
     private layoutInner(parent: Expr, expr: Expr) {
         return new ExprLayout(this.t, this.props, {
-            hasDisabledParent: this.state.hasDisabledParent || parent.data.disabled,
+            hasDisableAncestor: this.state.hasDisableAncestor || parent.data.disabled,
+            hasListParent: parent instanceof E.List,
         }).layout(expr);
     }
 
@@ -153,7 +157,7 @@ class ExprLayout implements ExprVisitor<Layout> {
         );
         const line = new Rect(new Offset(3, 5), new Size(0, layout.size.height - 8));
         // Only thing outside layoutText checking this.
-        const disabled = expr.data.disabled || this.state.hasDisabledParent;
+        const disabled = expr.data.disabled || this.state.hasDisableAncestor;
         const ruler = (
             <HitBox area={line.pad(new Offset(5))} {...this.exprProps(expr)} key={0}>
                 <SvgLine
@@ -234,7 +238,6 @@ class ExprLayout implements ExprVisitor<Layout> {
 
     visitCall(expr: E.Call): Layout {
         const args = expr.args.map(x => this.layoutInner(expr, x), this);
-        const inline = isCallInline(this.t, args);
         const fnName = this.layoutText(expr, expr.fn, {
             weight: 700,
             commentIndicator: expr.data.comment != null && this.props.foldComments,
@@ -244,8 +247,9 @@ class ExprLayout implements ExprVisitor<Layout> {
 
         let layout: Layout;
         // Adding a comment makes a call non-inline but not bold.
-        //TODO: Don't do this if we are in a list.
-        if (inline && (expr.data.comment == null || this.props.foldComments)) {
+        const commentIsInline =
+            expr.data.comment == null || this.props.foldComments || this.state.hasListParent;
+        if (isCallInline(this.t, args) && commentIsInline) {
             layout = hstack(TextMetrics.global.space.width, fnName, args);
             layout.isUnderlined = true;
             layout.inline = true;
@@ -259,9 +263,7 @@ class ExprLayout implements ExprVisitor<Layout> {
                 ),
             );
         }
-
-        const comment = this.layoutComment(expr);
-        return vstack(this.t.layout.lineSpacing, comment, layout);
+        return vstack(this.t.layout.lineSpacing, this.layoutComment(expr), layout);
     }
 }
 

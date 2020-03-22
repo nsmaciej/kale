@@ -294,7 +294,6 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         openEditor: (e: ExprId) => {
             const selected = this.expr.findId(e);
             if (selected instanceof E.Call) {
-                //TODO: This should be handled somewhere better, but cannot do it in the reducer.
                 this.props.workspace.dispatch({
                     type: "ensureExists",
                     name: selected.fn,
@@ -338,7 +337,6 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         m: "move",
         n: "newLine",
         N: "newLineBefore",
-        //TODO: Add openEditorInPlaceOfThisOne.
         o: "openEditor",
         q: "comment",
         r: "replace",
