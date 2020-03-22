@@ -25,7 +25,7 @@ export default React.memo(function ToyBox() {
     return (
         <Box gridArea="toybox" overflow="auto">
             <PaneHeading>Blocks</PaneHeading>
-            <ExprViewList frozen items={toyBoxExprs} />
+            <ExprViewList items={toyBoxExprs} />
         </Box>
     );
 });

@@ -6,7 +6,7 @@ import { ClientOffset, Rect } from "geometry";
 import { KaleTheme } from "theme";
 import { Optional, assertSome, assert } from "utils";
 import Expr from "expr";
-import layoutExpr, { LayoutProps } from "expr_view/layout";
+import layoutExpr from "expr_view/layout";
 
 const Container = styled.div`
     position: absolute;
@@ -19,12 +19,22 @@ const Container = styled.div`
 `;
 
 export interface DropListener {
-    update(point: ClientOffset | null): void;
-    drop(point: ClientOffset, expr: Expr): void;
+    /** Fires to give a listener an opportunity to show that a drop is accepted. */
+    dragUpdate(point: ClientOffset | null): void;
+    /** Fires when the dragged object moves. Should return if this listener accepted the drop. If
+     * move is returned, the draggedOut listener on the expr that begun the drag is not caleld */
+    acceptDrop(point: ClientOffset, expr: Expr): "copy" | "move" | "reject";
 }
 
 export interface DragAndDropValue {
-    maybeStartDrag(start: ClientOffset, exprStart: ClientOffset, expr: Expr): void;
+    /** Initialise a drag.
+     * @param draggedOut Fires if `acceptDrop` returns "move" */
+    maybeStartDrag(
+        start: ClientOffset,
+        exprStart: ClientOffset,
+        expr: Expr,
+        draggedOut?: () => void,
+    ): void;
     addListener(listener: DropListener): void;
     removeListener(listener: DropListener): void;
 }
@@ -46,6 +56,7 @@ export default class DragAndDropSurface extends Component<{}, DragAndDropSurface
         start: ClientOffset; // Where the maybe-drag started.
         delta: Optional<ClientOffset>; // How much to offset the expr when showing the drag.
         exprStart: ClientOffset; // Where is the corner of the xpr.
+        draggedOut?: () => void; // Fired when the drag completes.
         expr: Expr;
     }>;
 
@@ -57,12 +68,17 @@ export default class DragAndDropSurface extends Component<{}, DragAndDropSurface
         if (this.drag?.delta != null) {
             const exprCorner = assertSome(this.state.position).add(this.drag.delta);
             const expr = this.drag.expr;
-            this.listeners.forEach(x => x.drop(exprCorner, expr));
+            for (const listener of this.listeners) {
+                const status = listener.acceptDrop(exprCorner, expr);
+                if (status === "reject") continue;
+                if (status === "move") this.drag.draggedOut?.();
+                break;
+            }
         }
         this.drag = null;
         // Premature optimisation. This method is called on every other mouse move.
         if (this.state.position != null) {
-            this.listeners.forEach(f => f.update(null));
+            this.listeners.forEach(f => f.dragUpdate(null));
             this.setState({ position: null });
         }
     };
@@ -87,7 +103,7 @@ export default class DragAndDropSurface extends Component<{}, DragAndDropSurface
             // Update the drag.
             this.setState({ position });
             const exprCorner = position.add(this.drag.delta);
-            this.listeners.forEach(x => x.update(exprCorner));
+            this.listeners.forEach(x => x.dragUpdate(exprCorner));
         }
     };
 
@@ -99,32 +115,35 @@ export default class DragAndDropSurface extends Component<{}, DragAndDropSurface
     }
 
     private readonly contextValue: DragAndDropValue = {
-        maybeStartDrag: (start: ClientOffset, exprStart: ClientOffset, expr: Expr) => {
-            this.drag = { start, expr, exprStart, delta: null };
+        maybeStartDrag: (start, exprStart, expr, draggedOut) => {
+            this.drag = { start, expr, exprStart, draggedOut, delta: null };
         },
-        addListener: (listener: DropListener) => {
+        addListener: listener => {
             this.listeners.add(listener);
         },
-        removeListener: (listener: DropListener) => {
+        removeListener: listener => {
             this.listeners.delete(listener);
         },
     };
 
-    // layoutExpr is now memoized, save these in advance.
-    exprLayoutProps: LayoutProps = { frozen: true };
-
     private renderExpr(theme: KaleTheme) {
         assert(this.drag?.delta != null);
         const pos = assertSome(this.state.position).add(this.drag.delta);
-        const { nodes, size } = layoutExpr(theme, this.drag.expr, this.exprLayoutProps);
+        const { nodes, size } = layoutExpr(theme, this.drag.expr);
         return (
-            // Bug: Safari doesn't like drawing box-shadows on SVGs (it leaves a ghost trail), draw
-            // it on a div instead.
-            <Container onMouseUp={this.dismissDrag} style={{ top: pos.y, left: pos.x }}>
-                <svg xmlns="http://www.w3.org/2000/svg" width={size.width} height={size.height}>
-                    {nodes}
-                </svg>
-            </Container>
+            // Cover the entire page in a div so we can always get the mouseUp event.
+            // Bug: Safari doesn't like drawing box-shadows on SVGs (it leaves a ghost trail), it
+            // must be drawn on the Container div instead.
+            <div
+                onMouseUp={this.dismissDrag}
+                style={{ width: "100%", height: "100%", position: "fixed" }}
+            >
+                <Container style={{ top: pos.y, left: pos.x }}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width={size.width} height={size.height}>
+                        {nodes}
+                    </svg>
+                </Container>
+            </div>
         );
     }
 
@@ -165,12 +184,16 @@ export function useSimpleDrop(
         return clientRect === undefined ? null : Rect.fromBoundingRect(clientRect);
     }
     useDrop({
-        update(point) {
+        dragUpdate(point) {
             const contains = (point !== null && getRect()?.contains(point)) ?? false;
             setLastContains(contains);
         },
-        drop(point, expr) {
-            if (getRect()?.contains(point)) onDrop(expr);
+        acceptDrop(point, expr) {
+            if (getRect()?.contains(point)) {
+                onDrop(expr);
+                return "move";
+            }
+            return "reject";
         },
     });
     return lastContains;

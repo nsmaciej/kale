@@ -25,7 +25,9 @@ interface ExprViewProps {
     onClick?(expr: ExprId): void;
     onHover?(expr: Optional<ExprId>): void;
     onDoubleClick?(expr: ExprId): void;
-    // The expr has been focused on.
+    /** Triggered when an expr has been dragged out using drag-and-drop. */
+    onDraggedOut?(expr: ExprId): void;
+    /** Triggered when expr has been focused on, used after dismissing a context menu */
     onFocus?(): void;
 
     // Delegation.
@@ -34,6 +36,8 @@ interface ExprViewProps {
     // Looks.
     maxWidth?: number;
     scale?: number;
+    /** Is this an atomic expr whose children cannot be dragged out and should be given a new id
+     * when dragged? */
     frozen?: boolean;
     foldComments?: boolean;
     showDebugOverlay?: boolean;
@@ -135,7 +139,8 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
         assertSome(this.context).maybeStartDrag(
             ClientOffset.fromClient(event),
             this.pendingExprAreaMap[dragExpr.id].rect.origin.add(containerOrigin),
-            dragExpr,
+            this.props.frozen ? dragExpr.resetIds() : dragExpr,
+            () => this.props.onDraggedOut?.(dragExpr.id),
         );
     }
 
@@ -211,7 +216,6 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
         const { nodes, size, areas, text } = layoutExpr(this.theme, this.props.expr, {
             exprPropsFor: this.exprPropsFor,
             // Passed through props.
-            frozen: this.props.frozen,
             focused: this.props.focused,
             // Pass something that can be momoized if we can.
             highlights: this.state.showingMenu ? highlights : this.props.highlights,

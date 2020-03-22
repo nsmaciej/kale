@@ -268,13 +268,12 @@ class ExprLayout implements ExprVisitor<Layout> {
 // Make sure to update argsEqual when adding or removing properties form this.
 export interface LayoutProps {
     exprPropsFor?(expr: Expr): Partial<React.DOMAttributes<Element>>;
-    frozen?: boolean;
     focused?: boolean;
     highlights?: readonly [ExprId, Highlight][];
     foldComments?: boolean;
 }
 
-type LayoutExprArgs = [KaleTheme, Expr, LayoutProps];
+type LayoutExprArgs = [KaleTheme, Expr, LayoutProps | undefined];
 
 function argsEquals(prev: LayoutExprArgs, next: LayoutExprArgs) {
     const lhs = prev[2];
@@ -282,8 +281,9 @@ function argsEquals(prev: LayoutExprArgs, next: LayoutExprArgs) {
     const quickCheck =
         prev[0] === next[0] &&
         prev[1] === next[1] &&
+        lhs !== undefined &&
+        rhs !== undefined &&
         lhs.exprPropsFor === rhs.exprPropsFor &&
-        lhs.frozen === rhs.frozen &&
         lhs.foldComments === rhs.foldComments;
     if (!quickCheck) return false;
 
@@ -297,12 +297,13 @@ function argsEquals(prev: LayoutExprArgs, next: LayoutExprArgs) {
         }
         return false;
     }
-    return !highlightsBlanks(lhs) && !highlightsBlanks(rhs);
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    return !highlightsBlanks(lhs!) && !highlightsBlanks(rhs!);
 }
 
 export default memoizeOne(
-    function layoutExpr(theme: KaleTheme, expr: Expr, props: LayoutProps): Layout {
-        return materialiseUnderlines(theme, new ExprLayout(theme, props).layout(expr));
+    function layoutExpr(theme: KaleTheme, expr: Expr, props?: LayoutProps): Layout {
+        return materialiseUnderlines(theme, new ExprLayout(theme, props ?? {}).layout(expr));
     },
     // This library is badly typed.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

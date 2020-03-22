@@ -51,8 +51,9 @@ export default abstract class Expr {
         throw new UnvisitableExpr(this);
     }
 
-    contains(expr: ExprId): boolean {
-        return this.findId(expr) != null;
+    /** Returns true if this expr contains or is itself the `child` expr */
+    contains(child: ExprId): boolean {
+        return this.findId(child) != null;
     }
 
     some(fn: (expr: Expr) => boolean) {

@@ -1,4 +1,4 @@
-import React, { Fragment, ReactNode } from "react";
+import React, { Fragment, ReactNode, useCallback } from "react";
 import styled, { useTheme } from "styled-components";
 import { motion } from "framer-motion";
 
@@ -48,26 +48,41 @@ interface ShortcutExpr {
     shortcut?: string;
 }
 
-interface ExprViewListProps<E> {
-    animate?: boolean;
+interface ExprViewListItemProps<E> {
     maxWidth?: number;
+    onDraggedOut?(item: E): void;
+}
+
+interface ExprViewListProps<E> extends ExprViewListItemProps<E> {
+    animate?: boolean;
     items: E[];
-    frozen?: boolean;
     fallback?: ReactNode;
     showDropMarker?: boolean;
-    extras?(item: E): ReactNode;
+    onGetExtras?(item: E): ReactNode;
+}
+
+// This is needed to help with ExprView momoization.
+function ExprViewListItem<E extends ShortcutExpr>({
+    item,
+    maxWidth,
+    onDraggedOut,
+}: ExprViewListItemProps<E> & { item: E }) {
+    const theme = useTheme();
+    const cb = useCallback(() => onDraggedOut?.(item), [onDraggedOut, item]);
+    return <ExprView frozen expr={item.expr} theme={theme} maxWidth={maxWidth} onDraggedOut={cb} />;
 }
 
 export default function ExprViewList<E extends ShortcutExpr>({
     items,
-    frozen,
     animate,
     fallback,
     maxWidth,
-    extras,
     showDropMarker,
+    onGetExtras,
+    onDraggedOut,
 }: ExprViewListProps<E>) {
     const theme = useTheme();
+
     const renderItem = (item: E) => (
         // This has to be a fragment. Otherwise the items won't layout in a grid.
         <Fragment key={item.expr.id}>
@@ -79,8 +94,8 @@ export default function ExprViewList<E extends ShortcutExpr>({
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.1, ease: "easeIn" }}
             >
-                <ExprView expr={item.expr} frozen={frozen} theme={theme} maxWidth={maxWidth} />
-                {extras && <Extras>{extras(item)}</Extras>}
+                <ExprViewListItem item={item} maxWidth={maxWidth} onDraggedOut={onDraggedOut} />
+                {onGetExtras && <Extras>{onGetExtras(item)}</Extras>}
             </ExprListItem>
         </Fragment>
     );

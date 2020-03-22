@@ -32,11 +32,13 @@ export default React.memo(function ClipboardList() {
                 </SubtleButton>
             </Stack>
             <ExprViewList
-                frozen
                 animate
                 maxWidth={300}
                 items={history}
                 showDropMarker={draggingOver}
+                onDraggedOut={item => {
+                    clipboard.dispatch({ type: "use", expr: item.expr.id });
+                }}
                 fallback={
                     <NonIdealText>
                         Nothing here yet.
@@ -44,7 +46,7 @@ export default React.memo(function ClipboardList() {
                         Use <Shortcut>C</Shortcut> to copy something
                     </NonIdealText>
                 }
-                extras={item => (
+                onGetExtras={item => (
                     <SubtleButton
                         onClick={() =>
                             clipboard.dispatch({ type: "togglePinned", expr: item.expr.id })

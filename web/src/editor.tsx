@@ -94,7 +94,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         if (selected) {
             this.props.clipboard.dispatch({
                 type: "add",
-                entry: { expr: selected, pinned: false },
+                entry: { expr: selected.resetIds(), pinned: false },
             });
         }
     }
@@ -105,6 +105,11 @@ class Editor extends PureComponent<EditorProps, EditorState> {
 
     private replaceExpr(old: ExprId, next: Expr) {
         this.update(old, () => next.resetIds().replaceId(old));
+    }
+
+    private swapExpr(left: ExprId, right: ExprId) {
+        this.replaceExpr(left, this.expr.get(right));
+        this.replaceExpr(right, this.expr.get(left));
     }
 
     private createInlineEditor(exprId: ExprId, created: boolean) {
@@ -432,12 +437,6 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         event.stopPropagation();
     };
 
-    private readonly createChildBlank = (parentId: ExprId) => {
-        const blank = new E.Blank();
-        this.insertAsChildOf(parentId, blank, true);
-        this.selectExpr(blank.id);
-    };
-
     private readonly selectExpr = (selection: ExprId) => {
         this.setState({ selection });
     };
@@ -498,24 +497,34 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         return currentArea.expr.id;
     }
 
-    private readonly dropUpdate = (absolutePoint: ClientOffset | null) => {
-        this.setState({
-            droppable: this.clientOffsetToExpr(absolutePoint),
-        });
-    };
-
-    private readonly dropExecute = (absolutePoint: ClientOffset, expr: Expr) => {
-        const target = this.clientOffsetToExpr(absolutePoint);
-        if (target != null) {
-            this.replaceExpr(target, expr);
-            this.selectExpr(target);
-            this.focus();
-        }
+    private readonly onDraggedOut = (exprId: ExprId) => {
+        this.removeExpr(exprId);
     };
 
     private readonly dragListener: DropListener = {
-        update: this.dropUpdate,
-        drop: this.dropExecute,
+        dragUpdate: absolutePoint => {
+            this.setState({
+                droppable: this.clientOffsetToExpr(absolutePoint),
+            });
+        },
+        acceptDrop: (absolutePoint, draggedExpr) => {
+            const dropTargetId = this.clientOffsetToExpr(absolutePoint);
+            if (dropTargetId != null) {
+                this.focus();
+                this.selectExpr(dropTargetId);
+                if (draggedExpr.contains(dropTargetId)) {
+                    this.replaceExpr(dropTargetId, draggedExpr); // Nest.
+                    return "copy";
+                } else if (this.expr.contains(draggedExpr.id)) {
+                    this.swapExpr(draggedExpr.id, dropTargetId); // Swap.
+                    return "copy";
+                } else {
+                    this.replaceExpr(dropTargetId, draggedExpr); // Move from outside this editor.
+                    return "move";
+                }
+            }
+            return "reject";
+        },
     };
 
     componentDidMount() {
@@ -684,6 +693,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
                     onHover={this.onHover}
                     onDoubleClick={this.startEditing}
                     onFocus={this.focus}
+                    onDraggedOut={this.onDraggedOut}
                 />
                 {this.renderInlineEditor()}
                 {this.renderBlankPopover()}
