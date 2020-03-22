@@ -1,8 +1,9 @@
-import React, { useState, ReactNode, useRef } from "react";
+import React, { useState, ReactNode, useRef, useContext } from "react";
 import ReactDOM from "react-dom";
 import styled, { useTheme } from "styled-components";
 
 import { ClientOffset } from "geometry";
+import { Clipboard } from "contexts/clipboard";
 import { Optional, assertSome, assert } from "utils";
 import { useDocumentEvent } from "hooks";
 import Expr from "expr";
@@ -55,6 +56,7 @@ interface DraggingState {
 export default function DragAndDropSurface({ children }: { children: ReactNode }) {
     const theme = useTheme();
 
+    const clipboard = assertSome(useContext(Clipboard));
     const [position, setPosition] = useState<ClientOffset | null>(null);
     const listeners = useRef(new Set<DropListener>()).current;
     const drag = useRef<DraggingState | null>(null);
@@ -78,11 +80,17 @@ export default function DragAndDropSurface({ children }: { children: ReactNode }
         if (drag.current !== null && drag.current.delta !== null) {
             const exprCorner = assertSome(position).offset(drag.current.delta);
             const expr = drag.current.expr;
+            let accepted = false;
             for (const listener of listeners) {
                 const status = listener.acceptDrop(exprCorner, expr);
                 if (status === "reject") continue;
                 if (status === "move") drag.current.draggedOut?.();
+                accepted = true;
                 break;
+            }
+            if (!accepted) {
+                clipboard.dispatch({ type: "add", entry: { expr, pinned: false } });
+                drag.current.draggedOut?.();
             }
         }
         drag.current = null;

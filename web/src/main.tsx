@@ -160,15 +160,15 @@ function App() {
                 <GlobalStyle />
                 <ToastProvider>
                     <ErrorBoundary>
-                        <DragAndDropSurface>
-                            <WorkspaceProvider>
-                                <DebuggerProvider>
-                                    <ClipboardProvider>
+                        <ClipboardProvider>
+                            <DragAndDropSurface>
+                                <WorkspaceProvider>
+                                    <DebuggerProvider>
                                         <Kale />
-                                    </ClipboardProvider>
-                                </DebuggerProvider>
-                            </WorkspaceProvider>
-                        </DragAndDropSurface>
+                                    </DebuggerProvider>
+                                </WorkspaceProvider>
+                            </DragAndDropSurface>
+                        </ClipboardProvider>
                     </ErrorBoundary>
                 </ToastProvider>
             </ThemeProvider>
