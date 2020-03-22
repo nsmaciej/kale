@@ -2,7 +2,7 @@ import React from "react";
 import styled from "styled-components";
 import { AiOutlineBulb, AiOutlineBlock } from "react-icons/ai";
 
-import { ExprArea } from "expr_view";
+import { FlatExprArea } from "expr_view";
 import { useDisableScrolling } from "hooks";
 import Menu from "components/menu";
 import TextMetrics from "text_metrics";
@@ -22,7 +22,7 @@ const InlineEditorInput = styled.input`
 `;
 
 interface InlineEditorProps {
-    exprArea: ExprArea;
+    exprArea: FlatExprArea;
     value: string;
     disableSuggestions: boolean;
     onChange(value: string): void;
@@ -69,7 +69,7 @@ export default function InlineEditor({
         onChange(e.target.value);
     }
 
-    const textProps = exprArea.textProps ?? {};
+    const textProps = exprArea.text ?? {};
     const { offset, colour, italic, weight } = textProps;
     const origin = exprArea.rect.origin;
     // Make sure the input is always at least wide enough to show the cursor.

@@ -9,27 +9,27 @@ import { Optional, assert, assertSome } from "utils";
 import ContextMenu, { ContextMenuItem } from "components/context_menu";
 import Expr, { ExprId } from "expr";
 
-import { Area, TextProperties } from "expr_view/core";
+import { ExprArea, TextProperties } from "expr_view/core";
 import { SvgGroup, SvgRect, DebugRect } from "expr_view/components";
 import layoutExpr from "expr_view/layout";
 
-export { Area } from "expr_view/core";
-export interface ExprArea {
+export { ExprArea } from "expr_view/core";
+export interface FlatExprArea {
     inline: boolean;
     rect: Rect;
-    textProps: Optional<TextProperties>;
+    text: Optional<TextProperties>;
 }
 
 // The `in` is weird here. See https://github.com/microsoft/TypeScript/issues/1778.
-export type ExprAreaMap = { [expr in ExprId]: ExprArea };
+export type ExprAreaMap = { [expr in ExprId]: FlatExprArea };
 
-function flattenArea(parent: Area): ExprAreaMap {
+function flattenArea(parent: ExprArea): ExprAreaMap {
     const map: ExprAreaMap = {};
-    function traverse(area: Area, origin: Offset) {
+    function traverse(area: ExprArea, origin: Offset) {
         map[area.expr.id] = {
             inline: area.inline,
             rect: area.rect.shift(origin),
-            textProps: area.text,
+            text: area.text,
         };
         for (const child of area.children) traverse(child, area.rect.origin.add(origin));
     }
@@ -41,7 +41,7 @@ interface ExprViewProps {
     expr: Expr;
     theme: KaleTheme;
     exprAreaMapRef?: React.RefObject<ExprAreaMap>;
-    exprAreaRef?: React.RefObject<Area>;
+    exprAreaRef?: React.RefObject<ExprArea>;
 
     // Callbacks.
     onClick?(expr: ExprId): void;
@@ -77,7 +77,7 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
     state: ExprViewState = { showingMenu: null };
     private readonly containerRef = React.createRef<SVGSVGElement>();
     private pendingExprAreaMap: ExprAreaMap | null = null;
-    private pendingExprArea: Area | null = null;
+    private pendingExprArea: ExprArea | null = null;
 
     get theme() {
         return this.props.theme;
@@ -94,11 +94,11 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
             />
         ));
         const texts = Object.entries(areas)
-            .filter(x => x[1].textProps != null)
+            .filter(x => x[1].text != null)
             .map(([k, v]) => (
                 <DebugRect
                     key={`t${k}`}
-                    origin={v.rect.origin.add(v.textProps?.offset ?? Offset.zero)}
+                    origin={v.rect.origin.add(v.text?.offset ?? Offset.zero)}
                 />
             ));
         return exprs.concat(texts);
@@ -213,7 +213,9 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
             >).current = this.pendingExprAreaMap;
         }
         if (this.props.exprAreaRef !== undefined && this.pendingExprArea !== null) {
-            (this.props.exprAreaRef as React.MutableRefObject<Area>).current = this.pendingExprArea;
+            (this.props.exprAreaRef as React.MutableRefObject<
+                ExprArea
+            >).current = this.pendingExprArea;
         }
     }
     componentDidMount() {

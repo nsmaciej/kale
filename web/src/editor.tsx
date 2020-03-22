@@ -8,7 +8,7 @@ import { KaleTheme, Highlight } from "theme";
 import { Offset, Rect, ClientOffset } from "geometry";
 import { Optional, assertSome, reverseObject, assert, insertSibling, arrayEquals } from "utils";
 import Expr, { ExprId } from "expr";
-import ExprView, { Area, ExprAreaMap } from "expr_view";
+import ExprView, { ExprArea, ExprAreaMap } from "expr_view";
 
 import { Type, Func, assertFunc, Value, Builtin } from "vm/types";
 import { specialFunctions } from "vm/interpreter";
@@ -49,7 +49,7 @@ interface EditorProps extends EditorWrapperProps {
 class Editor extends PureComponent<EditorProps, EditorState> {
     private readonly containerRef = React.createRef<HTMLDivElement>();
     private readonly exprAreaMapRef = React.createRef<ExprAreaMap>();
-    private readonly exprAreaRef = React.createRef<Area>();
+    private readonly exprAreaRef = React.createRef<ExprArea>();
 
     state: EditorState = {
         focused: false,

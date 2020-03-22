@@ -19,11 +19,11 @@ export interface Underline {
     length: number;
 }
 
-export interface Area {
+export interface ExprArea {
     rect: Rect;
     expr: Expr;
     text: Optional<TextProperties>;
-    children: Area[];
+    children: ExprArea[];
     // Needed for setAreasHeightInPlace. See its comment.
     inline: boolean;
 }
@@ -33,7 +33,7 @@ function shiftText(props: TextProperties, origin: Offset): TextProperties {
     return { ...kept, offset: offset?.add(origin) ?? origin };
 }
 
-function shiftArea({ rect, ...rest }: Area, origin: Offset) {
+function shiftArea({ rect, ...rest }: ExprArea, origin: Offset) {
     return { ...rest, rect: rect.shift(origin) };
 }
 
@@ -42,7 +42,7 @@ export class Layout {
     size: Size;
     nodes: ReactNode[] = [];
     underlines: Underline[] = [];
-    areas: Area[] = [];
+    areas: ExprArea[] = [];
     isUnderlined = false;
 
     // Things that will get copied to areas.

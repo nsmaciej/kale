@@ -10,7 +10,7 @@ import { Offset, Size, Rect } from "geometry";
 import Expr, { ExprId, ExprVisitor } from "expr";
 import TextMetrics from "text_metrics";
 
-import { Layout, TextProperties, hstack, vstack, Area } from "expr_view/core";
+import { Layout, TextProperties, hstack, vstack, ExprArea } from "expr_view/core";
 import { UnderlineLine, SvgLine, HitBox } from "expr_view/components";
 
 // See https://vanseodesign.com/web-design/svg-text-baseline-alignment/ for excellent discussion
@@ -32,7 +32,7 @@ const CommentIndicator = styled.tspan`
 // This is a limitation of the layout engine, we do not yet know how
 // many underlines an expr will have until higher up in call stack,
 // so we just set the height here, now that we know for sure.
-function setAreasHeightInPlace(areas: Area[], height: number) {
+function setAreasHeightInPlace(areas: ExprArea[], height: number) {
     for (const area of areas) {
         if (!area.inline) continue;
         area.rect = area.rect.withSize(new Size(area.rect.size.width, height));
