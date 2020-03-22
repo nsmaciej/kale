@@ -154,7 +154,13 @@ export default class Interpreter {
 
         if (expr instanceof E.Literal) {
             const { type, content } = expr;
-            return { type, value: content };
+            let value: unknown = content;
+            if (type === Type.Num) {
+                value = parseInt(content);
+            } else if (type !== Type.Str) {
+                throw new VmError(`${type} literals are not supported`);
+            }
+            return { type, value };
         } else if (expr instanceof E.Variable) {
             return scope.get(expr.name);
         } else if (expr instanceof E.List) {
