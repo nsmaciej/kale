@@ -641,9 +641,6 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         // Preferablly this would be above the hover-highlight, but the blank hover-highlight has a
         // solid background, which would cover the blue-selection effect.
         highlights.push([this.state.selection, hl.selection]);
-        if (this.state.droppable != null) {
-            highlights.push([this.state.droppable, hl.droppable]);
-        }
         if (this.state.blankPopover !== null) {
             highlights.push([this.state.blankPopover, hl.contextMenu]);
         }
@@ -661,6 +658,11 @@ class Editor extends PureComponent<EditorProps, EditorState> {
             if (lhs[0] === rhs[0]) return 0;
             return lut[lhs[0]].contains(rhs[0]) ? -1 : 1;
         });
+
+        // Droppable highlight goes on last. Otherwise the shadow might clip other highlights.
+        if (this.state.droppable != null) {
+            highlights.push([this.state.droppable, hl.droppable]);
+        }
         if (arrayEquals(highlights, this.lastHighlights)) return this.lastHighlights;
         this.lastHighlights = highlights;
         return highlights;
