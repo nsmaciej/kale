@@ -330,7 +330,6 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         "#": "foldComments",
         Backspace: "delete",
         c: "copy",
-        d: "delete",
         Enter: "edit",
         f: "smartMakeCall",
         g: "demoAddString",
@@ -361,6 +360,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         "7": this.pasteAction(6),
         "8": this.pasteAction(7),
         "9": this.pasteAction(9),
+        d: this.actions["delete"], // An alternative to the Backspace
         ArrowDown: this.selectionAction(Select.downSmart),
         ArrowLeft: this.selectionAction(Select.leftSmart),
         ArrowRight: this.selectionAction(Select.rightSmart),
