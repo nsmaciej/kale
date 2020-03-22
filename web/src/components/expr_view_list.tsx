@@ -20,6 +20,7 @@ const ExprListShortcut = styled(Shortcut)`
     grid-column: shortcut;
     justify-self: right;
     margin-top: ${p => p.theme.exprView.padding.top / 2}px;
+    margin-right: 10px;
 `;
 
 const ExprList = styled.div`
@@ -27,7 +28,9 @@ const ExprList = styled.div`
     grid-template-columns:
         [shortcut] auto
         [expr] min-content;
-    gap: 10px;
+    /* We use margin-right in the shortcut to handle horizontal gap, this way the column collapses
+    no nothing if there are no shortcuts present */
+    gap: 10px 0;
     grid-auto-rows: min-content;
     align-items: start;
     margin: 20px 0 40px;

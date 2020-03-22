@@ -3,7 +3,6 @@ import React from "react";
 
 import * as E from "expr";
 import { Box, PaneHeading } from "components";
-import { Type } from "vm/types";
 import Builtins from "vm/builtins";
 import Expr, { exprData } from "expr";
 import ExprViewList, { ShortcutExpr } from "components/expr_view_list";
