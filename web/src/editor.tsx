@@ -635,6 +635,9 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         if (this.state.droppable != null) {
             highlights.push([this.state.droppable, hl.droppable]);
         }
+        if (this.state.blankPopover !== null) {
+            highlights.push([this.state.blankPopover, hl.contextMenu]);
+        }
 
         // Remove higlights that do not exist. Iterating backwards makes this easy.
         for (let i = highlights.length - 1; i >= 0; --i) {

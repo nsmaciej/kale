@@ -105,7 +105,6 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
                 fill={highlight.fill(this.props.focused === true) ?? "none"}
                 stroke={highlight.stroke(this.props.focused === true) ?? "none"}
                 initial={false}
-                strokeWidth={highlight.strokeWidth}
                 style={{ filter: highlight.droppable ? "url(#droppable)" : undefined }}
                 transition={{
                     type: "tween",

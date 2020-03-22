@@ -4,7 +4,6 @@ import { assert } from "utils";
 type HighlightPair = [string | undefined, string | undefined];
 
 export class Highlight {
-    strokeWidth = 1;
     animates = false;
     droppable = false;
     private readonly focusedPair: HighlightPair;
@@ -16,10 +15,6 @@ export class Highlight {
         this.blurredPair = [fill, stroke];
     }
 
-    withStrokeWidth(strokeWidth: number): this {
-        this.strokeWidth = strokeWidth;
-        return this;
-    }
     /** This highlight should animate when changed. */
     withAnimation(): this {
         this.animates = true;
@@ -130,7 +125,7 @@ export const DefaultTheme = {
             .blurred("#fcfdff", "#edeffc")
             .withAnimation(),
         hover: new Highlight("hover", undefined, "#cecece").blank("#efefef", "#dcdcdc"),
-        contextMenu: new Highlight("context", undefined, "#364ee0").withStrokeWidth(0.5),
+        contextMenu: new Highlight("context", undefined, "#248af0"),
         droppable: new Highlight("droppable", "#ffffff00", colour.clickable).withDroppable(),
     },
 

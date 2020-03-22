@@ -220,7 +220,6 @@ class ExprLayout implements ExprVisitor<Layout> {
                         }}
                         initial={false}
                         rx={rect.height / 2}
-                        strokeWidth={highlight.strokeWidth}
                         stroke={highlight.blankStroke(this.props.focused === true)}
                         style={{ filter: highlight.droppable ? "url(#droppable)" : undefined }}
                     />
