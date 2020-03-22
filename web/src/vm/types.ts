@@ -2,13 +2,13 @@ import Expr from "expr";
 import { Optional } from "utils";
 
 export const enum Type {
-    Str = "string",
-    Num = "number",
-    List = "list",
-    Null = "null",
-    Bool = "boolean",
-    Func = "function",
-    Builtin = "builtin",
+    Text = "Text",
+    Num = "Number",
+    List = "List",
+    Null = "Null",
+    Bool = "Boolean",
+    Func = "Function",
+    Builtin = "Builtin",
 }
 
 export interface Value<T = unknown> {
@@ -50,7 +50,7 @@ function assertType<T>(type: string): (value: Value) => T {
 export const assertBoolean = assertType<boolean>(Type.Bool);
 export const assertFunc = assertType<Func>(Type.Func);
 export const assertBuiltin = assertType<Builtin>(Type.Builtin);
-export const assertString = assertType<string>(Type.Str);
+export const assertString = assertType<string>(Type.Text);
 export const assertNumber = assertType<number>(Type.Num);
 
 export class Scope {

@@ -37,8 +37,8 @@ const atIndex = rawBuiltin(
     [Type.Num, null],
     args => {
         const [index, indexable] = args;
-        if (indexable.type === Type.Str) {
-            return { type: Type.Str, value: (indexable.value as string)[assertNumber(index)] };
+        if (indexable.type === Type.Text) {
+            return { type: Type.Text, value: (indexable.value as string)[assertNumber(index)] };
         } else if (indexable.type === Type.List) {
             return (indexable.value as Value[])[assertNumber(index)];
         }
@@ -66,8 +66,8 @@ export default {
 
     // Strings.
     Text: builtin(
-        Type.Str,
-        [Type.Str, Type.Str],
+        Type.Text,
+        [Type.Text, Type.Text],
         (a: string, b: string) => a + b,
         "Joins two pieces of text together",
     ),
@@ -76,21 +76,21 @@ export default {
     "Is-list?": typeTest(Type.List, "Checks if a value is a list of values"),
     "Is-null?": typeTest(Type.Null, "Checks if a value is null"),
     "Is-number?": typeTest(Type.Num, "Checks if a value is a number"),
-    "Is-text?": typeTest(Type.Str, "Checks if a value is a piece of text"),
+    "Is-text?": typeTest(Type.Text, "Checks if a value is a piece of text"),
 
     // Indexing.
     "@": atIndex,
 
     // Conversion.
     "Number->text": builtin(
-        Type.Str,
+        Type.Text,
         [Type.Num],
         (x: number) => x.toString(),
         "Convert a number to text",
     ),
     "Text->number": builtin(
         Type.Num,
-        [Type.Str],
+        [Type.Text],
         (x: string) => parseInt(x),
         "Read a piece of a text as a number",
     ),
@@ -98,7 +98,7 @@ export default {
     // I/O.
     Print: builtin(
         Type.Null,
-        [Type.Str],
+        [Type.Text],
         // eslint-disable-next-line no-console
         show => alert(show),
         "Show a message in the browser",

@@ -157,7 +157,7 @@ export default class Interpreter {
             let value: unknown = content;
             if (type === Type.Num) {
                 value = parseInt(content);
-            } else if (type !== Type.Str) {
+            } else if (type !== Type.Text) {
                 throw new VmError(`${type} literals are not supported`);
             }
             return { type, value };

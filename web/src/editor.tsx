@@ -324,7 +324,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         },
         // Demo things that should be moved to the toy-box.
         demoAddVariable: (e: ExprId) => this.replaceAndEdit(e, new E.Variable(""), true),
-        demoAddString: (e: ExprId) => this.replaceAndEdit(e, new E.Literal("", Type.Str), true),
+        demoAddString: (e: ExprId) => this.replaceAndEdit(e, new E.Literal("", Type.Text), true),
         showDebugOverlay: () =>
             this.setState({ showingDebugOverlay: !this.state.showingDebugOverlay }),
     };
@@ -620,7 +620,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         const exprs = [
             { label: "Function Call", expr: new E.Call(""), keyEquivalent: "f" },
             { label: "Variable", expr: new E.Variable(""), keyEquivalent: "v" },
-            { label: "Text", expr: new E.Literal("", Type.Str), keyEquivalent: "g" },
+            { label: "Text", expr: new E.Literal("", Type.Text), keyEquivalent: "g" },
             { label: "Number", expr: new E.Literal("", Type.Num) },
         ];
 

@@ -44,7 +44,7 @@ const Extras = styled.div`
     margin: ${p => p.theme.exprView.frozenPadding.css} !important;
 `;
 
-interface ShortcutExpr {
+export interface ShortcutExpr {
     expr: Expr;
     shortcut?: string;
 }
@@ -58,7 +58,7 @@ interface ExprViewListItemProps<E> {
 
 interface ExprViewListProps<E> extends ExprViewListItemProps<E> {
     animate?: boolean;
-    items: E[];
+    items: readonly E[];
     fallback?: ReactNode;
     showDropMarker?: boolean;
     onGetExtras?(item: E): ReactNode;
