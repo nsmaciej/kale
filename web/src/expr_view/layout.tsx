@@ -72,9 +72,7 @@ function isCallInline(theme: KaleTheme, args: readonly Layout[]): boolean {
         return false;
     }
     // Is the expression too nested?
-    const underlinesHeight = max(args.map(x => x.underlinesHeight()));
-    const MAX_NESTING_LEVEL = 3;
-    return underlinesHeight < MAX_NESTING_LEVEL;
+    return max(args.map(x => x.underlinesHeight())) < theme.layout.maxNesting;
 }
 
 interface LayoutState {

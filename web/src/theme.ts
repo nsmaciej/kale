@@ -130,6 +130,7 @@ export const DefaultTheme = {
     },
 
     layout: {
+        maxNesting: 4,
         lineBreakPoint: 300,
         underlineSpacing: 3,
         lineSpacing: 7, // Should be bigger than the selection padding.

@@ -15,7 +15,6 @@ const Container = styled.div`
     padding: ${p => p.theme.exprList.padding.combine(p.theme.highlight.padding).css};
     border-radius: ${p => p.theme.exprList.borderRadius}px;
     box-sizing: content-box;
-    z-index: 1000;
 `;
 
 export interface DropListener {
@@ -128,7 +127,7 @@ export default function DragAndDropSurface({ children }: { children: ReactNode }
             // must be drawn on the Container div instead.
             <div
                 onMouseUp={dismissDrag}
-                style={{ width: "100%", height: "100%", position: "fixed" }}
+                style={{ width: "100%", height: "100%", position: "fixed", zIndex: 1000 }}
             >
                 <Container style={{ top: pos.y, left: pos.x }}>
                     <svg xmlns="http://www.w3.org/2000/svg" width={size.width} height={size.height}>
