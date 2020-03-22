@@ -4,7 +4,7 @@ import { Optional, max, assert } from "utils";
 import { Size, Offset, Rect } from "geometry";
 import { SvgGroup } from "expr_view/components";
 import { TextStyle } from "text_metrics";
-import Expr from "expr";
+import Expr, { ExprId } from "expr";
 
 export interface TextProperties extends TextStyle {
     colour?: string;
@@ -26,6 +26,29 @@ export interface ExprArea {
     children: ExprArea[];
     // Needed for setAreasHeightInPlace. See its comment.
     inline: boolean;
+}
+
+export interface FlatExprArea {
+    inline: boolean;
+    rect: Rect;
+    text: Optional<TextProperties>;
+}
+
+// The `in` is weird here. See https://github.com/microsoft/TypeScript/issues/1778.
+export type ExprAreaMap = { [expr in ExprId]: FlatExprArea };
+
+export function flattenArea(parent: ExprArea): ExprAreaMap {
+    const map: ExprAreaMap = {};
+    function traverse(area: ExprArea, origin: Offset) {
+        map[area.expr.id] = {
+            inline: area.inline,
+            rect: area.rect.shift(origin),
+            text: area.text,
+        };
+        for (const child of area.children) traverse(child, area.rect.origin.add(origin));
+    }
+    traverse(parent, Offset.zero);
+    return map;
 }
 
 function shiftText(props: TextProperties, origin: Offset): TextProperties {

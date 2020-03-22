@@ -9,33 +9,11 @@ import { Optional, assert, assertSome } from "utils";
 import ContextMenu, { ContextMenuItem } from "components/context_menu";
 import Expr, { ExprId } from "expr";
 
-import { ExprArea, TextProperties } from "expr_view/core";
+import { ExprArea, ExprAreaMap, flattenArea } from "expr_view/core";
 import { SvgGroup, SvgRect, DebugRect } from "expr_view/components";
 import layoutExpr from "expr_view/layout";
 
-export { ExprArea } from "expr_view/core";
-export interface FlatExprArea {
-    inline: boolean;
-    rect: Rect;
-    text: Optional<TextProperties>;
-}
-
-// The `in` is weird here. See https://github.com/microsoft/TypeScript/issues/1778.
-export type ExprAreaMap = { [expr in ExprId]: FlatExprArea };
-
-function flattenArea(parent: ExprArea): ExprAreaMap {
-    const map: ExprAreaMap = {};
-    function traverse(area: ExprArea, origin: Offset) {
-        map[area.expr.id] = {
-            inline: area.inline,
-            rect: area.rect.shift(origin),
-            text: area.text,
-        };
-        for (const child of area.children) traverse(child, area.rect.origin.add(origin));
-    }
-    traverse(parent, Offset.zero);
-    return map;
-}
+export { ExprArea, ExprAreaMap, FlatExprArea } from "expr_view/core";
 
 interface ExprViewProps {
     expr: Expr;
