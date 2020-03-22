@@ -307,6 +307,12 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         },
         newLine: (e: ExprId) => this.insertNewLine(e, true),
         newLineBefore: (e: ExprId) => this.insertNewLine(e, false),
+        moveToParent: (e: ExprId) => {
+            const parent = this.expr.parentOf(e);
+            if (parent !== null) {
+                this.replaceExpr(parent.id, new E.List(parent.children()));
+            }
+        },
         smartMakeCall: (e: ExprId) => {
             const target = this.expr.get(e);
             if (target instanceof E.Blank) {
@@ -319,7 +325,8 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         // Demo things that should be moved to the toy-box.
         demoAddVariable: (e: ExprId) => this.replaceAndEdit(e, new E.Variable(""), true),
         demoAddString: (e: ExprId) => this.replaceAndEdit(e, new E.Literal("", Type.Str), true),
-        showDebugOverlay: () => this.setState({ showingDebugOverlay: true }),
+        showDebugOverlay: () =>
+            this.setState({ showingDebugOverlay: !this.state.showingDebugOverlay }),
     };
 
     // See https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values.
@@ -330,6 +337,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         Backspace: "delete",
         c: "copy",
         Enter: "edit",
+        F: "moveToParent",
         f: "smartMakeCall",
         g: "demoAddString",
         i: "insert",
@@ -386,7 +394,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         { action: "edit", label: "Edit..." },
         { action: "copy", label: "Copy" },
         { action: "openEditor", label: "Open definition...", enabled: this.enableForCalls },
-        { action: "showDebugOverlay", label: "Show the Debug Overlay", hidden: true },
+        { action: "showDebugOverlay", label: "Toggle the Debug Overlay", hidden: true },
         null,
         { action: "delete", label: "Delete" },
         { action: "move", label: "Delete and Copy" },
