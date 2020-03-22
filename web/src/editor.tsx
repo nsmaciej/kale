@@ -143,7 +143,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
             // Auto-insert the right amount of blanks for this function.
             // Note at this point expr still might have some old value.
             const func = this.getWorkspaceValue(this.props.workspace, value)?.value;
-            if (func !== undefined && !specialFunctions.has(value)) {
+            if (func !== undefined && !specialFunctions.has(value) && func.args.length > 0) {
                 const blanks = (func.args as (string | null)[]).map(
                     x => new E.Blank(E.exprData(x)),
                 );
