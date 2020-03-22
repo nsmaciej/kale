@@ -44,11 +44,15 @@ export default function ContextMenu({ items, origin, dismissMenu, popover }: Con
     const [blinking, setBlinking] = useState(false);
     const [showingHidden, setShowingHidden] = useState(false);
 
-    // Move selection skipping past separators, if the menu consists of only separators,
-    // bad things(tm) will happen.
+    /**
+     * Moves selection skipping past separators, if the menu consists of only separators, bad
+     * things(tm) will happen. */
     function moveSelection(delta: 1 | -1) {
         setSelection(current => {
-            let next = current == null ? 0 : mod(current + delta, items.length);
+            let next = mod(
+                current === null ? (delta === -1 ? -1 : 0) : current + delta,
+                items.length,
+            );
             while (items[next].label == null) {
                 next = mod(next + delta, items.length);
             }
@@ -60,8 +64,9 @@ export default function ContextMenu({ items, origin, dismissMenu, popover }: Con
         if (blinking) false;
         setBlinking(true);
 
-        // Blink the menu.
-        const offDuration = 60;
+        // Blink the menu. See Chrome's
+        // src/ui/views/controls/menu/menu_closure_animation_mac.h for how big-boys do this.
+        const offDuration = 100;
         if (selection != null) {
             setSelection(null);
             await delay(offDuration);
@@ -81,6 +86,7 @@ export default function ContextMenu({ items, origin, dismissMenu, popover }: Con
     }
 
     function onKeyDown(e: React.KeyboardEvent) {
+        // Chrome's src/ui/views/controls/menu/menu_controller.cc is a great source for these.
         if (e.ctrlKey || e.metaKey) return;
         // Pressing Alt allows showing hidden menu items.
         if (e.altKey && e.key !== "Alt") return;
@@ -100,6 +106,7 @@ export default function ContextMenu({ items, origin, dismissMenu, popover }: Con
                 dismissMenu();
                 break;
             case "Enter":
+            case "Space":
                 if (selection) {
                     onClick(items[selection], selection);
                 } else {

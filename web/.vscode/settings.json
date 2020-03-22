@@ -2,5 +2,7 @@
     "files.exclude": {
         "dist": true,
         "vendor": true
-    }
+    },
+    // VSCodeVim's textWidth should match prettier one.
+    "vim.textwidth": 100
 }
