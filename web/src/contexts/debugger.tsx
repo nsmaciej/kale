@@ -1,10 +1,10 @@
-import React, { useState, useContext, ReactNode } from "react";
 import { useToasts } from "react-toast-notifications";
+import React, { useState, useContext, ReactNode } from "react";
 
 import { assertSome } from "utils";
 import { VmError } from "vm/types";
-import { Workspace } from "contexts/workspace";
 import Interpreter from "vm/interpreter";
+import Workspace from "contexts/workspace";
 
 export function useDebugProvider() {
     const workspace = assertSome(useContext(Workspace));
@@ -39,7 +39,8 @@ export function useDebugProvider() {
 }
 
 export type DebuggerValue = ReturnType<typeof useDebugProvider>;
-export const Debugger = React.createContext<DebuggerValue | null>(null);
+const Debugger = React.createContext<DebuggerValue | null>(null);
+export default Debugger;
 
 export function DebuggerProvider(props: { children: ReactNode }) {
     return <Debugger.Provider value={useDebugProvider()}>{props.children}</Debugger.Provider>;

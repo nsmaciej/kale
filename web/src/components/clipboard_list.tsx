@@ -3,7 +3,7 @@ import React, { useContext, useRef } from "react";
 
 import { assertSome, mod } from "utils";
 import { Box, Stack, SubtleButton, NonIdealText, PaneHeading, Shortcut } from "components";
-import { Clipboard, ClipboardEntry } from "contexts/clipboard";
+import Clipboard, { ClipboardEntry } from "contexts/clipboard";
 import { useSimpleDrop } from "hooks";
 import ExprViewList from "components/expr_view_list";
 

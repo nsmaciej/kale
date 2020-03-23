@@ -51,7 +51,8 @@ export type ClipboardContext = {
     dispatch: React.Dispatch<ClipboardActions>;
 };
 
-export const Clipboard = React.createContext<ClipboardContext | null>(null);
+const Clipboard = React.createContext<ClipboardContext | null>(null);
+export default Clipboard;
 
 export function ClipboardProvider({ children }: { children: ReactNode }) {
     const [clipboard, dispatch] = useReducer(clipboardReducer, []);

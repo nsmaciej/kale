@@ -74,7 +74,8 @@ export type WorkspaceContext = {
     dispatch: React.Dispatch<WorkspaceActions>;
 };
 
-export const Workspace = React.createContext<WorkspaceContext | null>(null);
+const Workspace = React.createContext<WorkspaceContext | null>(null);
+export default Workspace;
 
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
     const [workspace, dispatch] = useReducer(workspaceReducer, null, initWorkspace);

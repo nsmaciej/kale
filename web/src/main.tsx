@@ -6,19 +6,19 @@ import styled, { ThemeProvider, createGlobalStyle } from "styled-components";
 
 import { DefaultTheme } from "theme";
 import { Stack, Box } from "components";
-import DragAndDropSurface from "contexts/drag_and_drop";
 import TextMetrics from "text_metrics";
+import useEditorStack from "hooks/editor_stack";
 
 import { ClipboardProvider } from "contexts/clipboard";
+import { DebuggerProvider } from "contexts/debugger";
+import { DragAndDropSurface } from "contexts/drag_and_drop";
 import { WorkspaceProvider } from "contexts/workspace";
 
-import { DebuggerProvider } from "contexts/debugger";
 import ClipboardList from "components/clipboard_list";
 import EditorList from "components/editor_list";
 import EditorSuggestions from "components/editor_suggestions";
 import ErrorBoundary from "components/error_boundary";
 import ToyBox from "components/toy_box";
-import useEditorStack from "hooks/editor_stack";
 
 const GlobalStyle = createGlobalStyle`
 #main {

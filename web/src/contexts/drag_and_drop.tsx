@@ -3,9 +3,9 @@ import ReactDOM from "react-dom";
 import styled, { useTheme } from "styled-components";
 
 import { ClientOffset } from "geometry";
-import { Clipboard } from "contexts/clipboard";
 import { Optional, assertSome, assert } from "utils";
 import { useDocumentEvent } from "hooks";
+import Clipboard from "contexts/clipboard";
 import Expr from "expr";
 import layoutExpr from "expr_view/layout";
 
@@ -26,7 +26,7 @@ export interface DropListener {
     acceptDrop(point: ClientOffset, expr: Expr): "copy" | "move" | "reject";
 }
 
-export interface DragAndDropValue {
+export interface DragAndDropContext {
     /** Initialise a drag.
      * @param draggedOut Fires if `acceptDrop` returns "move" */
     maybeStartDrag(
@@ -39,7 +39,8 @@ export interface DragAndDropValue {
     removeListener(listener: DropListener): void;
 }
 
-export const DragAndDrop = React.createContext<Optional<DragAndDropValue>>(null);
+const DragAndDrop = React.createContext<Optional<DragAndDropContext>>(null);
+export default DragAndDrop;
 
 interface DraggingState {
     start: ClientOffset; // Where the maybe-drag started.
@@ -53,7 +54,7 @@ interface DraggingState {
 // 1. Not dragging - drag and state.position is null.
 // 2. Maybe-drag - drag is now initialised, except for delta.
 // 3. Drag - Delta is now initialised, state.position follows the mouse.
-export default function DragAndDropSurface({ children }: { children: ReactNode }) {
+export function DragAndDropSurface({ children }: { children: ReactNode }) {
     const theme = useTheme();
 
     const clipboard = assertSome(useContext(Clipboard));
@@ -63,7 +64,7 @@ export default function DragAndDropSurface({ children }: { children: ReactNode }
 
     useDocumentEvent("mousemove", onMouseMove);
 
-    const contextValue = useRef<DragAndDropValue>({
+    const contextValue = useRef<DragAndDropContext>({
         maybeStartDrag(start, exprStart, expr, draggedOut) {
             drag.current = { start, expr, exprStart, draggedOut, delta: null };
         },

@@ -2,11 +2,11 @@ import React, { PureComponent } from "react";
 import { motion } from "framer-motion";
 
 import * as E from "expr";
-import { DragAndDrop } from "contexts/drag_and_drop";
 import { KaleTheme, Highlight } from "theme";
 import { Offset, Rect, ClientOffset } from "geometry";
 import { Optional, assert, assertSome } from "utils";
 import ContextMenu, { ContextMenuItem } from "components/context_menu";
+import DragAndDrop from "contexts/drag_and_drop";
 import Expr, { ExprId } from "expr";
 
 import { ExprArea, ExprAreaMap, flattenArea } from "expr_view/core";

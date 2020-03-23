@@ -7,8 +7,8 @@ import ExprView from "expr_view";
 import { assertFunc } from "vm/types";
 import { useDebounce } from "hooks";
 
-import { Workspace } from "contexts/workspace";
 import { EditorStackActions } from "hooks/editor_stack";
+import Workspace from "contexts/workspace";
 
 const MinimapItemStack = styled(Stack).attrs({ gap: 8, vertical: true })<{ focused: boolean }>`
     border-radius: ${(p) => p.theme.borderRadius}px;

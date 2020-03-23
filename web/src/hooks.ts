@@ -1,7 +1,7 @@
 import React, { MutableRefObject, useContext, useEffect, useRef, useState } from "react";
 
 import { assertSome } from "utils";
-import { DropListener, DragAndDrop } from "contexts/drag_and_drop";
+import DragAndDrop, { DropListener } from "contexts/drag_and_drop";
 import { Rect } from "geometry";
 import Expr from "expr";
 

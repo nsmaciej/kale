@@ -13,9 +13,9 @@ import ExprView, { ExprArea, ExprAreaMap } from "expr_view";
 import { Type, Func, assertFunc, Value, Builtin } from "vm/types";
 import { specialFunctions } from "vm/interpreter";
 
-import { Clipboard, ClipboardContext } from "contexts/clipboard";
-import { DragAndDrop, DragAndDropValue, DropListener } from "contexts/drag_and_drop";
-import { Workspace, WorkspaceContext } from "contexts/workspace";
+import DragAndDrop, { DragAndDropContext, DropListener } from "contexts/drag_and_drop";
+import Clipboard, { ClipboardContext } from "contexts/clipboard";
+import Workspace, { WorkspaceContext } from "contexts/workspace";
 
 import ContextMenu, { ContextMenuItem } from "components/context_menu";
 import InlineEditor from "components/inline_editor";
@@ -41,7 +41,7 @@ interface EditorWrapperProps {
 interface EditorProps extends EditorWrapperProps {
     workspace: WorkspaceContext;
     clipboard: ClipboardContext;
-    dragAndDrop: DragAndDropValue;
+    dragAndDrop: DragAndDropContext;
     theme: KaleTheme;
     forwardedRef: Ref<HTMLDivElement>;
 }

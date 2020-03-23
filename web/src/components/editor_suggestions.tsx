@@ -5,9 +5,9 @@ import { AiOutlinePlusCircle } from "react-icons/ai";
 import { assertSome } from "utils";
 import { EditorStackActions } from "hooks/editor_stack";
 import { SubtleButton, Shortcut, Box, Stack } from "components";
-import { Workspace } from "contexts/workspace";
 import Menu, { MenuTextWrapper } from "components/menu";
 import useSuggestions from "hooks/suggestions";
+import Workspace from "contexts/workspace";
 
 const inputWidthPx = 400;
 

@@ -1,16 +1,17 @@
+import { AiOutlineCloseCircle, AiOutlinePlayCircle, AiOutlineUndo } from "react-icons/ai";
+import { motion, AnimatePresence } from "framer-motion";
 import React, { useContext } from "react";
 import styled from "styled-components";
-import { motion, AnimatePresence } from "framer-motion";
-import { AiOutlineCloseCircle, AiOutlinePlayCircle, AiOutlineUndo } from "react-icons/ai";
 
 import { assertSome } from "utils";
 import { Box, Stack, NonIdealText, EditorHeadingStyle, IconButton } from "components";
-import { Debugger } from "contexts/debugger";
 import { OpenedEditor } from "hooks/editor_stack";
-import { Workspace } from "contexts/workspace";
-import builtins from "vm/builtins";
+import Builtins from "vm/builtins";
 import EditorWrapper from "editor";
 import Minimap, { MinimapProps } from "components/minimap";
+
+import Debugger from "contexts/debugger";
+import Workspace from "contexts/workspace";
 
 const EditorHeading = styled.h2`
     ${EditorHeadingStyle};
@@ -83,7 +84,7 @@ export default function EditorStack({
                         <p>
                             {editor.name} is a builtin function.
                             <br />
-                            <b>{builtins[editor.name].value.help}</b>
+                            <b>{Builtins[editor.name].value.help}</b>
                         </p>
                     ) : (
                         <EditorWrapper
