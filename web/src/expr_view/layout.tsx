@@ -12,6 +12,7 @@ import TextMetrics from "text_metrics";
 
 import { Layout, TextProperties, hstack, vstack, ExprArea } from "expr_view/core";
 import { UnderlineLine, SvgLine, HitBox } from "expr_view/components";
+import { Type } from "vm/types";
 
 // See https://vanseodesign.com/web-design/svg-text-baseline-alignment/ for excellent discussion
 // on SVG text aligment properties.
@@ -173,14 +174,23 @@ class ExprLayout implements ExprVisitor<Layout> {
     }
 
     visitLiteral(expr: E.Literal): Layout {
-        //TODO: Add more pretty printing for literals.
-        return this.layoutText(expr, expr.content, {
+        const textProps = {
             title: expr.data.comment ?? undefined,
             colour: this.t.syntaxColour.literal,
-            italic: expr.type === "symbol",
+            italic: expr.type === Type.Num,
+        };
+        const content = this.layoutText(expr, expr.content, {
             commentIndicator: expr.data.comment != null,
             mainText: true,
+            ...textProps,
         });
+        if (expr.type === Type.Text) {
+            const quote = this.layoutText(expr, '"', textProps);
+            const text = hstack(0, quote, content, quote);
+            text.inline = true;
+            return text;
+        }
+        return content;
     }
 
     visitVariable(expr: E.Variable): Layout {
