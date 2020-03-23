@@ -61,7 +61,7 @@ const colour = {
     disabled: "#d8d8d8",
     subtleClickable: "#cccccc",
     subtleText: "#7b7b7b",
-    mainText: "#404040",
+    mainText: "#111111",
 };
 
 // This needs to be shared between SVG and HTML.
@@ -102,7 +102,7 @@ export const DefaultTheme = {
     },
 
     syntaxColour: {
-        call: "#000000",
+        call: colour.mainText,
         comment: "#00b508",
         variable: "#248af0",
         literal: "#ef6c00",
