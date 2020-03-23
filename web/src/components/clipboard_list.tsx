@@ -2,10 +2,12 @@ import { AiOutlinePushpin, AiFillPushpin } from "react-icons/ai";
 import React, { useContext, useRef } from "react";
 
 import { assertSome, mod } from "utils";
-import { Box, Stack, SubtleButton, NonIdealText, PaneHeading, Shortcut } from "components";
-import Clipboard, { ClipboardEntry } from "contexts/clipboard";
+import { SubtleButton, NonIdealText, Shortcut } from "components";
 import { useSimpleDrop } from "hooks";
+import Clipboard, { ClipboardEntry } from "contexts/clipboard";
+
 import ExprViewList from "components/expr_view_list";
+import Pane from "components/pane";
 
 export default React.memo(function ClipboardList() {
     const containerRef = useRef<HTMLDivElement>(null);
@@ -23,19 +25,21 @@ export default React.memo(function ClipboardList() {
         shortcut: i < 10 ? mod(i + 1, 10).toString() : undefined,
     }));
     return (
-        <Box gridArea="history" overflow="auto" ref={containerRef}>
-            <Stack gap={10} alignItems="baseline" justifyContent="space-between">
-                <PaneHeading>Clipboard</PaneHeading>
+        <Pane
+            gridArea="history"
+            name="Clipboard"
+            extras={
                 <SubtleButton
                     onClick={() => clipboard.dispatch({ type: "clear" })}
                     disabled={clipboard.value.every((x) => x.pinned)}
                 >
                     Clear All
                 </SubtleButton>
-            </Stack>
+            }
+        >
             <ExprViewList
                 animate
-                maxWidth={300}
+                width={200}
                 items={history}
                 showDropMarker={draggingOver}
                 onDraggedOut={(item) => {
@@ -62,12 +66,13 @@ export default React.memo(function ClipboardList() {
                         Use <Shortcut>C</Shortcut> to copy something
                     </NonIdealText>
                 }
+                extrasFudge={30}
                 onGetExtras={(item) => (
                     <SubtleButton onClick={() => togglePin(item)}>
                         {item.pinned ? <AiFillPushpin /> : <AiOutlinePushpin />}
                     </SubtleButton>
                 )}
             />
-        </Box>
+        </Pane>
     );
 });

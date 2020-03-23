@@ -34,7 +34,7 @@ interface ExprViewProps {
     contextMenuFor?(expr: ExprId): ContextMenuItem[];
 
     // Looks.
-    maxWidth?: number;
+    width?: number;
     scale?: number;
     /** Is this an atomic expr whose children cannot be dragged out and should be given a new id
      * when dragged? */
@@ -249,9 +249,11 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
         }
 
         const { width, height } = size.padding(this.padding);
-        const scale = this.props.maxWidth
-            ? Math.min(this.props.maxWidth ?? width, width) / width
-            : this.props.scale ?? 1;
+        let scale = this.props.scale ?? 1;
+        if (this.props.width !== undefined) {
+            // Note this already includes the padding.
+            scale = Math.min(this.props.width, width * scale) / width;
+        }
         return (
             <>
                 <svg
@@ -267,14 +269,6 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
                     onContextMenu={(e) => this.props.contextMenuFor && e.preventDefault()}
                     style={{ cursor: "default" }}
                 >
-                    <filter id="droppable">
-                        <feDropShadow
-                            dx="0"
-                            dy="0"
-                            stdDeviation={this.theme.droppable.radius / 2}
-                            floodColor={this.theme.droppable.colour}
-                        />
-                    </filter>
                     {highlightRects}
                     <SvgGroup translate={this.padding.topLeft}>{nodes}</SvgGroup>
                     {this.props.showDebugOverlay && this.debugRenderAreas(this.pendingExprAreaMap)}

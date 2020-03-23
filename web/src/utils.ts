@@ -62,6 +62,19 @@ export function reverseObject(obj: { [key: string]: string }): { [value: string]
     return reversed;
 }
 
+export function groupEntries<K extends string | number | symbol, V>(
+    entries: readonly [K, V][],
+): { [k in K]: V[] } {
+    const result = {} as { [k in K]: V[] };
+    for (const [k, v] of entries) {
+        if (!Object.prototype.hasOwnProperty.call(result, k)) {
+            result[k] = [];
+        }
+        result[k].push(v);
+    }
+    return result;
+}
+
 export function delay(timeout: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, timeout));
 }
@@ -75,6 +88,7 @@ export async function asyncForEach<T>(
     }
 }
 
+/** Inserts a `value` next to or before the first element matching the `predicate`. */
 export function insertSibling<T>(
     array: readonly T[],
     predicate: (item: T) => boolean,

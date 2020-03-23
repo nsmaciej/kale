@@ -76,21 +76,21 @@ export const ShortcutGroup = styled.span`
     display: inline-block;
 `;
 
-export const SubtleButton = styled.button`
+export const SubtleButton = styled.button<{ selected?: boolean }>`
     font: inherit;
     background: none;
     border: none;
     font-weight: 600;
+    display: block;
     color: ${(p) => p.theme.colour.clickable};
     outline: none;
     transition: color 0.1s;
-    &:hover,
-    &:focus {
-        text-decoration: underline;
+    ${(p) => p.selected && "-webkit-text-stroke: 1px currentcolor"};
+    &:hover {
+        color: ${(p) => (p.selected ? undefined : p.theme.colour.active)};
     }
     &:disabled {
         color: ${(p) => p.theme.colour.disabled};
-        text-decoration: none !important;
     }
 `;
 
@@ -117,12 +117,8 @@ export const NonIdealText = styled.p`
     color: ${(p) => p.theme.colour.subtleText};
 `;
 
-export const EditorHeadingStyle = css`
+export const PaneHeading = styled.h2`
     font-weight: 700;
     font-size: 20px;
     font-variant-numeric: oldstyle-nums;
-`;
-
-export const PaneHeading = styled.h2`
-    ${EditorHeadingStyle}
 `;

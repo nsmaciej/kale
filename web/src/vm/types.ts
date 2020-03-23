@@ -11,6 +11,15 @@ export const enum Type {
     Builtin = "Builtin",
 }
 
+export enum Category {
+    General = "General",
+    Maths = "Maths",
+    Text = "Text",
+    Lists = "Lists",
+    Types = "Types",
+    Functions = "Functions",
+}
+
 export interface Value<T = unknown> {
     type: string;
     value: T;
@@ -24,6 +33,9 @@ export interface Func {
 
 export interface Builtin {
     help?: string;
+    /** The toy-box category this builtin belongs to. Builtins without a category will not be shown
+     * in the toy-box. */
+    category?: Category;
     args: (string | null)[];
     builtin(args: Value[]): Value;
 }

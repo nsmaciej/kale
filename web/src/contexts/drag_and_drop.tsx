@@ -152,9 +152,25 @@ export function DragAndDropSurface({ children }: { children: ReactNode }) {
         surface = ReactDOM.createPortal(renderExpr(), document.body);
     }
 
+    // Declare the global droppable filter here once.
     return (
         <DragAndDrop.Provider value={contextValue}>
             {surface}
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="0"
+                height="0"
+                style={{ position: "absolute" }}
+            >
+                <filter id="droppable">
+                    <feDropShadow
+                        dx="0"
+                        dy="0"
+                        stdDeviation={theme.droppable.radius / 2}
+                        floodColor={theme.droppable.colour}
+                    />
+                </filter>
+            </svg>
             {children}
         </DragAndDrop.Provider>
     );

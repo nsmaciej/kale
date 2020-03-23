@@ -63,7 +63,7 @@ const Container = styled.div`
         "nav nav nav" min-content
         "toybox editor history" 1fr /
         max-content 1fr max-content;
-    gap: 20px 40px;
+    gap: 20px;
     padding: 15px 20px 0;
     height: 100%;
     position: relative;

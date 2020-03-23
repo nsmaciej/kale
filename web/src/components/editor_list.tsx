@@ -4,7 +4,7 @@ import React, { useContext } from "react";
 import styled from "styled-components";
 
 import { assertSome } from "utils";
-import { Box, Stack, NonIdealText, EditorHeadingStyle, IconButton } from "components";
+import { Box, Stack, NonIdealText, IconButton, PaneHeading } from "components";
 import { OpenedEditor } from "hooks/editor_stack";
 import Builtins from "vm/builtins";
 import EditorWrapper from "editor";
@@ -13,8 +13,7 @@ import Minimap, { MinimapProps } from "components/minimap";
 import Debugger from "contexts/debugger";
 import Workspace from "contexts/workspace";
 
-const EditorHeading = styled.h2`
-    ${EditorHeadingStyle};
+const EditorHeading = styled(PaneHeading)`
     margin-left: ${(p) => p.theme.exprView.padding.left}px;
 `;
 
