@@ -7,7 +7,8 @@
         "build": "webpack --mode=production",
         "start": "webpack-dev-server",
         "test": "jest",
-        "lint": "eslint src/**/*.{ts,tsx}"
+        "lint": "eslint src/**/*.{ts,tsx}",
+        "format": "prettier --write src"
     },
     "author": "",
     "license": "ISC",
@@ -37,6 +38,7 @@
         "eslint-plugin-react": "^7.19.0",
         "eslint-plugin-react-hooks": "^2.5.1",
         "jest": "^25.1.0",
+        "prettier": "^2.0.1",
         "ts-jest": "^25.2.1",
         "ts-loader": "^6.2.1",
         "typescript": "^3.8.3",
