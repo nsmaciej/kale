@@ -1,4 +1,4 @@
-import React, { ReactNode } from "react";
+import React, { ReactNode, Ref } from "react";
 import styled from "styled-components";
 
 import { Optional } from "utils";
@@ -79,6 +79,7 @@ export interface MenuProps<I> {
     noPadding?: boolean;
     popover?: boolean;
     selected: Optional<number>;
+    containerRef?: Ref<HTMLDivElement>;
     onSetSelected(index: number | null): void;
     onClick(item: I, index: number): void;
     // Function-children to render a menu item in a flexbox context.
@@ -97,6 +98,7 @@ export default function Menu<I extends MenuItem>(props: MenuProps<I>) {
                     transform: props.popover ? "translateX(-50%)" : undefined,
                     padding: props.noPadding ? undefined : "padding: 6px 0",
                 }}
+                ref={props.containerRef}
             >
                 {props.popover && <Arrow />}
                 <ContainerClip>

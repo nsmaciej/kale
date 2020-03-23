@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useLayoutEffect, useRef } from "react";
 import styled from "styled-components";
 
-import { Offset } from "geometry";
+import { Offset, Rect } from "geometry";
 import { Optional, mod, assert, delay } from "utils";
 import { Shortcut } from "components";
 import { useDisableScrolling } from "hooks";
@@ -44,6 +44,18 @@ export default function ContextMenu({ items, origin, dismissMenu, popover }: Con
     const [selection, setSelection] = useState<number | null>(null);
     const [blinking, setBlinking] = useState(false);
     const [showingHidden, setShowingHidden] = useState(false);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const [adjustedOrigin, setAdjustedOrigin] = useState(origin);
+
+    // Make sure the menu is always visible.
+    useLayoutEffect(() => {
+        if (containerRef.current !== null) {
+            const rect = Rect.fromBoundingRect(containerRef.current.getBoundingClientRect());
+            const menuBottom = rect.height + rect.y + 10;
+            const overflow = document.documentElement.clientHeight - menuBottom;
+            setAdjustedOrigin(origin.dy(Math.min(0, overflow)));
+        }
+    }, [origin]);
 
     /**
      * Moves selection skipping past separators, if the menu consists of only separators, bad
@@ -142,7 +154,12 @@ export default function ContextMenu({ items, origin, dismissMenu, popover }: Con
 
     return (
         <div
-            style={{ position: "fixed", left: origin.x, top: origin.y, zIndex: 100 }}
+            style={{
+                position: "fixed",
+                left: adjustedOrigin.x,
+                top: adjustedOrigin.y,
+                zIndex: 100,
+            }}
             onKeyDown={onKeyDown}
             onKeyUp={onKeyUp}
             tabIndex={0}
@@ -154,6 +171,7 @@ export default function ContextMenu({ items, origin, dismissMenu, popover }: Con
                 selected={selection}
                 items={items}
                 onClick={onClick}
+                containerRef={containerRef}
                 // Do not allow selecting separators.
                 onSetSelected={(i) =>
                     blinking || setSelection(i != null && items[i].label != null ? i : null)
