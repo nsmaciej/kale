@@ -98,7 +98,7 @@ export default React.forwardRef(function EditorSuggestions(
                         items={suggestions}
                         selected={selection}
                         onClick={(x) => selectEditor(x.name)}
-                        setSelected={(i) => setSelection(i)}
+                        onSetSelected={(i) => setSelection(i)}
                     >
                         {(item) => (
                             <>

@@ -155,7 +155,7 @@ export default function ContextMenu({ items, origin, dismissMenu, popover }: Con
                 items={items}
                 onClick={onClick}
                 // Do not allow selecting separators.
-                setSelected={(i) =>
+                onSetSelected={(i) =>
                     blinking || setSelection(i != null && items[i].label != null ? i : null)
                 }
                 minimalPadding={(i) =>

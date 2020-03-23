@@ -101,7 +101,7 @@ export default function InlineEditor({
                     items={suggestions}
                     selected={selection}
                     onClick={(x) => onSubmit(x.name)}
-                    setSelected={(i) => setSelection(i)}
+                    onSetSelected={(i) => setSelection(i)}
                 >
                     {(item) => (
                         <>

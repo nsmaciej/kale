@@ -79,7 +79,7 @@ export interface MenuProps<I> {
     noPadding?: boolean;
     popover?: boolean;
     selected: Optional<number>;
-    setSelected(index: number | null): void;
+    onSetSelected(index: number | null): void;
     onClick(item: I, index: number): void;
     // Function-children to render a menu item in a flexbox context.
     children(item: I): ReactNode;
@@ -108,8 +108,8 @@ export default function Menu<I extends MenuItem>(props: MenuProps<I>) {
                                 onMouseDown={(e) => e.preventDefault()} // Don't blur.
                                 onClick={() => props.onClick(item, i)}
                                 onContextMenu={(e) => e.preventDefault()} // Can't right click.
-                                onMouseMove={() => props.setSelected(i)}
-                                onMouseLeave={() => props.setSelected(null)}
+                                onMouseMove={() => props.onSetSelected(i)}
+                                onMouseLeave={() => props.onSetSelected(null)}
                                 // Styling.
                                 disabled={item.disabled ?? false}
                                 selected={i === props.selected}
