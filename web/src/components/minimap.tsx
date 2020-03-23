@@ -11,13 +11,13 @@ import { Workspace } from "contexts/workspace";
 import { EditorStackActions } from "hooks/editor_stack";
 
 const MinimapItemStack = styled(Stack).attrs({ gap: 8, vertical: true })<{ focused: boolean }>`
-    border-radius: ${p => p.theme.borderRadius}px;
+    border-radius: ${(p) => p.theme.borderRadius}px;
     padding: 5px;
-    color: ${p => p.theme.colour.clickable};
-    ${p => p.focused && `background: ${p.theme.colour.innerBackground};`}
-    border: 1px solid ${p => (p.focused ? p.theme.colour.grey : "transparent")};
+    color: ${(p) => p.theme.colour.clickable};
+    ${(p) => p.focused && `background: ${p.theme.colour.innerBackground};`}
+    border: 1px solid ${(p) => (p.focused ? p.theme.colour.grey : "transparent")};
     &:hover {
-        border: 1px solid ${p => p.theme.colour.subtleClickable};
+        border: 1px solid ${(p) => p.theme.colour.subtleClickable};
     }
 `;
 

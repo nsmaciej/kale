@@ -35,8 +35,8 @@ const GlobalStyle = createGlobalStyle`
 }
 body {
     font: 14px/1 "Nunito", sans-serif;
-    color: ${p => p.theme.colour.mainText};
-    background: ${p => p.theme.colour.background};
+    color: ${(p) => p.theme.colour.mainText};
+    background: ${(p) => p.theme.colour.background};
     /* Nothing is selectable by default. This used to not be true, but Safari is overzealous with
     selection while dragging. In the future this should be fixed to allow selecting p and a. */
     user-select: none;
@@ -46,13 +46,13 @@ p {
     font-variant-numeric: oldstyle-nums;
 }
 a {
-    color: ${p => p.theme.colour.clickable};
+    color: ${(p) => p.theme.colour.clickable};
     display: inline-block;
     text-decoration: none;
     /* In case we embed SVGs etc. */
     cursor: pointer;
     &:hover {
-        color: ${p => p.theme.colour.active};
+        color: ${(p) => p.theme.colour.active};
     }
 }
 `;
@@ -73,7 +73,7 @@ const HeaderGrid = styled.div`
     grid-area: nav;
     display: grid;
     padding-bottom: 15px;
-    border-bottom: 1px solid ${p => p.theme.colour.grey};
+    border-bottom: 1px solid ${(p) => p.theme.colour.grey};
     grid-template: "branding search menu" / minmax(max-content, 1fr) max-content minmax(
             max-content,
             1fr
@@ -84,7 +84,7 @@ const HeaderGrid = styled.div`
 
 const MainHeading = styled.h1`
     font-weight: 900;
-    color: ${p => p.theme.colour.brand};
+    color: ${(p) => p.theme.colour.brand};
     letter-spacing: 2px;
 `;
 

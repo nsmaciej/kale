@@ -31,14 +31,14 @@ export default function useSuggestions(
     const fuse = useMemo(() => {
         if (disable) return null;
         console.info("Indexing functions...");
-        const functions = workspace.workspace.functions.map(name => ({
+        const functions = workspace.workspace.functions.map((name) => ({
             name,
             id: name,
             original: false,
             special: false,
             enabled: true,
         }));
-        const special = Array.from(showSpecials ? specialFunctions.values() : [], name => ({
+        const special = Array.from(showSpecials ? specialFunctions.values() : [], (name) => ({
             name,
             id: name,
             original: false,
@@ -76,7 +76,7 @@ export default function useSuggestions(
         setSelection,
         suggestions,
         moveSelection(delta) {
-            setSelection(x =>
+            setSelection((x) =>
                 mod(x == null ? (delta === 1 ? 0 : -1) : x + delta, suggestions.length),
             );
         },

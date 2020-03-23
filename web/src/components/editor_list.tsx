@@ -14,15 +14,15 @@ import Minimap, { MinimapProps } from "components/minimap";
 
 const EditorHeading = styled.h2`
     ${EditorHeadingStyle};
-    margin-left: ${p => p.theme.exprView.padding.left}px;
+    margin-left: ${(p) => p.theme.exprView.padding.left}px;
 `;
 
 const EditorHeader = styled(Stack).attrs({ gap: 5 })`
     position: sticky;
     top: 0;
-    background: ${p => p.theme.colour.background};
+    background: ${(p) => p.theme.colour.background};
     padding-bottom: 5px;
-    border-bottom: 1px solid ${p => p.theme.colour.grey};
+    border-bottom: 1px solid ${(p) => p.theme.colour.grey};
     align-items: center;
     z-index: 50;
 `;
@@ -126,7 +126,7 @@ export default function EditorStack({
             </Stack>
             <Box top={0} position="sticky" flex="none">
                 <Minimap
-                    editors={editors.filter(x => x.type === "user")}
+                    editors={editors.filter((x) => x.type === "user")}
                     focused={focused}
                     editorStackDispatch={editorStackDispatch}
                 />

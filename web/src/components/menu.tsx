@@ -4,9 +4,9 @@ import styled from "styled-components";
 import { Optional } from "utils";
 
 const Container = styled.div`
-    background: ${p => p.theme.colour.background};
-    border-radius: ${p => p.theme.borderRadius}px;
-    box-shadow: ${p => p.theme.shadow.normal};
+    background: ${(p) => p.theme.colour.background};
+    border-radius: ${(p) => p.theme.borderRadius}px;
+    box-shadow: ${(p) => p.theme.shadow.normal};
     z-index: 1000;
     position: fixed;
 `;
@@ -14,7 +14,7 @@ const Container = styled.div`
 // Clips the highlight boxes, since Container needs to have overflow to potentially show the popover
 // arrow.
 const ContainerClip = styled.div`
-    border-radius: ${p => p.theme.borderRadius}px;
+    border-radius: ${(p) => p.theme.borderRadius}px;
     overflow: hidden;
 `;
 
@@ -32,10 +32,10 @@ const Arrow = styled.div`
     top: -${triangleSize}px;
 
     &::before {
-        background: ${p => p.theme.colour.background};
+        background: ${(p) => p.theme.colour.background};
         left: ${triangleSize / 2}px;
         top: ${triangleSize / 2}px;
-        box-shadow: ${p => p.theme.shadow.small};
+        box-shadow: ${(p) => p.theme.shadow.small};
         position: absolute;
         transform: rotate(45deg);
         content: "";
@@ -45,13 +45,13 @@ const Arrow = styled.div`
 `;
 
 const MenuItemContainer = styled.div<{ selected: boolean; disabled: boolean }>`
-    background: ${p => (!p.disabled && p.selected ? p.theme.colour.clickable : "transparent")};
+    background: ${(p) => (!p.disabled && p.selected ? p.theme.colour.clickable : "transparent")};
     display: flex;
     align-items: center;
     & > svg {
         margin-right: 5px;
     }
-    color: ${p =>
+    color: ${(p) =>
         p.disabled ? p.theme.colour.disabled : p.selected ? "white" : p.theme.colour.mainText};
     overflow: hidden;
 `;
@@ -100,9 +100,9 @@ export default function Menu<I extends MenuItem>(props: MenuProps<I>) {
                         return (
                             <MenuItemContainer
                                 key={item.id}
-                                onMouseDown={e => e.preventDefault()} // Don't blur.
+                                onMouseDown={(e) => e.preventDefault()} // Don't blur.
                                 onClick={() => props.onClick(item, i)}
-                                onContextMenu={e => e.preventDefault()} // Can't right click.
+                                onContextMenu={(e) => e.preventDefault()} // Can't right click.
                                 onMouseMove={() => props.setSelected(i)}
                                 onMouseLeave={() => props.setSelected(null)}
                                 // Styling.

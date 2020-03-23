@@ -13,12 +13,12 @@ const Container = styled.div`
 `;
 
 const InlineEditorInput = styled.input`
-    font-family: ${p => p.theme.expr.fontFamily};
-    font-size: ${p => p.theme.expr.fontSizePx}px;
+    font-family: ${(p) => p.theme.expr.fontFamily};
+    font-size: ${(p) => p.theme.expr.fontSizePx}px;
     line-height: 1;
     outline: 0;
     border: 0;
-    background: ${p => p.theme.highlight.selection.fill(false)};
+    background: ${(p) => p.theme.highlight.selection.fill(false)};
 `;
 
 interface InlineEditorProps {
@@ -91,7 +91,7 @@ export default function InlineEditor({
                     fontStyle: italic ? "italic" : undefined,
                     fontWeight: weight,
                 }}
-                ref={r => r?.focus()}
+                ref={(r) => r?.focus()}
                 onKeyDown={onKeyDown}
                 onChange={onChangeEvent}
             />
@@ -100,10 +100,10 @@ export default function InlineEditor({
                     noPadding
                     items={suggestions}
                     selected={selection}
-                    onClick={x => onSubmit(x.name)}
-                    setSelected={i => setSelection(i)}
+                    onClick={(x) => onSubmit(x.name)}
+                    setSelected={(i) => setSelection(i)}
                 >
-                    {item => (
+                    {(item) => (
                         <>
                             {item.special ? <AiOutlineBlock /> : <AiOutlineBulb />}
                             {item.name}

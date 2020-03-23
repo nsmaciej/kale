@@ -40,14 +40,14 @@ enableMapSet();
 const workspaceReducer = createReducer<WorkspaceValue, WorkspaceActions>({
     ensureExists(state, { name, initial }) {
         if (state.scope.has(name)) return state;
-        return produce(state, draft => {
+        return produce(state, (draft) => {
             draft.scope.set(name, asFunc(initial ?? new Blank()));
             draft.functions = Array.from(draft.scope.keys());
             draft.history.set(name, []);
         });
     },
     update(state, { updater, name }) {
-        return produce(state, draft => {
+        return produce(state, (draft) => {
             const currentExpr = assertFunc(assertSome(draft.scope.get(name))).expr;
             draft.scope.set(name, asFunc(updater(currentExpr)));
 
@@ -60,7 +60,7 @@ const workspaceReducer = createReducer<WorkspaceValue, WorkspaceActions>({
         });
     },
     undo(state, { name }) {
-        return produce(state, draft => {
+        return produce(state, (draft) => {
             const lastState = draft.history.get(name)?.pop();
             if (lastState !== undefined) {
                 draft.scope.set(name, asFunc(lastState as Expr));

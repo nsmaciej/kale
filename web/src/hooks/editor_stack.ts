@@ -8,7 +8,7 @@ import { builtinFunctions } from "vm/interpreter";
 let GlobalEditorId = 1;
 
 function focusEditor(state: EditorStack, index: number | null): EditorStack {
-    return produce(state, draft => {
+    return produce(state, (draft) => {
         if (draft.focus != null && index != null) {
             // If index is null this is a blur, don't push onto the jump-list.
             const key = draft.stack[draft.focus].key;
@@ -21,7 +21,7 @@ function focusEditor(state: EditorStack, index: number | null): EditorStack {
 }
 
 function createAndFocusEditor(state: EditorStack, name: string): EditorStack {
-    const updated = produce(state, draft => {
+    const updated = produce(state, (draft) => {
         draft.stack.unshift({
             name,
             key: GlobalEditorId++,
@@ -32,20 +32,20 @@ function createAndFocusEditor(state: EditorStack, name: string): EditorStack {
 }
 
 function jumpBack(state: EditorStack) {
-    return produce(state, draft => {
+    return produce(state, (draft) => {
         const focusKey = draft.jumpList.pop();
         if (focusKey == null) {
             draft.focus = 0;
         } else {
-            const nextIndex = draft.stack.findIndex(x => x.key === focusKey);
+            const nextIndex = draft.stack.findIndex((x) => x.key === focusKey);
             draft.focus = nextIndex < 0 ? 0 : nextIndex;
         }
     });
 }
 
 function closeEditor(state: EditorStack, index: number) {
-    return produce(state, draft => {
-        draft.jumpList = draft.jumpList.filter(x => x !== draft.stack[index].key);
+    return produce(state, (draft) => {
+        draft.jumpList = draft.jumpList.filter((x) => x !== draft.stack[index].key);
         draft.stack = removeIndex(draft.stack, index);
         if (!draft.stack.length) {
             draft.focus = null;
@@ -67,7 +67,7 @@ const editorStackReducer = createReducer<EditorStack, EditorStackActions>({
         return createAndFocusEditor(state, name);
     },
     openEditor(state, { index, name }) {
-        const existing = findNearestIndex(state.stack, index, x => x.name === name);
+        const existing = findNearestIndex(state.stack, index, (x) => x.name === name);
         if (existing == null) {
             return createAndFocusEditor(state, name);
         }
@@ -86,7 +86,7 @@ const editorStackReducer = createReducer<EditorStack, EditorStackActions>({
         return jumpBack(state);
     },
     moveFocus(state, { move }) {
-        return produce(state, draft => {
+        return produce(state, (draft) => {
             if (draft.focus == null) {
                 draft.focus = move === 1 ? 0 : draft.stack.length - 1;
             } else {
@@ -120,7 +120,7 @@ export default function useEditorStack() {
     useEffect(() => dispatch({ type: "createEditor", name: "Hello-World" }), []);
     // This is needed because React freezes the state, so it cannot contain refs. This hooks simply
     // syncs a map of refs with the existing editor-stack keys.
-    const refs = useRefMap<EditorKey, HTMLDivElement>(state.stack.map(x => x.key));
+    const refs = useRefMap<EditorKey, HTMLDivElement>(state.stack.map((x) => x.key));
     return {
         ...state,
         dispatch,

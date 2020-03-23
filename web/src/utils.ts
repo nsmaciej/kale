@@ -63,7 +63,7 @@ export function reverseObject(obj: { [key: string]: string }): { [value: string]
 }
 
 export function delay(timeout: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, timeout));
+    return new Promise((resolve) => setTimeout(resolve, timeout));
 }
 
 export async function asyncForEach<T>(

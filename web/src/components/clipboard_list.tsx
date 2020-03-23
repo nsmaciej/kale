@@ -11,7 +11,7 @@ export default React.memo(function ClipboardList() {
     const containerRef = useRef<HTMLDivElement>(null);
     const clipboard = assertSome(useContext(Clipboard));
 
-    const draggingOver = useSimpleDrop(containerRef, expr =>
+    const draggingOver = useSimpleDrop(containerRef, (expr) =>
         clipboard.dispatch({ type: "add", entry: { pinned: false, expr } }),
     );
 
@@ -29,7 +29,7 @@ export default React.memo(function ClipboardList() {
                 <PaneHeading>History</PaneHeading>
                 <SubtleButton
                     onClick={() => clipboard.dispatch({ type: "clear" })}
-                    disabled={clipboard.value.every(x => x.pinned)}
+                    disabled={clipboard.value.every((x) => x.pinned)}
                 >
                     Clear All
                 </SubtleButton>
@@ -39,10 +39,10 @@ export default React.memo(function ClipboardList() {
                 maxWidth={300}
                 items={history}
                 showDropMarker={draggingOver}
-                onDraggedOut={item => {
+                onDraggedOut={(item) => {
                     clipboard.dispatch({ type: "use", expr: item.expr.id });
                 }}
-                onContextMenu={item => [
+                onContextMenu={(item) => [
                     {
                         id: "pin",
                         label: "Toggle Pin",
@@ -63,7 +63,7 @@ export default React.memo(function ClipboardList() {
                         Use <Shortcut>C</Shortcut> to copy something
                     </NonIdealText>
                 }
-                onGetExtras={item => (
+                onGetExtras={(item) => (
                     <SubtleButton onClick={() => togglePin(item)}>
                         {item.pinned ? <AiFillPushpin /> : <AiOutlinePushpin />}
                     </SubtleButton>

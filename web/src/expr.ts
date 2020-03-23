@@ -66,7 +66,7 @@ export default abstract class Expr {
     }
 
     findId(id: ExprId): Expr | null {
-        return this.find(x => x.id === id);
+        return this.find((x) => x.id === id);
     }
 
     replace(id: ExprId, next: Optional<Expr>): Expr | null {
@@ -74,7 +74,7 @@ export default abstract class Expr {
     }
 
     update(id: ExprId, update: (expr: Expr) => Optional<Expr>): Expr | null {
-        return this.filterMap(x => (x.id === id ? update(x) : x));
+        return this.filterMap((x) => (x.id === id ? update(x) : x));
     }
 
     assignToData(value: Partial<ExprData>): Expr {
@@ -89,7 +89,7 @@ export default abstract class Expr {
 
     // Give each sub-expr a fresh id.
     resetIds(): Expr {
-        return assertSome(this.filterMap(x => x.replaceId(GlobalExprId++)));
+        return assertSome(this.filterMap((x) => x.replaceId(GlobalExprId++)));
     }
 
     // Replace the id of the current expr.
@@ -99,7 +99,7 @@ export default abstract class Expr {
 
     find(predicate: (expr: Expr) => boolean): Expr | null {
         let found: Expr | null = null;
-        this.forEach(x => {
+        this.forEach((x) => {
             if (found == null && predicate(x)) found = x;
         });
         return found;
@@ -107,14 +107,14 @@ export default abstract class Expr {
 
     findAll(test: (expr: Expr) => boolean): Expr[] {
         const result: Expr[] = [];
-        this.forEach(x => {
+        this.forEach((x) => {
             if (test(x)) result.push(x);
         });
         return result;
     }
 
     forEach(callback: (x: Expr) => void): void {
-        this.filterMap(x => {
+        this.filterMap((x) => {
             callback(x);
             return x;
         });
@@ -134,9 +134,9 @@ export default abstract class Expr {
 
     parentOf(id: ExprId): Expr | null {
         return this.find(
-            x =>
-                (x instanceof Call && x.args.some(i => i.id === id)) ||
-                (x instanceof List && x.list.some(i => i.id === id)),
+            (x) =>
+                (x instanceof Call && x.args.some((i) => i.id === id)) ||
+                (x instanceof List && x.list.some((i) => i.id === id)),
         );
     }
 
@@ -164,14 +164,14 @@ export default abstract class Expr {
 
     siblings(id: ExprId): [readonly Expr[], number | null] {
         const siblings = this.parentOf(id)?.children() ?? [];
-        const index = siblings.findIndex(x => x.id === id);
+        const index = siblings.findIndex((x) => x.id === id);
         return [siblings, index < 0 ? null : index];
     }
 
     validate() {
         if (this.data.comment === "") throw new InvalidExpr(this);
         const seenIds = new Set<ExprId>();
-        this.forEach(x => {
+        this.forEach((x) => {
             if (seenIds.has(x.id) || !x.shallowValid()) {
                 throw new InvalidExpr(x);
             }
@@ -211,7 +211,7 @@ export default abstract class Expr {
 
 export class List extends Expr {
     shallowValid() {
-        return this.list.length > 1 && !this.list.some(x => x instanceof List);
+        return this.list.length > 1 && !this.list.some((x) => x instanceof List);
     }
     constructor(readonly list: readonly Expr[], data = exprData()) {
         super(data);
@@ -262,7 +262,7 @@ export class Blank extends Expr {
 class ExprFilterMap implements ExprVisitor<Optional<Expr>> {
     constructor(private readonly fn: (expr: Expr) => Optional<Expr>) {}
     visitList(expr: List): Optional<Expr> {
-        const items = filterMap(expr.list, x => x.visit(this));
+        const items = filterMap(expr.list, (x) => x.visit(this));
         if (arrayEquals(expr.list, items)) return this.fn(expr); // Nothing changed.
         //TODO: What should happen to the comment if we destory the list.
         if (items.length === 1) return this.fn(items[0]);
@@ -279,7 +279,7 @@ class ExprFilterMap implements ExprVisitor<Optional<Expr>> {
         return this.fn(expr);
     }
     visitCall(expr: Call): Optional<Expr> {
-        const args = filterMap(expr.args, x => x.visit(this));
+        const args = filterMap(expr.args, (x) => x.visit(this));
         if (arrayEquals(expr.args, args)) return this.fn(expr); // Nothing changed.
         return this.fn(new Call(expr.fn, args, expr.data));
     }

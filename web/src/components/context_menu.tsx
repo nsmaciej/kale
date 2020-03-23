@@ -9,7 +9,7 @@ import Menu, { MenuItem } from "components/menu";
 
 const ContextMenuSeparator = styled.div`
     height: 1px;
-    background: ${p => p.theme.colour.disabled};
+    background: ${(p) => p.theme.colour.disabled};
     width: 100%;
 `;
 
@@ -48,7 +48,7 @@ export default function ContextMenu({ items, origin, dismissMenu, popover }: Con
      * Moves selection skipping past separators, if the menu consists of only separators, bad
      * things(tm) will happen. */
     function moveSelection(delta: 1 | -1) {
-        setSelection(current => {
+        setSelection((current) => {
             let next = mod(
                 current === null ? (delta === -1 ? -1 : 0) : current + delta,
                 items.length,
@@ -146,7 +146,7 @@ export default function ContextMenu({ items, origin, dismissMenu, popover }: Con
             onKeyUp={onKeyUp}
             tabIndex={0}
             onBlur={dismissMenu}
-            ref={el => el?.focus()}
+            ref={(el) => el?.focus()}
         >
             <Menu
                 popover={popover}
@@ -154,14 +154,14 @@ export default function ContextMenu({ items, origin, dismissMenu, popover }: Con
                 items={items}
                 onClick={onClick}
                 // Do not allow selecting separators.
-                setSelected={i =>
+                setSelected={(i) =>
                     blinking || setSelection(i != null && items[i].label != null ? i : null)
                 }
-                minimalPadding={i =>
+                minimalPadding={(i) =>
                     items[i].label == null || (items[i].hidden === true && !showingHidden)
                 }
             >
-                {item =>
+                {(item) =>
                     (!item.hidden || showingHidden) &&
                     (item.label ? (
                         <ContextMenuItemContainer>

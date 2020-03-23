@@ -20,7 +20,7 @@ function builtin<T extends unknown[]>(
 ): Value<Builtin> {
     return rawBuiltin(
         argTypes,
-        args => ({ type: result, value: fn(...(args.map(x => x.value) as T)) }),
+        (args) => ({ type: result, value: fn(...(args.map((x) => x.value) as T)) }),
         help,
     );
 }
@@ -30,12 +30,12 @@ const op = (fn: (a: number, b: number) => number, help: string) =>
 const test = (fn: (a: number, b: number) => boolean, help: string) =>
     builtin(Type.Bool, [Type.Num, Type.Num], fn, help);
 const typeTest = (type: string, help: string) =>
-    rawBuiltin([null], args => ({ type: Type.Bool, value: args[0].type === type }), help);
+    rawBuiltin([null], (args) => ({ type: Type.Bool, value: args[0].type === type }), help);
 
 // The return type depends on the value.
 const atIndex = rawBuiltin(
     [Type.Num, null],
-    args => {
+    (args) => {
         const [index, indexable] = args;
         if (indexable.type === Type.Text) {
             return { type: Type.Text, value: (indexable.value as string)[assertNumber(index)] };
@@ -100,11 +100,11 @@ export default {
         Type.Null,
         [Type.Text],
         // eslint-disable-next-line no-console
-        show => alert(show),
+        (show) => alert(show),
         "Show a message in the browser",
     ),
 
     // Functional programming.
-    Id: rawBuiltin([null], x => x[0], "Returns whatever value is passed to it"),
+    Id: rawBuiltin([null], (x) => x[0], "Returns whatever value is passed to it"),
     //TODO: Add call and something to retrive a Func/Builtin from the workspace by name.
 } as { [name: string]: Value<Builtin> };

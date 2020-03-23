@@ -16,14 +16,14 @@ import { UnderlineLine, SvgLine, HitBox } from "expr_view/components";
 // See https://vanseodesign.com/web-design/svg-text-baseline-alignment/ for excellent discussion
 // on SVG text aligment properties.
 const Code = styled.text`
-    font-size: ${p => p.theme.expr.fontSizePx}px;
-    font-family: ${p => p.theme.expr.fontFamily};
+    font-size: ${(p) => p.theme.expr.fontSizePx}px;
+    font-family: ${(p) => p.theme.expr.fontFamily};
 `;
 
 const CommentIndicator = styled.tspan`
     baseline-shift: super;
-    fill: ${p => p.theme.syntaxColour.comment};
-    font-size: ${p => Math.round(p.theme.expr.fontSizePx * 0.6)}px;
+    fill: ${(p) => p.theme.syntaxColour.comment};
+    font-size: ${(p) => Math.round(p.theme.expr.fontSizePx * 0.6)}px;
     font-weight: normal;
 `;
 
@@ -47,7 +47,7 @@ function materialiseUnderlines(theme: KaleTheme, parent: Layout) {
         const pos = new Offset(x.offset, parent.size.height + x.level * gap);
         layout.nodes.push(<UnderlineLine start={pos} end={pos.dx(x.length)} key={"U" + i} />);
     });
-    const height = max(parent.underlines.map(x => x.level)) * gap;
+    const height = max(parent.underlines.map((x) => x.level)) * gap;
     layout.size = layout.size.pad(new Offset(0, height));
     // Don't just use height, subtract the text offset in case there is a comment sitting on top of
     // the text. (Like in the 'commented call in a list' case).
@@ -59,7 +59,7 @@ function isCallInline(theme: KaleTheme, args: readonly Layout[]): boolean {
     if (args.length === 0) {
         return true;
     }
-    if (!args.every(x => x.inline)) {
+    if (!args.every((x) => x.inline)) {
         return false;
     }
     // Our situation won't improve much from here on by making the function not-inline.
@@ -67,12 +67,12 @@ function isCallInline(theme: KaleTheme, args: readonly Layout[]): boolean {
         return true;
     }
     // Do we need a line break?
-    const lineWidth = args.map(x => x.size.width).reduce((x, y) => x + y, 0);
+    const lineWidth = args.map((x) => x.size.width).reduce((x, y) => x + y, 0);
     if (lineWidth > theme.layout.lineBreakPoint && args.length > 0) {
         return false;
     }
     // Is the expression too nested?
-    return max(args.map(x => x.underlinesHeight())) < theme.layout.maxNesting;
+    return max(args.map((x) => x.underlinesHeight())) < theme.layout.maxNesting;
 }
 
 interface LayoutState {
@@ -151,7 +151,7 @@ class ExprLayout implements ExprVisitor<Layout> {
     visitList(expr: E.List): Layout {
         const layout = vstack(
             this.t.layout.lineSpacing,
-            expr.list.map(x => materialiseUnderlines(this.t, this.layoutInner(expr, x))),
+            expr.list.map((x) => materialiseUnderlines(this.t, this.layoutInner(expr, x))),
         );
         const line = new Rect(new Offset(3, 5), new Size(0, layout.size.height - 8));
         // Only thing outside layoutText checking this.
@@ -235,7 +235,7 @@ class ExprLayout implements ExprVisitor<Layout> {
     }
 
     visitCall(expr: E.Call): Layout {
-        const args = expr.args.map(x => this.layoutInner(expr, x), this);
+        const args = expr.args.map((x) => this.layoutInner(expr, x), this);
         const fnName = this.layoutText(expr, expr.fn, {
             weight: 700,
             commentIndicator: expr.data.comment != null && this.props.foldComments,
@@ -257,7 +257,7 @@ class ExprLayout implements ExprVisitor<Layout> {
                 fnName,
                 vstack(
                     this.t.layout.lineSpacing,
-                    args.map(x => materialiseUnderlines(this.t, x)),
+                    args.map((x) => materialiseUnderlines(this.t, x)),
                 ),
             );
         }

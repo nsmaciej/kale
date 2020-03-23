@@ -137,7 +137,7 @@ export class Layout {
             });
         } else {
             // Adopt the areas.
-            this.areas.push(...layout.areas.map(x => shiftArea(x, origin)));
+            this.areas.push(...layout.areas.map((x) => shiftArea(x, origin)));
             // Copy the text over while stacking children of exprs.
             if (layout.text != null) {
                 assert(this.text == null, "Multiple text properties");
@@ -147,14 +147,14 @@ export class Layout {
     }
 
     underlinesHeight() {
-        return max(this.underlines.map(x => x.level)) + +this.isUnderlined;
+        return max(this.underlines.map((x) => x.level)) + +this.isUnderlined;
     }
 }
 
 type StackLayout = (Optional<Layout>[] | Optional<Layout>)[];
 
 function stack(column: boolean, margin: number, args: StackLayout) {
-    const children = args.flat().filter(x => x != null);
+    const children = args.flat().filter((x) => x != null);
     if (children.length === 1) {
         return children[0];
     }

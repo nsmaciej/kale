@@ -11,10 +11,10 @@ import layoutExpr from "expr_view/layout";
 
 const Container = styled.div`
     position: absolute;
-    background: ${p => p.theme.colour.background};
-    box-shadow: ${p => p.theme.shadow.normal};
-    padding: ${p => p.theme.exprList.padding.combine(p.theme.highlight.padding).css};
-    border-radius: ${p => p.theme.exprList.borderRadius}px;
+    background: ${(p) => p.theme.colour.background};
+    box-shadow: ${(p) => p.theme.shadow.normal};
+    padding: ${(p) => p.theme.exprList.padding.combine(p.theme.highlight.padding).css};
+    border-radius: ${(p) => p.theme.exprList.borderRadius}px;
     box-sizing: content-box;
 `;
 
@@ -96,7 +96,7 @@ export default function DragAndDropSurface({ children }: { children: ReactNode }
         drag.current = null;
         // Premature optimisation. This method is called on every other mouse move.
         if (position !== null) {
-            listeners.forEach(f => f.dragUpdate(null));
+            listeners.forEach((f) => f.dragUpdate(null));
             setPosition(null);
         }
     }
@@ -121,7 +121,7 @@ export default function DragAndDropSurface({ children }: { children: ReactNode }
             // Update the drag.
             setPosition(nextPosition);
             const exprCorner = nextPosition.offset(drag.current.delta);
-            listeners.forEach(x => x.dragUpdate(exprCorner));
+            listeners.forEach((x) => x.dragUpdate(exprCorner));
         }
     }
 

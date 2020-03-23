@@ -20,10 +20,10 @@ function createToyBox(): readonly ShortcutExpr[] {
         new E.Call("Set", [new E.Variable("Variable"), blank("Value")]),
     ];
     for (const [fn, value] of Object.entries(Builtins)) {
-        const args = value.value.args.map(x => new E.Blank(exprData(x)));
+        const args = value.value.args.map((x) => new E.Blank(exprData(x)));
         exprs.push(new E.Call(fn, args));
     }
-    return exprs.map(expr => ({ expr }));
+    return exprs.map((expr) => ({ expr }));
 }
 
 const toyBoxExprs = createToyBox();

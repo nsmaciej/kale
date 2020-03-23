@@ -19,7 +19,7 @@ export function useDebugProvider() {
         },
         async evalFunction(name: string) {
             const int = new Interpreter({
-                onBreakpoint: cc => setContinueEval(cc),
+                onBreakpoint: (cc) => setContinueEval(cc),
                 onTerminated: () => setInterpeter(null),
             });
             int.setWorkspace(workspace.workspace.scope);

@@ -137,7 +137,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
             this.replaceExpr(exprId, new E.Blank());
             return;
         }
-        this.update(exprId, x => x.withValue(value));
+        this.update(exprId, (x) => x.withValue(value));
 
         if (created && expr instanceof E.Call) {
             // Auto-insert the right amount of blanks for this function.
@@ -145,9 +145,9 @@ class Editor extends PureComponent<EditorProps, EditorState> {
             const func = this.getWorkspaceValue(this.props.workspace, value)?.value;
             if (func !== undefined && !specialFunctions.has(value) && func.args.length > 0) {
                 const blanks = (func.args as (string | null)[]).map(
-                    x => new E.Blank(E.exprData(x)),
+                    (x) => new E.Blank(E.exprData(x)),
                 );
-                blanks.forEach(arg => this.insertAsChildOf(exprId, arg, true));
+                blanks.forEach((arg) => this.insertAsChildOf(exprId, arg, true));
                 this.selectExpr(blanks[0].id);
             }
         } else if (expr !== null && newValue !== null) {
@@ -170,9 +170,11 @@ class Editor extends PureComponent<EditorProps, EditorState> {
 
     // Complex functions.
     private insertAsChildOf(target: ExprId, toInsert: Expr, last: boolean): void {
-        this.update(target, parent => {
+        this.update(target, (parent) => {
             if (parent.hasChildren()) {
-                return parent.updateChildren(xs => (last ? [...xs, toInsert] : [toInsert, ...xs]));
+                return parent.updateChildren((xs) =>
+                    last ? [...xs, toInsert] : [toInsert, ...xs],
+                );
             }
             return parent;
         });
@@ -180,15 +182,15 @@ class Editor extends PureComponent<EditorProps, EditorState> {
 
     private selectAndInsertAsSiblingOf(sibling: ExprId, toInsert: Expr, right: boolean): void {
         this.selectExpr(toInsert.id);
-        this.update(null, mainExpr => {
+        this.update(null, (mainExpr) => {
             const parent = mainExpr.parentOf(sibling);
             if (parent == null) {
                 return new E.List(right ? [mainExpr, toInsert] : [toInsert, mainExpr]);
             } else if (parent.hasChildren()) {
                 return mainExpr.replace(
                     parent.id,
-                    parent.updateChildren(xs =>
-                        insertSibling(xs, x => x.id === sibling, toInsert, right),
+                    parent.updateChildren((xs) =>
+                        insertSibling(xs, (x) => x.id === sibling, toInsert, right),
                     ),
                 );
             } else {
@@ -199,19 +201,19 @@ class Editor extends PureComponent<EditorProps, EditorState> {
 
     private insertNewLine(target: ExprId, below: boolean): void {
         const toInsert = new E.Blank();
-        this.update(null, mainExpr => {
+        this.update(null, (mainExpr) => {
             const expr = assertSome(mainExpr.findId(target));
             const parent = mainExpr.parentOf(target);
             if (expr instanceof E.List) {
                 return mainExpr.replace(
                     expr.id,
-                    expr.updateChildren(xs => (below ? [...xs, toInsert] : [toInsert, ...xs])),
+                    expr.updateChildren((xs) => (below ? [...xs, toInsert] : [toInsert, ...xs])),
                 );
             } else if (parent instanceof E.List) {
                 return mainExpr.replace(
                     parent.id,
-                    parent.updateChildren(xs =>
-                        insertSibling(xs, x => x.id === target, toInsert, below),
+                    parent.updateChildren((xs) =>
+                        insertSibling(xs, (x) => x.id === target, toInsert, below),
                     ),
                 );
             } else {
@@ -227,7 +229,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
     // Actions.
     private selectionAction(reducer: Select.SelectFn): () => void {
         return () =>
-            this.setState(state => ({
+            this.setState((state) => ({
                 selection:
                     reducer(this.expr, state.selection, assertSome(this.exprAreaMapRef.current)) ??
                     state.selection,
@@ -278,14 +280,14 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         copy: (e: ExprId) => this.addToClipboard(e),
         insert: (e: ExprId) => this.insertBlankAsSiblingOf(e, true),
         insertBefore: (e: ExprId) => this.insertBlankAsSiblingOf(e, false),
-        foldComments: () => this.setState(state => ({ foldingComments: !state.foldingComments })),
+        foldComments: () => this.setState((state) => ({ foldingComments: !state.foldingComments })),
         comment: (e: ExprId) => {
             // Empty string _should_ be null.
             const comment = prompt("Comment?", this.expr.get(e).data.comment ?? "") || null;
-            this.update(e, expr => expr.assignToData({ comment: comment }));
+            this.update(e, (expr) => expr.assignToData({ comment: comment }));
         },
         disable: (e: ExprId) => {
-            this.update(e, expr => {
+            this.update(e, (expr) => {
                 if (expr instanceof E.Blank) return expr;
                 return expr.assignToData({ disabled: !expr.data.disabled });
             });
@@ -511,7 +513,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
     };
 
     private readonly dragListener: DropListener = {
-        dragUpdate: absolutePoint => {
+        dragUpdate: (absolutePoint) => {
             this.setState({
                 droppable: this.clientOffsetToExpr(absolutePoint),
             });
@@ -593,11 +595,11 @@ class Editor extends PureComponent<EditorProps, EditorState> {
                 exprArea={this.exprAreaMapRef.current[exprId]}
                 value={assertSome(expr.value())}
                 disableSuggestions={!(expr instanceof E.Call)}
-                onChange={value => {
-                    this.update(exprId, x => x.withValue(value));
+                onChange={(value) => {
+                    this.update(exprId, (x) => x.withValue(value));
                 }}
                 onDismiss={() => this.stopEditing(null)}
-                onSubmit={value => this.stopEditing(value)}
+                onSubmit={(value) => this.stopEditing(value)}
             />
         );
     }
@@ -629,7 +631,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
                 popover
                 origin={origin}
                 dismissMenu={() => this.setState({ blankPopover: null })}
-                items={exprs.map(x => ({
+                items={exprs.map((x) => ({
                     id: x.label,
                     label: x.label,
                     action: () => this.replaceAndEdit(target, x.expr, true),

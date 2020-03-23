@@ -41,7 +41,7 @@ export function vmAssert(condition: boolean, message?: string): asserts conditio
 }
 
 function assertType<T>(type: string): (value: Value) => T {
-    return value => {
+    return (value) => {
         vmAssert(value.type === type, `Cannot use a ${value.type}, expected ${type}`);
         return value.value as T;
     };

@@ -95,14 +95,14 @@ export default class Interpreter {
         }
         const promise = this.evalRaw(expr, scope);
         if (this.breakpoints.has(expr.id)) {
-            await new Promise(resolve => this.callbacks.onBreakpoint(resolve));
+            await new Promise((resolve) => this.callbacks.onBreakpoint(resolve));
         }
         return promise;
     }
 
     private async evalBuiltin(fn: string, args: Expr[], scope: Scope): Promise<Value> {
         const builtin = assertBuiltin(scope.get(fn));
-        const evaluatedArgs = await Promise.all(args.map(x => this.eval(x, scope)));
+        const evaluatedArgs = await Promise.all(args.map((x) => this.eval(x, scope)));
         vmAssert(
             builtin.args.length === args.length,
             `Wrong number of arguments for builtin function '${fn}'`,
@@ -119,7 +119,7 @@ export default class Interpreter {
     private async evalRawCall(expr: E.Call, scope: Scope): Promise<Value> {
         const { fn } = expr;
         // We pretend as if disabled arguments aren't there.
-        const args = expr.args.filter(x => !x.data.disabled);
+        const args = expr.args.filter((x) => !x.data.disabled);
 
         // Handle specials.
         if (Object.prototype.hasOwnProperty.call(specials, fn)) {

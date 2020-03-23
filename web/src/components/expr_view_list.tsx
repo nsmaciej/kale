@@ -10,16 +10,16 @@ import ExprView from "expr_view";
 const ExprListItem = styled(motion.div)`
     grid-column: expr;
     justify-self: left;
-    border: 1px solid ${p => p.theme.colour.subtleClickable};
-    border-radius: ${p => p.theme.exprList.borderRadius}px;
+    border: 1px solid ${(p) => p.theme.colour.subtleClickable};
+    border-radius: ${(p) => p.theme.exprList.borderRadius}px;
     display: flex;
-    padding: ${p => p.theme.exprList.padding.css};
+    padding: ${(p) => p.theme.exprList.padding.css};
 `;
 
 const ExprListShortcut = styled(Shortcut)`
     grid-column: shortcut;
     justify-self: right;
-    margin-top: ${p => p.theme.exprView.padding.top / 2}px;
+    margin-top: ${(p) => p.theme.exprView.padding.top / 2}px;
     margin-right: 10px;
 `;
 
@@ -38,13 +38,13 @@ const ExprList = styled.div`
 
 const DropMarker = styled.div`
     grid-column: 1 / -1;
-    background: ${p => p.theme.colour.clickable};
+    background: ${(p) => p.theme.colour.clickable};
     height: 1px;
-    box-shadow: 0 0 ${p => p.theme.droppable.radius}px ${p => p.theme.droppable.colour};
+    box-shadow: 0 0 ${(p) => p.theme.droppable.radius}px ${(p) => p.theme.droppable.colour};
 `;
 
 const Extras = styled.div`
-    margin: ${p => p.theme.exprView.frozenPadding.css} !important;
+    margin: ${(p) => p.theme.exprView.frozenPadding.css} !important;
 `;
 
 export interface ShortcutExpr {

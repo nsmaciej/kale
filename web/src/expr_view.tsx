@@ -79,7 +79,7 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
             />
         ));
         const texts = Object.entries(areas)
-            .filter(x => x[1].text != null)
+            .filter((x) => x[1].text != null)
             .map(([k, v]) => (
                 <DebugRect
                     key={`t${k}`}
@@ -174,18 +174,18 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
     }
 
     private readonly exprPropsFor = (expr: Expr): Partial<React.DOMAttributes<Element>> => ({
-        onMouseEnter: e => this.onHoverExpr(e, expr),
-        onMouseLeave: e => this.onHoverExpr(e, null),
-        onContextMenu: e => this.onContextMenu(e, expr),
-        onMouseDown: e => this.onMouseDown(e, expr),
+        onMouseEnter: (e) => this.onHoverExpr(e, expr),
+        onMouseLeave: (e) => this.onHoverExpr(e, null),
+        onContextMenu: (e) => this.onContextMenu(e, expr),
+        onMouseDown: (e) => this.onMouseDown(e, expr),
         // Note we do not stopPropagation if we aren't asked to handle something.
-        onDoubleClick: e => {
+        onDoubleClick: (e) => {
             if (this.props.onDoubleClick != null) {
                 e.stopPropagation();
                 this.props.onDoubleClick(expr.id);
             }
         },
-        onClick: e => {
+        onClick: (e) => {
             if (this.props.onClick != null) {
                 e.stopPropagation();
                 this.props.onClick(expr.id);
@@ -264,7 +264,7 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
                     display="block"
                     viewBox={`0 0 ${width} ${height}`}
                     // If we can open context menus, do not allow the system menu.
-                    onContextMenu={e => this.props.contextMenuFor && e.preventDefault()}
+                    onContextMenu={(e) => this.props.contextMenuFor && e.preventDefault()}
                     style={{ cursor: "default" }}
                 >
                     <filter id="droppable">

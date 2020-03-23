@@ -14,14 +14,14 @@ const inputWidthPx = 400;
 const EditorInput = styled.input`
     font: inherit;
     color: inherit;
-    border: 1px solid ${p => p.theme.colour.subtleClickable};
-    border-radius: ${p => p.theme.borderRadius}px;
+    border: 1px solid ${(p) => p.theme.colour.subtleClickable};
+    border-radius: ${(p) => p.theme.borderRadius}px;
     width: ${inputWidthPx}px;
     position: relative;
     padding: 8px 5px;
-    background: ${p => p.theme.colour.background};
+    background: ${(p) => p.theme.colour.background};
     &:focus {
-        border: 1px solid ${p => p.theme.colour.clickable};
+        border: 1px solid ${(p) => p.theme.colour.clickable};
     }
 `;
 
@@ -97,10 +97,10 @@ export default React.forwardRef(function EditorSuggestions(
                         width={inputWidthPx}
                         items={suggestions}
                         selected={selection}
-                        onClick={x => selectEditor(x.name)}
-                        setSelected={i => setSelection(i)}
+                        onClick={(x) => selectEditor(x.name)}
+                        setSelected={(i) => setSelection(i)}
                     >
-                        {item => (
+                        {(item) => (
                             <>
                                 {item.original && <AiOutlinePlusCircle style={{ flex: "none" }} />}
                                 <MenuTextWrapper>
