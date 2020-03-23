@@ -20,13 +20,12 @@ export const rightSibling: SelectFn = (expr, sel) => {
     return siblings[ix + 1]?.id;
 };
 
-export const firstChild: SelectFn = (expr, sel) => {
-    return expr.findId(sel)?.children()[0]?.id ?? null;
+export const firstChild: SelectFn = (_, sel, areas) => {
+    return areas[sel].expr.children()[0]?.id ?? null;
 };
 
-export const lastChild: SelectFn = (expr, sel) => {
-    const children = expr.findId(sel)?.children();
-    if (children == null) return null;
+export const lastChild: SelectFn = (_, sel, areas) => {
+    const children = areas[sel].expr.children();
     return children[children.length - 1]?.id;
 };
 
