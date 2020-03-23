@@ -10,7 +10,6 @@ import ExprViewList from "components/expr_view_list";
 export default React.memo(function ClipboardList() {
     const containerRef = useRef<HTMLDivElement>(null);
     const clipboard = assertSome(useContext(Clipboard));
-
     const draggingOver = useSimpleDrop(containerRef, (expr) =>
         clipboard.dispatch({ type: "add", entry: { pinned: false, expr } }),
     );
@@ -26,7 +25,7 @@ export default React.memo(function ClipboardList() {
     return (
         <Box gridArea="history" overflow="auto" ref={containerRef}>
             <Stack gap={10} alignItems="baseline" justifyContent="space-between">
-                <PaneHeading>History</PaneHeading>
+                <PaneHeading>Clipboard</PaneHeading>
                 <SubtleButton
                     onClick={() => clipboard.dispatch({ type: "clear" })}
                     disabled={clipboard.value.every((x) => x.pinned)}
