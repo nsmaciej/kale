@@ -201,27 +201,15 @@ class Editor extends PureComponent<EditorProps, EditorState> {
 
     private insertNewLine(target: ExprId, below: boolean): void {
         const toInsert = new E.Blank();
-        this.update(null, (mainExpr) => {
-            const expr = assertSome(mainExpr.findId(target));
-            const parent = mainExpr.parentOf(target);
+        this.update(target, (expr) => {
             if (expr instanceof E.List) {
-                return mainExpr.replace(
-                    expr.id,
-                    expr.updateChildren((xs) => (below ? [...xs, toInsert] : [toInsert, ...xs])),
-                );
-            } else if (parent instanceof E.List) {
-                return mainExpr.replace(
-                    parent.id,
-                    parent.updateChildren((xs) =>
-                        insertSibling(xs, (x) => x.id === target, toInsert, below),
-                    ),
-                );
-            } else {
-                return mainExpr.replace(
-                    target,
-                    new E.List(below ? [expr, toInsert] : [toInsert, expr]),
+                return new E.List(
+                    below ? [...expr.list, toInsert] : [toInsert, ...expr.list],
+                    expr.data,
                 );
             }
+            // This becomes very simple with automatic list merging.
+            return new E.List(below ? [expr, toInsert] : [toInsert, expr]);
         });
         this.selectExpr(toInsert.id);
     }

@@ -264,10 +264,12 @@ class ExprFilterMap implements ExprVisitor<Optional<Expr>> {
     visitList(expr: List): Optional<Expr> {
         const items = filterMap(expr.list, (x) => x.visit(this));
         if (arrayEquals(expr.list, items)) return this.fn(expr); // Nothing changed.
-        //TODO: What should happen to the comment if we destory the list.
+        //TODO: What should happen to the comment if we destory a list.
         if (items.length === 1) return this.fn(items[0]);
         if (items.length === 0) return null;
-        return this.fn(new List(items, expr.data));
+        // Shallowly nested lists get merged up.
+        const flattened = items.flatMap((x) => (x instanceof List ? x.list : x));
+        return this.fn(new List(flattened, expr.data));
     }
     visitLiteral(expr: Literal): Optional<Expr> {
         return this.fn(expr);
