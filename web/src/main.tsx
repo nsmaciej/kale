@@ -136,7 +136,11 @@ function Kale() {
                     <EditorSuggestions ref={functionSearchRef} editorStackDispatch={dispatch} />
                 </Box>
                 <Box gridArea="menu" justifySelf="end">
-                    <a href="https://github.com/mgoszcz2/kale">
+                    <a
+                        href="https://github.com/mgoszcz2/kale"
+                        target="_blank"
+                        rel="noreferrer noopener"
+                    >
                         <AiOutlineGithub size="2em" title="Open on GitHub" />
                     </a>
                 </Box>
