@@ -20,15 +20,15 @@ export interface Underline {
 }
 
 export interface ExprArea {
-    rect: Rect;
-    expr: Expr;
-    text: Optional<TextProperties>;
     children: ExprArea[];
-    // Needed for setAreasHeightInPlace. See its comment.
+    expr: Expr;
     inline: boolean;
+    rect: Rect;
+    text: Optional<TextProperties>;
 }
 
 export interface FlatExprArea {
+    expr: Expr;
     inline: boolean;
     rect: Rect;
     text: Optional<TextProperties>;
@@ -44,6 +44,7 @@ export function flattenArea(parent: ExprArea): ExprAreaMap {
             inline: area.inline,
             rect: area.rect.shift(origin),
             text: area.text,
+            expr: area.expr,
         };
         for (const child of area.children) traverse(child, area.rect.origin.offset(origin));
     }

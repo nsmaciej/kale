@@ -40,20 +40,14 @@ const leftDeepestChild: SelectFn = (expr, sel, areas) => {
     return r;
 };
 
-// Select only non-inline blocks.
-function smartBlockSelection(selectSibling: SelectFn): SelectFn {
+/** Skips past inline exprs and lists using a selector. */
+function skipNonInline(selectSibling: SelectFn): SelectFn {
     return (expr, sel, areas) => {
-        if (!areas[sel].inline) {
-            const sibling = selectSibling(expr, sel, areas);
-            if (sibling != null) return sibling;
+        let result = selectSibling(expr, sel, areas);
+        while (result !== null && (areas[result].expr instanceof E.List || areas[result].inline)) {
+            result = selectSibling(expr, result, areas);
         }
-        for (const parentExpr of expr.parents(sel)) {
-            if (!areas[parentExpr.id].inline) {
-                const sibling = selectSibling(expr, parentExpr.id, areas);
-                if (sibling != null) return sibling;
-            }
-        }
-        return null;
+        return result;
     };
 }
 
@@ -82,9 +76,9 @@ export const nextBlank: SelectFn = (expr, sel) => {
 // Skip past children.
 export const rightSiblingSmart = smartSelection(rightSibling, rightSibling);
 export const leftSiblingSmart = smartSelection(leftSibling, parent);
-// Non-inline siblings.
-export const upSmart = smartBlockSelection(leftSibling);
-export const downSmart = smartBlockSelection(rightSibling);
 // Pre-order traversal.
 export const leftSmart = smartSelection(leftDeepestChild, parent);
 export const rightSmart = smartSelection(firstChild, rightSibling);
+// Non-inline siblings.
+export const upSmart = skipNonInline(leftSmart);
+export const downSmart = skipNonInline(rightSmart);
