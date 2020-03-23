@@ -44,7 +44,11 @@ const Arrow = styled.div`
     }
 `;
 
-const MenuItemContainer = styled.div<{ selected: boolean; disabled: boolean }>`
+const MenuItemContainer = styled.div<{
+    selected: boolean;
+    disabled: boolean;
+    minimalPadding: boolean;
+}>`
     background: ${(p) => (!p.disabled && p.selected ? p.theme.colour.clickable : "transparent")};
     display: flex;
     align-items: center;
@@ -54,6 +58,7 @@ const MenuItemContainer = styled.div<{ selected: boolean; disabled: boolean }>`
     color: ${(p) =>
         p.disabled ? p.theme.colour.disabled : p.selected ? "white" : p.theme.colour.mainText};
     overflow: hidden;
+    padding: ${(p) => (p.minimalPadding ? "0" : "6px 10px")};
 `;
 
 // Convenience class for overflowing text.
@@ -108,12 +113,7 @@ export default function Menu<I extends MenuItem>(props: MenuProps<I>) {
                                 // Styling.
                                 disabled={item.disabled ?? false}
                                 selected={i === props.selected}
-                                style={{
-                                    paddingTop: minimalPadding ? 1 : 6,
-                                    paddingBottom: minimalPadding ? 1 : 6,
-                                    paddingLeft: minimalPadding ? 0 : 10,
-                                    paddingRight: minimalPadding ? 0 : 10,
-                                }}
+                                minimalPadding={minimalPadding}
                             >
                                 {props.children(item)}
                             </MenuItemContainer>

@@ -8,9 +8,10 @@ import { useDisableScrolling } from "hooks";
 import Menu, { MenuItem } from "components/menu";
 
 const ContextMenuSeparator = styled.div`
-    height: 1px;
-    background: ${(p) => p.theme.colour.disabled};
+    height: 0;
+    border-bottom: 1px solid ${(p) => p.theme.colour.disabled};
     width: 100%;
+    margin: 2px 0;
 `;
 
 const ContextMenuItemContainer = styled.div`
