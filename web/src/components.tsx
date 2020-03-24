@@ -77,13 +77,7 @@ export const ShortcutGroup = styled.span`
 `;
 
 export const SubtleButton = styled.button<{ selected?: boolean }>`
-    font: inherit;
-    background: none;
-    border: none;
-    font-weight: 600;
-    display: block;
     color: ${(p) => p.theme.colour.clickable};
-    outline: none;
     transition: color 0.1s;
     ${(p) => p.selected && "-webkit-text-stroke: 1px currentcolor"};
     &:hover {

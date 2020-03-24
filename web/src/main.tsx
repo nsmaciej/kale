@@ -19,6 +19,7 @@ import ClipboardList from "components/clipboard_list";
 import EditorList from "components/editor_list";
 import EditorSuggestions from "components/editor_suggestions";
 import ErrorBoundary from "components/error_boundary";
+import ThemeSwitcher from "components/theme_switcher";
 import ToyBox from "components/toy_box";
 
 const GlobalStyle = createGlobalStyle`
@@ -55,6 +56,16 @@ a {
     &:hover {
         color: ${(p) => p.theme.colour.active};
     }
+}
+/* Reset most of the button styles */
+button {
+    font: inherit;
+    color: inherit;
+    background: none;
+    border: none;
+    font-weight: 600;
+    display: block;
+    outline: none;
 }
 `;
 
@@ -136,7 +147,8 @@ function Kale() {
                 <Box gridArea="search">
                     <EditorSuggestions ref={functionSearchRef} editorStackDispatch={dispatch} />
                 </Box>
-                <Box gridArea="menu" justifySelf="end">
+                <Stack gap={15} alignItems="center" gridArea="menu" justifySelf="end">
+                    <ThemeSwitcher />
                     <a
                         href="https://github.com/mgoszcz2/kale"
                         target="_blank"
@@ -144,7 +156,7 @@ function Kale() {
                     >
                         <AiOutlineGithub size="2em" title="Open on GitHub" />
                     </a>
-                </Box>
+                </Stack>
             </HeaderGrid>
             <ToyBox />
             <EditorList

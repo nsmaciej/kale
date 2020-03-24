@@ -1,5 +1,5 @@
 import { ThemeProvider } from "styled-components";
-import React, { ReactNode, useContext } from "react";
+import React, { ReactNode, useContext, useState } from "react";
 
 import { DefaultTheme, DarkTheme } from "theme";
 import { useMediaQuery } from "hooks";
@@ -9,15 +9,25 @@ const Themes = {
     Light: DefaultTheme,
     Dark: DarkTheme,
 };
-type Theme = keyof typeof Themes;
 
-const KaleTheme = React.createContext<{ theme: Theme } | null>(null);
+export type Theme = keyof typeof Themes | "Auto";
+
+export interface KaleThemeContext {
+    theme: Theme;
+    actualTheme: keyof typeof Themes;
+    setTheme(theme: Theme): void;
+}
+
+export const KaleTheme = React.createContext<KaleThemeContext | null>(null);
 
 export function KaleThemeProvider({ children }: { children: ReactNode }) {
     const prefersDark = useMediaQuery("(prefers-color-scheme: dark)");
-    const theme = prefersDark ? "Dark" : "Light";
+    const [preference, setPreference] = useState<Theme>("Auto");
+    const theme = preference === "Auto" ? (prefersDark ? "Dark" : "Light") : preference;
     return (
-        <KaleTheme.Provider value={{ theme }}>
+        <KaleTheme.Provider
+            value={{ theme: preference, actualTheme: theme, setTheme: setPreference }}
+        >
             <ThemeProvider theme={Themes[theme]}>{children}</ThemeProvider>
         </KaleTheme.Provider>
     );
@@ -25,6 +35,6 @@ export function KaleThemeProvider({ children }: { children: ReactNode }) {
 
 /** Checks whether the user is using a dark theme. */
 export function useUsesDarkTheme(): boolean {
-    const { theme } = assertSome(useContext(KaleTheme));
-    return theme === "Dark";
+    const { actualTheme } = assertSome(useContext(KaleTheme));
+    return actualTheme === "Dark";
 }
