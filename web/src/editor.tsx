@@ -21,7 +21,6 @@ import ContextMenu, { ContextMenuItem } from "components/context_menu";
 import InlineEditor from "components/inline_editor";
 
 interface EditorState {
-    focused: boolean;
     foldingComments: boolean;
     editing: { expr: ExprId; created: boolean } | null;
     showingDebugOverlay: boolean;
@@ -33,6 +32,7 @@ interface EditorState {
 }
 
 interface EditorWrapperProps {
+    focused: boolean;
     functionName: string;
     editorStackIndex: number;
     editorStackDispatch: React.Dispatch<EditorStackActions>;
@@ -52,7 +52,6 @@ class Editor extends PureComponent<EditorProps, EditorState> {
     private readonly exprAreaRef = React.createRef<ExprArea>();
 
     state: EditorState = {
-        focused: false,
         foldingComments: false,
         editing: null,
         blankPopover: null,
@@ -114,14 +113,13 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         this.replaceExpr(right, this.expr.get(left));
     }
 
-    private createInlineEditor(exprId: ExprId, created: boolean) {
-        const expr = this.expr.findId(exprId);
+    private createInlineEditor(expr: Expr, created: boolean) {
         if (expr === null) return;
         // Only things with a value can be edited.
         if (expr.value() !== null) {
-            this.setState({ editing: { expr: exprId, created } });
+            this.setState({ editing: { expr: expr.id, created } });
         } else if (expr instanceof E.Blank) {
-            this.setState({ blankPopover: exprId });
+            this.setState({ blankPopover: expr.id });
         }
     }
 
@@ -156,12 +154,11 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         }
     }
 
-    private replaceAndEdit(expr: ExprId, next: Expr, created: boolean) {
-        // Replace expr but using the callback.
-        this.replaceExpr(expr, next);
-        //TODO: Remove this.
-        // ReplaceExpr will re-use the expr ID.
-        this.forceUpdate(() => this.createInlineEditor(expr, created));
+    private replaceAndEdit(prevId: ExprId, next: Expr, created: boolean) {
+        // We cannot use the .replace here because we need the next expr for creating the editor.
+        const nextWithPrevId = next.resetIds().replaceId(prevId);
+        this.update(prevId, () => nextWithPrevId);
+        this.createInlineEditor(nextWithPrevId, created);
     }
 
     private insertBlankAsSiblingOf(target: ExprId, right: boolean) {
@@ -409,8 +406,8 @@ class Editor extends PureComponent<EditorProps, EditorState> {
 
     // Bound methods.
     private readonly menuKeyEquivalentForAction = reverseObject(this.menuKeyEquivalents);
-    contextMenuFor = (exprId: ExprId): ContextMenuItem[] => {
-        const expr = assertSome(this.expr.findId(exprId));
+    onContextMenu = (exprId: ExprId): ContextMenuItem[] => {
+        const expr = this.expr.get(exprId);
         return this.exprMenu.map((item, i) => ({
             id: item?.action ?? i.toString(),
             label: item?.label,
@@ -445,7 +442,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
     };
 
     private readonly startEditing = (expr: ExprId) => {
-        this.createInlineEditor(expr, false);
+        this.createInlineEditor(this.expr.get(expr), false);
     };
 
     private readonly focus = () => {
@@ -461,12 +458,6 @@ class Editor extends PureComponent<EditorProps, EditorState> {
             forwardedRef(element);
         } else if (forwardedRef != null) {
             (forwardedRef as React.MutableRefObject<HTMLDivElement>).current = element;
-        }
-    };
-
-    private readonly onFocusEvent = (event: React.FocusEvent) => {
-        if (event.target === this.containerRef.current) {
-            this.setState({ focused: event.type === "focus" });
         }
     };
 
@@ -577,7 +568,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
     private renderInlineEditor() {
         if (this.exprAreaMapRef.current === null || this.state.editing === null) return;
         const exprId = this.state.editing.expr;
-        const expr = assertSome(this.expr.findId(exprId));
+        const expr = this.expr.get(exprId);
         return (
             <InlineEditor
                 exprArea={this.exprAreaMapRef.current[exprId]}
@@ -673,8 +664,6 @@ class Editor extends PureComponent<EditorProps, EditorState> {
                 onKeyDown={this.keyDown}
                 tabIndex={0}
                 ref={this.attachRef}
-                onFocus={this.onFocusEvent}
-                onBlur={this.onFocusEvent}
                 // Needed for positioning the inline editor.
                 style={{ position: "relative" }}
             >
@@ -682,14 +671,14 @@ class Editor extends PureComponent<EditorProps, EditorState> {
                     // This is heavy pure component, don't create new objects here.
                     expr={this.expr}
                     highlights={this.memoizedHighlights()}
-                    focused={this.state.focused}
+                    focused={this.props.focused}
                     foldComments={this.state.foldingComments}
                     theme={this.props.theme}
                     exprAreaMapRef={this.exprAreaMapRef}
                     exprAreaRef={this.exprAreaRef}
                     showDebugOverlay={this.state.showingDebugOverlay}
                     // Callbacks.
-                    contextMenuFor={this.contextMenuFor}
+                    onContextMenu={this.onContextMenu}
                     onClick={this.selectExpr}
                     onHover={this.onHover}
                     onDoubleClick={this.startEditing}

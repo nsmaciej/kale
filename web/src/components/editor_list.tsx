@@ -90,6 +90,7 @@ export default function EditorStack({
                             functionName={editor.name}
                             editorStackDispatch={editorStackDispatch}
                             editorStackIndex={i}
+                            focused={i === focused}
                             ref={editorRefs.get(editor.key)}
                             // It's proably easiest to just create a new editor for each function.
                             key={editor.name}

@@ -31,7 +31,7 @@ interface ExprViewProps {
     onFocus?(): void;
 
     // Delegation.
-    contextMenuFor?(expr: ExprId): ContextMenuItem[];
+    onContextMenu?(expr: ExprId): ContextMenuItem[];
 
     // Looks.
     width?: number;
@@ -150,15 +150,15 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
     }
 
     private onContextMenu(e: React.MouseEvent, expr: Expr) {
-        if (this.props.contextMenuFor === undefined) return;
+        if (this.props.onContextMenu === undefined) return;
         e.preventDefault();
         e.stopPropagation();
-        const menu = this.props.contextMenuFor(expr.id);
+        const menu = this.props.onContextMenu(expr.id);
         if (menu.length > 0) {
             this.setState({
                 showingMenu: {
                     at: ClientOffset.fromClient(e),
-                    menu: this.props.contextMenuFor?.(expr.id),
+                    menu: this.props.onContextMenu?.(expr.id),
                     expr: expr.id,
                 },
             });
@@ -266,7 +266,7 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
                     display="block"
                     viewBox={`0 0 ${width} ${height}`}
                     // If we can open context menus, do not allow the system menu.
-                    onContextMenu={(e) => this.props.contextMenuFor && e.preventDefault()}
+                    onContextMenu={(e) => this.props.onContextMenu && e.preventDefault()}
                     style={{ cursor: "default" }}
                 >
                     {highlightRects}

@@ -91,7 +91,7 @@ function ExprViewListItem<E extends ShortcutExpr>({
                 width={width}
                 scale={scale}
                 onDraggedOut={draggedOut}
-                contextMenuFor={contextMenu}
+                onContextMenu={contextMenu}
             />
         </Box>
     );
