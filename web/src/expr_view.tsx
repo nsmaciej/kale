@@ -8,18 +8,20 @@ import React, {
     useState,
 } from "react";
 import { motion } from "framer-motion";
+import { useTheme } from "styled-components";
 
 import * as E from "expr";
 import { assertSome } from "utils";
 import { Highlight } from "theme";
-import { Offset, Rect, ClientOffset } from "geometry";
-import ContextMenu, { ContextMenuItem } from "components/context_menu";
+import { Rect, ClientOffset } from "geometry";
 import DragAndDrop from "contexts/drag_and_drop";
 import Expr, { ExprId } from "expr";
 
+import ContextMenu, { ContextMenuItem } from "components/context_menu";
+import SvgDebugOverlay from "components/debug_overlay";
+
 import { ExprArea, ExprAreaMap, flattenArea } from "expr_view/core";
-import { SvgGroup, SvgRect, DebugRect } from "expr_view/components";
-import { useTheme } from "styled-components";
+import { SvgGroup } from "expr_view/components";
 import layoutExpr from "expr_view/layout";
 
 export { ExprArea, ExprAreaMap, FlatExprArea } from "expr_view/core";
@@ -75,27 +77,6 @@ export default React.memo(function ExprView(props: ExprViewProps) {
         () => (props.frozen ? theme.exprView.frozenPadding : theme.exprView.padding),
         [props.frozen, theme],
     );
-
-    function debugRenderAreas(areas: ExprAreaMap) {
-        const exprs = Object.entries(areas).map(([k, v]) => (
-            <SvgRect
-                key={`e${k}`}
-                rect={v.rect}
-                fill="none"
-                stroke={v.inline ? "blue" : "red"}
-                opacity="0.7"
-            />
-        ));
-        const texts = Object.entries(areas)
-            .filter((x) => x[1].text != null)
-            .map(([k, v]) => (
-                <DebugRect
-                    key={`t${k}`}
-                    origin={v.rect.origin.offset(v.text?.offset ?? Offset.zero)}
-                />
-            ));
-        return exprs.concat(texts);
-    }
 
     function drawRect(exprId: ExprId, highlight: Highlight, areas: ExprAreaMap) {
         if (areas[exprId] == null) return;
@@ -253,7 +234,7 @@ export default React.memo(function ExprView(props: ExprViewProps) {
             >
                 {highlightRects}
                 <SvgGroup translate={padding.topLeft}>{nodes}</SvgGroup>
-                {props.showDebugOverlay && debugRenderAreas(pendingExprAreaMap.current)}
+                {props.showDebugOverlay && <SvgDebugOverlay areaMap={pendingExprAreaMap.current} />}
             </svg>
             {showingMenu && (
                 <ContextMenu
