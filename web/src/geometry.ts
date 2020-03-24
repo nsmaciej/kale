@@ -9,6 +9,11 @@ export class Offset {
         return new Offset(-this.x, -this.y);
     }
 
+    /** Checks if both x and y equal zero. */
+    isZero() {
+        return this.x === 0 && this.y === 0;
+    }
+
     difference(other: Offset) {
         return this.offset(other.neg);
     }
@@ -80,6 +85,7 @@ export class Size {
         return new Size(this.width + left + right, this.height + top + bottom);
     }
 
+    /** Checks if both width and height equal zero. */
     isZero() {
         return this.width === 0 && this.height === 0;
     }

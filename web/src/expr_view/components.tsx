@@ -13,7 +13,13 @@ export function SvgGroup({
     translate = Offset.zero,
 }: CustomSvgProps<SVGGElement, { translate?: Offset }>) {
     return (
-        <g transform={`translate(${Math.round(translate.x)} ${Math.round(translate.y)})`}>
+        <g
+            transform={
+                translate.isZero()
+                    ? undefined
+                    : `translate(${Math.round(translate.x)} ${Math.round(translate.y)})`
+            }
+        >
             {children}
         </g>
     );

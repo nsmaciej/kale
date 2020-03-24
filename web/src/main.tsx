@@ -2,7 +2,7 @@ import ReactDOM from "react-dom";
 import { AiOutlineGithub } from "react-icons/ai";
 import { ToastProvider } from "react-toast-notifications";
 import React, { useRef, useEffect } from "react";
-import styled, { ThemeProvider, createGlobalStyle } from "styled-components";
+import styled, { createGlobalStyle } from "styled-components";
 
 import { DefaultTheme } from "theme";
 import { Stack, Box } from "components";
@@ -12,6 +12,7 @@ import useEditorStack from "hooks/editor_stack";
 import { ClipboardProvider } from "contexts/clipboard";
 import { DebuggerProvider } from "contexts/debugger";
 import { DragAndDropSurface } from "contexts/drag_and_drop";
+import { KaleThemeProvider } from "contexts/theme";
 import { WorkspaceProvider } from "contexts/workspace";
 
 import ClipboardList from "components/clipboard_list";
@@ -160,7 +161,7 @@ function Kale() {
 function App() {
     return (
         <React.StrictMode>
-            <ThemeProvider theme={DefaultTheme}>
+            <KaleThemeProvider>
                 <GlobalStyle />
                 <ToastProvider>
                     <ErrorBoundary>
@@ -175,7 +176,7 @@ function App() {
                         </ClipboardProvider>
                     </ErrorBoundary>
                 </ToastProvider>
-            </ThemeProvider>
+            </KaleThemeProvider>
         </React.StrictMode>
     );
 }

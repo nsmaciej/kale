@@ -4,8 +4,8 @@ import styled from "styled-components";
 import { Optional } from "utils";
 
 const Container = styled.div`
-    background: ${(p) => p.theme.colour.background};
-    border-radius: ${(p) => p.theme.borderRadius}px;
+    background: ${(p) => p.theme.colour.innerBackground};
+    border-radius: ${(p) => p.theme.general.borderRadius}px;
     box-shadow: ${(p) => p.theme.shadow.normal};
     z-index: 1000;
     position: fixed;
@@ -14,7 +14,7 @@ const Container = styled.div`
 // Clips the highlight boxes, since Container needs to have overflow to potentially show the popover
 // arrow.
 const ContainerClip = styled.div`
-    border-radius: ${(p) => p.theme.borderRadius}px;
+    border-radius: ${(p) => p.theme.general.borderRadius}px;
     overflow: hidden;
 `;
 
@@ -32,7 +32,7 @@ const Arrow = styled.div`
     top: -${triangleSize}px;
 
     &::before {
-        background: ${(p) => p.theme.colour.background};
+        background: ${(p) => p.theme.colour.innerBackground};
         left: ${triangleSize / 2}px;
         top: ${triangleSize / 2}px;
         box-shadow: ${(p) => p.theme.shadow.small};
@@ -49,7 +49,8 @@ const MenuItemContainer = styled.div<{
     disabled: boolean;
     minimalPadding: boolean;
 }>`
-    background: ${(p) => (!p.disabled && p.selected ? p.theme.colour.clickable : "transparent")};
+    background: ${(p) =>
+        !p.disabled && p.selected ? p.theme.colour.clickableBackground : "transparent"};
     display: flex;
     align-items: center;
     & > svg {

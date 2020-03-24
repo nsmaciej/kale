@@ -52,10 +52,14 @@ const sample2 = new Call("object", [
 
 const sample3 = new List([
     new Call("Let", [new Variable("msg"), new Literal("Hello World", Type.Text)]),
-    new Call("Print", [
-        new Literal("This will not be printed", Type.Text, exprData(null, true)),
-        new Variable("msg"),
-    ]),
+    new Call(
+        "Print",
+        [
+            new Literal("This will not be printed", Type.Text, exprData(null, true)),
+            new Variable("msg"),
+        ],
+        exprData("Print the message"),
+    ),
     new Call("Sample-1", [new Blank(exprData("An argument blank"))]),
 ]);
 

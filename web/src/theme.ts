@@ -52,6 +52,8 @@ export class Highlight {
 
 const colour = {
     clickable: "#1b65f1",
+    // This needs to be different in dark mode.
+    clickableBackground: "#1b65f1",
     active: "#003fb7",
     brand: "#0ba902",
     error: "#f44336",
@@ -70,10 +72,16 @@ const droppable = {
     colour: colour.clickable,
 };
 
+// Until https://github.com/Popmotion/popmotion/pull/868 gets merged we have to use rgba notation.
+const transparentWhite = "rgba(1, 1, 1, 0)";
+
 export const DefaultTheme = {
-    borderRadius: 4,
     colour,
     droppable,
+
+    general: {
+        borderRadius: 4,
+    },
 
     shadow: {
         normal: "0 0 0 1px #10161a1a, 0 2px 4px #10161a33, 0 8px 24px #10161a33",
@@ -126,7 +134,7 @@ export const DefaultTheme = {
             .withAnimation(),
         hover: new Highlight("hover", undefined, "#cecece").blank("#efefef", "#dcdcdc"),
         contextMenu: new Highlight("context", undefined, "#248af0"),
-        droppable: new Highlight("droppable", "#ffffff00", colour.clickable).withDroppable(),
+        droppable: new Highlight("droppable", transparentWhite, colour.clickable).withDroppable(),
     },
 
     layout: {
@@ -142,6 +150,54 @@ export const DefaultTheme = {
     },
 };
 
+export type KaleTheme = typeof DefaultTheme;
+
+function updateTheme(partial: { [p in keyof KaleTheme]?: Partial<KaleTheme[p]> }): KaleTheme {
+    const result = {} as { [k: string]: unknown };
+    for (const category of Object.keys(DefaultTheme) as (keyof KaleTheme)[]) {
+        result[category] = Object.assign({}, DefaultTheme[category], partial[category]);
+    }
+    return result as KaleTheme;
+}
+
+export const DarkTheme = updateTheme({
+    colour: {
+        clickable: "#70aeff",
+        clickableBackground: "#2483ff",
+        active: "#2483ff",
+        brand: "#0dde02",
+        background: "#202020",
+        innerBackground: "#282828",
+        grey: "#404040",
+        disabled: "#424242",
+        subtleClickable: "#525252",
+        mainText: "#ffffff",
+    },
+    shadow: {
+        normal: "0 0 0 1px #505050, 0 2px 4px #00000033, 0 8px 24px #00000033",
+        small: "0 0 0 1px #505050, 0 2px 4px #00000033",
+    },
+
+    highlight: {
+        hover: new Highlight("hover", undefined, "#515151").blank("#404040", "#525252"),
+        selection: new Highlight("selection", "#2f2f2f", "#73c7ff")
+            .blurred("#232323", "#004488")
+            .withAnimation(),
+    },
+    blank: {
+        textColour: "#d2d2d2",
+        resting: new Highlight("selection", "#353535", "#404040"),
+    },
+    syntaxColour: {
+        call: "#ffffff",
+        comment: "#15d131",
+        variable: "#2da3ff",
+        literal: "#fd8b21",
+        underline: "#d2d2d2",
+        listRuler: "#ffffff",
+    },
+});
+
 assert(
     DefaultTheme.highlight.padding.bottom + DefaultTheme.highlight.padding.top <
         DefaultTheme.layout.lineSpacing,
@@ -151,8 +207,6 @@ assert(
     DefaultTheme.highlight.mainPadding.contains(DefaultTheme.highlight.padding),
     "Main padding needs to be at least as big as the normal padding",
 );
-
-export type KaleTheme = typeof DefaultTheme;
 
 // Augument the DefaultTheme type.
 // See: https://github.com/styled-components/styled-components-website/issues/447

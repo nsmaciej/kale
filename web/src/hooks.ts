@@ -45,14 +45,14 @@ export function useDocumentEvent<K extends keyof DocumentEventMap>(
     name: K,
     listener: (event: DocumentEventMap[K]) => void,
     options?: boolean | AddEventListenerOptions,
-) {
+): void {
     useEffect(() => {
         document.addEventListener(name, listener, options);
         return () => document.removeEventListener(name, listener);
     }, [name, listener, options]);
 }
 
-function useDrop(listener: DropListener) {
+function useDrop(listener: DropListener): void {
     const dragAndDrop = assertSome(useContext(DragAndDrop));
     useEffect(() => {
         dragAndDrop.addListener(listener);
@@ -83,4 +83,13 @@ export function useSimpleDrop(
         },
     });
     return lastContains;
+}
+
+export function useMediaQuery(query: string): boolean {
+    const [value, setValue] = useState<boolean | null>(null);
+    const queryList = window.matchMedia(query);
+    useEffect(() => {
+        queryList.addListener((e) => setValue(e.matches));
+    });
+    return value ?? queryList.matches;
 }

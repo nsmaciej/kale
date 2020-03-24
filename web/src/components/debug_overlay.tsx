@@ -3,8 +3,10 @@ import React from "react";
 import { ExprAreaMap } from "expr_view";
 import { Offset } from "geometry";
 import { SvgRect, DebugRect } from "expr_view/components";
+import { useUsesDarkTheme } from "contexts/theme";
 
 export default function SvgDebugOverlay({ areaMap }: { areaMap: ExprAreaMap }) {
+    const darkTheme = useUsesDarkTheme();
     const exprs = Object.entries(areaMap).map(([exprId, area]) => (
         <>
             <SvgRect
@@ -14,7 +16,12 @@ export default function SvgDebugOverlay({ areaMap }: { areaMap: ExprAreaMap }) {
                 stroke={area.inline ? "blue" : "red"}
                 opacity="0.7"
             />
-            <text x={area.rect.x} y={area.rect.y + 5} fontSize="5">
+            <text
+                x={area.rect.x + 1}
+                y={area.rect.y + area.rect.height - 1}
+                fontSize={7}
+                fill={darkTheme ? "white" : "black"}
+            >
                 {area.expr.id}
             </text>
         </>

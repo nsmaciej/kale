@@ -15,7 +15,7 @@ const EditorInput = styled.input`
     font: inherit;
     color: inherit;
     border: 1px solid ${(p) => p.theme.colour.subtleClickable};
-    border-radius: ${(p) => p.theme.borderRadius}px;
+    border-radius: ${(p) => p.theme.general.borderRadius}px;
     width: ${inputWidthPx}px;
     position: relative;
     padding: 8px 5px;

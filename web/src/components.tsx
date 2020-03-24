@@ -52,10 +52,10 @@ interface ShortcutProps {
 
 export const Shortcut = styled.kbd<ShortcutProps>`
     display: inline-block;
-    background-color: ${(p) => (p.subtle ? "#ffffff" : "#eeeeee")};
+    background-color: ${(p) => (p.subtle ? p.theme.colour.innerBackground : p.theme.colour.grey)};
     border-radius: 3px;
-    border: 1px solid #cecece;
-    box-shadow: 0 1px 1px #6b6b6b33;
+    border: 1px solid ${(p) => p.theme.colour.subtleClickable};
+    box-shadow: 0 1px 1px ${(p) => p.theme.colour.subtleText};
     font-size: 0.85em;
     padding: 2px;
     white-space: nowrap;
