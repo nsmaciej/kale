@@ -6,7 +6,7 @@ import * as Select from "selection";
 import { EditorStackActions } from "hooks/editor_stack";
 import { KaleTheme, Highlight } from "theme";
 import { Offset, Rect, ClientOffset } from "geometry";
-import { assertSome, reverseObject, assert, insertSibling, arrayEquals } from "utils";
+import { assertSome, reverseObject, assert, insertSibling, arrayEquals, makeMutableRef } from "utils";
 import Expr, { ExprId } from "expr";
 import ExprView, { ExprArea, ExprAreaMap } from "expr_view";
 
@@ -48,8 +48,8 @@ interface EditorProps extends EditorWrapperProps {
 
 class Editor extends PureComponent<EditorProps, EditorState> {
     private readonly containerRef = React.createRef<HTMLDivElement>();
-    private readonly exprAreaMapRef = React.createRef<ExprAreaMap>();
-    private readonly exprAreaRef = React.createRef<ExprArea>();
+    private readonly exprAreaMapRef = makeMutableRef<ExprAreaMap>();
+    private readonly exprAreaRef = makeMutableRef<ExprArea>();
 
     state: EditorState = {
         foldingComments: false,
@@ -673,7 +673,6 @@ class Editor extends PureComponent<EditorProps, EditorState> {
                     highlights={this.memoizedHighlights()}
                     focused={this.props.focused}
                     foldComments={this.state.foldingComments}
-                    theme={this.props.theme}
                     exprAreaMapRef={this.exprAreaMapRef}
                     exprAreaRef={this.exprAreaRef}
                     showDebugOverlay={this.state.showingDebugOverlay}

@@ -11,8 +11,8 @@ import Expr, { ExprId, ExprVisitor } from "expr";
 import TextMetrics from "text_metrics";
 
 import { Layout, TextProperties, hstack, vstack, ExprArea } from "expr_view/core";
-import { UnderlineLine, SvgLine, HitBox } from "expr_view/components";
 import { Type } from "vm/types";
+import { UnderlineLine, SvgLine, HitBox } from "expr_view/components";
 
 // See https://vanseodesign.com/web-design/svg-text-baseline-alignment/ for excellent discussion
 // on SVG text aligment properties.
@@ -311,6 +311,7 @@ function argsEquals(prev: LayoutExprArgs, next: LayoutExprArgs) {
     return !highlightsBlanks(lhs!) && !highlightsBlanks(rhs!);
 }
 
+//TODO: One day implement this as a hook with useMemo now that ExprView is a functional component.
 export default memoizeOne(
     function layoutExpr(theme: KaleTheme, expr: Expr, props?: LayoutProps): Layout {
         return materialiseUnderlines(theme, new ExprLayout(theme, props ?? {}).layout(expr));

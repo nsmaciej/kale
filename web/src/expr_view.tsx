@@ -1,29 +1,37 @@
-import React, { PureComponent } from "react";
+import React, {
+    MutableRefObject,
+    useCallback,
+    useContext,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+} from "react";
 import { motion } from "framer-motion";
 
 import * as E from "expr";
-import { KaleTheme, Highlight } from "theme";
+import { assertSome } from "utils";
+import { Highlight } from "theme";
 import { Offset, Rect, ClientOffset } from "geometry";
-import { Optional, assert, assertSome } from "utils";
 import ContextMenu, { ContextMenuItem } from "components/context_menu";
 import DragAndDrop from "contexts/drag_and_drop";
 import Expr, { ExprId } from "expr";
 
 import { ExprArea, ExprAreaMap, flattenArea } from "expr_view/core";
 import { SvgGroup, SvgRect, DebugRect } from "expr_view/components";
+import { useTheme } from "styled-components";
 import layoutExpr from "expr_view/layout";
 
 export { ExprArea, ExprAreaMap, FlatExprArea } from "expr_view/core";
 
 interface ExprViewProps {
     expr: Expr;
-    theme: KaleTheme;
-    exprAreaMapRef?: React.RefObject<ExprAreaMap>;
-    exprAreaRef?: React.RefObject<ExprArea>;
+    exprAreaMapRef?: MutableRefObject<ExprAreaMap | null>;
+    exprAreaRef?: MutableRefObject<ExprArea | null>;
 
     // Callbacks.
     onClick?(expr: ExprId): void;
-    onHover?(expr: Optional<ExprId>): void;
+    onHover?(expr: ExprId | null): void;
     onDoubleClick?(expr: ExprId): void;
     /** Triggered when an expr has been dragged out using drag-and-drop. */
     onDraggedOut?(expr: ExprId): void;
@@ -46,29 +54,29 @@ interface ExprViewProps {
     highlights?: readonly [ExprId, Highlight][];
 }
 
-interface ExprViewState {
-    showingMenu: Optional<{ menu: ContextMenuItem[]; at: ClientOffset; expr: ExprId }>;
+interface ExprMenuState {
+    menu: ContextMenuItem[];
+    at: ClientOffset;
+    expr: ExprId;
 }
 
 //TODO: Make a functional component.
-export default class ExprView extends PureComponent<ExprViewProps, ExprViewState> {
-    static contextType = DragAndDrop;
-    declare context: React.ContextType<typeof DragAndDrop>;
+export default React.memo(function ExprView(props: ExprViewProps) {
+    const theme = useTheme();
+    const dnd = assertSome(useContext(DragAndDrop));
+    const [showingMenu, setShowingMenu] = useState<ExprMenuState | null>(null);
 
-    state: ExprViewState = { showingMenu: null };
-    private readonly containerRef = React.createRef<SVGSVGElement>();
-    private pendingExprAreaMap: ExprAreaMap | null = null;
-    private pendingExprArea: ExprArea | null = null;
+    const containerRef = useRef<SVGSVGElement>(null);
+    const pendingExprAreaMap = useRef(null as ExprAreaMap | null);
+    const pendingExprArea = useRef(null as ExprArea | null);
 
-    get theme() {
-        return this.props.theme;
-    }
+    // useMemo needed because this is a useCallbackp dependency.
+    const padding = useMemo(
+        () => (props.frozen ? theme.exprView.frozenPadding : theme.exprView.padding),
+        [props.frozen, theme],
+    );
 
-    get padding() {
-        return this.props.frozen ? this.theme.exprView.frozenPadding : this.theme.exprView.padding;
-    }
-
-    private debugRenderAreas(areas: ExprAreaMap) {
+    function debugRenderAreas(areas: ExprAreaMap) {
         const exprs = Object.entries(areas).map(([k, v]) => (
             <SvgRect
                 key={`e${k}`}
@@ -89,15 +97,13 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
         return exprs.concat(texts);
     }
 
-    private drawRect(exprId: ExprId, highlight: Highlight, areas: ExprAreaMap) {
+    function drawRect(exprId: ExprId, highlight: Highlight, areas: ExprAreaMap) {
         if (areas[exprId] == null) return;
         const rect = areas[exprId].rect.padding(
-            this.props.expr.id === exprId
-                ? this.theme.highlight.mainPadding
-                : this.theme.highlight.padding,
+            props.expr.id === exprId ? theme.highlight.mainPadding : theme.highlight.padding,
         );
         // Hack: Blanks draw their own highlights.
-        const isBlank = this.props.expr.findId(exprId) instanceof E.Blank;
+        const isBlank = props.expr.findId(exprId) instanceof E.Blank;
         return (
             <motion.rect
                 animate={{
@@ -108,9 +114,9 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
                     opacity: isBlank ? 0 : 1, // +!isBlank
                 }}
                 key={`highlight-${highlight.name}`}
-                rx={this.theme.highlight.radius}
-                fill={highlight.fill(this.props.focused === true) ?? "none"}
-                stroke={highlight.stroke(this.props.focused === true) ?? "none"}
+                rx={theme.highlight.radius}
+                fill={highlight.fill(props.focused === true) ?? "none"}
+                stroke={highlight.stroke(props.focused === true) ?? "none"}
                 initial={false}
                 style={{ filter: highlight.droppable ? "url(#droppable)" : undefined }}
                 transition={{
@@ -122,168 +128,143 @@ export default class ExprView extends PureComponent<ExprViewProps, ExprViewState
         );
     }
 
-    // Handler for the mousedown event.
-    private onMouseDown(event: React.MouseEvent, expr: Expr) {
-        assert(event.type === "mousedown");
-        if (
-            event.buttons !== 1 ||
-            this.pendingExprAreaMap === null ||
-            this.containerRef.current === null
-        ) {
-            return;
-        }
-
-        event.stopPropagation();
-        const containerOrigin = ClientOffset.fromBoundingRect(
-            this.containerRef.current?.getBoundingClientRect(),
-        );
-        // Frozen expressions drag everything.
-        const dragExpr = this.props.frozen ? this.props.expr : expr;
-        assertSome(this.context).maybeStartDrag(
-            ClientOffset.fromClient(event),
-            this.pendingExprAreaMap[dragExpr.id].rect.origin
-                .offset(containerOrigin)
-                .offset(this.padding.topLeft.neg),
-            this.props.frozen ? dragExpr.resetIds() : dragExpr,
-            () => this.props.onDraggedOut?.(dragExpr.id),
-        );
-    }
-
-    private onContextMenu(e: React.MouseEvent, expr: Expr) {
-        if (this.props.onContextMenu === undefined) return;
-        e.preventDefault();
-        e.stopPropagation();
-        const menu = this.props.onContextMenu(expr.id);
-        if (menu.length > 0) {
-            this.setState({
-                showingMenu: {
-                    at: ClientOffset.fromClient(e),
-                    menu: this.props.onContextMenu?.(expr.id),
-                    expr: expr.id,
-                },
-            });
-        }
-    }
-
+    const { frozen, expr, onDoubleClick, onClick, onHover, onDraggedOut, onContextMenu } = props;
     // Change the highlighted expr.
-    private onHoverExpr(event: React.MouseEvent, expr: Optional<Expr>) {
-        if (this.props.onHover != null) {
-            event.stopPropagation();
-            this.props.onHover(expr?.id);
-        }
-    }
+    const exprPropsFor = useCallback(
+        (childExpr: Expr): Partial<React.DOMAttributes<Element>> => {
+            /** Prevents default and calls `fn` with `arg` if `fn` is provided, nop otherwise. */
+            function trigger<T>(fn: ((arg: T) => void) | undefined, arg: T, e: React.MouseEvent) {
+                if (fn !== undefined) {
+                    e.preventDefault();
+                    fn(arg);
+                }
+            }
+            return {
+                onDoubleClick(event) {
+                    trigger(onDoubleClick, childExpr.id, event);
+                },
+                onClick(event) {
+                    trigger(onClick, childExpr.id, event);
+                },
+                onMouseEnter(event: React.MouseEvent) {
+                    trigger(onHover, childExpr.id, event);
+                },
+                onMouseLeave(event: React.MouseEvent) {
+                    trigger(onHover, null, event);
+                },
+                onMouseDown(event) {
+                    if (event.buttons !== 1) return;
+                    event.stopPropagation();
+                    if (pendingExprAreaMap.current === null || containerRef.current === null) {
+                        return;
+                    }
 
-    private readonly exprPropsFor = (expr: Expr): Partial<React.DOMAttributes<Element>> => ({
-        onMouseEnter: (e) => this.onHoverExpr(e, expr),
-        onMouseLeave: (e) => this.onHoverExpr(e, null),
-        onContextMenu: (e) => this.onContextMenu(e, expr),
-        onMouseDown: (e) => this.onMouseDown(e, expr),
-        // Note we do not stopPropagation if we aren't asked to handle something.
-        onDoubleClick: (e) => {
-            if (this.props.onDoubleClick != null) {
-                e.stopPropagation();
-                this.props.onDoubleClick(expr.id);
-            }
+                    // Frozen expressions drag everything.
+                    const dragExpr = frozen ? expr : childExpr;
+                    const containerOrigin = ClientOffset.fromBoundingRect(
+                        containerRef.current.getBoundingClientRect(),
+                    );
+                    const exprOrigin = pendingExprAreaMap.current[dragExpr.id].rect.origin;
+                    dnd.maybeStartDrag(
+                        ClientOffset.fromClient(event),
+                        exprOrigin.offset(containerOrigin).offset(padding.topLeft.neg),
+                        frozen ? dragExpr.resetIds() : dragExpr,
+                        () => onDraggedOut?.(dragExpr.id),
+                    );
+                },
+                onContextMenu(event) {
+                    if (onContextMenu === undefined) return;
+                    event.preventDefault();
+                    event.stopPropagation();
+                    const menu = onContextMenu(childExpr.id);
+                    if (menu.length > 0) {
+                        setShowingMenu({
+                            at: ClientOffset.fromClient(event),
+                            menu: onContextMenu?.(childExpr.id),
+                            expr: childExpr.id,
+                        });
+                    }
+                },
+            };
         },
-        onClick: (e) => {
-            if (this.props.onClick != null) {
-                e.stopPropagation();
-                this.props.onClick(expr.id);
-            }
-        },
+        [dnd, expr, frozen, onClick, onContextMenu, onDoubleClick, onDraggedOut, onHover, padding],
+    );
+
+    useEffect(() => {
+        if (props.exprAreaMapRef !== undefined && pendingExprAreaMap.current !== null) {
+            props.exprAreaMapRef.current = pendingExprAreaMap.current;
+        }
+        if (props.exprAreaRef !== undefined && pendingExprArea.current !== null) {
+            props.exprAreaRef.current = pendingExprArea.current;
+        }
     });
 
-    private updateExprAreaMapRef() {
-        if (this.props.exprAreaMapRef !== undefined && this.pendingExprAreaMap !== null) {
-            // See https://github.com/DefinitelyTyped/DefinitelyTyped/issues/31065
-            // As far as I can see React's users are free to modify .current, but the typings do not
-            // respect that.
-            (this.props.exprAreaMapRef as React.MutableRefObject<
-                ExprAreaMap
-            >).current = this.pendingExprAreaMap;
-        }
-        if (this.props.exprAreaRef !== undefined && this.pendingExprArea !== null) {
-            (this.props.exprAreaRef as React.MutableRefObject<
-                ExprArea
-            >).current = this.pendingExprArea;
-        }
-    }
-    componentDidMount() {
-        this.updateExprAreaMapRef();
-    }
-    componentDidUpdate() {
-        this.updateExprAreaMapRef();
+    const highlights = props.highlights?.slice() ?? [];
+    if (showingMenu != null) {
+        highlights.push([showingMenu.expr, theme.highlight.contextMenu]);
     }
 
-    render() {
-        const highlights = this.props.highlights?.slice() ?? [];
-        if (this.state.showingMenu != null) {
-            highlights.push([this.state.showingMenu.expr, this.theme.highlight.contextMenu]);
+    const { nodes, size, areas, text } = layoutExpr(theme, props.expr, {
+        exprPropsFor,
+        focused: props.focused,
+        // Pass something that can be momoized if we can.
+        highlights: showingMenu ? highlights : props.highlights,
+        foldComments: props.foldComments,
+    });
+
+    // Spooky in React's Concurrent Mode, but it's ok since we'll only use this when
+    // we commit and it doesn't depend on any previous calls to render.
+    pendingExprArea.current = {
+        expr: props.expr,
+        children: areas,
+        rect: new Rect(padding.topLeft, size),
+        inline: false,
+        text,
+    };
+    pendingExprAreaMap.current = flattenArea(pendingExprArea.current);
+
+    const highlightRects = [];
+    if (props.highlights != null) {
+        for (const [exprId, highlight] of highlights) {
+            highlightRects.push(drawRect(exprId, highlight, pendingExprAreaMap.current));
         }
-
-        const { nodes, size, areas, text } = layoutExpr(this.theme, this.props.expr, {
-            exprPropsFor: this.exprPropsFor,
-            // Passed through props.
-            focused: this.props.focused,
-            // Pass something that can be momoized if we can.
-            highlights: this.state.showingMenu ? highlights : this.props.highlights,
-            foldComments: this.props.foldComments,
-        });
-
-        // Spooky in React's Concurrent Mode, but it's ok since we'll only use this when
-        // we commit and it doesn't depend on any previous calls to render.
-        this.pendingExprArea = {
-            expr: this.props.expr,
-            children: areas,
-            rect: new Rect(this.padding.topLeft, size),
-            inline: false,
-            text,
-        };
-        this.pendingExprAreaMap = flattenArea(this.pendingExprArea);
-
-        const highlightRects = [];
-        if (this.props.highlights != null) {
-            for (const [exprId, highlight] of highlights) {
-                highlightRects.push(this.drawRect(exprId, highlight, this.pendingExprAreaMap));
-            }
-        }
-
-        const { width, height } = size.padding(this.padding);
-        let scale = this.props.scale ?? 1;
-        if (this.props.width !== undefined) {
-            // Note this already includes the padding.
-            scale = Math.min(this.props.width, width * scale) / width;
-        }
-        return (
-            <>
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    ref={this.containerRef}
-                    width={width * scale}
-                    height={height * scale}
-                    // SVGs are inline by default, this leads to a scourge of invisible space
-                    // characters. Make it a block instead.
-                    display="block"
-                    viewBox={`0 0 ${width} ${height}`}
-                    // If we can open context menus, do not allow the system menu.
-                    onContextMenu={(e) => this.props.onContextMenu && e.preventDefault()}
-                    style={{ cursor: "default" }}
-                >
-                    {highlightRects}
-                    <SvgGroup translate={this.padding.topLeft}>{nodes}</SvgGroup>
-                    {this.props.showDebugOverlay && this.debugRenderAreas(this.pendingExprAreaMap)}
-                </svg>
-                {this.state.showingMenu && (
-                    <ContextMenu
-                        items={this.state.showingMenu.menu}
-                        origin={this.state.showingMenu.at}
-                        dismissMenu={() => {
-                            this.setState({ showingMenu: null });
-                            this.props.onFocus?.();
-                        }}
-                    />
-                )}
-            </>
-        );
     }
-}
+
+    const { width, height } = size.padding(padding);
+    let scale = props.scale ?? 1;
+    if (props.width !== undefined) {
+        // Note this already includes the padding.
+        scale = Math.min(props.width, width * scale) / width;
+    }
+    return (
+        <>
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                ref={containerRef}
+                width={width * scale}
+                height={height * scale}
+                // SVGs are inline by default, this leads to a scourge of invisible space
+                // characters. Make it a block instead.
+                display="block"
+                viewBox={`0 0 ${width} ${height}`}
+                // If we can open context menus, do not allow the system menu.
+                onContextMenu={(e) => props.onContextMenu && e.preventDefault()}
+                style={{ cursor: "default" }}
+            >
+                {highlightRects}
+                <SvgGroup translate={padding.topLeft}>{nodes}</SvgGroup>
+                {props.showDebugOverlay && debugRenderAreas(pendingExprAreaMap.current)}
+            </svg>
+            {showingMenu && (
+                <ContextMenu
+                    items={showingMenu.menu}
+                    origin={showingMenu.at}
+                    dismissMenu={() => {
+                        setShowingMenu(null);
+                        props.onFocus?.();
+                    }}
+                />
+            )}
+        </>
+    );
+});

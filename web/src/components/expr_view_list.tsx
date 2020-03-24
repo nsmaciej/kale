@@ -79,7 +79,6 @@ function ExprViewListItem<E extends ShortcutExpr>({
     onDraggedOut,
     onContextMenu,
 }: ExprViewListItemProps<E> & { item: E }) {
-    const theme = useTheme();
     const draggedOut = useCallback(() => onDraggedOut?.(item), [onDraggedOut, item]);
     const contextMenu = useCallback(() => onContextMenu?.(item) ?? [], [onContextMenu, item]);
     return (
@@ -87,7 +86,6 @@ function ExprViewListItem<E extends ShortcutExpr>({
             <ExprView
                 frozen
                 expr={item.expr}
-                theme={theme}
                 width={width}
                 scale={scale}
                 onDraggedOut={draggedOut}

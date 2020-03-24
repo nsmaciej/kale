@@ -128,3 +128,8 @@ export function findNearestIndex<T>(
     }
     return null;
 }
+
+/** This is an alternative to React.createRef, which produces readonly ref objects. */
+export function makeMutableRef<T>(): { current: T | null } {
+    return { current: null };
+}

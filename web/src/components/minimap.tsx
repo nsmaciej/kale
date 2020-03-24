@@ -1,5 +1,5 @@
 import React, { useContext } from "react";
-import styled, { useTheme } from "styled-components";
+import styled from "styled-components";
 
 import { Stack } from "components";
 import { assertSome } from "utils";
@@ -30,13 +30,12 @@ function MinimapItem({
     focused: boolean;
     onClick(): void;
 }) {
-    const theme = useTheme();
     const workspace = assertSome(useContext(Workspace)).workspace;
     const expr = useDebounce(assertFunc(assertSome(workspace.scope.get(editor.name))).expr, 1000);
     return (
         <MinimapItemStack key={editor.key} onClick={onClick} focused={focused}>
             <span>{editor.name}</span>
-            <ExprView frozen theme={theme} scale={0.2} expr={expr} />
+            <ExprView frozen scale={0.2} expr={expr} />
         </MinimapItemStack>
     );
 }

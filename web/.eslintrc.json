@@ -46,6 +46,8 @@
 
         // This is just a pain to have on.
         "@typescript-eslint/explicit-function-return-type": "off",
+        // Triggers too many false-positives in functional components.
+        "@typescript-eslint/unbound-method": "off",
         "@typescript-eslint/no-use-before-define": [
             "error",
             { "classes": false, "functions": false }
