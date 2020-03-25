@@ -2,10 +2,12 @@ import { motion } from "framer-motion";
 import React, { Fragment, ReactNode, useCallback } from "react";
 import styled, { useTheme } from "styled-components";
 
-import { ContextMenuItem } from "components/context_menu";
-import { Shortcut, Box } from "components";
+import { Box } from "components";
 import Expr from "expr";
 import ExprView from "expr_view";
+
+import { ContextMenuItem } from "components/context_menu";
+import Shortcut from "components/shortcut";
 
 const ExprList = styled.div`
     display: grid;
@@ -28,7 +30,7 @@ const ExprListItem = styled(motion.div)`
     width: min-content;
 `;
 
-const ExprListShortcut = styled(Shortcut)`
+const ExprListShortcut = styled.div`
     grid-column: shortcut;
     justify-self: right;
     margin-top: ${(p) => p.theme.exprView.padding.top / 2}px;
@@ -120,7 +122,9 @@ export default function ExprViewList<E extends ShortcutExpr>({
         // This has to be a fragment. Otherwise the items won't layout in a grid.
         <Fragment key={item.expr.id}>
             {item.shortcut && theme.feature.exprListShortcuts && (
-                <ExprListShortcut>{item.shortcut}</ExprListShortcut>
+                <ExprListShortcut>
+                    <Shortcut keys={item.shortcut} />
+                </ExprListShortcut>
             )}
             <div style={{ width: widthWithPadding, gridColumn: "expr" }}>
                 <ExprListItem

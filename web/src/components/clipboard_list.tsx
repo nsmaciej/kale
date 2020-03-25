@@ -2,12 +2,13 @@ import { AiOutlinePushpin, AiFillPushpin } from "react-icons/ai";
 import React, { useContext, useRef } from "react";
 
 import { assertSome, mod } from "utils";
-import { SubtleButton, NonIdealText, Shortcut } from "components";
+import { SubtleButton, NonIdealText } from "components";
 import { useSimpleDrop } from "hooks";
 import Clipboard, { ClipboardEntry } from "contexts/clipboard";
 
 import ExprViewList from "components/expr_view_list";
 import Pane from "components/pane";
+import Shortcut from "components/shortcut";
 
 export default React.memo(function ClipboardList() {
     const containerRef = useRef<HTMLDivElement>(null);
@@ -64,7 +65,7 @@ export default React.memo(function ClipboardList() {
                     <NonIdealText>
                         Nothing here yet.
                         <br />
-                        Use <Shortcut>C</Shortcut> to copy something
+                        Use <Shortcut keys="c" /> to copy something
                     </NonIdealText>
                 }
                 extrasFudge={30}

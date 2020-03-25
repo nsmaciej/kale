@@ -3,9 +3,9 @@ import styled from "styled-components";
 
 import { Offset, Rect } from "geometry";
 import { Optional, mod, assert, delay } from "utils";
-import { Shortcut } from "components";
 import { useDisableScrolling } from "hooks";
 import Menu, { MenuItem } from "components/menu";
+import Shortcut from "components/shortcut";
 
 const ContextMenuSeparator = styled.div`
     height: 0;
@@ -139,19 +139,6 @@ export default function ContextMenu({ items, origin, dismissMenu, popover }: Con
         }
     }
 
-    function renderShortcut(key: Optional<string>) {
-        const S = Shortcut;
-        if (key == null) return null;
-        if (key.length > 1) return <S subtle>{key}</S>;
-        if (key.toLowerCase() === key) return <S subtle>{key.toUpperCase()}</S>;
-        return (
-            <>
-                <S subtle>Shift</S>
-                <S subtle>{key.toUpperCase()}</S>
-            </>
-        );
-    }
-
     return (
         <div
             style={{
@@ -185,7 +172,7 @@ export default function ContextMenu({ items, origin, dismissMenu, popover }: Con
                     (item.label ? (
                         <ContextMenuItemContainer>
                             <span>{item.label}</span>
-                            {renderShortcut(item.keyEquivalent)}
+                            {item.keyEquivalent && <Shortcut subtle keys={item.keyEquivalent} />}
                         </ContextMenuItemContainer>
                     ) : (
                         <ContextMenuSeparator />

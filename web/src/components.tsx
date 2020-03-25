@@ -1,4 +1,4 @@
-import styled, { css } from "styled-components";
+import styled from "styled-components";
 import {
     SpaceProps,
     GridProps,
@@ -46,36 +46,6 @@ export const Stack = styled(Box)`
     }
 `;
 
-interface ShortcutProps {
-    subtle?: boolean;
-}
-
-export const Shortcut = styled.kbd<ShortcutProps>`
-    display: inline-block;
-    background-color: ${(p) => (p.subtle ? p.theme.colour.innerBackground : p.theme.colour.grey)};
-    border-radius: 3px;
-    border: 1px solid ${(p) => p.theme.colour.subtleClickable};
-    box-shadow: 0 1px 1px ${(p) => p.theme.colour.subtleText};
-    font-size: 0.85em;
-    padding: 2px;
-    white-space: nowrap;
-    font-variant-numeric: normal;
-    min-width: 1.5em;
-    text-align: center;
-    font-family: inherit;
-    /* Ensure we always look snazzy no matter the context */
-    color: ${(p) => p.theme.colour.mainText};
-    line-height: 1;
-    & + & {
-        margin-left: 1ex;
-    }
-`;
-
-// Prevent a shortcut group from containing line-breaks.
-export const ShortcutGroup = styled.span`
-    display: inline-block;
-`;
-
 export const SubtleButton = styled.button<{ selected?: boolean }>`
     color: ${(p) => p.theme.colour.clickable};
     transition: color 0.1s;
@@ -94,8 +64,8 @@ export const IconButton = styled.button`
     border: none;
     color: ${(p) => p.theme.colour.clickable};
     & > svg {
-        width: 2em;
-        height: 2em;
+        width: 1.5em;
+        height: 1.5em;
     }
     &:hover,
     &:focus {

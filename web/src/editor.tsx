@@ -6,7 +6,14 @@ import * as Select from "selection";
 import { EditorStackActions } from "hooks/editor_stack";
 import { KaleTheme, Highlight } from "theme";
 import { Offset, Rect, ClientOffset } from "geometry";
-import { assertSome, reverseObject, assert, insertSibling, arrayEquals, makeMutableRef } from "utils";
+import {
+    assertSome,
+    reverseObject,
+    assert,
+    insertSibling,
+    arrayEquals,
+    makeMutableRef,
+} from "utils";
 import Expr, { ExprId } from "expr";
 import ExprView, { ExprArea, ExprAreaMap } from "expr_view";
 
@@ -309,6 +316,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
                 this.replaceAndEdit(e, fn, false);
             }
         },
+        smartSpace: (e: ExprId) => this.smartSpace(e),
         // Demo things that should be moved to the toy-box.
         demoAddVariable: (e: ExprId) => this.replaceAndEdit(e, new E.Variable(""), true),
         demoAddString: (e: ExprId) => this.replaceAndEdit(e, new E.Literal("", Type.Text), true),
@@ -319,6 +327,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
     // See https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values.
     // Keep these sorted.
     private readonly menuKeyEquivalents: { [key: string]: keyof Editor["actions"] } = {
+        " ": "smartSpace",
         "\\": "disable",
         "#": "foldComments",
         Backspace: "delete",
@@ -342,7 +351,6 @@ class Editor extends PureComponent<EditorProps, EditorState> {
     // The shortcuts only accessible from the keyboard.
     // Keep these sorted.
     private readonly editorShortcuts: { [key: string]: (sel: ExprId) => void } = {
-        " ": this.smartSpace,
         "0": this.pasteAction(9),
         "1": this.pasteAction(0),
         "2": this.pasteAction(1),
@@ -379,6 +387,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         hidden?: boolean;
     })[] = [
         { action: "edit", label: "Edit..." },
+        { action: "smartSpace", label: "New Blank or Move Blank Up" },
         { action: "copy", label: "Copy" },
         { action: "openEditor", label: "Open definition", enabled: this.enableForCalls },
         { action: "showDebugOverlay", label: "Toggle the Debug Overlay", hidden: true },

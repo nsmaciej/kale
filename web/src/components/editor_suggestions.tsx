@@ -4,10 +4,12 @@ import { AiOutlinePlusCircle } from "react-icons/ai";
 
 import { assertSome } from "utils";
 import { EditorStackActions } from "hooks/editor_stack";
-import { SubtleButton, Shortcut, Box, Stack } from "components";
-import Menu, { MenuTextWrapper } from "components/menu";
+import { SubtleButton, Box, Stack } from "components";
 import useSuggestions from "hooks/suggestions";
 import Workspace from "contexts/workspace";
+
+import Menu, { MenuTextWrapper } from "components/menu";
+import Shortcut from "components/shortcut";
 
 const inputWidthPx = 400;
 
@@ -76,7 +78,7 @@ export default React.forwardRef(function EditorSuggestions(
     return (
         <Stack gap={10} alignItems="center">
             <div>
-                <Shortcut>/</Shortcut>
+                <Shortcut keys="/" />
             </div>
             <Box position="relative">
                 <EditorInput
