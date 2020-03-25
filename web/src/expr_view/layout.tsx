@@ -14,8 +14,6 @@ import { Layout, TextProperties, hstack, vstack, ExprArea } from "expr_view/core
 import { Type } from "vm/types";
 import { UnderlineLine, SvgLine, HitBox } from "expr_view/components";
 
-// See https://vanseodesign.com/web-design/svg-text-baseline-alignment/ for excellent discussion
-// on SVG text aligment properties.
 const Code = styled.text`
     font-size: ${(p) => p.theme.expr.fontSizePx}px;
     font-family: ${(p) => p.theme.expr.fontFamily};
@@ -254,7 +252,6 @@ class ExprLayout implements ExprVisitor<Layout> {
         });
 
         let layout: Layout;
-        // Adding a comment makes a call non-inline but not bold.
         const commentIsInline =
             expr.data.comment == null || this.props.foldComments || this.state.hasListParent;
         if (isCallInline(this.t, args) && commentIsInline) {

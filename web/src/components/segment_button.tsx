@@ -1,10 +1,10 @@
 import React from "react";
 import styled from "styled-components";
 
-export interface SegmentButtonProps {
-    labels: readonly string[];
+export interface SegmentButtonProps<L> {
+    labels: readonly L[];
     active?: string | null;
-    onClick(label: string, segment: number): void;
+    onClick(label: L, segment: number): void;
 }
 
 const Container = styled.div`
@@ -28,7 +28,11 @@ const Segment = styled.button<{ active: boolean }>`
     }
 `;
 
-export default function SegmentButton({ labels, active, onClick }: SegmentButtonProps) {
+export default function SegmentButton<L extends string>({
+    labels,
+    active,
+    onClick,
+}: SegmentButtonProps<L>) {
     return (
         <Container>
             {labels.map((label, i) => (
