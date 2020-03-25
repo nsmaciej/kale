@@ -1,10 +1,10 @@
-import React, { useState, ReactNode, useRef, useContext } from "react";
+import React, { useState, ReactNode, useRef } from "react";
 import ReactDOM from "react-dom";
 import styled, { useTheme } from "styled-components";
 
 import { ClientOffset } from "geometry";
-import { Optional, assertSome, assert } from "utils";
-import { useDocumentEvent } from "hooks";
+import { assertSome, assert } from "utils";
+import { useDocumentEvent, useContextChecked } from "hooks";
 import Clipboard from "contexts/clipboard";
 import Expr from "expr";
 import layoutExpr from "expr_view/layout";
@@ -39,7 +39,7 @@ export interface DragAndDropContext {
     removeListener(listener: DropListener): void;
 }
 
-const DragAndDrop = React.createContext<Optional<DragAndDropContext>>(null);
+const DragAndDrop = React.createContext<DragAndDropContext | null>(null);
 export default DragAndDrop;
 
 interface DraggingState {
@@ -56,8 +56,7 @@ interface DraggingState {
 // 3. Drag - Delta is now initialised, state.position follows the mouse.
 export function DragAndDropSurface({ children }: { children: ReactNode }) {
     const theme = useTheme();
-
-    const clipboard = assertSome(useContext(Clipboard));
+    const clipboard = useContextChecked(Clipboard);
     const [position, setPosition] = useState<ClientOffset | null>(null);
     const listeners = useRef(new Set<DropListener>()).current;
     const drag = useRef<DraggingState | null>(null);

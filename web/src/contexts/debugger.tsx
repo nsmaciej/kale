@@ -1,13 +1,13 @@
 import { useToasts } from "react-toast-notifications";
-import React, { useState, useContext, ReactNode } from "react";
+import React, { useState, ReactNode } from "react";
 
-import { assertSome } from "utils";
+import { useContextChecked } from "hooks";
 import { VmError } from "vm/types";
 import Interpreter from "vm/interpreter";
 import Workspace from "contexts/workspace";
 
 export function useDebugProvider() {
-    const workspace = assertSome(useContext(Workspace));
+    const workspace = useContextChecked(Workspace);
     const { addToast } = useToasts();
     const [continueEval, setContinueEval] = useState<(() => void) | null>(null);
     const [interpreter, setInterpeter] = useState<Interpreter | null>(null);

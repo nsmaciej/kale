@@ -1,11 +1,11 @@
 import { AiOutlineCloseCircle, AiOutlinePlayCircle, AiOutlineUndo } from "react-icons/ai";
 import { motion, AnimatePresence } from "framer-motion";
-import React, { useContext } from "react";
+import React from "react";
 import styled from "styled-components";
 
-import { assertSome } from "utils";
 import { Box, Stack, NonIdealText, IconButton, PaneHeading } from "components";
 import { OpenedEditor } from "hooks/editor_stack";
+import { useContextChecked } from "hooks";
 import Builtins from "vm/builtins";
 import EditorWrapper from "editor";
 import Minimap, { MinimapProps } from "components/minimap";
@@ -42,8 +42,8 @@ export default function EditorStack({
     editorRefs,
     editorStackDispatch,
 }: EditorListProps) {
-    const dbg = assertSome(useContext(Debugger));
-    const { workspace, dispatch } = assertSome(useContext(Workspace));
+    const dbg = useContextChecked(Debugger);
+    const { workspace, dispatch } = useContextChecked(Workspace);
 
     function renderSection(editor: OpenedEditor, i: number) {
         const canUndo = (workspace.history.get(editor.name)?.length ?? 0) > 0;

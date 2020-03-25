@@ -1,10 +1,10 @@
-import React, { useState, Ref, useContext } from "react";
+import React, { useState, Ref } from "react";
 import styled from "styled-components";
 import { AiOutlinePlusCircle } from "react-icons/ai";
 
-import { assertSome } from "utils";
 import { EditorStackActions } from "hooks/editor_stack";
 import { SubtleButton, Box, Stack } from "components";
+import { useContextChecked } from "hooks";
 import useSuggestions from "hooks/suggestions";
 import Workspace from "contexts/workspace";
 
@@ -40,7 +40,7 @@ export default React.forwardRef(function EditorSuggestions(
     const { setSelection, selection, suggestions, moveSelection } = useSuggestions(value, {
         showValue: true,
     });
-    const workspace = assertSome(useContext(Workspace));
+    const workspace = useContextChecked(Workspace);
 
     function selectEditor(name: string) {
         editorStackDispatch({ type: "createEditor", name });

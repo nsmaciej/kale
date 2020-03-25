@@ -1,21 +1,13 @@
-import React, {
-    MutableRefObject,
-    useCallback,
-    useContext,
-    useEffect,
-    useMemo,
-    useRef,
-    useState,
-} from "react";
+import React, { MutableRefObject, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { useTheme } from "styled-components";
 
 import * as E from "expr";
-import { assertSome } from "utils";
 import { Highlight } from "theme";
 import { Rect, ClientOffset } from "geometry";
 import DragAndDrop from "contexts/drag_and_drop";
 import Expr, { ExprId } from "expr";
+import { useContextChecked } from "hooks";
 
 import ContextMenu, { ContextMenuItem } from "components/context_menu";
 import SvgDebugOverlay from "components/debug_overlay";
@@ -65,7 +57,7 @@ interface ExprMenuState {
 //TODO: Make a functional component.
 export default React.memo(function ExprView(props: ExprViewProps) {
     const theme = useTheme();
-    const dnd = assertSome(useContext(DragAndDrop));
+    const dnd = useContextChecked(DragAndDrop);
     const [showingMenu, setShowingMenu] = useState<ExprMenuState | null>(null);
 
     const containerRef = useRef<SVGSVGElement>(null);

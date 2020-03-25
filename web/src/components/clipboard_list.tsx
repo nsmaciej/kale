@@ -1,9 +1,9 @@
 import { AiOutlinePushpin, AiFillPushpin } from "react-icons/ai";
-import React, { useContext, useRef } from "react";
+import React, { useRef } from "react";
 
-import { assertSome, mod } from "utils";
+import { mod } from "utils";
 import { SubtleButton, NonIdealText } from "components";
-import { useSimpleDrop } from "hooks";
+import { useSimpleDrop, useContextChecked } from "hooks";
 import Clipboard, { ClipboardEntry } from "contexts/clipboard";
 
 import ExprViewList from "components/expr_view_list";
@@ -12,7 +12,7 @@ import Shortcut from "components/shortcut";
 
 export default React.memo(function ClipboardList() {
     const containerRef = useRef<HTMLDivElement>(null);
-    const clipboard = assertSome(useContext(Clipboard));
+    const clipboard = useContextChecked(Clipboard);
     const draggingOver = useSimpleDrop(containerRef, (expr) =>
         clipboard.dispatch({ type: "add", entry: { pinned: false, expr } }),
     );

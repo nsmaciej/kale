@@ -1,11 +1,11 @@
-import React, { useContext } from "react";
+import React from "react";
 import styled from "styled-components";
 
 import { Stack } from "components";
 import { assertSome } from "utils";
 import ExprView from "expr_view";
 import { assertFunc } from "vm/types";
-import { useDebounce } from "hooks";
+import { useDebounce, useContextChecked } from "hooks";
 
 import { EditorStackActions } from "hooks/editor_stack";
 import Workspace from "contexts/workspace";
@@ -30,7 +30,7 @@ function MinimapItem({
     focused: boolean;
     onClick(): void;
 }) {
-    const workspace = assertSome(useContext(Workspace)).workspace;
+    const workspace = useContextChecked(Workspace).workspace;
     const expr = useDebounce(assertFunc(assertSome(workspace.scope.get(editor.name))).expr, 1000);
     return (
         <MinimapItemStack key={editor.key} onClick={onClick} focused={focused}>

@@ -1,9 +1,10 @@
-import { useContext, useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import Fuse from "fuse.js";
 
-import { assertSome, Optional, mod } from "utils";
 import { MenuItem } from "components/menu";
+import { Optional, mod } from "utils";
 import { specialFunctions } from "vm/interpreter";
+import { useContextChecked } from "hooks";
 import Workspace from "contexts/workspace";
 
 // Using MenuItem is just convenient.
@@ -24,7 +25,7 @@ export default function useSuggestions(
     value: string,
     { showValue = false, showSpecials = false, disable = false } = {},
 ): SuggestionsHook {
-    const workspace = assertSome(useContext(Workspace));
+    const workspace = useContextChecked(Workspace);
     const [selection, setSelection] = useState<Optional<number>>(0);
 
     // We use functionList, which is specially updated to make this memo infrequent.

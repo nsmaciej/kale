@@ -1,8 +1,8 @@
-import React, { MutableRefObject, useContext, useEffect, useRef, useState } from "react";
+import React, { MutableRefObject, useContext, useEffect, useRef, useState, Context } from "react";
 
-import { assertSome } from "utils";
-import DragAndDrop, { DropListener } from "contexts/drag_and_drop";
+import { assert } from "utils";
 import { Rect } from "geometry";
+import DragAndDrop, { DropListener } from "contexts/drag_and_drop";
 import Expr from "expr";
 
 export function useDebounce<T>(value: T, delayMs: number): T {
@@ -53,7 +53,7 @@ export function useDocumentEvent<K extends keyof DocumentEventMap>(
 }
 
 function useDrop(listener: DropListener): void {
-    const dragAndDrop = assertSome(useContext(DragAndDrop));
+    const dragAndDrop = useContextChecked(DragAndDrop);
     useEffect(() => {
         dragAndDrop.addListener(listener);
         return () => dragAndDrop.removeListener(listener);
@@ -103,4 +103,10 @@ export function usePersistedState<T extends string>(
         localStorage.setItem(key, state);
     }, [key, state]);
     return [state as T, setState];
+}
+
+export function useContextChecked<T>(context: Context<T | null>): T {
+    const value = useContext(context);
+    assert(value !== null, "No context provided");
+    return value;
 }

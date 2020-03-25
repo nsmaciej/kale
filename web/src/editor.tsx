@@ -1,11 +1,8 @@
-import React, { Ref, useContext, PureComponent } from "react";
+import React, { Ref, PureComponent } from "react";
 import { useTheme } from "styled-components";
 
 import * as E from "expr";
 import * as Select from "selection";
-import { EditorStackActions } from "hooks/editor_stack";
-import { KaleTheme, Highlight } from "theme";
-import { Offset, Rect, ClientOffset } from "geometry";
 import {
     assertSome,
     reverseObject,
@@ -14,6 +11,10 @@ import {
     arrayEquals,
     makeMutableRef,
 } from "utils";
+import { EditorStackActions } from "hooks/editor_stack";
+import { KaleTheme, Highlight } from "theme";
+import { Offset, Rect, ClientOffset } from "geometry";
+import { useContextChecked } from "hooks";
 import Expr, { ExprId } from "expr";
 import ExprView, { ExprArea, ExprAreaMap } from "expr_view";
 
@@ -710,10 +711,10 @@ export default React.forwardRef(function EditorWrapper(
     return (
         <Editor
             {...props}
-            workspace={assertSome(useContext(Workspace))}
-            clipboard={assertSome(useContext(Clipboard))}
-            dragAndDrop={assertSome(useContext(DragAndDrop))}
-            theme={assertSome(useTheme())}
+            workspace={useContextChecked(Workspace)}
+            clipboard={useContextChecked(Clipboard)}
+            dragAndDrop={useContextChecked(DragAndDrop)}
+            theme={useTheme()}
             forwardedRef={ref}
         />
     );

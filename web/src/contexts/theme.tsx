@@ -1,9 +1,8 @@
 import { ThemeProvider } from "styled-components";
-import React, { ReactNode, useContext } from "react";
+import React, { ReactNode } from "react";
 
 import { DefaultTheme, DarkTheme } from "theme";
-import { useMediaQuery, usePersistedState } from "hooks";
-import { assertSome } from "utils";
+import { useMediaQuery, usePersistedState, useContextChecked } from "hooks";
 
 const Themes = {
     Light: DefaultTheme,
@@ -35,6 +34,6 @@ export function KaleThemeProvider({ children }: { children: ReactNode }) {
 
 /** Checks whether the user is using a dark theme. */
 export function useUsesDarkTheme(): boolean {
-    const { actualTheme } = assertSome(useContext(KaleTheme));
+    const { actualTheme } = useContextChecked(KaleTheme);
     return actualTheme === "Dark";
 }
