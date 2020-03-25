@@ -93,3 +93,14 @@ export function useMediaQuery(query: string): boolean {
     });
     return value ?? queryList.matches;
 }
+
+export function usePersistedState<T extends string>(
+    key: string,
+    defaultValue: T,
+): [T, (value: T) => void] {
+    const [state, setState] = useState(localStorage.getItem(key) ?? defaultValue);
+    useEffect(() => {
+        localStorage.setItem(key, state);
+    }, [key, state]);
+    return [state as T, setState];
+}

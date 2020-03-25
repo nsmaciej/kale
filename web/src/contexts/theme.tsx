@@ -1,8 +1,8 @@
 import { ThemeProvider } from "styled-components";
-import React, { ReactNode, useContext, useState } from "react";
+import React, { ReactNode, useContext } from "react";
 
 import { DefaultTheme, DarkTheme } from "theme";
-import { useMediaQuery } from "hooks";
+import { useMediaQuery, usePersistedState } from "hooks";
 import { assertSome } from "utils";
 
 const Themes = {
@@ -22,7 +22,7 @@ export const KaleTheme = React.createContext<KaleThemeContext | null>(null);
 
 export function KaleThemeProvider({ children }: { children: ReactNode }) {
     const prefersDark = useMediaQuery("(prefers-color-scheme: dark)");
-    const [preference, setPreference] = useState<Theme>("Auto");
+    const [preference, setPreference] = usePersistedState<Theme>("theme", "Auto");
     const theme = preference === "Auto" ? (prefersDark ? "Dark" : "Light") : preference;
     return (
         <KaleTheme.Provider
