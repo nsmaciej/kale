@@ -618,7 +618,10 @@ class Editor extends PureComponent<EditorProps, EditorState> {
             <ContextMenu
                 popover
                 origin={origin}
-                dismissMenu={() => this.setState({ blankPopover: null })}
+                onDismissMenu={() => {
+                    this.focus();
+                    this.setState({ blankPopover: null });
+                }}
                 items={exprs.map((x) => ({
                     id: x.label,
                     label: x.label,

@@ -32,13 +32,13 @@ export interface ContextMenuItem extends MenuItem {
 }
 
 interface ContextMenuProps {
-    dismissMenu(): void;
+    onDismissMenu(): void;
     items: ContextMenuItem[];
     origin: Offset;
     popover?: boolean;
 }
 
-export default function ContextMenu({ items, origin, dismissMenu, popover }: ContextMenuProps) {
+export default function ContextMenu({ items, origin, onDismissMenu, popover }: ContextMenuProps) {
     assert(items.length > 0);
     useDisableScrolling();
     const [selection, setSelection] = useState<number | null>(null);
@@ -85,10 +85,10 @@ export default function ContextMenu({ items, origin, dismissMenu, popover }: Con
             await delay(offDuration);
         }
         setSelection(index);
-        await delay(offDuration / 2);
+        await delay(offDuration);
 
         setBlinking(false);
-        dismissMenu();
+        onDismissMenu();
         item.action?.();
     }
 
@@ -116,14 +116,14 @@ export default function ContextMenu({ items, origin, dismissMenu, popover }: Con
                 moveSelection(-1);
                 break;
             case "Escape":
-                dismissMenu();
+                onDismissMenu();
                 break;
             case "Enter":
             case "Space":
                 if (selection) {
                     onClick(items[selection], selection);
                 } else {
-                    dismissMenu();
+                    onDismissMenu();
                 }
                 break;
             default: {
@@ -150,7 +150,7 @@ export default function ContextMenu({ items, origin, dismissMenu, popover }: Con
             onKeyDown={onKeyDown}
             onKeyUp={onKeyUp}
             tabIndex={0}
-            onBlur={dismissMenu}
+            onBlur={onDismissMenu}
             ref={(el) => el?.focus()}
         >
             <Menu

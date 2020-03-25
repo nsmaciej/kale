@@ -240,7 +240,7 @@ export default React.memo(function ExprView(props: ExprViewProps) {
                 <ContextMenu
                     items={showingMenu.menu}
                     origin={showingMenu.at}
-                    dismissMenu={() => {
+                    onDismissMenu={() => {
                         setShowingMenu(null);
                         props.onFocus?.();
                     }}
