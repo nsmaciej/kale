@@ -678,7 +678,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
                 tabIndex={0}
                 ref={this.attachRef}
                 // Needed for positioning the inline editor.
-                style={{ position: "relative" }}
+                style={{ position: "relative", width: "max-content" }}
             >
                 <ExprView
                     // This is heavy pure component, don't create new objects here.

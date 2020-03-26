@@ -1,13 +1,13 @@
-import React, { MutableRefObject, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { useTheme } from "styled-components";
+import React, { MutableRefObject, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import styled, { useTheme } from "styled-components";
 
 import * as E from "expr";
 import { Highlight } from "theme";
-import { Rect, ClientOffset } from "geometry";
+import { Rect, ClientOffset, Padding } from "geometry";
+import { useContextChecked } from "hooks";
 import DragAndDrop from "contexts/drag_and_drop";
 import Expr, { ExprId } from "expr";
-import { useContextChecked } from "hooks";
 
 import ContextMenu, { ContextMenuItem } from "components/context_menu";
 import SvgDebugOverlay from "components/debug_overlay";
@@ -17,6 +17,15 @@ import { SvgGroup } from "expr_view/components";
 import layoutExpr from "expr_view/layout";
 
 export { ExprArea, ExprAreaMap, FlatExprArea } from "expr_view/core";
+
+const Container = styled.svg`
+    cursor: default;
+    max-width: 100%;
+    height: auto;
+    /* SVGs are inline by default, this leads to a scourge of invisible space characters. Make it a
+    block instead. */
+    display: block;
+`;
 
 interface ExprViewProps {
     expr: Expr;
@@ -36,7 +45,7 @@ interface ExprViewProps {
     onContextMenu?(expr: ExprId): ContextMenuItem[];
 
     // Looks.
-    width?: number;
+    padding?: Padding;
     scale?: number;
     /** Is this an atomic expr whose children cannot be dragged out and should be given a new id
      * when dragged? */
@@ -66,8 +75,11 @@ export default React.memo(function ExprView(props: ExprViewProps) {
 
     // useMemo needed because this is a useCallbackp dependency.
     const padding = useMemo(
-        () => (props.frozen ? theme.exprView.frozenPadding : theme.exprView.padding),
-        [props.frozen, theme],
+        () =>
+            (props.frozen ? theme.exprView.frozenPadding : theme.exprView.padding).combine(
+                props.padding ?? Padding.zero,
+            ),
+        [props.frozen, props.padding, theme],
     );
 
     function drawRect(exprId: ExprId, highlight: Highlight, areas: ExprAreaMap) {
@@ -204,30 +216,22 @@ export default React.memo(function ExprView(props: ExprViewProps) {
     }
 
     const { width, height } = size.padding(padding);
-    let scale = props.scale ?? 1;
-    if (props.width !== undefined) {
-        // Note this already includes the padding.
-        scale = Math.min(props.width, width * scale) / width;
-    }
+    const scale = props.scale ?? 1;
     return (
         <>
-            <svg
+            <Container
                 xmlns="http://www.w3.org/2000/svg"
                 ref={containerRef}
                 width={width * scale}
                 height={height * scale}
-                // SVGs are inline by default, this leads to a scourge of invisible space
-                // characters. Make it a block instead.
-                display="block"
                 viewBox={`0 0 ${width} ${height}`}
                 // If we can open context menus, do not allow the system menu.
                 onContextMenu={(e) => props.onContextMenu && e.preventDefault()}
-                style={{ cursor: "default" }}
             >
                 {highlightRects}
                 <SvgGroup translate={padding.topLeft}>{nodes}</SvgGroup>
                 {props.showDebugOverlay && <SvgDebugOverlay areaMap={pendingExprAreaMap.current} />}
-            </svg>
+            </Container>
             {showingMenu && (
                 <ContextMenu
                     items={showingMenu.menu}

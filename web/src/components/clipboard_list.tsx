@@ -41,7 +41,7 @@ export default React.memo(function ClipboardList() {
         >
             <ExprViewList
                 animate
-                width={200}
+                width={260}
                 items={history}
                 showDropMarker={draggingOver}
                 onDraggedOut={(item) => {
@@ -68,7 +68,6 @@ export default React.memo(function ClipboardList() {
                         Use <Shortcut keys="c" /> to copy something
                     </NonIdealText>
                 }
-                extrasFudge={30}
                 onGetExtras={(item) => (
                     <SubtleButton onClick={() => togglePin(item)}>
                         {item.pinned ? <AiFillPushpin /> : <AiOutlinePushpin />}

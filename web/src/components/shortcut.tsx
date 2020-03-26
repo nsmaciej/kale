@@ -2,9 +2,9 @@ import React from "react";
 import styled from "styled-components";
 import { Box } from "components";
 
-const ShortcutKey = styled.kbd<{ subtle?: boolean }>`
+const ShortcutKey = styled.kbd`
     display: inline-block;
-    background-color: ${(p) => (p.subtle ? p.theme.colour.innerBackground : p.theme.colour.grey)};
+    background-color: ${(p) => p.theme.colour.innerBackground};
     border-radius: 3px;
     border: 1px solid ${(p) => p.theme.colour.subtleClickable};
     box-shadow: 0 1px 1px ${(p) => p.theme.colour.subtleText};
@@ -25,10 +25,9 @@ const ShortcutKey = styled.kbd<{ subtle?: boolean }>`
 
 export interface ShortcutProps {
     keys: string;
-    subtle?: boolean;
 }
 
-export default function Shortcut({ keys, subtle }: ShortcutProps) {
+export default function Shortcut({ keys }: ShortcutProps) {
     function shortcutKeys(): string[] {
         if (keys === " ") return ["Space"];
         if (keys.length > 1) return [keys];
@@ -41,9 +40,7 @@ export default function Shortcut({ keys, subtle }: ShortcutProps) {
     return (
         <Box display="inline-block">
             {shortcutKeys().map((x) => (
-                <ShortcutKey key={x} subtle={subtle}>
-                    {x}
-                </ShortcutKey>
+                <ShortcutKey key={x}>{x}</ShortcutKey>
             ))}
         </Box>
     );

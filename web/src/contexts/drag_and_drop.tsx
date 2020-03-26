@@ -2,12 +2,19 @@ import React, { useState, ReactNode, useRef } from "react";
 import ReactDOM from "react-dom";
 import styled, { useTheme } from "styled-components";
 
-import { ClientOffset } from "geometry";
 import { assertSome, assert } from "utils";
+import { ClientOffset } from "geometry";
 import { useDocumentEvent, useContextChecked } from "hooks";
 import Clipboard from "contexts/clipboard";
 import Expr from "expr";
 import layoutExpr from "expr_view/layout";
+
+const Overlay = styled.div`
+    width: 100%;
+    height: 100%;
+    position: fixed;
+    z-index: 1000;
+`;
 
 const Container = styled.div`
     position: absolute;
@@ -16,6 +23,7 @@ const Container = styled.div`
     padding: ${(p) => p.theme.exprList.padding.combine(p.theme.highlight.padding).css};
     border-radius: ${(p) => p.theme.exprList.borderRadius}px;
     box-sizing: content-box;
+    padding: ${(p) => p.theme.exprView.frozenPadding.css};
 `;
 
 export interface DropListener {
@@ -133,16 +141,19 @@ export function DragAndDropSurface({ children }: { children: ReactNode }) {
             // Cover the entire page in a div so we can always get the mouseUp event.
             // Bug: Safari doesn't like drawing box-shadows on SVGs (it leaves a ghost trail), it
             // must be drawn on the Container div instead.
-            <div
-                onMouseUp={dismissDrag}
-                style={{ width: "100%", height: "100%", position: "fixed", zIndex: 1000 }}
-            >
+            <Overlay onMouseUp={dismissDrag}>
                 <Container style={{ top: pos.y, left: pos.x }}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width={size.width} height={size.height}>
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width={size.width}
+                        height={size.height}
+                        // Prevent weird white-space spacing issues.
+                        display="block"
+                    >
                         {nodes}
                     </svg>
                 </Container>
-            </div>
+            </Overlay>
         );
     }
 

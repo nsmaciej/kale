@@ -58,7 +58,7 @@ const colour = {
     brand: "#0ba902",
     error: "#f44336",
     background: "#ffffff",
-    innerBackground: "#f9f9f9",
+    innerBackground: "#fcfcfc",
     grey: "#e4e4e4",
     disabled: "#d8d8d8",
     subtleClickable: "#cccccc",
@@ -96,7 +96,7 @@ export const DefaultTheme = {
 
     exprList: {
         borderRadius: 8,
-        padding: new Padding(4),
+        padding: new Padding(0),
     },
 
     exprView: {

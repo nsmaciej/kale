@@ -172,7 +172,7 @@ export default function ContextMenu({ items, origin, onDismissMenu, popover }: C
                     (item.label ? (
                         <ContextMenuItemContainer>
                             <span>{item.label}</span>
-                            {item.keyEquivalent && <Shortcut subtle keys={item.keyEquivalent} />}
+                            {item.keyEquivalent && <Shortcut keys={item.keyEquivalent} />}
                         </ContextMenuItemContainer>
                     ) : (
                         <ContextMenuSeparator />

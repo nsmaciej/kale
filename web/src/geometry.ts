@@ -99,6 +99,8 @@ export class Size {
 }
 
 export class Padding {
+    static readonly zero = new Padding(0);
+
     constructor(
         readonly top: number,
         readonly right = top,

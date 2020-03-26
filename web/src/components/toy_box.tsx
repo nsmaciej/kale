@@ -52,7 +52,7 @@ export default React.memo(function ToyBox() {
                         </SubtleButton>
                     ))}
                 </Stack>
-                <ExprViewList items={toyBoxExprs[category]} width={200} scale={0.8} />
+                <ExprViewList items={toyBoxExprs[category]} width={200} scale={0.9} />
             </Stack>
         </Pane>
     );

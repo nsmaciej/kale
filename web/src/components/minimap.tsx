@@ -1,11 +1,11 @@
 import React from "react";
 import styled from "styled-components";
 
-import { Stack } from "components";
-import { assertSome } from "utils";
-import ExprView from "expr_view";
 import { assertFunc } from "vm/types";
+import { assertSome } from "utils";
+import { Stack } from "components";
 import { useDebounce, useContextChecked } from "hooks";
+import ExprView from "expr_view";
 
 import { EditorStackActions } from "hooks/editor_stack";
 import Workspace from "contexts/workspace";
