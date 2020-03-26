@@ -23,6 +23,12 @@ const ShortcutKey = styled.kbd`
     }
 `;
 
+// Note this element needs to be 'phrasing content' so that it can be contained in paragraphs.
+const ShortcutGroup = styled.span`
+    /* Prevent a shortcut group from containing line-breaks. */
+    display: inline-block;
+`;
+
 export interface ShortcutProps {
     keys: string;
 }
@@ -36,12 +42,11 @@ export default function Shortcut({ keys }: ShortcutProps) {
         return [keys];
     }
 
-    // Prevent a shortcut group from containing line-breaks.
     return (
-        <Box display="inline-block">
+        <ShortcutGroup>
             {shortcutKeys().map((x) => (
                 <ShortcutKey key={x}>{x}</ShortcutKey>
             ))}
-        </Box>
+        </ShortcutGroup>
     );
 }
