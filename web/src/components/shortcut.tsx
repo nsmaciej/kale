@@ -1,6 +1,5 @@
 import React from "react";
 import styled from "styled-components";
-import { Box } from "components";
 
 const ShortcutKey = styled.kbd`
     display: inline-block;

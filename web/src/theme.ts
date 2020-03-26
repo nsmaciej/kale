@@ -52,8 +52,7 @@ export class Highlight {
 
 const colour = {
     clickable: "#1b65f1",
-    // This needs to be different in dark mode.
-    clickableBackground: "#1b65f1",
+    clickableBackground: "#0672ff",
     active: "#003fb7",
     brand: "#0ba902",
     error: "#f44336",
