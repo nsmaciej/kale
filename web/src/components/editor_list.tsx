@@ -82,7 +82,7 @@ export default function EditorStack({
                 </EditorHeader>
                 <Box marginTop={10} marginBottom={20} overflowX="auto">
                     {editor.type === "builtin" ? (
-                        <p>
+                        <p tabIndex={0}>
                             {editor.name} is a builtin function.
                             <br />
                             <b>{Builtins[editor.name].value.help}</b>
@@ -116,7 +116,7 @@ export default function EditorStack({
             </Stack>
             <Box top={0} position="sticky" flex="none">
                 <Minimap
-                    editors={editors.filter((x) => x.type === "user")}
+                    editors={editors}
                     focused={focused}
                     editorStackDispatch={editorStackDispatch}
                 />

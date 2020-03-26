@@ -25,8 +25,9 @@ function focusEditor(state: EditorStack, key: EditorKey | null): EditorStack {
 
 function createAndFocusEditor(state: EditorStack, name: string): EditorStack {
     const key = editorKeyGenerator();
+    const type = builtinFunctions.has(name) ? "builtin" : "user";
     const updated = produce(state, (draft) => {
-        draft.stack.unshift({ name, key, type: builtinFunctions.has(name) ? "builtin" : "user" });
+        draft.stack.unshift({ name, key, type });
     });
     return focusEditor(updated, key);
 }

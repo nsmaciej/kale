@@ -3,7 +3,7 @@ import styled from "styled-components";
 
 import { assertFunc } from "vm/types";
 import { assertSome } from "utils";
-import { EditorStackActions, EditorKey } from "hooks/editor_stack";
+import { EditorStackActions, EditorKey, OpenedEditor } from "hooks/editor_stack";
 import { Stack } from "components";
 import { useDebounce, useContextChecked } from "hooks";
 import ExprView from "expr_view";
@@ -20,32 +20,14 @@ const MinimapItemStack = styled(Stack).attrs({ gap: 8, vertical: true })<{ focus
     }
 `;
 
-function MinimapItem({
-    editor,
-    focused,
-    onClick,
-}: {
-    editor: MinimapEditor;
-    focused: boolean;
-    onClick(): void;
-}) {
+function MinimapExpr({ name }: { name: string }) {
     const workspace = useContextChecked(Workspace).workspace;
-    const expr = useDebounce(assertFunc(assertSome(workspace.scope.get(editor.name))).expr, 1000);
-    return (
-        <MinimapItemStack key={editor.key.toString()} onClick={onClick} focused={focused}>
-            <span>{editor.name}</span>
-            <ExprView frozen scale={0.2} expr={expr} />
-        </MinimapItemStack>
-    );
-}
-
-export interface MinimapEditor {
-    name: string;
-    key: EditorKey;
+    const expr = useDebounce(assertFunc(assertSome(workspace.scope.get(name))).expr, 1000);
+    return <ExprView frozen scale={0.2} expr={expr} />;
 }
 
 export interface MinimapProps {
-    editors: readonly MinimapEditor[];
+    editors: readonly OpenedEditor[];
     focused: EditorKey | null;
     editorStackDispatch: React.Dispatch<EditorStackActions>;
 }
@@ -54,12 +36,14 @@ export default function Minimap({ editors, focused, editorStackDispatch }: Minim
     return (
         <Stack vertical gap={15}>
             {editors.map((editor) => (
-                <MinimapItem
+                <MinimapItemStack
                     key={editor.key.toString()}
-                    editor={editor}
                     onClick={() => editorStackDispatch({ type: "focusEditor", key: editor.key })}
-                    focused={editor.key === focused}
-                />
+                    focused={focused === editor.key}
+                >
+                    <span>{editor.name}</span>
+                    {editor.type === "user" && <MinimapExpr name={editor.name} />}
+                </MinimapItemStack>
             ))}
         </Stack>
     );
