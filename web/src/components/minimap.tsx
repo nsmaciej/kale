@@ -3,11 +3,10 @@ import styled from "styled-components";
 
 import { assertFunc } from "vm/types";
 import { assertSome } from "utils";
+import { EditorStackActions, EditorKey } from "hooks/editor_stack";
 import { Stack } from "components";
 import { useDebounce, useContextChecked } from "hooks";
 import ExprView from "expr_view";
-
-import { EditorStackActions } from "hooks/editor_stack";
 import Workspace from "contexts/workspace";
 
 const MinimapItemStack = styled(Stack).attrs({ gap: 8, vertical: true })<{ focused: boolean }>`
@@ -33,7 +32,7 @@ function MinimapItem({
     const workspace = useContextChecked(Workspace).workspace;
     const expr = useDebounce(assertFunc(assertSome(workspace.scope.get(editor.name))).expr, 1000);
     return (
-        <MinimapItemStack key={editor.key} onClick={onClick} focused={focused}>
+        <MinimapItemStack key={editor.key.toString()} onClick={onClick} focused={focused}>
             <span>{editor.name}</span>
             <ExprView frozen scale={0.2} expr={expr} />
         </MinimapItemStack>
@@ -42,24 +41,24 @@ function MinimapItem({
 
 export interface MinimapEditor {
     name: string;
-    key: number;
+    key: EditorKey;
 }
 
 export interface MinimapProps {
     editors: readonly MinimapEditor[];
-    focused: number | null;
+    focused: EditorKey | null;
     editorStackDispatch: React.Dispatch<EditorStackActions>;
 }
 
 export default function Minimap({ editors, focused, editorStackDispatch }: MinimapProps) {
     return (
         <Stack vertical gap={15}>
-            {editors.map((editor, i) => (
+            {editors.map((editor) => (
                 <MinimapItem
-                    key={editor.key}
+                    key={editor.key.toString()}
                     editor={editor}
-                    onClick={() => editorStackDispatch({ type: "focusEditor", index: i })}
-                    focused={i === focused}
+                    onClick={() => editorStackDispatch({ type: "focusEditor", key: editor.key })}
+                    focused={editor.key === focused}
                 />
             ))}
         </Stack>

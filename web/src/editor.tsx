@@ -42,7 +42,6 @@ interface EditorState {
 interface EditorWrapperProps {
     focused: boolean;
     functionName: string;
-    editorStackIndex: number;
     editorStackDispatch: React.Dispatch<EditorStackActions>;
 }
 
@@ -296,7 +295,6 @@ class Editor extends PureComponent<EditorProps, EditorState> {
                 this.props.editorStackDispatch({
                     type: "openEditor",
                     name: selected.fn,
-                    index: this.props.editorStackIndex,
                 });
             }
         },

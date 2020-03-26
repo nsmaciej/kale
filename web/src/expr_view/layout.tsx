@@ -83,7 +83,8 @@ class ExprLayout implements ExprVisitor<Layout> {
     constructor(
         private readonly t: KaleTheme,
         private readonly props: LayoutProps,
-        private readonly state: LayoutState = { hasDisableAncestor: false, hasListParent: false },
+        // We pretend topLevel expressions are in a 'list'.
+        private readonly state: LayoutState = { hasDisableAncestor: false, hasListParent: true },
     ) {}
 
     private exprProps(expr: Expr) {

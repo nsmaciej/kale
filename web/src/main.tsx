@@ -126,14 +126,6 @@ function Kale() {
         event.stopPropagation();
     }
 
-    // Beware, focus logic relies on being cosistant, if for any reason the focus state
-    // does not match the element being focused, a horrible infinite loop might occur.
-    useEffect(() => {
-        if (focus != null) {
-            refs.get(stack[focus].key)?.current?.focus();
-        }
-    }, [focus, stack, refs]);
-
     return (
         <Container onKeyDown={keyDown}>
             <HeaderGrid>

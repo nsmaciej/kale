@@ -16,6 +16,7 @@ export function assertFound(index: number): number {
     return index;
 }
 
+/** Map an array, removing any results which aqual null or undefined. */
 export function filterMap<T, R>(array: readonly T[], predicate: (element: T) => Optional<R>): R[] {
     const acc: R[] = [];
     for (const x of array) {
@@ -31,13 +32,9 @@ export function arrayEquals<T>(lhs: readonly T[], rhs: readonly T[]): boolean {
     return lhs.length === rhs.length && lhs.every((x, i) => x === rhs[i]);
 }
 
-// Max of an empty list is 0.
+/** Returns the maximum number if a list of numbers, returning 0 if empty. */
 export function max(list: readonly number[]): number {
     return list.reduce((a, b) => Math.max(a, b), 0);
-}
-
-export function removeIndex<T>(array: readonly T[], ix: number): T[] {
-    return array.slice(0, ix).concat(array.slice(ix + 1));
 }
 
 export function partition<T>(array: readonly T[], test: (value: T) => boolean): [T[], T[]] {
@@ -50,6 +47,7 @@ export function partition<T>(array: readonly T[], test: (value: T) => boolean): 
     return [left, right];
 }
 
+/** Real mode function. */
 export function mod(n: number, m: number): number {
     return ((n % m) + m) % m;
 }
@@ -115,21 +113,26 @@ export function createReducer<
         reducers[action.type as Types](state, action as Extract<Actions, { type: Types }>);
 }
 
-export function findNearestIndex<T>(
-    list: readonly T[],
-    index: number,
-    predicate: (item: T) => boolean,
-): number | null {
-    for (let i = index; i >= 0; --i) {
-        if (predicate(list[i])) return i;
-    }
-    for (let i = index + 1; i < list.length; ++i) {
-        if (predicate(list[i])) return i;
-    }
-    return null;
+/** Handy reducer transformer that logs the reducer state and actions. */
+export function loggingReducer<S, A>(
+    reducer: (state: S, action: A) => S,
+    // eslint-disable-next-line no-console
+    logger: (state: S, action: A) => void = console.log,
+): typeof reducer {
+    return (state, action) => {
+        logger(state, action);
+        return reducer(state, action);
+    };
 }
 
 /** This is an alternative to React.createRef, which produces readonly ref objects. */
 export function makeMutableRef<T>(): { current: T | null } {
     return { current: null };
+}
+
+/** Creates a function that when called returns unique (and debuggable) symbols. Using symbols means
+ * that the IDs work with immer, but do not coerce to strings or numbers */
+export function idGenerator(name: string): () => symbol {
+    let id = 0;
+    return () => Symbol(`${name}-${id++}`);
 }

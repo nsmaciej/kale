@@ -4,7 +4,7 @@ import React from "react";
 import styled from "styled-components";
 
 import { Box, Stack, NonIdealText, IconButton, PaneHeading } from "components";
-import { OpenedEditor } from "hooks/editor_stack";
+import { OpenedEditor, EditorKey } from "hooks/editor_stack";
 import { useContextChecked } from "hooks";
 import Builtins from "vm/builtins";
 import EditorWrapper from "editor";
@@ -33,7 +33,7 @@ const RightGroup = styled.div`
 
 interface EditorListProps extends MinimapProps {
     editors: readonly OpenedEditor[];
-    editorRefs: ReadonlyMap<number, React.MutableRefObject<HTMLDivElement>>;
+    editorRefs: ReadonlyMap<EditorKey, React.MutableRefObject<HTMLDivElement>>;
 }
 
 export default function EditorStack({
@@ -45,11 +45,11 @@ export default function EditorStack({
     const dbg = useContextChecked(Debugger);
     const { workspace, dispatch } = useContextChecked(Workspace);
 
-    function renderSection(editor: OpenedEditor, i: number) {
+    function renderSection(editor: OpenedEditor) {
         const canUndo = (workspace.history.get(editor.name)?.length ?? 0) > 0;
         return (
             <motion.div
-                key={editor.key}
+                key={editor.key.toString()}
                 initial={false}
                 exit={{ opacity: 0, scale: 0 }}
                 transition={{ duration: 0.1, ease: "easeIn" }}
@@ -58,7 +58,9 @@ export default function EditorStack({
                 <EditorHeader>
                     <EditorHeading>{editor.name}</EditorHeading>
                     <IconButton
-                        onClick={() => editorStackDispatch({ type: "closeEditor", index: i })}
+                        onClick={() =>
+                            editorStackDispatch({ type: "closeEditor", key: editor.key })
+                        }
                     >
                         <AiOutlineCloseCircle />
                     </IconButton>
@@ -89,8 +91,7 @@ export default function EditorStack({
                         <EditorWrapper
                             functionName={editor.name}
                             editorStackDispatch={editorStackDispatch}
-                            editorStackIndex={i}
-                            focused={i === focused}
+                            focused={editor.key === focused}
                             ref={editorRefs.get(editor.key)}
                             // It's proably easiest to just create a new editor for each function.
                             key={editor.name}
@@ -101,24 +102,12 @@ export default function EditorStack({
         );
     }
 
-    function focus(e: React.FocusEvent) {
-        // Check if focused landed on of the editors.
-        editors.forEach((editor, i) => {
-            if (editorRefs.get(editor.key)?.current === e.target) {
-                editorStackDispatch({ type: "focusEditor", index: i });
-            }
-        });
-    }
-
     return (
         <Stack
             gap={20}
             height="100%"
             justifyContent="space-between"
             overflowX="hidden"
-            onFocus={focus}
-            // This is weird, but React lets the blur event bubble.
-            onBlur={() => editorStackDispatch({ type: "focusEditor", index: null })}
             gridArea="editor"
         >
             <Stack vertical overflowX="hidden" flex="auto">
