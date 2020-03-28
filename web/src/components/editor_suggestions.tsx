@@ -2,10 +2,11 @@ import React, { useState, Ref } from "react";
 import styled from "styled-components";
 import { AiOutlinePlusCircle } from "react-icons/ai";
 
-import { EditorStackActions } from "hooks/editor_stack";
 import { SubtleButton, Box, Stack } from "components";
 import { useContextChecked } from "hooks";
 import useSuggestions from "hooks/suggestions";
+
+import EditorStack from "contexts/editor_stack";
 import Workspace from "contexts/workspace";
 
 import Menu, { MenuTextWrapper } from "components/menu";
@@ -27,23 +28,17 @@ const EditorInput = styled.input`
     }
 `;
 
-interface EditorSuggestionsProps {
-    editorStackDispatch: React.Dispatch<EditorStackActions>;
-}
-
-export default React.forwardRef(function EditorSuggestions(
-    { editorStackDispatch }: EditorSuggestionsProps,
-    ref: Ref<HTMLInputElement>,
-) {
+export default React.forwardRef(function EditorSuggestions({}, ref: Ref<HTMLInputElement>) {
     const [value, setValue] = useState("");
     const [hasFocus, setHasFocus] = useState(false);
     const { setSelection, selection, suggestions, moveSelection } = useSuggestions(value, {
         showValue: true,
     });
     const workspace = useContextChecked(Workspace);
+    const editorStack = useContextChecked(EditorStack);
 
     function selectEditor(name: string) {
-        editorStackDispatch({ type: "createEditor", name });
+        editorStack.createEditor(name);
         workspace.dispatch({ type: "ensureExists", name });
         setValue("");
         setSelection(0);

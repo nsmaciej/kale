@@ -4,13 +4,13 @@ import React from "react";
 import styled from "styled-components";
 
 import { Box, Stack, NonIdealText, IconButton, PaneHeading } from "components";
-import { OpenedEditor, EditorKey } from "hooks/editor_stack";
 import { useContextChecked } from "hooks";
 import Builtins from "vm/builtins";
 import EditorWrapper from "editor";
-import Minimap, { MinimapProps } from "components/minimap";
+import Minimap from "components/minimap";
 
 import Debugger from "contexts/debugger";
+import EditorStack, { OpenedEditor } from "contexts/editor_stack";
 import Workspace from "contexts/workspace";
 
 const EditorHeading = styled(PaneHeading)`
@@ -31,18 +31,9 @@ const RightGroup = styled.div`
     margin-left: auto;
 `;
 
-interface EditorListProps extends MinimapProps {
-    editors: readonly OpenedEditor[];
-    editorRefs: ReadonlyMap<EditorKey, React.MutableRefObject<HTMLDivElement>>;
-}
-
-export default function EditorStack({
-    focused,
-    editors,
-    editorRefs,
-    editorStackDispatch,
-}: EditorListProps) {
+export default function EditorList() {
     const dbg = useContextChecked(Debugger);
+    const editorStack = useContextChecked(EditorStack);
     const { workspace, dispatch } = useContextChecked(Workspace);
 
     function renderSection(editor: OpenedEditor) {
@@ -57,11 +48,7 @@ export default function EditorStack({
             >
                 <EditorHeader>
                     <EditorHeading>{editor.name}</EditorHeading>
-                    <IconButton
-                        onClick={() =>
-                            editorStackDispatch({ type: "closeEditor", key: editor.key })
-                        }
-                    >
+                    <IconButton onClick={() => editorStack.removeEditor(editor.key)}>
                         <AiOutlineCloseCircle />
                     </IconButton>
                     <IconButton disabled={!canUndo}>
@@ -90,9 +77,8 @@ export default function EditorStack({
                     ) : (
                         <EditorWrapper
                             functionName={editor.name}
-                            editorStackDispatch={editorStackDispatch}
-                            focused={editor.key === focused}
-                            ref={editorRefs.get(editor.key)}
+                            focused={editor.key === editorStack.lastFocus}
+                            ref={editorStack.refs.get(editor.key)}
                             // It's proably easiest to just create a new editor for each function.
                             key={editor.name}
                         />
@@ -111,15 +97,11 @@ export default function EditorStack({
             gridArea="editor"
         >
             <Stack vertical overflowX="hidden" flex="auto">
-                {editors.length === 0 && <NonIdealText>No editors open</NonIdealText>}
-                <AnimatePresence>{editors.map(renderSection)}</AnimatePresence>
+                {editorStack.stack.length === 0 && <NonIdealText>No editors open</NonIdealText>}
+                <AnimatePresence>{editorStack.stack.map(renderSection)}</AnimatePresence>
             </Stack>
             <Box top={0} position="sticky" flex="none">
-                <Minimap
-                    editors={editors}
-                    focused={focused}
-                    editorStackDispatch={editorStackDispatch}
-                />
+                <Minimap />
             </Box>
         </Stack>
     );

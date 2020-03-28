@@ -11,7 +11,6 @@ import {
     arrayEquals,
     makeMutableRef,
 } from "utils";
-import { EditorStackActions } from "hooks/editor_stack";
 import { KaleTheme, Highlight } from "theme";
 import { Offset, Rect, ClientOffset } from "geometry";
 import { useContextChecked } from "hooks";
@@ -24,6 +23,7 @@ import { specialFunctions } from "vm/interpreter";
 import DragAndDrop, { DragAndDropContext, DropListener } from "contexts/drag_and_drop";
 import Clipboard, { ClipboardContext } from "contexts/clipboard";
 import Workspace, { WorkspaceContext } from "contexts/workspace";
+import EditorStack, { EditorStackContext } from "contexts/editor_stack";
 
 import ContextMenu, { ContextMenuItem } from "components/context_menu";
 import InlineEditor from "components/inline_editor";
@@ -42,13 +42,13 @@ interface EditorState {
 interface EditorWrapperProps {
     focused: boolean;
     functionName: string;
-    editorStackDispatch: React.Dispatch<EditorStackActions>;
 }
 
 interface EditorProps extends EditorWrapperProps {
     workspace: WorkspaceContext;
     clipboard: ClipboardContext;
     dragAndDrop: DragAndDropContext;
+    editorStack: EditorStackContext;
     theme: KaleTheme;
     forwardedRef: Ref<HTMLDivElement>;
 }
@@ -292,10 +292,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
                     type: "ensureExists",
                     name: selected.fn,
                 });
-                this.props.editorStackDispatch({
-                    type: "openEditor",
-                    name: selected.fn,
-                });
+                this.props.editorStack.openEditor(selected.fn);
             }
         },
         newLine: (e: ExprId) => this.insertNewLine(e, true),
@@ -712,6 +709,7 @@ export default React.forwardRef(function EditorWrapper(
             workspace={useContextChecked(Workspace)}
             clipboard={useContextChecked(Clipboard)}
             dragAndDrop={useContextChecked(DragAndDrop)}
+            editorStack={useContextChecked(EditorStack)}
             theme={useTheme()}
             forwardedRef={ref}
         />

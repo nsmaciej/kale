@@ -3,7 +3,7 @@ import styled from "styled-components";
 
 import { assertFunc } from "vm/types";
 import { assertSome } from "utils";
-import { EditorStackActions, EditorKey, OpenedEditor } from "hooks/editor_stack";
+import EditorStack from "contexts/editor_stack";
 import { Stack } from "components";
 import { useDebounce, useContextChecked } from "hooks";
 import ExprView from "expr_view";
@@ -26,20 +26,15 @@ function MinimapExpr({ name }: { name: string }) {
     return <ExprView frozen scale={0.2} expr={expr} />;
 }
 
-export interface MinimapProps {
-    editors: readonly OpenedEditor[];
-    focused: EditorKey | null;
-    editorStackDispatch: React.Dispatch<EditorStackActions>;
-}
-
-export default function Minimap({ editors, focused, editorStackDispatch }: MinimapProps) {
+export default function Minimap() {
+    const editorStack = useContextChecked(EditorStack);
     return (
         <Stack vertical gap={15}>
-            {editors.map((editor) => (
+            {editorStack.stack.map((editor) => (
                 <MinimapItemStack
                     key={editor.key.toString()}
-                    onClick={() => editorStackDispatch({ type: "focusEditor", key: editor.key })}
-                    focused={focused === editor.key}
+                    onClick={() => editorStack.refs.get(editor.key)?.current.focus()}
+                    focused={editorStack.lastFocus === editor.key}
                 >
                     <span>{editor.name}</span>
                     {editor.type === "user" && <MinimapExpr name={editor.name} />}

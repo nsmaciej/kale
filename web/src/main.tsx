@@ -1,19 +1,20 @@
 import ReactDOM from "react-dom";
 import { AiOutlineGithub } from "react-icons/ai";
 import { ToastProvider } from "react-toast-notifications";
-import React, { useRef, useEffect } from "react";
+import React, { useRef } from "react";
 import styled, { createGlobalStyle } from "styled-components";
 
 import { DefaultTheme } from "theme";
 import { Stack, Box } from "components";
+import { useContextChecked } from "hooks";
 import TextMetrics from "text_metrics";
-import useEditorStack from "hooks/editor_stack";
 
 import { ClipboardProvider } from "contexts/clipboard";
 import { DebuggerProvider } from "contexts/debugger";
 import { DragAndDropSurface } from "contexts/drag_and_drop";
 import { KaleThemeProvider } from "contexts/theme";
 import { WorkspaceProvider } from "contexts/workspace";
+import EditorStack, { EditorStackProvider } from "contexts/editor_stack";
 
 import ClipboardList from "components/clipboard_list";
 import EditorList from "components/editor_list";
@@ -21,6 +22,7 @@ import EditorSuggestions from "components/editor_suggestions";
 import ErrorBoundary from "components/error_boundary";
 import ThemeSwitcher from "components/theme_switcher";
 import ToyBox from "components/toy_box";
+import { mod } from "utils";
 
 const GlobalStyle = createGlobalStyle`
 #main {
@@ -104,21 +106,36 @@ function Kale() {
     // eslint-disable-next-line no-console
     console.log("Rendering everything");
     const functionSearchRef = useRef<HTMLInputElement>(null);
-    const { focus, refs, stack, dispatch } = useEditorStack();
+    const editorStack = useContextChecked(EditorStack);
+
+    function moveFocus(move: 1 | -1) {
+        if (!editorStack.stack.length) return;
+        let index;
+        if (editorStack.lastFocus === null) {
+            index = move === 1 ? 0 : editorStack.stack.length - 1;
+        } else {
+            index = mod(
+                editorStack.stack.findIndex((x) => x.key === editorStack.lastFocus) + move,
+                editorStack.stack.length,
+            );
+        }
+        editorStack.refs.get(editorStack.stack[index].key)?.current.focus();
+    }
 
     function keyDown(event: React.KeyboardEvent) {
         const key = event.key;
         if (key === "/") {
             functionSearchRef.current?.focus();
         } else if (key === "J" || (key === "ArrowDown" && event.shiftKey)) {
-            dispatch({ type: "moveFocus", move: 1 });
+            moveFocus(1);
         } else if (key === "K" || (key === "ArrowUp" && event.shiftKey)) {
-            dispatch({ type: "moveFocus", move: -1 });
+            moveFocus(-1);
         } else if (key === "D") {
-            dispatch({ type: "closeFocusedEditor" });
+            if (editorStack.lastFocus !== null) {
+                editorStack.removeEditor(editorStack.lastFocus);
+            }
         } else if (key === "O") {
-            // The 'opposite' of 'Open definition'.
-            dispatch({ type: "jumpBack" });
+            editorStack.jumpBack();
         } else {
             return;
         }
@@ -137,7 +154,7 @@ function Kale() {
                     </p>
                 </Stack>
                 <Box gridArea="search">
-                    <EditorSuggestions ref={functionSearchRef} editorStackDispatch={dispatch} />
+                    <EditorSuggestions ref={functionSearchRef} />
                 </Box>
                 <Stack gap={15} alignItems="center" gridArea="menu" justifySelf="end">
                     <ThemeSwitcher />
@@ -151,12 +168,7 @@ function Kale() {
                 </Stack>
             </HeaderGrid>
             <ToyBox />
-            <EditorList
-                editors={stack}
-                editorRefs={refs}
-                focused={focus}
-                editorStackDispatch={dispatch}
-            />
+            <EditorList />
             <ClipboardList />
         </Container>
     );
@@ -172,9 +184,11 @@ function App() {
                         <ClipboardProvider>
                             <DragAndDropSurface>
                                 <WorkspaceProvider>
-                                    <DebuggerProvider>
-                                        <Kale />
-                                    </DebuggerProvider>
+                                    <EditorStackProvider>
+                                        <DebuggerProvider>
+                                            <Kale />
+                                        </DebuggerProvider>
+                                    </EditorStackProvider>
                                 </WorkspaceProvider>
                             </DragAndDropSurface>
                         </ClipboardProvider>
