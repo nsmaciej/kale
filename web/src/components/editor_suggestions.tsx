@@ -28,7 +28,7 @@ const EditorInput = styled.input`
     }
 `;
 
-export default React.forwardRef(function EditorSuggestions({}, ref: Ref<HTMLInputElement>) {
+export default React.forwardRef(function EditorSuggestions(_, ref: Ref<HTMLInputElement>) {
     const [value, setValue] = useState("");
     const [hasFocus, setHasFocus] = useState(false);
     const { setSelection, selection, suggestions, moveSelection } = useSuggestions(value, {
