@@ -1,6 +1,6 @@
 import { AiOutlineCloseCircle, AiOutlinePlayCircle, AiOutlineUndo } from "react-icons/ai";
 import { motion, AnimatePresence } from "framer-motion";
-import React from "react";
+import React, { ReactNode } from "react";
 import styled from "styled-components";
 
 import { Box, Stack, NonIdealText, IconButton, PaneHeading } from "components";
@@ -31,63 +31,83 @@ const RightGroup = styled.div`
     margin-left: auto;
 `;
 
-export default function EditorList() {
+function EditorItem({
+    children,
+    editor,
+    buttons,
+    rightButtons,
+}: {
+    children: ReactNode;
+    editor: OpenedEditor;
+    buttons?: ReactNode;
+    rightButtons?: ReactNode;
+}) {
+    const editorStack = useContextChecked(EditorStack);
+    return (
+        <>
+            <EditorHeader>
+                <EditorHeading>{editor.name}</EditorHeading>
+                <IconButton onClick={() => editorStack.removeEditor(editor.key)}>
+                    <AiOutlineCloseCircle />
+                </IconButton>
+                {buttons}
+                <RightGroup>{rightButtons}</RightGroup>
+            </EditorHeader>
+            <Box marginTop={10} marginBottom={20} overflowX="auto">
+                {children}
+            </Box>
+        </>
+    );
+}
+
+function BuiltinEditor({ editor }: { editor: OpenedEditor }) {
+    const editorStack = useContextChecked(EditorStack);
+    return (
+        <EditorItem editor={editor}>
+            <p tabIndex={0} ref={editorStack.refs.get(editor.key)}>
+                {editor.name} is a builtin function.
+                <br />
+                <b>{Builtins[editor.name].value.help}</b>
+            </p>
+        </EditorItem>
+    );
+}
+
+function UserEditor({ editor }: { editor: OpenedEditor }) {
     const dbg = useContextChecked(Debugger);
     const editorStack = useContextChecked(EditorStack);
     const { workspace, dispatch } = useContextChecked(Workspace);
+    const canUndo = (workspace.history.get(editor.name)?.length ?? 0) > 0;
+    return (
+        <EditorItem
+            editor={editor}
+            buttons={
+                <IconButton disabled={!canUndo}>
+                    <AiOutlineUndo onClick={() => dispatch({ type: "undo", name: editor.name })} />
+                </IconButton>
+            }
+            rightButtons={
+                <IconButton
+                    onClick={() => dbg.evalFunction(editor.name)}
+                    disabled={dbg.interpreter != null}
+                >
+                    <AiOutlinePlayCircle />
+                </IconButton>
+            }
+        >
+            <EditorWrapper
+                functionName={editor.name}
+                focused={editor.key === editorStack.lastFocus}
+                ref={editorStack.refs.get(editor.key)}
+                // It's proably easiest to just create a new editor for each function.
+                key={editor.name}
+            />
+        </EditorItem>
+    );
+}
 
-    function renderSection(editor: OpenedEditor) {
-        const canUndo = (workspace.history.get(editor.name)?.length ?? 0) > 0;
-        return (
-            <motion.div
-                key={editor.key.toString()}
-                initial={false}
-                exit={{ opacity: 0, scale: 0 }}
-                transition={{ duration: 0.1, ease: "easeIn" }}
-                positionTransition={{ duration: 0.1, ease: "easeIn" }}
-            >
-                <EditorHeader>
-                    <EditorHeading>{editor.name}</EditorHeading>
-                    <IconButton onClick={() => editorStack.removeEditor(editor.key)}>
-                        <AiOutlineCloseCircle />
-                    </IconButton>
-                    <IconButton disabled={!canUndo}>
-                        <AiOutlineUndo
-                            onClick={() => dispatch({ type: "undo", name: editor.name })}
-                        />
-                    </IconButton>
-                    <RightGroup>
-                        {editor.type === "user" && (
-                            <IconButton
-                                onClick={() => dbg.evalFunction(editor.name)}
-                                disabled={dbg.interpreter != null}
-                            >
-                                <AiOutlinePlayCircle />
-                            </IconButton>
-                        )}
-                    </RightGroup>
-                </EditorHeader>
-                <Box marginTop={10} marginBottom={20} overflowX="auto">
-                    {editor.type === "builtin" ? (
-                        <p tabIndex={0}>
-                            {editor.name} is a builtin function.
-                            <br />
-                            <b>{Builtins[editor.name].value.help}</b>
-                        </p>
-                    ) : (
-                        <EditorWrapper
-                            functionName={editor.name}
-                            focused={editor.key === editorStack.lastFocus}
-                            ref={editorStack.refs.get(editor.key)}
-                            // It's proably easiest to just create a new editor for each function.
-                            key={editor.name}
-                        />
-                    )}
-                </Box>
-            </motion.div>
-        );
-    }
-
+export default function EditorList() {
+    const editorStack = useContextChecked(EditorStack);
     return (
         <Stack
             gap={20}
@@ -98,7 +118,23 @@ export default function EditorList() {
         >
             <Stack vertical overflowX="hidden" flex="auto">
                 {editorStack.stack.length === 0 && <NonIdealText>No editors open</NonIdealText>}
-                <AnimatePresence>{editorStack.stack.map(renderSection)}</AnimatePresence>
+                <AnimatePresence>
+                    {editorStack.stack.map((x) => (
+                        <motion.div
+                            initial={false}
+                            exit={{ opacity: 0, scale: 0 }}
+                            transition={{ duration: 0.1, ease: "easeIn" }}
+                            positionTransition={{ duration: 0.1, ease: "easeIn" }}
+                            key={x.key.toString()}
+                        >
+                            {x.type === "builtin" ? (
+                                <BuiltinEditor editor={x} />
+                            ) : (
+                                <UserEditor editor={x} />
+                            )}
+                        </motion.div>
+                    ))}
+                </AnimatePresence>
             </Stack>
             <Box top={0} position="sticky" flex="none">
                 <Minimap />
