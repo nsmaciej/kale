@@ -5,6 +5,7 @@ import React, { useRef } from "react";
 import styled, { createGlobalStyle } from "styled-components";
 
 import { DefaultTheme } from "theme";
+import { mod } from "utils";
 import { Stack, Box } from "components";
 import { useContextChecked } from "hooks";
 import TextMetrics from "text_metrics";
@@ -20,9 +21,9 @@ import ClipboardList from "components/clipboard_list";
 import EditorList from "components/editor_list";
 import EditorSuggestions from "components/editor_suggestions";
 import ErrorBoundary from "components/error_boundary";
+import Hints from "components/hints";
 import ThemeSwitcher from "components/theme_switcher";
 import ToyBox from "components/toy_box";
-import { mod } from "utils";
 
 const GlobalStyle = createGlobalStyle`
 #main {
@@ -75,7 +76,8 @@ const Container = styled.div`
     display: grid;
     grid-template:
         "nav nav nav" min-content
-        "toybox editor history" 1fr /
+        "toybox editor history" 1fr
+        "hints hints hints" min-content /
         max-content 1fr max-content;
     gap: 20px;
     padding: 15px 20px 0;
@@ -170,6 +172,7 @@ function Kale() {
             <ToyBox />
             <EditorList />
             <ClipboardList />
+            <Hints />
         </Container>
     );
 }

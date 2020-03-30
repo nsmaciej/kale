@@ -29,11 +29,12 @@ const ShortcutGroup = styled.span`
 `;
 
 export interface ShortcutProps {
-    keys: string;
+    keys: string | string[];
 }
 
 export default function Shortcut({ keys }: ShortcutProps) {
     function shortcutKeys(): string[] {
+        if (keys instanceof Array) return keys;
         if (keys === " ") return ["Space"];
         if (keys.length > 1) return [keys];
         if (/^[a-z]$/.test(keys)) return [keys.toUpperCase()];
