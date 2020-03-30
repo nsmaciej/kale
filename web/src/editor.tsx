@@ -509,32 +509,30 @@ class Editor extends PureComponent<EditorProps, EditorState> {
     };
 
     private readonly dragListener: DropListener = {
-        dragUpdate: (absolutePoint) => {
-            this.setState({
-                droppable: this.clientOffsetToExpr(absolutePoint),
-            });
+        dragUpdate: (absolutePoint, draggedExpr) => {
+            const dropTargetId = this.clientOffsetToExpr(absolutePoint);
+            if (dropTargetId !== null && draggedExpr?.contains(dropTargetId)) {
+                // Do not even hint we support nesting.
+                this.setState({ droppable: null });
+            } else {
+                this.setState({ droppable: dropTargetId });
+            }
         },
         acceptDrop: (absolutePoint, draggedExpr) => {
             const dropTargetId = this.clientOffsetToExpr(absolutePoint);
             //TODO: This very fugly and relies on the id of the draggd expr, replace it with some
             // sort of indication of the dragged-expr origin.
-            if (dropTargetId !== null) {
-                this.focus();
-                this.selectExpr(dropTargetId);
-                if (draggedExpr.contains(dropTargetId)) {
-                    this.replaceExpr(dropTargetId, draggedExpr); // Nest.
-                    return "copy";
-                } else if (this.expr.contains(draggedExpr.id)) {
-                    // Replace, copying the older value.
-                    this.addToClipboard(dropTargetId);
-                    this.replaceExpr(dropTargetId, draggedExpr);
-                    return "move";
-                } else {
-                    this.replaceExpr(dropTargetId, draggedExpr); // Move from outside this editor.
-                    return "move";
-                }
+            if (dropTargetId === null) return "reject";
+            // Reject nesting.
+            if (draggedExpr.contains(dropTargetId)) return "reject";
+            this.focus();
+            this.selectExpr(dropTargetId);
+            if (this.expr.contains(draggedExpr.id)) {
+                // Replace, copying the older value.
+                this.addToClipboard(dropTargetId);
             }
-            return "reject";
+            this.replaceExpr(dropTargetId, draggedExpr);
+            return "move";
         },
     };
 

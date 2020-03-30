@@ -28,7 +28,7 @@ const Container = styled.div`
 
 export interface DropListener {
     /** Fires to give a listener an opportunity to show that a drop is accepted. */
-    dragUpdate(point: ClientOffset | null): void;
+    dragUpdate(point: ClientOffset | null, expr: Expr | null): void;
     /** Fires when the dragged object moves. Should return if this listener accepted the drop. If
      * move is returned, the draggedOut listener on the expr that begun the drag is not caleld */
     acceptDrop(point: ClientOffset, expr: Expr): "copy" | "move" | "reject";
@@ -115,7 +115,7 @@ export function DragAndDropSurface({ children }: { children: ReactNode }) {
         drag.current = null;
         // Premature optimisation. This method is called on every other mouse move.
         if (position !== null) {
-            listeners.forEach((f) => f.dragUpdate(null));
+            listeners.forEach((f) => f.dragUpdate(null, null));
             setPosition(null);
         }
     }
@@ -143,7 +143,7 @@ export function DragAndDropSurface({ children }: { children: ReactNode }) {
             // Update the drag.
             setPosition(nextPosition);
             const exprCorner = nextPosition.offset(drag.current.delta);
-            listeners.forEach((x) => x.dragUpdate(exprCorner));
+            listeners.forEach((x) => x.dragUpdate(exprCorner, drag.current?.expr ?? null));
         }
     }
 
