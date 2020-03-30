@@ -103,7 +103,7 @@ export const DefaultTheme = {
         get padding() {
             return DefaultTheme.highlight.mainPadding.add(droppable.radius);
         },
-        get frozenPadding() {
+        get widePadding() {
             return DefaultTheme.highlight.padding.add(droppable.radius);
         },
     },

@@ -23,7 +23,7 @@ const MinimapItemStack = styled(Stack).attrs({ gap: 8, vertical: true })<{ focus
 function MinimapExpr({ name }: { name: string }) {
     const workspace = useContextChecked(Workspace).workspace;
     const expr = useDebounce(assertFunc(assertSome(workspace.scope.get(name))).expr, 1000);
-    return <ExprView frozen scale={0.2} expr={expr} />;
+    return <ExprView immutable atomic persistent scale={0.2} expr={expr} />;
 }
 
 export default function Minimap() {

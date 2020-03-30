@@ -2,14 +2,18 @@ import { useTheme } from "styled-components";
 import React, { useState } from "react";
 
 import * as E from "expr";
-import { Stack, SubtleButton } from "components";
 import { Category } from "vm/types";
-import { groupEntries } from "utils";
+import { groupEntries, assert } from "utils";
+import { Stack, SubtleButton } from "components";
+import { useContextChecked } from "hooks";
 import Builtins from "vm/builtins";
 import Expr, { exprData } from "expr";
 
 import ExprViewList, { ShortcutExpr } from "components/expr_view_list";
 import Pane from "components/pane";
+
+import Clipboard from "contexts/clipboard";
+import EditorStack from "contexts/editor_stack";
 
 function createToyBox(): Readonly<{ [category in Category]: ShortcutExpr[] }> {
     function blank(comment: string) {
@@ -29,13 +33,37 @@ function createToyBox(): Readonly<{ [category in Category]: ShortcutExpr[] }> {
         const blanks = args.map((x) => new E.Blank(exprData(x)));
         exprs.push([category, new E.Call(fn, blanks)]);
     }
-    return groupEntries(exprs.map(([cat, expr]) => [cat, { expr }]));
+    return groupEntries(exprs.map(([cat, expr]) => [cat, { expr, persistent: true }]));
 }
 
 const toyBoxExprs = createToyBox();
 export default React.memo(function ToyBox() {
     const theme = useTheme();
+    const editorStack = useContextChecked(EditorStack);
+    const clipboard = useContextChecked(Clipboard);
     const [category, setCategory] = useState(Category.General);
+
+    function onContextMenu(item: ShortcutExpr) {
+        return [
+            {
+                id: "open",
+                label: "Open Definition",
+                keyEquivalent: "o",
+                action() {
+                    assert(item.expr instanceof E.Call);
+                    editorStack.openEditor(item.expr.fn);
+                },
+            },
+            {
+                id: "copy",
+                label: "Copy",
+                keyEquivalent: "c",
+                action() {
+                    clipboard.dispatch({ type: "add", entry: { expr: item.expr, pinned: false } });
+                },
+            },
+        ];
+    }
 
     if (!theme.feature.toyBox) return null;
     return (
@@ -52,7 +80,12 @@ export default React.memo(function ToyBox() {
                         </SubtleButton>
                     ))}
                 </Stack>
-                <ExprViewList items={toyBoxExprs[category]} width={200} scale={0.9} />
+                <ExprViewList
+                    items={toyBoxExprs[category]}
+                    width={200}
+                    scale={0.9}
+                    onContextMenu={onContextMenu}
+                />
             </Stack>
         </Pane>
     );

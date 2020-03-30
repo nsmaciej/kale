@@ -24,6 +24,7 @@ export default React.memo(function ClipboardList() {
     const history = clipboard.value.map((x, i) => ({
         ...x,
         shortcut: i < 10 ? mod(i + 1, 10).toString() : undefined,
+        persistent: x.pinned,
     }));
     return (
         <Pane

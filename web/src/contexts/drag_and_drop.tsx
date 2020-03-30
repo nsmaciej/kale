@@ -23,15 +23,14 @@ const Container = styled.div`
     padding: ${(p) => p.theme.exprList.padding.combine(p.theme.highlight.padding).css};
     border-radius: ${(p) => p.theme.exprList.borderRadius}px;
     box-sizing: content-box;
-    padding: ${(p) => p.theme.exprView.frozenPadding.css};
+    padding: ${(p) => p.theme.exprView.widePadding.css};
 `;
 
 export interface DropListener {
     /** Fires to give a listener an opportunity to show that a drop is accepted. */
     dragUpdate(point: ClientOffset | null, expr: Expr | null): void;
-    /** Fires when the dragged object moves. Should return if this listener accepted the drop. If
-     * move is returned, the draggedOut listener on the expr that begun the drag is not caleld */
-    acceptDrop(point: ClientOffset, expr: Expr): "copy" | "move" | "reject";
+    /** Fires when the dragged object moves. Should return if this listener accepted the drop. */
+    acceptDrop(point: ClientOffset, expr: Expr): boolean;
 }
 
 export interface MaybeStartDrag {
@@ -40,7 +39,7 @@ export interface MaybeStartDrag {
     /** Called when the drag status changes. */
     onDragUpdate?(willMove: boolean): void;
     /** Called if the drag is accepted. This is almost always the case except when copying. */
-    onDragAccepted?(): void;
+    onDragAccepted?(willMove: boolean): void;
     /** Called when the drag concludes, no matter the acceptance status. */
     onDragEnd?(): void;
     expr: Expr;
@@ -105,10 +104,10 @@ export function DragAndDropSurface({ children }: { children: ReactNode }) {
             const exprCorner = assertSome(position).offset(drag.current.delta);
             const expr = drag.current.expr;
             for (const listener of listeners) {
-                const status = listener.acceptDrop(exprCorner, expr);
-                if (status === "reject") continue;
-                if (status === "move" && willMove) drag.current.onDragAccepted?.();
-                break;
+                if (listener.acceptDrop(exprCorner, expr)) {
+                    drag.current.onDragAccepted?.(willMove);
+                    break;
+                }
             }
             drag.current.onDragEnd?.();
         }

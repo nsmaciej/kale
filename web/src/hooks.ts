@@ -52,7 +52,7 @@ export function useDocumentEvent<K extends keyof DocumentEventMap>(
     }, [name, listener, options]);
 }
 
-function useDrop(listener: DropListener): void {
+export function useDrop(listener: DropListener): void {
     const dragAndDrop = useContextChecked(DragAndDrop);
     useEffect(() => {
         dragAndDrop.addListener(listener);
@@ -77,9 +77,9 @@ export function useSimpleDrop(
         acceptDrop(point, expr) {
             if (getRect()?.contains(point)) {
                 onDrop(expr);
-                return "move";
+                return true;
             }
-            return "reject";
+            return false;
         },
     });
     return lastContains;

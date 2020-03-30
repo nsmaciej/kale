@@ -4,8 +4,8 @@ import styled, { useTheme } from "styled-components";
 
 import * as E from "expr";
 import { Highlight } from "theme";
-import { Rect, ClientOffset, Padding } from "geometry";
-import { useContextChecked } from "hooks";
+import { Rect, ClientOffset, Padding, Offset } from "geometry";
+import { useContextChecked, useDrop } from "hooks";
 import DragAndDrop from "contexts/drag_and_drop";
 import Expr, { ExprId } from "expr";
 
@@ -16,7 +16,7 @@ import { ExprArea, ExprAreaMap, flattenArea } from "expr_view/core";
 import { SvgGroup } from "expr_view/components";
 import layoutExpr from "expr_view/layout";
 
-export { ExprArea, ExprAreaMap, FlatExprArea } from "expr_view/core";
+export { ExprAreaMap, FlatExprArea } from "expr_view/core";
 
 const Container = styled.svg`
     max-width: 100%;
@@ -28,33 +28,51 @@ const Container = styled.svg`
 `;
 
 interface ExprViewProps {
+    /** The expr to display. */
     expr: Expr;
+    /** A ref to a map containg the rendering status of all shown exprs. */
     exprAreaMapRef?: MutableRefObject<ExprAreaMap | null>;
-    exprAreaRef?: MutableRefObject<ExprArea | null>;
 
-    // Callbacks.
+    // Generic callbacks.
     onClick?(expr: ExprId): void;
     onHover?(expr: ExprId | null): void;
     onDoubleClick?(expr: ExprId): void;
     onMiddleClick?(expr: ExprId): void;
-    /** Triggered when an expr has been dragged out using drag-and-drop. */
+
+    // Drag and Drop.
+    /** Triggered when an expr has been dragged out. See `immutable`. */
     onDraggedOut?(expr: ExprId): void;
+    /** Called when a drag has been acepted and `at` shuould be replaced with `expr`. */
+    onDrop?(at: ExprId, expr: Expr): void;
+    /** When initiating a drag, should the expr appearance indicate a pending deletion or not (using
+     * the ghosting effect) */
+    persistent?: boolean;
+    /** When initiating a drag, should constituent exprs be draggable, or the entire expr. */
+    atomic?: boolean;
+    /** When acccepting a drop, should the expr highlight to indicate that drops are accepted. When
+     * the acceptance stage is run, should `onDropped` ever be called */
+    immutable?: boolean;
+
+    // Delegation.
+    /** Called when the context menu is invoked. */
+    onContextMenu?(expr: ExprId): ContextMenuItem[];
     /** Triggered when expr has been focused on, used after dismissing a context menu */
     onFocus?(): void;
 
-    // Delegation.
-    onContextMenu?(expr: ExprId): ContextMenuItem[];
-
     // Looks.
     padding?: Padding;
+    /** Scale at which the expr should be shown. 1 means do not scale. */
     scale?: number;
-    /** Is this an atomic expr whose children cannot be dragged out and should be given a new id
-     * when dragged? */
-    frozen?: boolean;
+    /** Should comments be hidden and replaced with a comment indicator. */
     foldComments?: boolean;
+    /** Should a special debug overlay be shown over this view. */
     showDebugOverlay?: boolean;
+    /** Use the alternative wide main expr padding. */
+    widePadding?: boolean;
 
+    /** Should the ExprView use the focused appearance for its highlights. */
     focused?: boolean;
+    /** Highlights to use, note only the last highlight for a given ExprId ever gets used. */
     highlights?: readonly [ExprId, Highlight][];
 }
 
@@ -64,33 +82,104 @@ interface ExprMenuState {
     expr: ExprId;
 }
 
-//TODO: Make a functional component.
-export default React.memo(function ExprView(props: ExprViewProps) {
+export default React.memo(function ExprView({
+    atomic,
+    expr,
+    exprAreaMapRef,
+    focused,
+    foldComments,
+    highlights,
+    immutable,
+    onClick,
+    onContextMenu,
+    onDoubleClick,
+    onDraggedOut,
+    onDrop,
+    onFocus,
+    onHover,
+    onMiddleClick,
+    padding,
+    persistent,
+    scale,
+    showDebugOverlay,
+    widePadding,
+}: ExprViewProps) {
     const theme = useTheme();
     const dnd = useContextChecked(DragAndDrop);
     const [showingMenu, setShowingMenu] = useState<ExprMenuState | null>(null);
     const [ghost, setGhost] = useState<ExprId | null>(null);
+    const [droppable, setDroppable] = useState<ExprId | null>(null);
 
     const containerRef = useRef<SVGSVGElement>(null);
     const pendingExprAreaMap = useRef(null as ExprAreaMap | null);
-    const pendingExprArea = useRef(null as ExprArea | null);
+    const lastExprArea = useRef(null as ExprArea | null);
 
     // useMemo needed because this is a useCallbackp dependency.
-    const padding = useMemo(
+    const finalPadding = useMemo(
         () =>
-            (props.frozen ? theme.exprView.frozenPadding : theme.exprView.padding).combine(
-                props.padding ?? Padding.zero,
+            (widePadding ? theme.exprView.padding : theme.exprView.widePadding).combine(
+                padding ?? Padding.zero,
             ),
-        [props.frozen, props.padding, theme],
+        [widePadding, padding, theme],
     );
+
+    useDrop({
+        dragUpdate(absolutePoint, draggedExpr) {
+            if (immutable) return false;
+            const dropTargetId = clientOffsetToExpr(absolutePoint);
+            if (dropTargetId !== null && draggedExpr?.contains(dropTargetId)) {
+                // Do not even hint we support nesting.
+                setDroppable(null);
+            } else {
+                setDroppable(dropTargetId);
+            }
+        },
+        acceptDrop(absolutePoint, draggedExpr) {
+            if (immutable) return false;
+            const dropTargetId = clientOffsetToExpr(absolutePoint);
+            if (dropTargetId === null) return false;
+            // Reject nesting.
+            //TODO: This very fugly and relies on the id of the draggd expr, replace it with some
+            // sort of indication of the dragged-expr origin.
+            if (draggedExpr.contains(dropTargetId)) return false;
+            onDrop?.(dropTargetId, draggedExpr);
+            return true;
+        },
+    });
+
+    function clientOffsetToExpr(absolutePoint: ClientOffset | null): ExprId | null {
+        if (containerRef.current === null || lastExprArea.current === null) {
+            return null;
+        }
+        const editorRect = Rect.fromBoundingRect(containerRef.current.getBoundingClientRect());
+        if (absolutePoint === null || !editorRect.contains(absolutePoint)) {
+            return null;
+        }
+
+        // Find the drop target. Keep in mind each nested area is offset relative to its parent.
+        const point = absolutePoint.difference(editorRect.origin);
+        let currentArea = lastExprArea.current;
+        let areaStart = Offset.zero;
+        main: for (;;) {
+            for (const subArea of currentArea.children) {
+                if (subArea.rect.shift(areaStart).contains(point)) {
+                    currentArea = subArea;
+                    areaStart = areaStart.offset(subArea.rect.origin);
+                    continue main;
+                }
+            }
+            break;
+        }
+        return currentArea.expr.id;
+    }
 
     function drawRect(exprId: ExprId, highlight: Highlight, areas: ExprAreaMap) {
         if (areas[exprId] == null) return;
         const rect = areas[exprId].rect.padding(
-            props.expr.id === exprId ? theme.highlight.mainPadding : theme.highlight.padding,
+            expr.id === exprId ? theme.highlight.mainPadding : theme.highlight.padding,
         );
         // Hack: Blanks draw their own highlights.
-        const isBlank = props.expr.findId(exprId) instanceof E.Blank;
+        const isBlank = expr.findId(exprId) instanceof E.Blank;
         return (
             <motion.rect
                 animate={{
@@ -102,8 +191,8 @@ export default React.memo(function ExprView(props: ExprViewProps) {
                 }}
                 key={`highlight-${highlight.name}`}
                 rx={theme.highlight.radius}
-                fill={highlight.fill(props.focused === true) ?? "none"}
-                stroke={highlight.stroke(props.focused === true) ?? "none"}
+                fill={highlight.fill(focused === true) ?? "none"}
+                stroke={highlight.stroke(focused === true) ?? "none"}
                 initial={false}
                 style={{ filter: highlight.droppable ? "url(#droppable)" : undefined }}
                 transition={{
@@ -115,16 +204,6 @@ export default React.memo(function ExprView(props: ExprViewProps) {
         );
     }
 
-    const {
-        frozen,
-        expr,
-        onDoubleClick,
-        onClick,
-        onMiddleClick,
-        onHover,
-        onDraggedOut,
-        onContextMenu,
-    } = props;
     // Change the highlighted expr.
     const exprPropsFor = useCallback(
         (childExpr: Expr): Partial<React.DOMAttributes<Element>> => {
@@ -161,20 +240,23 @@ export default React.memo(function ExprView(props: ExprViewProps) {
                     }
 
                     // Frozen expressions drag everything.
-                    const dragExpr = frozen ? expr : childExpr;
+                    const dragExpr = atomic ? expr : childExpr;
                     const containerOrigin = ClientOffset.fromBoundingRect(
                         containerRef.current.getBoundingClientRect(),
                     );
                     const exprOrigin = pendingExprAreaMap.current[dragExpr.id].rect.origin;
                     dnd.maybeStartDrag({
-                        expr: frozen ? dragExpr.resetIds() : dragExpr,
+                        expr: atomic ? dragExpr.resetIds() : dragExpr,
                         start: ClientOffset.fromClient(event),
-                        exprStart: exprOrigin.offset(containerOrigin).offset(padding.topLeft.neg),
-                        onDragAccepted() {
-                            onDraggedOut?.(dragExpr.id);
+                        exprStart: exprOrigin
+                            .offset(containerOrigin)
+                            .offset(finalPadding.topLeft.neg),
+                        onDragAccepted(willMove) {
+                            // Only fire dragged-out if we are moving and this expr isn't persistant.
+                            if (willMove && !persistent) onDraggedOut?.(dragExpr.id);
                         },
                         onDragUpdate(willMove) {
-                            setGhost(willMove && !frozen ? dragExpr.id : null);
+                            setGhost(willMove && !persistent ? dragExpr.id : null);
                         },
                         onDragEnd() {
                             setGhost(null);
@@ -199,74 +281,76 @@ export default React.memo(function ExprView(props: ExprViewProps) {
         [
             dnd,
             expr,
-            frozen,
+            atomic,
+            persistent,
             onClick,
             onContextMenu,
             onDoubleClick,
             onMiddleClick,
             onDraggedOut,
             onHover,
-            padding,
+            finalPadding,
         ],
     );
 
     useEffect(() => {
-        if (props.exprAreaMapRef !== undefined && pendingExprAreaMap.current !== null) {
-            props.exprAreaMapRef.current = pendingExprAreaMap.current;
-        }
-        if (props.exprAreaRef !== undefined && pendingExprArea.current !== null) {
-            props.exprAreaRef.current = pendingExprArea.current;
+        if (exprAreaMapRef !== undefined && pendingExprAreaMap.current !== null) {
+            exprAreaMapRef.current = pendingExprAreaMap.current;
         }
     });
 
-    const highlights = props.highlights?.slice() ?? [];
-    if (showingMenu != null) {
-        highlights.push([showingMenu.expr, theme.highlight.contextMenu]);
+    const finalHighlights = highlights?.slice() ?? [];
+    if (showingMenu != null && !atomic) {
+        // Do not draw the context-menu ring on atomic exprs.
+        finalHighlights.push([showingMenu.expr, theme.highlight.contextMenu]);
+    }
+    if (droppable != null) {
+        finalHighlights.push([droppable, theme.highlight.droppable]);
     }
 
-    const { nodes, size, areas, text } = layoutExpr(theme, props.expr, {
-        exprPropsFor,
-        focused: props.focused,
+    const { nodes, size, areas, text } = layoutExpr(theme, expr, {
+        focused,
+        foldComments,
+        exprPropsFor: immutable ? undefined : exprPropsFor,
         // Pass something that can be momoized if we can.
-        highlights: showingMenu ? highlights : props.highlights,
-        foldComments: props.foldComments,
+        highlights: showingMenu || droppable !== null ? finalHighlights : highlights,
         transparent: ghost,
     });
 
     // Spooky in React's Concurrent Mode, but it's ok since we'll only use this when
     // we commit and it doesn't depend on any previous calls to render.
-    pendingExprArea.current = {
-        expr: props.expr,
-        children: areas,
-        rect: new Rect(padding.topLeft, size),
-        inline: false,
+    lastExprArea.current = {
+        expr,
         text,
+        children: areas,
+        rect: new Rect(finalPadding.topLeft, size),
+        inline: false,
     };
-    pendingExprAreaMap.current = flattenArea(pendingExprArea.current);
+    pendingExprAreaMap.current = flattenArea(lastExprArea.current);
 
     const highlightRects = [];
-    if (props.highlights != null) {
-        for (const [exprId, highlight] of highlights) {
-            highlightRects.push(drawRect(exprId, highlight, pendingExprAreaMap.current));
-        }
+    for (const [exprId, highlight] of finalHighlights) {
+        highlightRects.push(drawRect(exprId, highlight, pendingExprAreaMap.current));
     }
 
-    const { width, height } = size.padding(padding);
-    const scale = props.scale ?? 1;
+    const { width, height } = size.padding(finalPadding);
+    const finalScale = scale ?? 1;
     return (
         <>
             <Container
                 xmlns="http://www.w3.org/2000/svg"
                 ref={containerRef}
-                width={width * scale}
-                height={height * scale}
+                width={width * finalScale}
+                height={height * finalScale}
                 viewBox={`0 0 ${width} ${height}`}
                 // If we can open context menus, do not allow the system menu.
-                onContextMenu={(e) => props.onContextMenu && e.preventDefault()}
+                onContextMenu={(e) => onContextMenu && e.preventDefault()}
+                // This makes it so the entire expr can be clicked or dragged.
+                {...exprPropsFor(expr)}
             >
                 {highlightRects}
-                <SvgGroup translate={padding.topLeft}>{nodes}</SvgGroup>
-                {props.showDebugOverlay && <SvgDebugOverlay areaMap={pendingExprAreaMap.current} />}
+                <SvgGroup translate={finalPadding.topLeft}>{nodes}</SvgGroup>
+                {showDebugOverlay && <SvgDebugOverlay areaMap={pendingExprAreaMap.current} />}
             </Container>
             {showingMenu && (
                 <ContextMenu
@@ -274,7 +358,7 @@ export default React.memo(function ExprView(props: ExprViewProps) {
                     origin={showingMenu.at}
                     onDismissMenu={() => {
                         setShowingMenu(null);
-                        props.onFocus?.();
+                        onFocus?.();
                     }}
                 />
             )}

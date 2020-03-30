@@ -12,15 +12,14 @@ import {
     makeMutableRef,
 } from "utils";
 import { KaleTheme, Highlight } from "theme";
-import { Offset, Rect, ClientOffset } from "geometry";
+import { ClientOffset } from "geometry";
 import { useContextChecked } from "hooks";
 import Expr, { ExprId } from "expr";
-import ExprView, { ExprArea, ExprAreaMap } from "expr_view";
+import ExprView, { ExprAreaMap } from "expr_view";
 
 import { Type, Func, assertFunc, Value, Builtin } from "vm/types";
 import { specialFunctions } from "vm/interpreter";
 
-import DragAndDrop, { DragAndDropContext, DropListener } from "contexts/drag_and_drop";
 import Clipboard, { ClipboardContext } from "contexts/clipboard";
 import Workspace, { WorkspaceContext } from "contexts/workspace";
 import EditorStack, { EditorStackContext } from "contexts/editor_stack";
@@ -47,7 +46,6 @@ interface EditorWrapperProps {
 interface EditorProps extends EditorWrapperProps {
     workspace: WorkspaceContext;
     clipboard: ClipboardContext;
-    dragAndDrop: DragAndDropContext;
     editorStack: EditorStackContext;
     theme: KaleTheme;
     forwardedRef: Ref<HTMLDivElement>;
@@ -56,7 +54,6 @@ interface EditorProps extends EditorWrapperProps {
 class Editor extends PureComponent<EditorProps, EditorState> {
     private readonly containerRef = React.createRef<HTMLDivElement>();
     private readonly exprAreaMapRef = makeMutableRef<ExprAreaMap>();
-    private readonly exprAreaRef = makeMutableRef<ExprArea>();
 
     state: EditorState = {
         foldingComments: false,
@@ -113,11 +110,6 @@ class Editor extends PureComponent<EditorProps, EditorState> {
 
     private replaceExpr(old: ExprId, next: Expr) {
         this.update(old, () => next.resetIds().replaceId(old));
-    }
-
-    private swapExpr(left: ExprId, right: ExprId) {
-        this.replaceExpr(left, this.expr.get(right));
-        this.replaceExpr(right, this.expr.get(left));
     }
 
     private createInlineEditor(expr: Expr, created: boolean) {
@@ -478,70 +470,15 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         }
     };
 
-    private clientOffsetToExpr(absolutePoint: ClientOffset | null): ExprId | null {
-        if (this.containerRef.current === null || this.exprAreaRef.current === null) {
-            return null;
-        }
-        const editorRect = Rect.fromBoundingRect(this.containerRef.current.getBoundingClientRect());
-        if (absolutePoint === null || !editorRect.contains(absolutePoint)) {
-            return null;
-        }
-
-        // Find the drop target. Keep in mind each nested area is offset relative to its parent.
-        const point = absolutePoint.difference(editorRect.origin);
-        let currentArea = this.exprAreaRef.current;
-        let areaStart = Offset.zero;
-        main: for (;;) {
-            for (const subArea of currentArea.children) {
-                if (subArea.rect.shift(areaStart).contains(point)) {
-                    currentArea = subArea;
-                    areaStart = areaStart.offset(subArea.rect.origin);
-                    continue main;
-                }
-            }
-            break;
-        }
-        return currentArea.expr.id;
-    }
-
     private readonly onDraggedOut = (exprId: ExprId) => {
         this.removeExpr(exprId);
     };
 
-    private readonly dragListener: DropListener = {
-        dragUpdate: (absolutePoint, draggedExpr) => {
-            const dropTargetId = this.clientOffsetToExpr(absolutePoint);
-            if (dropTargetId !== null && draggedExpr?.contains(dropTargetId)) {
-                // Do not even hint we support nesting.
-                this.setState({ droppable: null });
-            } else {
-                this.setState({ droppable: dropTargetId });
-            }
-        },
-        acceptDrop: (absolutePoint, draggedExpr) => {
-            const dropTargetId = this.clientOffsetToExpr(absolutePoint);
-            //TODO: This very fugly and relies on the id of the draggd expr, replace it with some
-            // sort of indication of the dragged-expr origin.
-            if (dropTargetId === null) return "reject";
-            // Reject nesting.
-            if (draggedExpr.contains(dropTargetId)) return "reject";
-            this.focus();
-            this.selectExpr(dropTargetId);
-            if (this.expr.contains(draggedExpr.id)) {
-                // Replace, copying the older value.
-                this.addToClipboard(dropTargetId);
-            }
-            this.replaceExpr(dropTargetId, draggedExpr);
-            return "move";
-        },
+    private readonly onDropped = (at: ExprId, expr: Expr) => {
+        this.replaceExpr(at, expr);
+        this.selectExpr(expr.id);
+        this.focus();
     };
-
-    componentDidMount() {
-        this.props.dragAndDrop.addListener(this.dragListener);
-    }
-    componentWillUnmount() {
-        this.props.dragAndDrop.removeListener(this.dragListener);
-    }
 
     componentDidUpdate(prevProps: EditorProps, prevState: EditorState) {
         assert(
@@ -690,13 +627,13 @@ class Editor extends PureComponent<EditorProps, EditorState> {
                 style={{ position: "relative", width: "max-content" }}
             >
                 <ExprView
+                    widePadding
                     // This is heavy pure component, don't create new objects here.
                     expr={this.expr}
                     highlights={this.memoizedHighlights()}
                     focused={this.props.focused}
                     foldComments={this.state.foldingComments}
                     exprAreaMapRef={this.exprAreaMapRef}
-                    exprAreaRef={this.exprAreaRef}
                     showDebugOverlay={this.state.showingDebugOverlay}
                     // Callbacks.
                     onContextMenu={this.onContextMenu}
@@ -706,6 +643,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
                     onMiddleClick={this.openEditor}
                     onFocus={this.focus}
                     onDraggedOut={this.onDraggedOut}
+                    onDrop={this.onDropped}
                 />
                 {this.renderInlineEditor()}
                 {this.renderBlankPopover()}
@@ -723,7 +661,6 @@ export default React.forwardRef(function EditorWrapper(
             {...props}
             workspace={useContextChecked(Workspace)}
             clipboard={useContextChecked(Clipboard)}
-            dragAndDrop={useContextChecked(DragAndDrop)}
             editorStack={useContextChecked(EditorStack)}
             theme={useTheme()}
             forwardedRef={ref}

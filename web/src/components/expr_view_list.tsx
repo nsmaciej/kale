@@ -48,19 +48,21 @@ const Fallback = styled.div`
 `;
 
 const Extras = styled.div`
-    margin: ${(p) => p.theme.exprView.frozenPadding.css} !important;
+    margin: ${(p) => p.theme.exprView.widePadding.css} !important;
 `;
 
 export interface ShortcutExpr {
     expr: Expr;
+    persistent?: boolean;
     shortcut?: string;
 }
 
 interface ExprViewListItemProps<E> {
     /** Scale used for the interior ExprViews. */
     scale?: number;
+    /** Pass-through callback for each expr in the list. */
     onDraggedOut?(item: E): void;
-    //TODO: Draw our own menu with a large hitbox.
+    /** Pass-through callback for each expr in the list. */
     onContextMenu?(item: E): ContextMenuItem[];
 }
 
@@ -86,7 +88,9 @@ function ExprViewListItem<E extends ShortcutExpr>({
     return (
         <Box alignSelf="center" width="100%">
             <ExprView
-                frozen
+                atomic
+                immutable
+                persistent={item.persistent}
                 expr={item.expr}
                 scale={scale}
                 padding={theme.exprList.padding}
