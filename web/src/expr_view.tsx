@@ -19,7 +19,6 @@ import layoutExpr from "expr_view/layout";
 export { ExprArea, ExprAreaMap, FlatExprArea } from "expr_view/core";
 
 const Container = styled.svg`
-    cursor: default;
     max-width: 100%;
     height: auto;
     /* SVGs are inline by default, this leads to a scourge of invisible space characters. Make it a
@@ -173,8 +172,8 @@ export default React.memo(function ExprView(props: ExprViewProps) {
                         onDragAccepted() {
                             onDraggedOut?.(dragExpr.id);
                         },
-                        onDragStart() {
-                            setGhost(dragExpr.id);
+                        onDragUpdate(willMove) {
+                            setGhost(willMove ? dragExpr.id : null);
                         },
                         onDragEnd() {
                             setGhost(null);

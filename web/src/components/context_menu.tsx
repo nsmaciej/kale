@@ -2,7 +2,7 @@ import React, { useState, useLayoutEffect, useRef } from "react";
 import styled from "styled-components";
 
 import { Offset, Rect } from "geometry";
-import { Optional, mod, assert, delay } from "utils";
+import { Optional, mod, assert, delay, platformModifierKey, hasUnwantedMoidiferKeys } from "utils";
 import { useDisableScrolling } from "hooks";
 import Menu, { MenuItem } from "components/menu";
 import Shortcut from "components/shortcut";
@@ -93,16 +93,16 @@ export default function ContextMenu({ items, origin, onDismissMenu, popover }: C
     }
 
     function onKeyUp(e: React.KeyboardEvent) {
-        if (e.ctrlKey || e.metaKey) return;
+        if (hasUnwantedMoidiferKeys(e)) return;
         e.stopPropagation();
-        if (e.key === "Alt") setShowingHidden(false);
+        e.preventDefault();
+        if (e.key === platformModifierKey()) setShowingHidden(false);
     }
 
     function onKeyDown(e: React.KeyboardEvent) {
         // Chrome's src/ui/views/controls/menu/menu_controller.cc is a great source for these.
-        if (e.ctrlKey || e.metaKey) return;
-        // Pressing Alt allows showing hidden menu items.
-        if (e.altKey && e.key !== "Alt") return;
+        if (hasUnwantedMoidiferKeys(e)) return;
+        // Show the hidden menu items.
         e.stopPropagation();
         e.preventDefault();
         switch (e.key) {
@@ -127,6 +127,10 @@ export default function ContextMenu({ items, origin, onDismissMenu, popover }: C
                 }
                 break;
             default: {
+                if (e.key === platformModifierKey()) {
+                    setShowingHidden(true);
+                    return;
+                }
                 let i = 0;
                 for (const item of items) {
                     if (item.keyEquivalent === e.key) {

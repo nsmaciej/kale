@@ -2,10 +2,9 @@ import React, { useState, ReactNode, useRef } from "react";
 import ReactDOM from "react-dom";
 import styled, { useTheme } from "styled-components";
 
-import { assertSome, assert } from "utils";
+import { assertSome, assert, platformModifierKey } from "utils";
 import { ClientOffset } from "geometry";
-import { useDocumentEvent, useContextChecked } from "hooks";
-import Clipboard from "contexts/clipboard";
+import { useDocumentEvent } from "hooks";
 import Expr from "expr";
 import layoutExpr from "expr_view/layout";
 
@@ -37,8 +36,8 @@ export interface DropListener {
 export interface MaybeStartDrag {
     start: ClientOffset; // Where the maybe-drag started.
     exprStart: ClientOffset; // Where is the corner of the expr.
-    /** Called when the drag really begins. */
-    onDragStart?(): void;
+    /** Called when the drag status changes. */
+    onDragUpdate?(willMove: boolean): void;
     /** Called if the drag is accepted. This is almost always the case except when copying. */
     onDragAccepted?(): void;
     /** Called when the drag concludes, no matter the acceptance status. */
@@ -69,8 +68,21 @@ export function DragAndDropSurface({ children }: { children: ReactNode }) {
     const [position, setPosition] = useState<ClientOffset | null>(null);
     const listeners = useRef(new Set<DropListener>()).current;
     const drag = useRef<DraggingState | null>(null);
+    const [willMove, setWillMove] = useState(false);
 
     useDocumentEvent("mousemove", onMouseMove);
+    useDocumentEvent("keydown", (e) => {
+        if (e.key === platformModifierKey()) {
+            setWillMove(false);
+            drag.current?.onDragUpdate?.(false);
+        }
+    });
+    useDocumentEvent("keyup", (e) => {
+        if (e.key === platformModifierKey()) {
+            setWillMove(true);
+            drag.current?.onDragUpdate?.(true);
+        }
+    });
 
     const contextValue = useRef<DragAndDropContext>({
         maybeStartDrag(maybeDrag: MaybeStartDrag) {
@@ -92,7 +104,7 @@ export function DragAndDropSurface({ children }: { children: ReactNode }) {
             for (const listener of listeners) {
                 const status = listener.acceptDrop(exprCorner, expr);
                 if (status === "reject") continue;
-                if (status === "move") drag.current.onDragAccepted?.();
+                if (status === "move" && willMove) drag.current.onDragAccepted?.();
                 break;
             }
             drag.current.onDragEnd?.();
@@ -119,8 +131,9 @@ export function DragAndDropSurface({ children }: { children: ReactNode }) {
             // Consider starting a drag.
             if (drag.current.start.distance(nextPosition) > DRAG_THRESHOLD) {
                 drag.current.delta = drag.current.exprStart.difference(nextPosition);
-                drag.current.onDragStart?.();
+                drag.current.onDragUpdate?.(true);
                 setPosition(nextPosition);
+                setWillMove(true);
             }
         } else {
             // Update the drag.
@@ -138,7 +151,7 @@ export function DragAndDropSurface({ children }: { children: ReactNode }) {
             // Cover the entire page in a div so we can always get the mouseUp event.
             // Bug: Safari doesn't like drawing box-shadows on SVGs (it leaves a ghost trail), it
             // must be drawn on the Container div instead.
-            <Overlay onMouseUp={dismissDrag}>
+            <Overlay onMouseUp={dismissDrag} style={{ cursor: willMove ? "grabbing" : "copy" }}>
                 <Container style={{ top: pos.y, left: pos.x }}>
                     <svg
                         xmlns="http://www.w3.org/2000/svg"

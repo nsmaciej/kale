@@ -37,6 +37,7 @@ export function max(list: readonly number[]): number {
     return list.reduce((a, b) => Math.max(a, b), 0);
 }
 
+/* Partitions the array into two halves, one meeting the `test` and one that does not */
 export function partition<T>(array: readonly T[], test: (value: T) => boolean): [T[], T[]] {
     const left = [];
     const right = [];
@@ -73,6 +74,7 @@ export function groupEntries<K extends string | number | symbol, V>(
     return result;
 }
 
+/** Returns a promise that delays the execution by `timeout` miliseconds. */
 export function delay(timeout: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, timeout));
 }
@@ -135,4 +137,31 @@ export function makeMutableRef<T>(): { current: T | null } {
 export function idGenerator(name: string): () => symbol {
     let id = 0;
     return () => Symbol(`${name}-${id++}`);
+}
+
+/** Returns the best modifier key for the current platform. */
+export function platformModifierKey(): "Alt" | "Control" {
+    if (navigator.platform.includes("Mac")) return "Alt";
+    return "Control";
+}
+
+/** Returns if the event has a modifier key that should not be handled. Pass through single presses
+ * of the platform modifier key. */
+export function hasUnwantedMoidiferKeys(event: {
+    key: string;
+    altKey: boolean;
+    ctrlKey: boolean;
+    metaKey: boolean;
+}): boolean {
+    if (event.metaKey) return true;
+    switch (platformModifierKey()) {
+        case "Alt":
+            if (event.ctrlKey) return true;
+            if (event.altKey) return event.key !== "Alt";
+            return false;
+        case "Control":
+            if (event.altKey) return true;
+            if (event.ctrlKey) return event.key !== "Control";
+            return false;
+    }
 }

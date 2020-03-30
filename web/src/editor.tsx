@@ -516,10 +516,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
                     return "copy";
                 } else if (this.expr.contains(draggedExpr.id)) {
                     // Replace, copying the older value.
-                    this.props.clipboard.dispatch({
-                        type: "add",
-                        entry: { expr: this.expr.get(dropTargetId), pinned: false },
-                    });
+                    this.addToClipboard(dropTargetId);
                     this.replaceExpr(dropTargetId, draggedExpr);
                     return "move";
                 } else {
