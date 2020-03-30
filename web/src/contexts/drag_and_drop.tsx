@@ -1,4 +1,4 @@
-import React, { useState, ReactNode, useRef } from "react";
+import React, { useState, ReactNode, useRef, useEffect } from "react";
 import ReactDOM from "react-dom";
 import styled, { useTheme } from "styled-components";
 
@@ -13,6 +13,7 @@ const Overlay = styled.div`
     height: 100%;
     position: fixed;
     z-index: 1000;
+    touch-action: pinch-zoom;
 `;
 
 const Container = styled.div`
@@ -57,6 +58,7 @@ export default DragAndDrop;
 
 interface DraggingState extends MaybeStartDrag {
     delta: ClientOffset | null; // How much to offset the expr when showing the drag.
+    pointerId: number | null;
 }
 
 // There are three states to a drag.
@@ -68,9 +70,10 @@ export function DragAndDropSurface({ children }: { children: ReactNode }) {
     const [position, setPosition] = useState<ClientOffset | null>(null);
     const listeners = useRef(new Set<DropListener>()).current;
     const drag = useRef<DraggingState | null>(null);
+    const overlayRef = useRef<HTMLDivElement>(null);
     const [willMove, setWillMove] = useState(false);
 
-    useDocumentEvent("mousemove", onMouseMove);
+    useDocumentEvent("pointermove", onPointerMove);
     useDocumentEvent("keydown", (e) => {
         if (e.key === platformModifierKey()) {
             setWillMove(false);
@@ -86,7 +89,7 @@ export function DragAndDropSurface({ children }: { children: ReactNode }) {
 
     const contextValue = useRef<DragAndDropContext>({
         maybeStartDrag(maybeDrag: MaybeStartDrag) {
-            drag.current = { ...maybeDrag, delta: null };
+            drag.current = { ...maybeDrag, delta: null, pointerId: null };
         },
         addListener(listener) {
             listeners.add(listener);
@@ -117,8 +120,8 @@ export function DragAndDropSurface({ children }: { children: ReactNode }) {
         }
     }
 
-    function onMouseMove(event: MouseEvent) {
-        event.preventDefault();
+    function onPointerMove(event: PointerEvent) {
+        // event.preventDefault();
         // Ensure left mouse button is held down.
         if (event.buttons !== 1 || drag.current === null) {
             dismissDrag();
@@ -131,6 +134,7 @@ export function DragAndDropSurface({ children }: { children: ReactNode }) {
             // Consider starting a drag.
             if (drag.current.start.distance(nextPosition) > DRAG_THRESHOLD) {
                 drag.current.delta = drag.current.exprStart.difference(nextPosition);
+                drag.current.pointerId = event.pointerId;
                 drag.current.onDragUpdate?.(true);
                 setPosition(nextPosition);
                 setWillMove(true);
@@ -151,7 +155,12 @@ export function DragAndDropSurface({ children }: { children: ReactNode }) {
             // Cover the entire page in a div so we can always get the mouseUp event.
             // Bug: Safari doesn't like drawing box-shadows on SVGs (it leaves a ghost trail), it
             // must be drawn on the Container div instead.
-            <Overlay onMouseUp={dismissDrag} style={{ cursor: willMove ? "grabbing" : "copy" }}>
+            <Overlay
+                onPointerUp={dismissDrag}
+                onPointerCancel={dismissDrag}
+                style={{ cursor: willMove ? "grabbing" : "copy" }}
+                ref={overlayRef}
+            >
                 <Container style={{ top: pos.y, left: pos.x }}>
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -171,6 +180,13 @@ export function DragAndDropSurface({ children }: { children: ReactNode }) {
     if (drag.current?.delta != null) {
         surface = ReactDOM.createPortal(renderExpr(), document.body);
     }
+
+    const pointerId = drag.current?.pointerId;
+    useEffect(() => {
+        if (pointerId != null) {
+            assertSome(overlayRef.current).setPointerCapture(pointerId);
+        }
+    }, [pointerId]);
 
     // Declare the global droppable filter here once.
     return (

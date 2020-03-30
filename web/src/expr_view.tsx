@@ -24,6 +24,7 @@ const Container = styled.svg`
     /* SVGs are inline by default, this leads to a scourge of invisible space characters. Make it a
     block instead. */
     display: block;
+    touch-action: pinch-zoom;
 `;
 
 interface ExprViewProps {
@@ -147,7 +148,7 @@ export default React.memo(function ExprView(props: ExprViewProps) {
                 onMouseLeave(event: React.MouseEvent) {
                     trigger(onHover, null, event);
                 },
-                onMouseDown(event) {
+                onPointerDown(event) {
                     if (event.button === 1) {
                         trigger(onMiddleClick, childExpr.id, event);
                         return;
@@ -173,7 +174,7 @@ export default React.memo(function ExprView(props: ExprViewProps) {
                             onDraggedOut?.(dragExpr.id);
                         },
                         onDragUpdate(willMove) {
-                            setGhost(willMove ? dragExpr.id : null);
+                            setGhost(willMove && !frozen ? dragExpr.id : null);
                         },
                         onDragEnd() {
                             setGhost(null);

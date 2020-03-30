@@ -77,7 +77,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
     private update(childId: ExprId | null, transform: (expr: Expr) => Expr | null) {
         function updater(main: Expr) {
             const nextMain = main.update(childId ?? main.id, transform);
-            return nextMain ?? new E.Blank(E.exprData("Double click me"));
+            return nextMain ?? new E.Blank(E.exprData("Double Tap Me"));
         }
         this.props.workspace.dispatch({
             type: "update",
