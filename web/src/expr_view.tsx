@@ -36,6 +36,7 @@ interface ExprViewProps {
     onClick?(expr: ExprId): void;
     onHover?(expr: ExprId | null): void;
     onDoubleClick?(expr: ExprId): void;
+    onMiddleClick?(expr: ExprId): void;
     /** Triggered when an expr has been dragged out using drag-and-drop. */
     onDraggedOut?(expr: ExprId): void;
     /** Triggered when expr has been focused on, used after dismissing a context menu */
@@ -113,7 +114,16 @@ export default React.memo(function ExprView(props: ExprViewProps) {
         );
     }
 
-    const { frozen, expr, onDoubleClick, onClick, onHover, onDraggedOut, onContextMenu } = props;
+    const {
+        frozen,
+        expr,
+        onDoubleClick,
+        onClick,
+        onMiddleClick,
+        onHover,
+        onDraggedOut,
+        onContextMenu,
+    } = props;
     // Change the highlighted expr.
     const exprPropsFor = useCallback(
         (childExpr: Expr): Partial<React.DOMAttributes<Element>> => {
@@ -138,7 +148,11 @@ export default React.memo(function ExprView(props: ExprViewProps) {
                     trigger(onHover, null, event);
                 },
                 onMouseDown(event) {
-                    if (event.buttons !== 1) return;
+                    if (event.button === 1) {
+                        trigger(onMiddleClick, childExpr.id, event);
+                        return;
+                    }
+                    if (event.button !== 0) return;
                     event.stopPropagation();
                     if (pendingExprAreaMap.current === null || containerRef.current === null) {
                         return;
@@ -172,7 +186,18 @@ export default React.memo(function ExprView(props: ExprViewProps) {
                 },
             };
         },
-        [dnd, expr, frozen, onClick, onContextMenu, onDoubleClick, onDraggedOut, onHover, padding],
+        [
+            dnd,
+            expr,
+            frozen,
+            onClick,
+            onContextMenu,
+            onDoubleClick,
+            onMiddleClick,
+            onDraggedOut,
+            onHover,
+            padding,
+        ],
     );
 
     useEffect(() => {

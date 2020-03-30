@@ -238,6 +238,17 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         };
     }
 
+    private readonly openEditor = (target: ExprId) => {
+        const selected = this.expr.findId(target);
+        if (selected instanceof E.Call) {
+            this.props.workspace.dispatch({
+                type: "ensureExists",
+                name: selected.fn,
+            });
+            this.props.editorStack.openEditor(selected.fn);
+        }
+    };
+
     private readonly smartSpace = (target: ExprId) => {
         const expr = this.expr.findId(target);
         if (expr instanceof E.Call || expr instanceof E.List) {
@@ -285,16 +296,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
             });
         },
         edit: (e: ExprId) => this.startEditing(e),
-        openEditor: (e: ExprId) => {
-            const selected = this.expr.findId(e);
-            if (selected instanceof E.Call) {
-                this.props.workspace.dispatch({
-                    type: "ensureExists",
-                    name: selected.fn,
-                });
-                this.props.editorStack.openEditor(selected.fn);
-            }
-        },
+        openEditor: (e: ExprId) => this.openEditor(e),
         newLine: (e: ExprId) => this.insertNewLine(e, true),
         newLineBefore: (e: ExprId) => this.insertNewLine(e, false),
         moveToParent: (e: ExprId) => {
@@ -689,6 +691,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
                     onClick={this.selectExpr}
                     onHover={this.onHover}
                     onDoubleClick={this.startEditing}
+                    onMiddleClick={this.openEditor}
                     onFocus={this.focus}
                     onDraggedOut={this.onDraggedOut}
                 />
