@@ -46,12 +46,17 @@ function useEditorStack() {
         }
     });
 
+    /** Set the editor as last focused and mark it be focused. */
+    function moveFocus(key: EditorKey) {
+        setLastFocus(key);
+        futureFocus.current = key;
+    }
+
     const createEditor = useCallback((name: string) => {
         const key = editorKeyGenerator();
         const type = builtinFunctions.has(name) ? "builtin" : "user";
-        futureFocus.current = key;
         setStack((current) => [{ type, key, name }, ...current]);
-        setLastFocus(key);
+        moveFocus(key);
     }, []);
 
     const openEditor = useCallback(
@@ -72,9 +77,9 @@ function useEditorStack() {
             if (lastFocus === key) {
                 if (jumpList.length) {
                     assert(jumpList.pop() === lastFocus);
-                    setLastFocus(jumpList[jumpList.length - 1] ?? null);
+                    moveFocus(jumpList[jumpList.length - 1] ?? null);
                 } else if (stack.length) {
-                    setLastFocus(stack[0].key);
+                    moveFocus(stack[0].key);
                 } else {
                     setLastFocus(null);
                 }
