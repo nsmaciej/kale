@@ -506,6 +506,8 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         },
         acceptDrop: (absolutePoint, draggedExpr) => {
             const dropTargetId = this.clientOffsetToExpr(absolutePoint);
+            //TODO: This very fugly and relies on the id of the draggd expr, replace it with some
+            // sort of indication of the dragged-expr origin.
             if (dropTargetId !== null) {
                 this.focus();
                 this.selectExpr(dropTargetId);
@@ -513,8 +515,13 @@ class Editor extends PureComponent<EditorProps, EditorState> {
                     this.replaceExpr(dropTargetId, draggedExpr); // Nest.
                     return "copy";
                 } else if (this.expr.contains(draggedExpr.id)) {
-                    this.swapExpr(draggedExpr.id, dropTargetId); // Swap.
-                    return "copy";
+                    // Replace, copying the older value.
+                    this.props.clipboard.dispatch({
+                        type: "add",
+                        entry: { expr: this.expr.get(dropTargetId), pinned: false },
+                    });
+                    this.replaceExpr(dropTargetId, draggedExpr);
+                    return "move";
                 } else {
                     this.replaceExpr(dropTargetId, draggedExpr); // Move from outside this editor.
                     return "move";

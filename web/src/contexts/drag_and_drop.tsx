@@ -34,15 +34,21 @@ export interface DropListener {
     acceptDrop(point: ClientOffset, expr: Expr): "copy" | "move" | "reject";
 }
 
+export interface MaybeStartDrag {
+    start: ClientOffset; // Where the maybe-drag started.
+    exprStart: ClientOffset; // Where is the corner of the expr.
+    /** Called when the drag really begins. */
+    onDragStart?(): void;
+    /** Called if the drag is accepted. This is almost always the case except when copying. */
+    onDragAccepted?(): void;
+    /** Called when the drag concludes, no matter the acceptance status. */
+    onDragEnd?(): void;
+    expr: Expr;
+}
+
 export interface DragAndDropContext {
-    /** Initialise a drag.
-     * @param draggedOut Fires if `acceptDrop` returns "move" */
-    maybeStartDrag(
-        start: ClientOffset,
-        exprStart: ClientOffset,
-        expr: Expr,
-        draggedOut?: () => void,
-    ): void;
+    /** Possibly start a drag */
+    maybeStartDrag(maybeDrag: MaybeStartDrag): void;
     addListener(listener: DropListener): void;
     removeListener(listener: DropListener): void;
 }
@@ -50,12 +56,8 @@ export interface DragAndDropContext {
 const DragAndDrop = React.createContext<DragAndDropContext | null>(null);
 export default DragAndDrop;
 
-interface DraggingState {
-    start: ClientOffset; // Where the maybe-drag started.
+interface DraggingState extends MaybeStartDrag {
     delta: ClientOffset | null; // How much to offset the expr when showing the drag.
-    exprStart: ClientOffset; // Where is the corner of the xpr.
-    draggedOut?: () => void; // Fired when the drag completes.
-    expr: Expr;
 }
 
 // There are three states to a drag.
@@ -64,7 +66,6 @@ interface DraggingState {
 // 3. Drag - Delta is now initialised, state.position follows the mouse.
 export function DragAndDropSurface({ children }: { children: ReactNode }) {
     const theme = useTheme();
-    const clipboard = useContextChecked(Clipboard);
     const [position, setPosition] = useState<ClientOffset | null>(null);
     const listeners = useRef(new Set<DropListener>()).current;
     const drag = useRef<DraggingState | null>(null);
@@ -72,8 +73,8 @@ export function DragAndDropSurface({ children }: { children: ReactNode }) {
     useDocumentEvent("mousemove", onMouseMove);
 
     const contextValue = useRef<DragAndDropContext>({
-        maybeStartDrag(start, exprStart, expr, draggedOut) {
-            drag.current = { start, expr, exprStart, draggedOut, delta: null };
+        maybeStartDrag(maybeDrag: MaybeStartDrag) {
+            drag.current = { ...maybeDrag, delta: null };
         },
         addListener(listener) {
             listeners.add(listener);
@@ -88,18 +89,13 @@ export function DragAndDropSurface({ children }: { children: ReactNode }) {
         if (drag.current !== null && drag.current.delta !== null) {
             const exprCorner = assertSome(position).offset(drag.current.delta);
             const expr = drag.current.expr;
-            let accepted = false;
             for (const listener of listeners) {
                 const status = listener.acceptDrop(exprCorner, expr);
                 if (status === "reject") continue;
-                if (status === "move") drag.current.draggedOut?.();
-                accepted = true;
+                if (status === "move") drag.current.onDragAccepted?.();
                 break;
             }
-            if (!accepted) {
-                clipboard.dispatch({ type: "add", entry: { expr, pinned: false } });
-                drag.current.draggedOut?.();
-            }
+            drag.current.onDragEnd?.();
         }
         drag.current = null;
         // Premature optimisation. This method is called on every other mouse move.
@@ -123,6 +119,7 @@ export function DragAndDropSurface({ children }: { children: ReactNode }) {
             // Consider starting a drag.
             if (drag.current.start.distance(nextPosition) > DRAG_THRESHOLD) {
                 drag.current.delta = drag.current.exprStart.difference(nextPosition);
+                drag.current.onDragStart?.();
                 setPosition(nextPosition);
             }
         } else {

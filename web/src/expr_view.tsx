@@ -69,6 +69,7 @@ export default React.memo(function ExprView(props: ExprViewProps) {
     const theme = useTheme();
     const dnd = useContextChecked(DragAndDrop);
     const [showingMenu, setShowingMenu] = useState<ExprMenuState | null>(null);
+    const [ghost, setGhost] = useState<ExprId | null>(null);
 
     const containerRef = useRef<SVGSVGElement>(null);
     const pendingExprAreaMap = useRef(null as ExprAreaMap | null);
@@ -127,10 +128,10 @@ export default React.memo(function ExprView(props: ExprViewProps) {
     // Change the highlighted expr.
     const exprPropsFor = useCallback(
         (childExpr: Expr): Partial<React.DOMAttributes<Element>> => {
-            /** Prevents default and calls `fn` with `arg` if `fn` is provided, nop otherwise. */
             function trigger<T>(fn: ((arg: T) => void) | undefined, arg: T, e: React.MouseEvent) {
+                e.preventDefault();
                 if (fn !== undefined) {
-                    e.preventDefault();
+                    e.stopPropagation();
                     fn(arg);
                 }
             }
@@ -152,6 +153,7 @@ export default React.memo(function ExprView(props: ExprViewProps) {
                         trigger(onMiddleClick, childExpr.id, event);
                         return;
                     }
+                    // Only allow the left mouse button below.
                     if (event.button !== 0) return;
                     event.stopPropagation();
                     if (pendingExprAreaMap.current === null || containerRef.current === null) {
@@ -164,12 +166,20 @@ export default React.memo(function ExprView(props: ExprViewProps) {
                         containerRef.current.getBoundingClientRect(),
                     );
                     const exprOrigin = pendingExprAreaMap.current[dragExpr.id].rect.origin;
-                    dnd.maybeStartDrag(
-                        ClientOffset.fromClient(event),
-                        exprOrigin.offset(containerOrigin).offset(padding.topLeft.neg),
-                        frozen ? dragExpr.resetIds() : dragExpr,
-                        () => onDraggedOut?.(dragExpr.id),
-                    );
+                    dnd.maybeStartDrag({
+                        expr: frozen ? dragExpr.resetIds() : dragExpr,
+                        start: ClientOffset.fromClient(event),
+                        exprStart: exprOrigin.offset(containerOrigin).offset(padding.topLeft.neg),
+                        onDragAccepted() {
+                            onDraggedOut?.(dragExpr.id);
+                        },
+                        onDragStart() {
+                            setGhost(dragExpr.id);
+                        },
+                        onDragEnd() {
+                            setGhost(null);
+                        },
+                    });
                 },
                 onContextMenu(event) {
                     if (onContextMenu === undefined) return;
@@ -220,6 +230,7 @@ export default React.memo(function ExprView(props: ExprViewProps) {
         // Pass something that can be momoized if we can.
         highlights: showingMenu ? highlights : props.highlights,
         foldComments: props.foldComments,
+        transparent: ghost,
     });
 
     // Spooky in React's Concurrent Mode, but it's ok since we'll only use this when

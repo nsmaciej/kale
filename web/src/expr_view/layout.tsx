@@ -12,7 +12,7 @@ import TextMetrics from "text_metrics";
 
 import { Layout, TextProperties, hstack, vstack, ExprArea } from "expr_view/core";
 import { Type } from "vm/types";
-import { UnderlineLine, SvgLine, HitBox } from "expr_view/components";
+import { UnderlineLine, SvgLine, HitBox, SvgGroup } from "expr_view/components";
 
 const Code = styled.text`
     font-size: ${(p) => p.theme.expr.fontSizePx}px;
@@ -137,6 +137,13 @@ class ExprLayout implements ExprVisitor<Layout> {
 
     layout(expr: Expr): Layout {
         const layout = expr.visit(this);
+        if (this.props.transparent === expr.id) {
+            layout.nodes = [
+                <SvgGroup opacity={0.3} key="ghost">
+                    {layout.nodes}
+                </SvgGroup>,
+            ];
+        }
         layout.expr = expr;
         return layout;
     }
@@ -276,6 +283,7 @@ class ExprLayout implements ExprVisitor<Layout> {
 // Make sure to update argsEqual when adding or removing properties form this.
 export interface LayoutProps {
     exprPropsFor?(expr: Expr): Partial<React.DOMAttributes<Element>>;
+    transparent?: ExprId | null;
     focused?: boolean;
     highlights?: readonly [ExprId, Highlight][];
     foldComments?: boolean;

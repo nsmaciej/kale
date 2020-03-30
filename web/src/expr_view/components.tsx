@@ -9,8 +9,9 @@ type CustomSvgProps<Element, CustomProps> = CustomProps &
 
 // Naming convention: generic svg components have the prefix Svg, bot established UI elements.
 export function SvgGroup({
-    children,
     translate = Offset.zero,
+    children,
+    ...props
 }: CustomSvgProps<SVGGElement, { translate?: Offset }>) {
     return (
         <g
@@ -19,6 +20,7 @@ export function SvgGroup({
                     ? undefined
                     : `translate(${Math.round(translate.x)} ${Math.round(translate.y)})`
             }
+            {...props}
         >
             {children}
         </g>
