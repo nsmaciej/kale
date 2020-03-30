@@ -264,7 +264,9 @@ class ExprLayout implements ExprVisitor<Layout> {
             expr.data.comment == null || this.props.foldComments || this.state.hasListParent;
         if (isCallInline(this.t, args) && commentIsInline) {
             layout = hstack(TextMetrics.global.space.width, fnName, args);
-            layout.isUnderlined = true;
+            // This normally wouldn't matter but if we have a comment the vstack would add another
+            // underline we don't want.
+            layout.isUnderlined = !this.state.hasListParent;
             layout.inline = true;
         } else {
             layout = hstack(
