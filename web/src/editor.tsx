@@ -218,6 +218,20 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         this.selectExpr(toInsert.id);
     }
 
+    /** Move an expr one level of nesting up. Barf in the LISP parlance. */
+    private barfUp(exprId: ExprId): void {
+        const expr = this.expr.get(exprId);
+        const parent = this.expr.parentOf(exprId);
+        if (parent !== null) {
+            // Do not stack top-level lists.
+            if (this.expr.parentOf(parent.id) == null && this.expr instanceof E.List) {
+                return;
+            }
+            this.removeExpr(exprId);
+            this.selectAndInsertAsSiblingOf(parent.id, expr, true);
+        }
+    }
+
     // Actions.
     private selectionAction(reducer: Select.SelectFn): () => void {
         return () =>
@@ -256,14 +270,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
             this.insertAsChildOf(target, blank, false);
             this.selectExpr(blank.id);
         } else if (expr instanceof E.Blank) {
-            // Kinda like slurp. We don't create a new blank, rather move this one around.
-            const parent = this.expr.parentOf(target);
-            if (parent !== null) {
-                // Do not stack top-level lists.
-                if (this.expr.parentOf(parent.id) == null && this.expr instanceof E.List) return;
-                this.removeExpr(target);
-                this.selectAndInsertAsSiblingOf(parent.id, expr, true);
-            }
+            this.barfUp(target);
         } else {
             this.insertBlankAsSiblingOf(target, true);
         }
@@ -314,6 +321,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
                 this.replaceAndEdit(e, fn, false);
             }
         },
+        barfUp: (e: ExprId) => this.barfUp(e),
         smartSpace: (e: ExprId) => this.smartSpace(e),
         // Demo things that should be moved to the toy-box.
         demoAddVariable: (e: ExprId) => this.replaceAndEdit(e, new E.Variable(""), true),
@@ -344,6 +352,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         r: "replace",
         s: "shuffle",
         v: "demoAddVariable",
+        P: "barfUp", // Like the parent motion but actually do something.
     };
 
     // The shortcuts only accessible from the keyboard.
@@ -388,6 +397,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         { action: "smartSpace", label: "New Blank or Move Blank Up" },
         { action: "copy", label: "Copy" },
         { action: "openEditor", label: "Open definition", enabled: this.enableForCalls },
+        { action: "barfUp", label: "Move Up" },
         { action: "showDebugOverlay", label: "Toggle the Debug Overlay", hidden: true },
         null,
         { action: "delete", label: "Delete" },
