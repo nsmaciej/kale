@@ -64,6 +64,8 @@ interface ExprViewListItemProps<E> {
     onDraggedOut?(item: E): void;
     /** Pass-through callback for each expr in the list. */
     onContextMenu?(item: E): ContextMenuItem[];
+    /** Called on middle click for an expr. */
+    onMiddleClick?(item: E): void;
 }
 
 interface ExprViewListProps<E> extends ExprViewListItemProps<E> {
@@ -81,10 +83,12 @@ function ExprViewListItem<E extends ShortcutExpr>({
     scale,
     onDraggedOut,
     onContextMenu,
+    onMiddleClick,
 }: ExprViewListItemProps<E> & { item: E }) {
     const theme = useTheme();
     const draggedOut = useCallback(() => onDraggedOut?.(item), [onDraggedOut, item]);
     const contextMenu = useCallback(() => onContextMenu?.(item) ?? [], [onContextMenu, item]);
+    const middleClick = useCallback(() => onMiddleClick?.(item), [onMiddleClick, item]);
     return (
         <Box alignSelf="center" width="100%">
             <ExprView
@@ -96,6 +100,7 @@ function ExprViewListItem<E extends ShortcutExpr>({
                 padding={theme.exprList.padding}
                 onDraggedOut={draggedOut}
                 onContextMenu={contextMenu}
+                onMiddleClick={middleClick}
             />
         </Box>
     );

@@ -52,16 +52,23 @@ export default React.memo(function ClipboardList() {
                     {
                         id: "pin",
                         label: "Toggle Pin",
-                        action: () => togglePin(item),
                         keyEquivalent: "p",
+                        action() {
+                            togglePin(item);
+                        },
                     },
                     {
                         id: "remove",
                         label: "Remove",
-                        action: () => clipboard.dispatch({ type: "remove", expr: item.expr.id }),
                         keyEquivalent: "d",
+                        action() {
+                            clipboard.dispatch({ type: "remove", expr: item.expr.id });
+                        },
                     },
                 ]}
+                onMiddleClick={(item) => {
+                    clipboard.dispatch({ type: "remove", expr: item.expr.id });
+                }}
                 fallback={
                     <NonIdealText>
                         Nothing here yet.
