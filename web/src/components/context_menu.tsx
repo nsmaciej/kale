@@ -2,8 +2,8 @@ import React, { useState, useLayoutEffect, useRef } from "react";
 import styled from "styled-components";
 
 import { Offset, Rect } from "geometry";
-import { Optional, mod, assert, delay, platformModifierKey, hasUnwantedMoidiferKeys } from "utils";
-import { useDisableScrolling } from "hooks";
+import { Optional, mod, assert, delay, eventHasUnwantedModifiers } from "utils";
+import { useDisableScrolling, usePlatformModifierKey } from "hooks";
 import Menu, { MenuItem } from "components/menu";
 import Shortcut from "components/shortcut";
 
@@ -43,7 +43,7 @@ export default function ContextMenu({ items, origin, onDismissMenu, popover }: C
     useDisableScrolling();
     const [selection, setSelection] = useState<number | null>(null);
     const [blinking, setBlinking] = useState(false);
-    const [showingHidden, setShowingHidden] = useState(false);
+    const showingHidden = usePlatformModifierKey();
     const containerRef = useRef<HTMLDivElement>(null);
     const [adjustedOrigin, setAdjustedOrigin] = useState(origin);
 
@@ -92,23 +92,13 @@ export default function ContextMenu({ items, origin, onDismissMenu, popover }: C
         item.action?.();
     }
 
-    function onKeyUp(e: React.KeyboardEvent) {
-        if (hasUnwantedMoidiferKeys(e)) return;
-        e.stopPropagation();
-        e.preventDefault();
-        if (e.key === platformModifierKey()) setShowingHidden(false);
-    }
-
     function onKeyDown(e: React.KeyboardEvent) {
-        // Chrome's src/ui/views/controls/menu/menu_controller.cc is a great source for these.
-        if (hasUnwantedMoidiferKeys(e)) return;
-        // Show the hidden menu items.
+        if (eventHasUnwantedModifiers(e)) return;
+        // Chrome's src/ui/views/controls/menu/menu_controller.cc is a great source for context menu
+        // keyboard shortcuts.
         e.stopPropagation();
         e.preventDefault();
         switch (e.key) {
-            case "Alt":
-                setShowingHidden(true);
-                break;
             case "ArrowDown":
                 moveSelection(1);
                 break;
@@ -127,10 +117,6 @@ export default function ContextMenu({ items, origin, onDismissMenu, popover }: C
                 }
                 break;
             default: {
-                if (e.key === platformModifierKey()) {
-                    setShowingHidden(true);
-                    return;
-                }
                 let i = 0;
                 for (const item of items) {
                     if (item.keyEquivalent === e.key) {
@@ -152,7 +138,6 @@ export default function ContextMenu({ items, origin, onDismissMenu, popover }: C
                 zIndex: 100,
             }}
             onKeyDown={onKeyDown}
-            onKeyUp={onKeyUp}
             tabIndex={0}
             onBlur={onDismissMenu}
             ref={(el) => el?.focus()}

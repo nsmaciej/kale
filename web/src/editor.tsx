@@ -4,12 +4,13 @@ import { useTheme } from "styled-components";
 import * as E from "expr";
 import * as Select from "selection";
 import {
-    assertSome,
-    reverseObject,
-    assert,
-    insertSibling,
     arrayEquals,
+    assert,
+    assertSome,
+    eventHasUnwantedModifiers,
+    insertSibling,
     makeMutableRef,
+    reverseObject,
 } from "utils";
 import { KaleTheme, Highlight } from "theme";
 import { ClientOffset } from "geometry";
@@ -428,8 +429,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
     };
 
     private readonly keyDown = (event: React.KeyboardEvent) => {
-        // Do not handle modifier keys.
-        if (event.ctrlKey || event.altKey || event.metaKey) return;
+        if (eventHasUnwantedModifiers(event)) return;
         const key = event.key;
         if (Object.prototype.hasOwnProperty.call(this.menuKeyEquivalents, key)) {
             this.actions[this.menuKeyEquivalents[key]](this.state.selection);

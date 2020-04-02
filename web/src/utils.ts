@@ -139,29 +139,11 @@ export function idGenerator(name: string): () => symbol {
     return () => Symbol(`${name}-${id++}`);
 }
 
-/** Returns the best modifier key for the current platform. */
-export function platformModifierKey(): "Alt" | "Control" {
-    if (navigator.platform.includes("Mac")) return "Alt";
-    return "Control";
-}
-
-/** Returns if the event has a modifier key that should not be handled. Pass through single presses
- * of the platform modifier key. */
-export function hasUnwantedMoidiferKeys(event: {
-    key: string;
+/** Returns if the event has a modifier key that should not be handled. */
+export function eventHasUnwantedModifiers(event: {
     altKey: boolean;
     ctrlKey: boolean;
     metaKey: boolean;
 }): boolean {
-    if (event.metaKey) return true;
-    switch (platformModifierKey()) {
-        case "Alt":
-            if (event.ctrlKey) return true;
-            if (event.altKey) return event.key !== "Alt";
-            return false;
-        case "Control":
-            if (event.altKey) return true;
-            if (event.ctrlKey) return event.key !== "Control";
-            return false;
-    }
+    return event.ctrlKey || event.altKey || event.metaKey;
 }

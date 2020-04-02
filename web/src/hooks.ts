@@ -110,3 +110,33 @@ export function useContextChecked<T>(context: Context<T | null>): T {
     assert(value !== null, "No context provided");
     return value;
 }
+
+let modifierKeyDown = false;
+const modifierKeyListeners = new Set<() => void>();
+// The best modifier key for the current platform.
+const modifierKey = navigator.platform.includes("Mac") ? "Alt" : "Control";
+window.addEventListener("keydown", (e) => {
+    if (e.key === modifierKey) modifierKeyDown = true;
+    modifierKeyListeners.forEach((x) => x());
+});
+window.addEventListener("keyup", (e) => {
+    if (e.key === modifierKey) modifierKeyDown = false;
+    modifierKeyListeners.forEach((x) => x());
+});
+
+/** Check if the "platform modifier key" is being held down. Optionally recieving a callback when
+ * the state changes. */
+// This is sligthly complex because we want to detect the modifer key being pressed even before the
+// component first mounts, hence the global state.
+export function usePlatformModifierKey(update?: (isDown: boolean) => void): boolean {
+    const [keyPressed, setKeyPressed] = useState(modifierKeyDown);
+    useEffect(() => {
+        const handle = () => {
+            setKeyPressed(modifierKeyDown);
+            update?.(modifierKeyDown);
+        };
+        modifierKeyListeners.add(handle);
+        return () => void modifierKeyListeners.delete(handle);
+    }, [update]);
+    return keyPressed;
+}

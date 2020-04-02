@@ -270,12 +270,11 @@ export default React.memo(function ExprView({
                         exprStart: exprOrigin
                             .offset(containerOrigin)
                             .offset(finalPadding.topLeft.neg),
-                        onDragAccepted(willMove) {
-                            // Only fire dragged-out if we are moving and this expr isn't persistant.
-                            if (willMove && !persistent) onDraggedOut?.(dragExpr.id);
+                        onDragAccepted(copyMode) {
+                            if (!(copyMode || persistent)) onDraggedOut?.(dragExpr.id);
                         },
-                        onDragUpdate(willMove) {
-                            setGhost(willMove && !persistent ? dragExpr.id : null);
+                        onDragUpdate(copyMode) {
+                            setGhost(copyMode || persistent ? null : dragExpr.id);
                         },
                         onDragEnd() {
                             setGhost(null);
@@ -333,7 +332,7 @@ export default React.memo(function ExprView({
         exprPropsFor: immutable ? undefined : exprPropsFor,
         // Pass something that can be momoized if we can.
         highlights: showingMenu || droppable !== null ? finalHighlights : highlights,
-        transparent: ghost,
+        ghost: ghost,
     });
 
     // Spooky in React's Concurrent Mode, but it's ok since we'll only use this when

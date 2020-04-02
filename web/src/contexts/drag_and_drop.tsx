@@ -2,9 +2,9 @@ import React, { useState, ReactNode, useRef, useEffect } from "react";
 import ReactDOM from "react-dom";
 import styled, { useTheme } from "styled-components";
 
-import { assertSome, assert, platformModifierKey } from "utils";
+import { assertSome, assert } from "utils";
 import { ClientOffset } from "geometry";
-import { useDocumentEvent } from "hooks";
+import { useDocumentEvent, usePlatformModifierKey } from "hooks";
 import Expr from "expr";
 import layoutExpr from "expr_view/layout";
 
@@ -70,21 +70,9 @@ export function DragAndDropSurface({ children }: { children: ReactNode }) {
     const listeners = useRef(new Set<DropListener>()).current;
     const drag = useRef<DraggingState | null>(null);
     const overlayRef = useRef<HTMLDivElement>(null);
-    const [willMove, setWillMove] = useState(true);
-
+    // If user is pressing the platform modifier key, copy expressions instead of moving them.
+    const copyMode = usePlatformModifierKey((isDown) => drag.current?.onDragUpdate?.(isDown));
     useDocumentEvent("pointermove", onPointerMove);
-    useDocumentEvent("keydown", (e) => {
-        if (e.key === platformModifierKey()) {
-            setWillMove(false);
-            drag.current?.onDragUpdate?.(false);
-        }
-    });
-    useDocumentEvent("keyup", (e) => {
-        if (e.key === platformModifierKey()) {
-            setWillMove(true);
-            drag.current?.onDragUpdate?.(true);
-        }
-    });
 
     const contextValue = useRef<DragAndDropContext>({
         maybeStartDrag(maybeDrag: MaybeStartDrag) {
@@ -105,7 +93,7 @@ export function DragAndDropSurface({ children }: { children: ReactNode }) {
             const expr = drag.current.expr;
             for (const listener of listeners) {
                 if (listener.acceptDrop(exprCorner, expr)) {
-                    drag.current.onDragAccepted?.(willMove);
+                    drag.current.onDragAccepted?.(copyMode);
                     break;
                 }
             }
@@ -135,7 +123,7 @@ export function DragAndDropSurface({ children }: { children: ReactNode }) {
                 drag.current.delta = drag.current.exprStart.difference(nextPosition);
                 drag.current.pointerId = event.pointerId;
                 // Send the initial drag update, reflecting the current modifer state.
-                drag.current.onDragUpdate?.(willMove);
+                drag.current.onDragUpdate?.(copyMode);
                 setPosition(nextPosition);
             }
         } else {
@@ -157,7 +145,7 @@ export function DragAndDropSurface({ children }: { children: ReactNode }) {
             <Overlay
                 onPointerUp={dismissDrag}
                 onPointerCancel={dismissDrag}
-                style={{ cursor: willMove ? "grabbing" : "copy" }}
+                style={{ cursor: copyMode ? "copy" : "grabbing" }}
                 ref={overlayRef}
             >
                 <Container style={{ top: pos.y, left: pos.x }}>

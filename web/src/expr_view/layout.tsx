@@ -138,7 +138,7 @@ class ExprLayout implements ExprVisitor<Layout> {
 
     layout(expr: Expr): Layout {
         const layout = expr.visit(this);
-        if (this.props.transparent === expr.id) {
+        if (this.props.ghost === expr.id) {
             layout.nodes = [
                 <SvgGroup opacity={0.3} key="ghost">
                     {layout.nodes}
@@ -289,7 +289,7 @@ class ExprLayout implements ExprVisitor<Layout> {
 // Make sure to update argsEqual when adding or removing properties form this.
 export interface LayoutProps {
     exprPropsFor?(expr: Expr): Partial<React.DOMAttributes<Element>>;
-    transparent?: ExprId | null;
+    ghost?: ExprId | null;
     focused?: boolean;
     highlights?: readonly [ExprId, Highlight][];
     foldComments?: boolean;
@@ -306,7 +306,8 @@ function argsEquals(prev: LayoutExprArgs, next: LayoutExprArgs) {
         lhs !== undefined &&
         rhs !== undefined &&
         lhs.exprPropsFor === rhs.exprPropsFor &&
-        lhs.foldComments === rhs.foldComments;
+        lhs.foldComments === rhs.foldComments &&
+        lhs?.ghost === rhs?.ghost;
     if (!quickCheck) return false;
 
     // By the quickCheck the two exprs must be equal.
