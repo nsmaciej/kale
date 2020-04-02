@@ -20,12 +20,23 @@ export interface Underline {
 }
 
 export interface ExprArea {
-    children: ExprArea[];
+    kind: "expr";
+    rect: Rect;
+    children: Area[];
     expr: Expr;
     inline: boolean;
-    rect: Rect;
     text: Optional<TextProperties>;
 }
+
+export interface GapArea {
+    kind: "gap";
+    mode: "child" | "sibling";
+    rect: Rect;
+    /** The expr we are adjacent to. */
+    expr: Expr;
+}
+
+export type Area = ExprArea | GapArea;
 
 export interface FlatExprArea {
     expr: Expr;
@@ -37,16 +48,20 @@ export interface FlatExprArea {
 // The `in` is weird here. See https://github.com/microsoft/TypeScript/issues/1778.
 export type ExprAreaMap = { [expr in ExprId]: FlatExprArea };
 
-export function flattenArea(parent: ExprArea): ExprAreaMap {
+export function flattenArea(parent: Area): ExprAreaMap {
     const map: ExprAreaMap = {};
-    function traverse(area: ExprArea, origin: Offset) {
-        map[area.expr.id] = {
-            inline: area.inline,
-            rect: area.rect.shift(origin),
-            text: area.text,
-            expr: area.expr,
-        };
-        for (const child of area.children) traverse(child, area.rect.origin.offset(origin));
+    function traverse(area: Area, origin: Offset) {
+        if (area.kind === "expr") {
+            map[area.expr.id] = {
+                inline: area.inline,
+                rect: area.rect.shift(origin),
+                text: area.text,
+                expr: area.expr,
+            };
+            for (const child of area.children) {
+                traverse(child, area.rect.origin.offset(origin));
+            }
+        }
     }
     traverse(parent, Offset.zero);
     return map;
@@ -57,21 +72,29 @@ function shiftText(props: TextProperties, origin: Offset): TextProperties {
     return { ...kept, offset: offset?.offset(origin) ?? origin };
 }
 
-function shiftArea({ rect, ...rest }: ExprArea, origin: Offset) {
+function shiftArea({ rect, ...rest }: Area, origin: Offset) {
     return { ...rest, rect: rect.shift(origin) };
 }
 
 export class Layout {
-    // Do not forget to update withNoUnderlines when adding properties.
+    // Do not forget to update copy when adding properties.
     size: Size;
     nodes: ReactNode[] = [];
     underlines: Underline[] = [];
-    areas: ExprArea[] = [];
+    areas: Area[] = [];
+
+    /* A hint to the layout algorithm that this layout can neatly fit in line. */
+    inline = false;
+    /* This layout is not only inline but also should be underlined. */
     isUnderlined = false;
 
-    // Things that will get copied to areas.
-    expr: Optional<Expr>;
-    inline = false;
+    /** This layout forms the entire expr and should be included in generated expr areas. */
+    expr: Expr | null = null;
+    /** Hacky, hint that this layout directly belongs to an expr, to help inserting gap between
+     * stuff like function names and their arguments (even tho it's only the whole stack together
+     * that forms an expr) */
+    partOfExpr: Expr | null = null;
+    /** This expr displays a piece of text, stored here to be used for the inline-editor. */
     text: Optional<TextProperties>;
 
     // Important: The node passed here should have a key, otherwise it might end up in a list, and
@@ -97,6 +120,7 @@ export class Layout {
         r.areas = this.areas.slice();
         r.isUnderlined = this.isUnderlined;
         r.expr = this.expr;
+        r.partOfExpr = this.partOfExpr;
         r.inline = this.inline;
         r.text = this.text == null ? null : Object.assign({}, this.text);
         return r;
@@ -130,6 +154,7 @@ export class Layout {
         // Handle hover/drop areas.
         if (layout.expr != null) {
             this.areas.push({
+                kind: "expr",
                 rect: new Rect(origin, layout.size),
                 expr: layout.expr,
                 children: layout.areas,
@@ -155,19 +180,33 @@ export class Layout {
 type StackLayout = (Optional<Layout>[] | Optional<Layout>)[];
 
 function stack(column: boolean, margin: number, args: StackLayout) {
-    const children = args.flat().filter((x) => x != null);
+    const children: Layout[] = args.flat().filter((x) => x != null);
     if (children.length === 1) {
         return children[0];
     }
 
     const layout = new Layout();
-    for (const x of children) {
-        // Do not use the margin for the first element.
-        const pad = layout.size.isZero() ? 0 : margin;
-        const size = layout.size.pad(new Offset(pad));
-        const pos = column ? size.bottomLeft : size.topRight;
-        layout.place(pos, x);
-    }
+    const gap = column ? new Size(0, margin) : new Size(margin, 0);
+    children.forEach((x, i) => {
+        layout.place(column ? layout.size.bottomLeft : layout.size.topRight, x);
+        const corner = column ? layout.size.bottomLeft : layout.size.topRight;
+        if (i < children.length - 1) {
+            const expr = x.expr ?? x.partOfExpr;
+            if (expr != null) {
+                layout.areas.push({
+                    kind: "gap",
+                    // If this is a partOfExpr, the gap is a 'child gap'.
+                    mode: x.expr != null ? "sibling" : "child",
+                    expr,
+                    rect: new Rect(
+                        corner,
+                        column ? new Size(x.size.width, margin) : new Size(margin, x.size.height),
+                    ),
+                });
+            }
+            layout.size = layout.size.extend(corner, gap);
+        }
+    });
     return layout;
 }
 

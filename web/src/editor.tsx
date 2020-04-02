@@ -15,7 +15,7 @@ import { KaleTheme, Highlight } from "theme";
 import { ClientOffset } from "geometry";
 import { useContextChecked } from "hooks";
 import Expr, { ExprId } from "expr";
-import ExprView, { ExprAreaMap } from "expr_view";
+import ExprView, { ExprAreaMap, OnDropMode } from "expr_view";
 
 import { Type, Func, assertFunc, Value, Builtin } from "vm/types";
 import { specialFunctions } from "vm/interpreter";
@@ -255,16 +255,16 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         }
     };
 
-    private readonly smartSpace = (target: ExprId) => {
-        const expr = this.expr.findId(target);
-        if (expr instanceof E.Call || expr instanceof E.List) {
-            const blank = new E.Blank();
-            this.insertAsChildOf(target, blank, false);
-            this.selectExpr(blank.id);
-        } else if (expr instanceof E.Blank) {
-            this.barfUp(target);
+    private readonly smartSpace = (targetId: ExprId) => {
+        const expr = this.expr.get(targetId);
+        if (expr instanceof E.Blank) {
+            this.barfUp(targetId);
+        } else if (expr instanceof E.Call || expr instanceof E.List) {
+            const toInsert = new E.Blank();
+            this.insertAsChildOf(targetId, toInsert, false);
+            this.selectExpr(toInsert.id);
         } else {
-            this.insertBlankAsSiblingOf(target, true);
+            this.insertBlankAsSiblingOf(targetId, true);
         }
     };
 
@@ -474,9 +474,20 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         this.removeExpr(exprId);
     };
 
-    private readonly onDropped = (at: ExprId, expr: Expr) => {
-        this.replaceExpr(at, expr);
-        this.selectExpr(expr.id);
+    private readonly onDropped = (mode: OnDropMode, at: ExprId, expr: Expr) => {
+        switch (mode) {
+            case "replace":
+                this.replaceExpr(at, expr);
+                this.selectExpr(expr.id);
+                break;
+            case "sibling":
+                this.selectAndInsertAsSiblingOf(at, expr, true);
+                break;
+            case "child":
+                this.insertAsChildOf(at, expr, false);
+                this.selectExpr(expr.id);
+                break;
+        }
         this.focus();
     };
 

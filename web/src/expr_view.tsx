@@ -12,8 +12,8 @@ import Expr, { ExprId } from "expr";
 import ContextMenu, { ContextMenuItem } from "components/context_menu";
 import SvgDebugOverlay from "components/debug_overlay";
 
-import { ExprArea, ExprAreaMap, flattenArea } from "expr_view/core";
-import { SvgGroup } from "expr_view/components";
+import { ExprArea, ExprAreaMap, flattenArea, Area } from "expr_view/core";
+import { SvgGroup, SvgRect } from "expr_view/components";
 import layoutExpr from "expr_view/layout";
 
 export { ExprAreaMap, FlatExprArea } from "expr_view/core";
@@ -26,6 +26,8 @@ const Container = styled.svg`
     display: block;
     touch-action: pinch-zoom;
 `;
+
+export type OnDropMode = "replace" | "child" | "sibling";
 
 interface ExprViewProps {
     /** The expr to display. */
@@ -43,7 +45,7 @@ interface ExprViewProps {
     /** Triggered when an expr has been dragged out. See `immutable`. */
     onDraggedOut?(expr: ExprId): void;
     /** Called when a drag has been acepted and `at` shuould be replaced with `expr`. */
-    onDrop?(at: ExprId, expr: Expr): void;
+    onDrop?(mode: OnDropMode, at: ExprId, expr: Expr): void;
     /** When initiating a drag, should the expr appearance indicate a pending deletion or not (using
      * the ghosting effect) */
     persistent?: boolean;
@@ -109,6 +111,7 @@ export default React.memo(function ExprView({
     const [showingMenu, setShowingMenu] = useState<ExprMenuState | null>(null);
     const [ghost, setGhost] = useState<ExprId | null>(null);
     const [droppable, setDroppable] = useState<ExprId | null>(null);
+    const [dropIndicator, setDropIndicator] = useState<Rect | null>(null);
 
     const containerRef = useRef<SVGSVGElement>(null);
     const pendingExprAreaMap = useRef(null as ExprAreaMap | null);
@@ -126,28 +129,38 @@ export default React.memo(function ExprView({
     useDrop({
         dragUpdate(absolutePoint, draggedExpr) {
             if (immutable) return false;
-            const dropTargetId = clientOffsetToExpr(absolutePoint);
-            if (dropTargetId !== null && draggedExpr?.contains(dropTargetId)) {
+            const area = clientOffsetToArea(absolutePoint);
+            if (area === null || draggedExpr?.contains(area.expr.id)) {
                 // Do not even hint we support nesting.
                 setDroppable(null);
+                setDropIndicator(null);
+                return;
+            }
+            // Note these cannot be combined because blanks draw their own droppable highlight.
+            if (area.kind === "gap") {
+                // Careful, area.rec is a fresh reference each time, only re-render if it's
+                // _actually_ different.
+                setDropIndicator((old) => (old?.equals(area.rect) ? old : area.rect));
+                setDroppable(null);
             } else {
-                setDroppable(dropTargetId);
+                setDropIndicator(null);
+                setDroppable(area.expr.id);
             }
         },
         acceptDrop(absolutePoint, draggedExpr) {
             if (immutable) return false;
-            const dropTargetId = clientOffsetToExpr(absolutePoint);
-            if (dropTargetId === null) return false;
+            const area = clientOffsetToArea(absolutePoint);
+            if (area === null) return false;
             // Reject nesting.
             //TODO: This very fugly and relies on the id of the draggd expr, replace it with some
             // sort of indication of the dragged-expr origin.
-            if (draggedExpr.contains(dropTargetId)) return false;
-            onDrop?.(dropTargetId, draggedExpr);
+            if (draggedExpr.contains(area.expr.id)) return false;
+            onDrop?.(area.kind === "gap" ? area.mode : "replace", area.expr.id, draggedExpr);
             return true;
         },
     });
 
-    function clientOffsetToExpr(absolutePoint: ClientOffset | null): ExprId | null {
+    function clientOffsetToArea(absolutePoint: ClientOffset | null): Area | null {
         if (containerRef.current === null || lastExprArea.current === null) {
             return null;
         }
@@ -162,15 +175,21 @@ export default React.memo(function ExprView({
         let areaStart = Offset.zero;
         main: for (;;) {
             for (const subArea of currentArea.children) {
-                if (subArea.rect.shift(areaStart).contains(point)) {
-                    currentArea = subArea;
-                    areaStart = areaStart.offset(subArea.rect.origin);
-                    continue main;
+                if (subArea.kind === "gap") {
+                    if (subArea.rect.shift(areaStart).contains(point)) {
+                        return { ...subArea, rect: subArea.rect.shift(areaStart) };
+                    }
+                } else {
+                    if (subArea.rect.shift(areaStart).contains(point)) {
+                        currentArea = subArea;
+                        areaStart = areaStart.offset(subArea.rect.origin);
+                        continue main;
+                    }
                 }
             }
             break;
         }
-        return currentArea.expr.id;
+        return currentArea;
     }
 
     function drawRect(exprId: ExprId, highlight: Highlight, areas: ExprAreaMap) {
@@ -320,6 +339,7 @@ export default React.memo(function ExprView({
     // Spooky in React's Concurrent Mode, but it's ok since we'll only use this when
     // we commit and it doesn't depend on any previous calls to render.
     lastExprArea.current = {
+        kind: "expr",
         expr,
         text,
         children: areas,
@@ -349,8 +369,13 @@ export default React.memo(function ExprView({
                 {...exprPropsFor(expr)}
             >
                 {highlightRects}
-                <SvgGroup translate={finalPadding.topLeft}>{nodes}</SvgGroup>
-                {showDebugOverlay && <SvgDebugOverlay areaMap={pendingExprAreaMap.current} />}
+                <SvgGroup translate={finalPadding.topLeft}>
+                    {nodes}
+                    {dropIndicator !== null && <SvgRect rect={dropIndicator} fill="red" />}
+                </SvgGroup>
+                {showDebugOverlay && lastExprArea.current !== null && (
+                    <SvgDebugOverlay area={lastExprArea.current} />
+                )}
             </Container>
             {showingMenu && (
                 <ContextMenu

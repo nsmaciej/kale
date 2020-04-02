@@ -9,6 +9,10 @@ export class Offset {
         return new Offset(-this.x, -this.y);
     }
 
+    equals(rhs: Offset): boolean {
+        return this.x === rhs.x && this.y === rhs.y;
+    }
+
     /** Checks if both x and y equal zero. */
     isZero() {
         return this.x === 0 && this.y === 0;
@@ -75,6 +79,10 @@ export class Size {
     }
     get topRight(): Offset {
         return new Offset(this.width, 0);
+    }
+
+    equals(rhs: Size): boolean {
+        return this.width === rhs.width && this.height === rhs.height;
     }
 
     pad({ x, y }: Offset) {
@@ -181,6 +189,10 @@ export class Rect {
     }
     get bottomRight() {
         return this.origin.offset(new Offset(this.width, this.height));
+    }
+
+    equals(rhs: Rect): boolean {
+        return this.size.equals(rhs.size) && this.origin.equals(rhs.origin);
     }
 
     withSize(size: Size) {
