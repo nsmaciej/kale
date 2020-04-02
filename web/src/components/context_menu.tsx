@@ -74,7 +74,7 @@ export default function ContextMenu({ items, origin, onDismissMenu, popover }: C
     }
 
     async function onClick(item: ContextMenuItem, index: number) {
-        if (blinking) false;
+        if (blinking || item.label == null) return false;
         setBlinking(true);
 
         // Blink the menu. See Chrome's
