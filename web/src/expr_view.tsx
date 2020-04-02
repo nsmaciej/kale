@@ -227,12 +227,13 @@ export default React.memo(function ExprView({
                 onMouseLeave(event: React.MouseEvent) {
                     trigger(onHover, null, event);
                 },
-                onPointerDown(event) {
+                onPointerUp(event) {
                     if (event.button === 1) {
                         trigger(onMiddleClick, childExpr.id, event);
-                        return;
                     }
-                    // Only allow the left mouse button below.
+                },
+                onPointerDown(event) {
+                    // Only handle the left mouse button.
                     if (event.button !== 0) return;
                     event.stopPropagation();
                     if (pendingExprAreaMap.current === null || containerRef.current === null) {

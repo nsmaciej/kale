@@ -3,10 +3,11 @@ import styled from "styled-components";
 
 import { assertFunc } from "vm/types";
 import { assertSome } from "utils";
-import EditorStack from "contexts/editor_stack";
 import { Stack } from "components";
 import { useDebounce, useContextChecked } from "hooks";
 import ExprView from "expr_view";
+
+import EditorStack, { OpenedEditor } from "contexts/editor_stack";
 import Workspace from "contexts/workspace";
 
 const MinimapItemStack = styled(Stack).attrs({ gap: 8, vertical: true })<{ focused: boolean }>`
@@ -28,12 +29,24 @@ function MinimapExpr({ name }: { name: string }) {
 
 export default function Minimap() {
     const editorStack = useContextChecked(EditorStack);
+    function onPointerUp(editor: OpenedEditor, event: React.MouseEvent) {
+        if (event.button === 0) {
+            editorStack.refs.get(editor.key)?.current.focus();
+        } else if (event.button === 1) {
+            editorStack.removeEditor(editor.key);
+        } else {
+            return;
+        }
+        event.preventDefault();
+        event.stopPropagation();
+    }
+
     return (
         <Stack vertical gap={15}>
             {editorStack.stack.map((editor) => (
                 <MinimapItemStack
                     key={editor.key.toString()}
-                    onClick={() => editorStack.refs.get(editor.key)?.current.focus()}
+                    onPointerUp={(e) => onPointerUp(editor, e)}
                     focused={editorStack.lastFocus === editor.key}
                 >
                     <span>{editor.name}</span>
