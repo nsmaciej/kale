@@ -84,6 +84,9 @@ export default React.memo(function ToyBox() {
                     items={toyBoxExprs[category]}
                     width={200}
                     scale={0.9}
+                    onMiddleClick={(item) => {
+                        if (item.expr instanceof E.Call) editorStack.openEditor(item.expr.fn);
+                    }}
                     onContextMenu={onContextMenu}
                 />
             </Stack>
