@@ -70,7 +70,7 @@ export function DragAndDropSurface({ children }: { children: ReactNode }) {
     const listeners = useRef(new Set<DropListener>()).current;
     const drag = useRef<DraggingState | null>(null);
     const overlayRef = useRef<HTMLDivElement>(null);
-    const [willMove, setWillMove] = useState(false);
+    const [willMove, setWillMove] = useState(true);
 
     useDocumentEvent("pointermove", onPointerMove);
     useDocumentEvent("keydown", (e) => {
@@ -134,9 +134,9 @@ export function DragAndDropSurface({ children }: { children: ReactNode }) {
             if (drag.current.start.distance(nextPosition) > DRAG_THRESHOLD) {
                 drag.current.delta = drag.current.exprStart.difference(nextPosition);
                 drag.current.pointerId = event.pointerId;
-                drag.current.onDragUpdate?.(true);
+                // Send the initial drag update, reflecting the current modifer state.
+                drag.current.onDragUpdate?.(willMove);
                 setPosition(nextPosition);
-                setWillMove(true);
             }
         } else {
             // Update the drag.
