@@ -56,7 +56,9 @@ const DragAndDrop = React.createContext<DragAndDropContext | null>(null);
 export default DragAndDrop;
 
 interface DraggingState extends MaybeStartDrag {
-    delta: ClientOffset | null; // How much to offset the expr when showing the drag.
+    /** How much to offset the expr when showing the drag. Pretty much always a negative number. */
+    delta: ClientOffset | null;
+    /** Which pointer started the drag. */
     pointerId: number | null;
 }
 
@@ -127,9 +129,12 @@ export function DragAndDropSurface({ children }: { children: ReactNode }) {
                 setPosition(nextPosition);
             }
         } else {
-            // Update the drag.
+            // Update the drag. Note unlike what we are drawing, we will be hit testing against the
+            // corner of the _container_, not the expr, so we must subtract the padding.
             setPosition(nextPosition);
-            const exprCorner = nextPosition.offset(drag.current.delta);
+            const exprCorner = nextPosition
+                .offset(drag.current.delta)
+                .difference(theme.highlight.padding.topLeft);
             listeners.forEach((x) => x.dragUpdate(exprCorner, drag.current?.expr ?? null));
         }
     }
