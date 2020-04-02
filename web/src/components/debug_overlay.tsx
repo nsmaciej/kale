@@ -1,7 +1,7 @@
 import React, { useState, Fragment } from "react";
 
 import { Area } from "expr_view/core";
-import { Offset, Rect, Size } from "geometry";
+import { Offset, Rect } from "geometry";
 import { SvgRect, DebugRect } from "expr_view/components";
 import { useUsesDarkTheme } from "contexts/theme";
 

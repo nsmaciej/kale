@@ -15,12 +15,12 @@ export function SvgGroup({
 }: CustomSvgProps<SVGGElement, { translate?: Offset }>) {
     return (
         <g
+            {...props}
             transform={
                 translate.isZero()
                     ? undefined
                     : `translate(${Math.round(translate.x)} ${Math.round(translate.y)})`
             }
-            {...props}
         >
             {children}
         </g>

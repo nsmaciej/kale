@@ -192,15 +192,18 @@ function stack(column: boolean, margin: number, args: StackLayout) {
         const corner = column ? layout.size.bottomLeft : layout.size.topRight;
         if (i < children.length - 1) {
             const expr = x.expr ?? x.partOfExpr;
+            const next = children[i + 1];
             if (expr != null) {
                 layout.areas.push({
+                    expr,
                     kind: "gap",
                     // If this is a partOfExpr, the gap is a 'child gap'.
                     mode: x.expr != null ? "sibling" : "child",
-                    expr,
                     rect: new Rect(
                         corner,
-                        column ? new Size(x.size.width, margin) : new Size(margin, x.size.height),
+                        column
+                            ? new Size(Math.max(x.size.width, next.size.width), margin)
+                            : new Size(margin, Math.max(x.size.height, next.size.height)),
                     ),
                 });
             }

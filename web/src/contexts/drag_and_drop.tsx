@@ -3,7 +3,7 @@ import ReactDOM from "react-dom";
 import styled, { useTheme } from "styled-components";
 
 import { assertSome, assert } from "utils";
-import { ClientOffset } from "geometry";
+import { ClientOffset, Offset } from "geometry";
 import { useDocumentEvent, usePlatformModifierKey } from "hooks";
 import Expr from "expr";
 import layoutExpr from "expr_view/layout";
@@ -20,7 +20,6 @@ const Container = styled.div`
     position: absolute;
     background: ${(p) => p.theme.colour.background};
     box-shadow: ${(p) => p.theme.shadow.normal};
-    padding: ${(p) => p.theme.exprList.padding.combine(p.theme.highlight.padding).css};
     border-radius: ${(p) => p.theme.exprList.borderRadius}px;
     box-sizing: content-box;
     padding: ${(p) => p.theme.exprView.widePadding.css};
@@ -57,15 +56,18 @@ export default DragAndDrop;
 
 interface DraggingState extends MaybeStartDrag {
     /** How much to offset the expr when showing the drag. Pretty much always a negative number. */
-    delta: ClientOffset | null;
+    delta: Offset | null;
+    /** How much to offset the hit-point, accounting for any padding the container has plus some
+     * fudge. */
+    hitpointDelta: Offset | null;
     /** Which pointer started the drag. */
     pointerId: number | null;
 }
 
 // There are three states to a drag.
-// 1. Not dragging - drag and state.position is null.
-// 2. Maybe-drag - drag is now initialised, except for delta.
-// 3. Drag - Delta is now initialised, state.position follows the mouse.
+// 1. Not dragging - drag and position is null.
+// 2. Maybe-drag - draging state is now initialised, but without any deltas,
+// 3. Drag - Deltas are now initialised, position follows the mouse.
 export function DragAndDropSurface({ children }: { children: ReactNode }) {
     const theme = useTheme();
     const [position, setPosition] = useState<ClientOffset | null>(null);
@@ -76,9 +78,12 @@ export function DragAndDropSurface({ children }: { children: ReactNode }) {
     const copyMode = usePlatformModifierKey((isDown) => drag.current?.onDragUpdate?.(isDown));
     useDocumentEvent("pointermove", onPointerMove);
 
+    // Since we aren't using ExprView, we add highlight padding on our own.
+    const padding = theme.exprList.padding.combine(theme.highlight.padding);
+
     const contextValue = useRef<DragAndDropContext>({
         maybeStartDrag(maybeDrag: MaybeStartDrag) {
-            drag.current = { ...maybeDrag, delta: null, pointerId: null };
+            drag.current = { ...maybeDrag, delta: null, hitpointDelta: null, pointerId: null };
         },
         addListener(listener) {
             listeners.add(listener);
@@ -90,8 +95,8 @@ export function DragAndDropSurface({ children }: { children: ReactNode }) {
 
     function dismissDrag() {
         // Note this calls both .drop and then .update on the listeners.
-        if (drag.current !== null && drag.current.delta !== null) {
-            const exprCorner = assertSome(position).offset(drag.current.delta);
+        if (drag.current !== null && drag.current.hitpointDelta !== null) {
+            const exprCorner = assertSome(position).offset(drag.current.hitpointDelta);
             const expr = drag.current.expr;
             for (const listener of listeners) {
                 if (listener.acceptDrop(exprCorner, expr)) {
@@ -110,7 +115,6 @@ export function DragAndDropSurface({ children }: { children: ReactNode }) {
     }
 
     function onPointerMove(event: PointerEvent) {
-        // event.preventDefault();
         // Ensure left mouse button is held down.
         if (event.buttons !== 1 || drag.current === null) {
             dismissDrag();
@@ -119,22 +123,22 @@ export function DragAndDropSurface({ children }: { children: ReactNode }) {
 
         const DRAG_THRESHOLD = 4; // Based on Windows default, DragHeight registry.
         const nextPosition = ClientOffset.fromClient(event);
-        if (drag.current.delta === null) {
+        if (drag.current.hitpointDelta === null) {
             // Consider starting a drag.
             if (drag.current.start.distance(nextPosition) > DRAG_THRESHOLD) {
                 drag.current.delta = drag.current.exprStart.difference(nextPosition);
+                drag.current.hitpointDelta = drag.current.delta
+                    .difference(padding.topLeft)
+                    .difference(new Offset(6, 0));
                 drag.current.pointerId = event.pointerId;
                 // Send the initial drag update, reflecting the current modifer state.
                 drag.current.onDragUpdate?.(copyMode);
                 setPosition(nextPosition);
             }
         } else {
-            // Update the drag. Note unlike what we are drawing, we will be hit testing against the
-            // corner of the _container_, not the expr, so we must subtract the padding.
+            // Update the drag.
             setPosition(nextPosition);
-            const exprCorner = nextPosition
-                .offset(drag.current.delta)
-                .difference(theme.highlight.padding.topLeft);
+            const exprCorner = nextPosition.offset(drag.current.hitpointDelta);
             listeners.forEach((x) => x.dragUpdate(exprCorner, drag.current?.expr ?? null));
         }
     }
@@ -153,7 +157,7 @@ export function DragAndDropSurface({ children }: { children: ReactNode }) {
                 style={{ cursor: copyMode ? "copy" : "grabbing" }}
                 ref={overlayRef}
             >
-                <Container style={{ top: pos.y, left: pos.x }}>
+                <Container style={{ padding: padding.css, top: pos.y, left: pos.x }}>
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
                         width={size.width}

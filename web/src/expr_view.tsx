@@ -13,12 +13,12 @@ import ContextMenu, { ContextMenuItem } from "components/context_menu";
 import SvgDebugOverlay from "components/debug_overlay";
 
 import { ExprArea, ExprAreaMap, flattenArea, Area } from "expr_view/core";
-import { SvgGroup, SvgRect } from "expr_view/components";
+import { SvgGroup } from "expr_view/components";
 import layoutExpr from "expr_view/layout";
 
 export { ExprAreaMap, FlatExprArea } from "expr_view/core";
 
-const Container = styled.svg`
+const ContainerSvg = styled.svg`
     max-width: 100%;
     height: auto;
     /* SVGs are inline by default, this leads to a scourge of invisible space characters. Make it a
@@ -111,11 +111,17 @@ export default React.memo(function ExprView({
     const [showingMenu, setShowingMenu] = useState<ExprMenuState | null>(null);
     const [ghost, setGhost] = useState<ExprId | null>(null);
     const [droppable, setDroppable] = useState<ExprId | null>(null);
-    const [dropIndicator, setDropIndicator] = useState<Rect | null>(null);
+    const [insertionIndicator, setInsertionIndicator] = useState<Rect | null>(null);
 
     const containerRef = useRef<SVGSVGElement>(null);
     const pendingExprAreaMap = useRef(null as ExprAreaMap | null);
     const lastExprArea = useRef(null as ExprArea | null);
+
+    useEffect(() => {
+        if (exprAreaMapRef !== undefined && pendingExprAreaMap.current !== null) {
+            exprAreaMapRef.current = pendingExprAreaMap.current;
+        }
+    });
 
     // useMemo needed because this is a useCallbackp dependency.
     const finalPadding = useMemo(
@@ -129,33 +135,39 @@ export default React.memo(function ExprView({
     useDrop({
         dragUpdate(absolutePoint, draggedExpr) {
             if (immutable) return false;
-            const area = clientOffsetToArea(absolutePoint);
-            if (area === null || draggedExpr?.contains(area.expr.id)) {
-                // Do not even hint we support nesting.
+            const dropArea = clientOffsetToArea(absolutePoint);
+            if (
+                dropArea === null ||
+                // Note, this code gets repeated in acceptDrop, so watch out if you are changing it.
+                (dropArea.kind === "expr" && draggedExpr?.contains(dropArea.expr.id))
+            ) {
                 setDroppable(null);
-                setDropIndicator(null);
+                setInsertionIndicator(null);
                 return;
             }
-            // Note these cannot be combined because blanks draw their own droppable highlight.
-            if (area.kind === "gap") {
-                // Careful, area.rec is a fresh reference each time, only re-render if it's
-                // _actually_ different.
-                setDropIndicator((old) => (old?.equals(area.rect) ? old : area.rect));
+            if (dropArea.kind === "gap") {
+                // Careful, area.rect is a fresh reference each time, only re-render if it's
+                // actually different.
+                setInsertionIndicator((old) => (old?.equals(dropArea.rect) ? old : dropArea.rect));
                 setDroppable(null);
             } else {
-                setDropIndicator(null);
-                setDroppable(area.expr.id);
+                setInsertionIndicator(null);
+                setDroppable(dropArea.expr.id);
             }
         },
         acceptDrop(absolutePoint, draggedExpr) {
             if (immutable) return false;
-            const area = clientOffsetToArea(absolutePoint);
-            if (area === null) return false;
-            // Reject nesting.
-            //TODO: This very fugly and relies on the id of the draggd expr, replace it with some
-            // sort of indication of the dragged-expr origin.
-            if (draggedExpr.contains(area.expr.id)) return false;
-            onDrop?.(area.kind === "gap" ? area.mode : "replace", area.expr.id, draggedExpr);
+            const dropArea = clientOffsetToArea(absolutePoint);
+            if (dropArea === null) return false;
+            // Reject nesting. Note this relies on non-atomic ExprView's not reseting expr ids when
+            // drag starts.
+            if (dropArea.kind === "expr" && draggedExpr.contains(dropArea.expr.id)) return false;
+            onDrop?.(
+                dropArea.kind === "gap" ? dropArea.mode : "replace",
+                dropArea.expr.id,
+                // This is important so we can duplicate exprs using the copying drag and drop.
+                draggedExpr.resetIds(),
+            );
             return true;
         },
     });
@@ -190,37 +202,6 @@ export default React.memo(function ExprView({
             break;
         }
         return currentArea;
-    }
-
-    function drawRect(exprId: ExprId, highlight: Highlight, areas: ExprAreaMap) {
-        if (areas[exprId] == null) return;
-        const rect = areas[exprId].rect.padding(
-            expr.id === exprId ? theme.highlight.mainPadding : theme.highlight.padding,
-        );
-        // Hack: Blanks draw their own highlights.
-        const isBlank = expr.findId(exprId) instanceof E.Blank;
-        return (
-            <motion.rect
-                animate={{
-                    x: rect.x,
-                    y: rect.y,
-                    width: rect.width,
-                    height: rect.height,
-                    opacity: isBlank ? 0 : 1, // +!isBlank
-                }}
-                key={`highlight-${highlight.name}`}
-                rx={theme.highlight.radius}
-                fill={highlight.fill(focused === true) ?? "none"}
-                stroke={highlight.stroke(focused === true) ?? "none"}
-                initial={false}
-                style={{ filter: highlight.droppable ? "url(#droppable)" : undefined }}
-                transition={{
-                    type: "tween",
-                    ease: "easeIn",
-                    duration: highlight.animates ? 0.08 : 0,
-                }}
-            />
-        );
     }
 
     // Change the highlighted expr.
@@ -265,6 +246,9 @@ export default React.memo(function ExprView({
                     );
                     const exprOrigin = pendingExprAreaMap.current[dragExpr.id].rect.origin;
                     dnd.maybeStartDrag({
+                        // If this is a non-atomic expr, do not reset ids so we can detect
+                        // same editor drag and drop. Otherwise reset it to lift any constraints
+                        // other code might have.
                         expr: atomic ? dragExpr.resetIds() : dragExpr,
                         start: ClientOffset.fromClient(event),
                         exprStart: exprOrigin
@@ -311,11 +295,57 @@ export default React.memo(function ExprView({
         ],
     );
 
-    useEffect(() => {
-        if (exprAreaMapRef !== undefined && pendingExprAreaMap.current !== null) {
-            exprAreaMapRef.current = pendingExprAreaMap.current;
-        }
-    });
+    function renderHighlight(exprId: ExprId, highlight: Highlight, areas: ExprAreaMap) {
+        if (areas[exprId] == null) return;
+        const rect = areas[exprId].rect.padding(
+            expr.id === exprId ? theme.highlight.mainPadding : theme.highlight.padding,
+        );
+        // Hack: Blanks draw their own highlights.
+        const isBlank = expr.findId(exprId) instanceof E.Blank;
+        return (
+            <motion.rect
+                animate={{
+                    x: rect.x,
+                    y: rect.y,
+                    width: rect.width,
+                    height: rect.height,
+                    opacity: isBlank ? 0 : 1, // +!isBlank
+                }}
+                key={`highlight-${highlight.name}`}
+                rx={theme.highlight.radius}
+                fill={highlight.fill(focused === true) ?? "none"}
+                stroke={highlight.stroke(focused === true) ?? "none"}
+                initial={false}
+                style={{ filter: highlight.droppable ? "url(#droppable)" : undefined }}
+                transition={{
+                    type: "tween",
+                    ease: "easeIn",
+                    duration: highlight.animates ? 0.08 : 0,
+                }}
+            />
+        );
+    }
+
+    function renderDropIndicator() {
+        if (insertionIndicator === null) return;
+        const vertical = insertionIndicator.height >= insertionIndicator.width;
+        const size = vertical ? insertionIndicator.height : insertionIndicator.width;
+        const jut = 3;
+        const points = `0,0 ${jut * 2},0 ${jut},0 ${jut},${size} 0,${size}, ${jut * 2},${size}`;
+        return (
+            <SvgGroup translate={insertionIndicator.origin}>
+                <polyline
+                    points={points}
+                    fill="none"
+                    stroke={theme.highlight.droppable.stroke(true)}
+                    style={{ filter: "url(#droppable)" }}
+                    // Either center it down, or rotate it around, move it down a bit to account
+                    // for the origin of the rotation.
+                    transform={vertical ? undefined : `translate(0,${jut * 2}) rotate(270)`}
+                />
+            </SvgGroup>
+        );
+    }
 
     const finalHighlights = highlights?.slice() ?? [];
     if (showingMenu != null && !atomic) {
@@ -329,10 +359,10 @@ export default React.memo(function ExprView({
     const { nodes, size, areas, text } = layoutExpr(theme, expr, {
         focused,
         foldComments,
+        ghost,
         exprPropsFor: immutable ? undefined : exprPropsFor,
         // Pass something that can be momoized if we can.
         highlights: showingMenu || droppable !== null ? finalHighlights : highlights,
-        ghost: ghost,
     });
 
     // Spooky in React's Concurrent Mode, but it's ok since we'll only use this when
@@ -349,14 +379,14 @@ export default React.memo(function ExprView({
 
     const highlightRects = [];
     for (const [exprId, highlight] of finalHighlights) {
-        highlightRects.push(drawRect(exprId, highlight, pendingExprAreaMap.current));
+        highlightRects.push(renderHighlight(exprId, highlight, pendingExprAreaMap.current));
     }
 
     const { width, height } = size.padding(finalPadding);
     const finalScale = scale ?? 1;
     return (
         <>
-            <Container
+            <ContainerSvg
                 xmlns="http://www.w3.org/2000/svg"
                 ref={containerRef}
                 width={width * finalScale}
@@ -370,12 +400,12 @@ export default React.memo(function ExprView({
                 {highlightRects}
                 <SvgGroup translate={finalPadding.topLeft}>
                     {nodes}
-                    {dropIndicator !== null && <SvgRect rect={dropIndicator} fill="red" />}
+                    {renderDropIndicator()}
                 </SvgGroup>
                 {showDebugOverlay && lastExprArea.current !== null && (
                     <SvgDebugOverlay area={lastExprArea.current} />
                 )}
-            </Container>
+            </ContainerSvg>
             {showingMenu && (
                 <ContextMenu
                     items={showingMenu.menu}
