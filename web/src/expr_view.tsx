@@ -329,12 +329,19 @@ export default React.memo(function ExprView({
 
     function renderInsertionPoint() {
         if (insertionIndicator === null) return;
-        const vertical = insertionIndicator.height >= insertionIndicator.width;
+        const { width, height } = insertionIndicator;
+        const vertical = height >= width;
         // Using the font size for vertical insertion point makes sense for very tall first argument
         // like a list, since it's unambiguous where the insertion will visually fly-into.
         const size = vertical ? theme.expr.fontSizePx : insertionIndicator.width;
         const jut = 3;
         const points = `0,0 ${jut * 2},0 ${jut},0 ${jut},${size} 0,${size}, ${jut * 2},${size}`;
+        // Either center it down, or rotate it around, move it down a bit to account
+        // for the origin of the rotation.
+        //TODO: Use the normal text bounding box height instead of the magic 1.3x.
+        const transform = vertical
+            ? `translate(${(width - jut * 2) / 2}, ${(size * 1.3 - size) / 2})`
+            : `translate(0,${jut * 2}) rotate(270)`;
         return (
             <SvgGroup translate={insertionIndicator.origin}>
                 <polyline
@@ -342,9 +349,7 @@ export default React.memo(function ExprView({
                     fill="none"
                     stroke={theme.highlight.droppable.stroke(true)}
                     style={{ filter: "url(#droppable)" }}
-                    // Either center it down, or rotate it around, move it down a bit to account
-                    // for the origin of the rotation.
-                    transform={vertical ? undefined : `translate(0,${jut * 2}) rotate(270)`}
+                    transform={transform}
                 />
             </SvgGroup>
         );
