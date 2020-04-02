@@ -326,10 +326,12 @@ export default React.memo(function ExprView({
         );
     }
 
-    function renderDropIndicator() {
+    function renderInsertionPoint() {
         if (insertionIndicator === null) return;
         const vertical = insertionIndicator.height >= insertionIndicator.width;
-        const size = vertical ? insertionIndicator.height : insertionIndicator.width;
+        // Using the font size for vertical insertion point makes sense for very tall first argument
+        // like a list, since it's unambiguous where the insertion will visually fly-into.
+        const size = vertical ? theme.expr.fontSizePx : insertionIndicator.width;
         const jut = 3;
         const points = `0,0 ${jut * 2},0 ${jut},0 ${jut},${size} 0,${size}, ${jut * 2},${size}`;
         return (
@@ -400,7 +402,7 @@ export default React.memo(function ExprView({
                 {highlightRects}
                 <SvgGroup translate={finalPadding.topLeft}>
                     {nodes}
-                    {renderDropIndicator()}
+                    {renderInsertionPoint()}
                 </SvgGroup>
                 {showDebugOverlay && lastExprArea.current !== null && (
                     <SvgDebugOverlay area={lastExprArea.current} />
