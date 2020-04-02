@@ -7,7 +7,9 @@ import { Box, Stack, NonIdealText, IconButton, PaneHeading } from "components";
 import { useContextChecked } from "hooks";
 import Builtins from "vm/builtins";
 import EditorWrapper from "editor";
+
 import Minimap from "components/minimap";
+import Shortcut from "components/shortcut";
 
 import Debugger from "contexts/debugger";
 import EditorStack, { OpenedEditor } from "contexts/editor_stack";
@@ -117,7 +119,13 @@ export default function EditorList() {
             gridArea="editor"
         >
             <Stack vertical overflowX="hidden" flex="auto">
-                {editorStack.stack.length === 0 && <NonIdealText>No editors open</NonIdealText>}
+                {editorStack.stack.length === 0 && (
+                    <NonIdealText>
+                        No editors open.
+                        <br />
+                        Use the Function Search field or <Shortcut keys="/" /> to open one.
+                    </NonIdealText>
+                )}
                 <AnimatePresence>
                     {editorStack.stack.map((x) => (
                         <motion.div

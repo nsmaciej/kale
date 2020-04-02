@@ -26,11 +26,10 @@ const CommentIndicator = styled.tspan`
     font-weight: normal;
 `;
 
-// This lets all inline child areas have the same height, preventing
-// the selection and highlight rects from overlapping with the lines.
-// This is a limitation of the layout engine, we do not yet know how
-// many underlines an expr will have until higher up in call stack,
-// so we just set the height here, now that we know for sure.
+/** Lets all inline child areas have the same height, preventing the selection and highlight
+ * rects from overlapping with the lines. This is a limitation of the layout engine, we do not yet
+ * know how many underlines an expr will have until higher up in call stack, so we just set the
+ * height here, now that we know for sure. */
 function setAreasHeightInPlace(areas: Area[], height: number) {
     for (const area of areas) {
         if (area.kind === "expr" && area.inline) {
