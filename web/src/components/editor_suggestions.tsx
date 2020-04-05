@@ -23,6 +23,7 @@ const EditorInput = styled.input`
     position: relative;
     padding: 8px 5px;
     background: ${(p) => p.theme.colour.background};
+    -webkit-appearance: none;
     &:focus {
         border: 1px solid ${(p) => p.theme.colour.clickable};
     }
