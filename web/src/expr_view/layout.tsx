@@ -297,11 +297,14 @@ export interface LayoutProps {
 type LayoutExprArgs = [KaleTheme, Expr, LayoutProps | undefined];
 
 function argsEquals(prev: LayoutExprArgs, next: LayoutExprArgs) {
+    // Check the theme and expr.
+    if (prev[0] !== next[0] || prev[1] !== next[1]) return false;
+    // The props are identical, no need for the complex check. Might be undefined.
+    if (prev[2] === next[2]) return true;
+
     const lhs = prev[2];
     const rhs = next[2];
     const quickCheck =
-        prev[0] === next[0] &&
-        prev[1] === next[1] &&
         lhs !== undefined &&
         rhs !== undefined &&
         lhs.exprPropsFor === rhs.exprPropsFor &&
@@ -323,10 +326,15 @@ function argsEquals(prev: LayoutExprArgs, next: LayoutExprArgs) {
     return !highlightsBlanks(lhs!) && !highlightsBlanks(rhs!);
 }
 
+// Use the same reference each time if we don't pass props.
+const emptyProps = {};
 //TODO: One day implement this as a hook with useMemo now that ExprView is a functional component.
 export default memoizeOne(
     function layoutExpr(theme: KaleTheme, expr: Expr, props?: LayoutProps): Layout {
-        return materialiseUnderlines(theme, new ExprLayout(theme, props ?? {}).layout(expr));
+        return materialiseUnderlines(
+            theme,
+            new ExprLayout(theme, props ?? emptyProps).layout(expr),
+        );
     },
     // This library is badly typed.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -61,6 +61,15 @@ export function reverseObject(obj: { [key: string]: string }): { [value: string]
     return reversed;
 }
 
+/** Map a function over an iterable. */
+export function map<T, R>(iterable: Iterable<T>, fn: (x: T) => R): R[] {
+    const result = [];
+    for (const x of iterable) {
+        result.push(fn(x));
+    }
+    return result;
+}
+
 export function groupEntries<K extends string | number | symbol, V>(
     entries: readonly [K, V][],
 ): { [k in K]: V[] } {

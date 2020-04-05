@@ -2,22 +2,17 @@ import React, { useState, ReactNode, useRef, useEffect } from "react";
 import ReactDOM from "react-dom";
 import styled, { useTheme } from "styled-components";
 
-import { assertSome, assert } from "utils";
+import { assertSome, assert, filterMap, map } from "utils";
 import { ClientOffset, Offset } from "geometry";
-import { useDocumentEvent, usePlatformModifierKey } from "hooks";
+import { useDocumentEvent, usePlatformModifierKey, useRefMap } from "hooks";
 import Expr from "expr";
 import layoutExpr from "expr_view/layout";
 
-const Overlay = styled.div`
-    width: 100%;
-    height: 100%;
+const Container = styled.div`
+    background: rgba(255, 0, 0, 0.2);
     position: fixed;
     z-index: 1000;
-    touch-action: pinch-zoom;
-`;
-
-const Container = styled.div`
-    position: absolute;
+    touch-action: none;
     background: ${(p) => p.theme.colour.background};
     box-shadow: ${(p) => p.theme.shadow.normal};
     border-radius: ${(p) => p.theme.exprList.borderRadius}px;
@@ -32,21 +27,28 @@ export interface DropListener {
     acceptDrop(point: ClientOffset, expr: Expr): boolean;
 }
 
-export interface MaybeStartDrag {
-    start: ClientOffset; // Where the maybe-drag started.
-    exprStart: ClientOffset; // Where is the corner of the expr.
+type PointerId = number;
+
+export interface DragData {
+    /** Pointer id that started this event. */
+    pointerId: PointerId;
+    /** What point did the pointer event start at. */
+    clientOffset: ClientOffset;
+    /** The corner of the to-be-dragged expr, in client space. */
+    exprStart: ClientOffset;
     /** Called when the drag status changes. */
     onDragUpdate?(willMove: boolean): void;
     /** Called if the drag is accepted. This is almost always the case except when copying. */
     onDragAccepted?(willMove: boolean): void;
     /** Called when the drag concludes, no matter the acceptance status. */
     onDragEnd?(): void;
+    /** The expr to be dragged. */
     expr: Expr;
 }
 
 export interface DragAndDropContext {
     /** Possibly start a drag */
-    maybeStartDrag(maybeDrag: MaybeStartDrag): void;
+    maybeStartDrag(maybeDrag: DragData): void;
     addListener(listener: DropListener): void;
     removeListener(listener: DropListener): void;
 }
@@ -54,14 +56,14 @@ export interface DragAndDropContext {
 const DragAndDrop = React.createContext<DragAndDropContext | null>(null);
 export default DragAndDrop;
 
-interface DraggingState extends MaybeStartDrag {
+interface DragState {
+    /** Callbacks and drag info. */
+    data: DragData;
     /** How much to offset the expr when showing the drag. Pretty much always a negative number. */
     delta: Offset | null;
     /** How much to offset the hit-point, accounting for any padding the container has plus some
      * fudge. */
     hitpointDelta: Offset | null;
-    /** Which pointer started the drag. */
-    pointerId: number | null;
 }
 
 // There are three states to a drag.
@@ -70,20 +72,22 @@ interface DraggingState extends MaybeStartDrag {
 // 3. Drag - Deltas are now initialised, position follows the mouse.
 export function DragAndDropSurface({ children }: { children: ReactNode }) {
     const theme = useTheme();
-    const [position, setPosition] = useState<ClientOffset | null>(null);
     const listeners = useRef(new Set<DropListener>()).current;
-    const drag = useRef<DraggingState | null>(null);
-    const overlayRef = useRef<HTMLDivElement>(null);
+    const [positions, setPositions] = useState<Map<PointerId, ClientOffset>>(new Map());
+    const drags = useRef<Map<PointerId, DragState>>(new Map()).current;
+    const overlayRefs = useRefMap<PointerId, HTMLDivElement>(positions.keys());
+
     // If user is pressing the platform modifier key, copy expressions instead of moving them.
-    const copyMode = usePlatformModifierKey((isDown) => drag.current?.onDragUpdate?.(isDown));
+    // const copyMode = usePlatformModifierKey((isDown) => drag.current?.onDragUpdate?.(isDown));
+    const copyMode = false;
     useDocumentEvent("pointermove", onPointerMove);
 
     // Since we aren't using ExprView, we add highlight padding on our own.
     const padding = theme.exprList.padding.combine(theme.highlight.padding);
 
     const contextValue = useRef<DragAndDropContext>({
-        maybeStartDrag(maybeDrag: MaybeStartDrag) {
-            drag.current = { ...maybeDrag, delta: null, hitpointDelta: null, pointerId: null };
+        maybeStartDrag(data: DragData) {
+            drags.set(data.pointerId, { data, delta: null, hitpointDelta: null });
         },
         addListener(listener) {
             listeners.add(listener);
@@ -93,101 +97,120 @@ export function DragAndDropSurface({ children }: { children: ReactNode }) {
         },
     }).current;
 
-    function dismissDrag() {
-        // Note this calls both .drop and then .update on the listeners.
-        if (drag.current !== null && drag.current.hitpointDelta !== null) {
-            const exprCorner = assertSome(position).offset(drag.current.hitpointDelta);
-            const expr = drag.current.expr;
-            for (const listener of listeners) {
-                if (listener.acceptDrop(exprCorner, expr)) {
-                    drag.current.onDragAccepted?.(copyMode);
-                    break;
-                }
+    function completeDrag(pointerId: number) {
+        const drag = drags.get(pointerId);
+        if (drag === undefined) return;
+        // // Note this calls both .drop and then .update on the listeners.
+        const exprCorner = assertSome(positions.get(pointerId)).offset(
+            assertSome(drag.hitpointDelta),
+        );
+        const expr = drag.data.expr;
+        for (const listener of listeners) {
+            if (listener.acceptDrop(exprCorner, expr)) {
+                drag.data.onDragAccepted?.(copyMode);
+                break;
             }
-            drag.current.onDragEnd?.();
         }
-        drag.current = null;
-        // Premature optimisation. This method is called on every other mouse move.
-        if (position !== null) {
-            listeners.forEach((f) => f.dragUpdate(null, null));
-            setPosition(null);
+        drag.data.onDragEnd?.();
+        setPosition(pointerId, null);
+        drags.delete(pointerId);
+    }
+
+    function dismissDrag(pointerId: number) {
+        // eslint-disable-next-line no-console
+        console.log("Drag dismissed", pointerId);
+        setPosition(pointerId, null);
+        drags.delete(pointerId);
+    }
+
+    function setPosition(pointerId: PointerId, position: ClientOffset | null) {
+        // Quick paths.
+        if (position === null && !positions.has(pointerId)) return;
+        if (positions.get(pointerId) === position) return;
+
+        const copy = new Map(positions);
+        if (position === null) {
+            copy.delete(pointerId);
+        } else {
+            copy.set(pointerId, position);
         }
+        setPositions(copy);
     }
 
     function onPointerMove(event: PointerEvent) {
-        // Ensure left mouse button is held down.
-        if (event.buttons !== 1 || drag.current === null) {
-            dismissDrag();
-            return;
-        }
+        if (event.buttons !== 1) return;
+        const drag = drags.get(event.pointerId);
+        console.log(event.pointerId);
+        if (drag === undefined) return;
 
         const DRAG_THRESHOLD = 4; // Based on Windows default, DragHeight registry.
         const nextPosition = ClientOffset.fromClient(event);
-        if (drag.current.hitpointDelta === null) {
+        if (drag.hitpointDelta === null) {
             // Consider starting a drag.
-            if (drag.current.start.distance(nextPosition) > DRAG_THRESHOLD) {
-                drag.current.delta = drag.current.exprStart.difference(nextPosition);
-                drag.current.hitpointDelta = drag.current.delta
+            if (drag.data.clientOffset.distance(nextPosition) > DRAG_THRESHOLD) {
+                drag.delta = drag.data.exprStart.difference(nextPosition);
+                drag.hitpointDelta = drag.delta
                     .difference(padding.topLeft)
                     .difference(new Offset(6, 0));
-                drag.current.pointerId = event.pointerId;
                 // Send the initial drag update, reflecting the current modifer state.
-                drag.current.onDragUpdate?.(copyMode);
-                setPosition(nextPosition);
+                drag.data.onDragUpdate?.(copyMode);
+                setPosition(drag.data.pointerId, nextPosition);
             }
-        } else {
+        } else if (event.pointerId === drag.data.pointerId) {
             // Update the drag.
-            setPosition(nextPosition);
-            const exprCorner = nextPosition.offset(drag.current.hitpointDelta);
-            listeners.forEach((x) => x.dragUpdate(exprCorner, drag.current?.expr ?? null));
+            setPosition(drag.data.pointerId, nextPosition);
+            const exprCorner = nextPosition.offset(drag.hitpointDelta);
+            listeners.forEach((x) => x.dragUpdate(exprCorner, drag.data.expr));
         }
     }
 
-    function renderExpr() {
-        assert(drag.current?.delta != null);
-        const pos = assertSome(position).offset(drag.current.delta);
-        const { nodes, size } = layoutExpr(theme, drag.current.expr);
+    function renderExpr(pointerId: PointerId) {
+        const drag = drags.get(pointerId);
+        if (drag === undefined) return;
+        const position = assertSome(positions.get(pointerId));
+        const pos = assertSome(position).offset(assertSome(drag.delta));
+
+        const { nodes, size } = layoutExpr(theme, drag.data.expr);
         return (
-            // Cover the entire page in a div so we can always get the mouseUp event.
             // Bug: Safari doesn't like drawing box-shadows on SVGs (it leaves a ghost trail), it
             // must be drawn on the Container div instead.
-            <Overlay
-                onPointerUp={dismissDrag}
-                onPointerCancel={dismissDrag}
-                style={{ cursor: copyMode ? "copy" : "grabbing" }}
-                ref={overlayRef}
+            <Container
+                ref={overlayRefs.get(pointerId)}
+                style={{
+                    cursor: copyMode ? "copy" : "grabbing",
+                    padding: padding.css,
+                    top: pos.y,
+                    left: pos.x,
+                }}
+                onPointerUp={(e) => completeDrag(e.pointerId)}
+                onPointerCancel={(e) => dismissDrag(e.pointerId)}
             >
-                <Container style={{ padding: padding.css, top: pos.y, left: pos.x }}>
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width={size.width}
-                        height={size.height}
-                        // Prevent weird white-space spacing issues.
-                        display="block"
-                    >
-                        {nodes}
-                    </svg>
-                </Container>
-            </Overlay>
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width={size.width}
+                    height={size.height}
+                    // Prevent weird white-space spacing issues.
+                    display="block"
+                >
+                    {nodes}
+                </svg>
+            </Container>
         );
     }
 
-    let surface: React.ReactNode;
-    if (drag.current?.delta != null) {
-        surface = ReactDOM.createPortal(renderExpr(), document.body);
-    }
-
-    const pointerId = drag.current?.pointerId;
     useEffect(() => {
-        if (pointerId != null) {
-            assertSome(overlayRef.current).setPointerCapture(pointerId);
+        for (const pointerId of positions.keys()) {
+            const overlay = overlayRefs.get(pointerId)?.current;
+            if (overlay !== undefined) {
+                overlay.setPointerCapture(pointerId);
+            }
         }
-    }, [pointerId]);
+    }, [overlayRefs, positions]);
 
     // Declare the global droppable filter here once.
     return (
         <DragAndDrop.Provider value={contextValue}>
-            {surface}
+            {map(positions.keys(), (x) => ReactDOM.createPortal(renderExpr(x), document.body))}
             <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="0"

@@ -25,15 +25,15 @@ export function useDisableScrolling(): void {
 }
 
 export function useRefMap<K, T>(keys: Iterable<K>): ReadonlyMap<K, MutableRefObject<T>> {
-    const refs = useRef<Map<K, MutableRefObject<T>>>(new Map());
     const keySet = new Set(keys);
+    const refs = useRef<Map<K, MutableRefObject<T>>>(new Map());
     // Sync the refs with the keys.
     for (const refKey of refs.current.keys()) {
         if (!keySet.has(refKey)) {
             refs.current.delete(refKey);
         }
     }
-    for (const key of keys) {
+    for (const key of keySet) {
         if (!refs.current.has(key)) {
             refs.current.set(key, React.createRef() as MutableRefObject<T>);
         }

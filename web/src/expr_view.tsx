@@ -24,7 +24,7 @@ const ContainerSvg = styled.svg`
     /* SVGs are inline by default, this leads to a scourge of invisible space characters. Make it a
     block instead. */
     display: block;
-    touch-action: pinch-zoom;
+    touch-action: none;
 `;
 
 export type OnDropMode = "replace" | "child" | "sibling";
@@ -251,7 +251,8 @@ export default React.memo(function ExprView({
                         // same editor drag and drop. Otherwise reset it to lift any constraints
                         // other code might have.
                         expr: atomic ? dragExpr.resetIds() : dragExpr,
-                        start: ClientOffset.fromClient(event),
+                        clientOffset: ClientOffset.fromClient(event),
+                        pointerId: event.pointerId,
                         exprStart: exprOrigin
                             .offset(containerOrigin)
                             .offset(finalPadding.topLeft.neg),
