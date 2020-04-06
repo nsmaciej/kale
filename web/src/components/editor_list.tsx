@@ -15,18 +15,15 @@ import Debugger from "contexts/debugger";
 import EditorStack, { OpenedEditor } from "contexts/editor_stack";
 import Workspace from "contexts/workspace";
 
-const EditorHeading = styled(PaneHeading)`
-    margin-left: ${(p) => p.theme.exprView.padding.left}px;
+const EditorItemContainer = styled.div`
+    border-radius: ${(p) => p.theme.exprList.borderRadius}px;
+    border: 1px solid ${(p) => p.theme.colour.subtleClickable};
+    padding: 10px;
 `;
 
 const EditorHeader = styled(Stack).attrs({ gap: 5 })`
-    position: sticky;
-    top: 0;
-    background: ${(p) => p.theme.colour.background};
-    padding-bottom: 5px;
-    border-bottom: 1px solid ${(p) => p.theme.colour.subtleClickableDark};
+    padding-left: ${(p) => p.theme.exprView.padding.left}px;
     align-items: center;
-    z-index: 50;
 `;
 
 const RightGroup = styled.div`
@@ -46,19 +43,19 @@ function EditorItem({
 }) {
     const editorStack = useContextChecked(EditorStack);
     return (
-        <>
+        <EditorItemContainer>
             <EditorHeader>
-                <EditorHeading>{editor.name}</EditorHeading>
+                <PaneHeading>{editor.name}</PaneHeading>
                 <IconButton onClick={() => editorStack.removeEditor(editor.key)}>
                     <AiOutlineCloseCircle />
                 </IconButton>
                 {buttons}
                 <RightGroup>{rightButtons}</RightGroup>
             </EditorHeader>
-            <Box marginTop={10} marginBottom={20} overflowX="auto">
+            <Box marginTop={10} overflowX="auto">
                 {children}
             </Box>
-        </>
+        </EditorItemContainer>
     );
 }
 
@@ -112,7 +109,7 @@ export default function EditorList() {
     const editorStack = useContextChecked(EditorStack);
     return (
         <Stack gap={20} justifyContent="space-between" overflow="auto">
-            <Stack vertical flex="auto" overflow="auto">
+            <Stack vertical gap={20} flex="auto" overflow="auto">
                 {editorStack.stack.length === 0 && (
                     <NonIdealText>
                         No editors open.

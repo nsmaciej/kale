@@ -139,7 +139,7 @@ export const DefaultTheme = {
         padding: new Padding(3),
         mainPadding: new Padding(3, 20, 3, 3),
         radius: 3,
-        selection: new Highlight("selection", "#f5f9ff", "#364ee0")
+        selection: new Highlight("selection", "#f5f9ff", "#1b65f1")
             .blurred("#fcfdff", "#edeffc")
             .withAnimation(),
         hover: new Highlight("hover", undefined, "#cecece").blank("#efefef", "#dcdcdc"),
