@@ -128,15 +128,14 @@ window.addEventListener("keyup", (e) => {
  * the state changes. */
 // This is sligthly complex because we want to detect the modifer key being pressed even before the
 // component first mounts, hence the global state.
-export function usePlatformModifierKey(update?: (isDown: boolean) => void): boolean {
+export function usePlatformModifierKey(): boolean {
     const [keyPressed, setKeyPressed] = useState(modifierKeyDown);
     useEffect(() => {
         const handle = () => {
             setKeyPressed(modifierKeyDown);
-            update?.(modifierKeyDown);
         };
         modifierKeyListeners.add(handle);
         return () => void modifierKeyListeners.delete(handle);
-    }, [update]);
+    }, []);
     return keyPressed;
 }

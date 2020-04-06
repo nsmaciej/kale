@@ -1,8 +1,8 @@
-import React, { useState, ReactNode, useRef, useEffect } from "react";
+import React, { useState, ReactNode, useRef } from "react";
 import ReactDOM from "react-dom";
 import styled, { useTheme } from "styled-components";
 
-import { assertSome, assert, filterMap, map } from "utils";
+import { assertSome, map } from "utils";
 import { ClientOffset, Offset } from "geometry";
 import { useWindowEvent, usePlatformModifierKey, useRefMap } from "hooks";
 import Expr from "expr";
@@ -79,8 +79,8 @@ export function DragAndDropSurface({ children }: { children: ReactNode }) {
     const overlayRefs = useRefMap<PointerId, HTMLDivElement>(rendering.keys());
 
     // If user is pressing the platform modifier key, copy expressions instead of moving them.
-    // const copyMode = usePlatformModifierKey((isDown) => drag.current?.onDragUpdate?.(isDown));
-    const copyMode = false;
+    const copyMode = usePlatformModifierKey();
+
     useWindowEvent("pointermove", (e) => onPointerMove(e));
     // This should ideally use pointer capture on the Overlay elements, but Safari doesn't like
     // nested pointer capture elements in Safari 13. See https://bugs.webkit.org/show_bug.cgi?id=203364
@@ -110,7 +110,6 @@ export function DragAndDropSurface({ children }: { children: ReactNode }) {
     function completeDrag(pointerId: number) {
         const drag = drags.get(pointerId);
         if (drag === undefined || drag.position === null || drag.hitpointDelta === null) return;
-        // // Note this calls both .drop and then .update on the listeners.
         const exprCorner = drag.position.offset(drag.hitpointDelta);
         const expr = drag.data.expr;
         for (const listener of listeners) {
@@ -119,6 +118,8 @@ export function DragAndDropSurface({ children }: { children: ReactNode }) {
                 break;
             }
         }
+        // Make sure everyone knows that we completed the drop.
+        listeners.forEach((f) => f.dragUpdate(null, null));
         drag.data.onDragEnd?.();
         dismissDrag(pointerId);
     }
