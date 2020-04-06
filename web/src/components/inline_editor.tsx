@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef, useEffect } from "react";
 import styled from "styled-components";
 import { AiOutlineBulb, AiOutlineBlock } from "react-icons/ai";
 
@@ -39,10 +39,16 @@ export default function InlineEditor({
     onDismiss,
 }: InlineEditorProps) {
     useDisableScrolling();
+    const inputRef = useRef<HTMLInputElement>(null);
     const { setSelection, selection, suggestions, moveSelection } = useSuggestions(value, {
         showSpecials: true,
         disable: disableSuggestions,
     });
+
+    useEffect(() => {
+        inputRef.current?.focus();
+        inputRef.current?.select();
+    }, []);
 
     function onKeyDown(e: React.KeyboardEvent) {
         e.stopPropagation(); // Always stop propagation.
@@ -78,7 +84,7 @@ export default function InlineEditor({
     return (
         <Container
             style={{
-                top: origin.y + (offset?.y ?? 0),
+                top: origin.y + (offset?.y ?? 0) - 1,
                 left: origin.x + (offset?.x ?? 0),
             }}
         >
@@ -91,7 +97,7 @@ export default function InlineEditor({
                     fontStyle: italic ? "italic" : undefined,
                     fontWeight: weight,
                 }}
-                ref={(r) => r?.focus()}
+                ref={inputRef}
                 onKeyDown={onKeyDown}
                 onChange={onChangeEvent}
             />
