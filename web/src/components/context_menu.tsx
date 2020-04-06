@@ -1,9 +1,9 @@
-import React, { useState, useLayoutEffect, useRef } from "react";
+import React, { useState, useLayoutEffect, useRef, useEffect } from "react";
 import styled from "styled-components";
 
 import { Offset, Rect } from "geometry";
-import { Optional, mod, assert, delay, eventHasUnwantedModifiers } from "utils";
-import { useDisableScrolling, usePlatformModifierKey } from "hooks";
+import { Optional, mod, assert, eventHasUnwantedModifiers } from "utils";
+import { usePlatformModifierKey } from "hooks";
 import Menu, { MenuItem } from "components/menu";
 import Shortcut from "components/shortcut";
 
@@ -41,10 +41,14 @@ interface ContextMenuProps {
 export default function ContextMenu({ items, origin, onDismissMenu, popover }: ContextMenuProps) {
     assert(items.length > 0);
     const [selection, setSelection] = useState<number | null>(null);
-    const [blinking, setBlinking] = useState(false);
     const showingHidden = usePlatformModifierKey();
     const containerRef = useRef<HTMLDivElement>(null);
     const [adjustedOrigin, setAdjustedOrigin] = useState(origin);
+    const wrapperRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        wrapperRef.current?.focus();
+    }, [wrapperRef]);
 
     // Make sure the menu is always visible.
     useLayoutEffect(() => {
@@ -72,23 +76,14 @@ export default function ContextMenu({ items, origin, onDismissMenu, popover }: C
         });
     }
 
-    async function onClick(item: ContextMenuItem, index: number) {
-        if (blinking || item.label == null) return false;
-        setBlinking(true);
-
-        // Blink the menu. See Chrome's
-        // src/ui/views/controls/menu/menu_closure_animation_mac.h for how big-boys do this.
-        const offDuration = 100;
-        if (selection != null) {
-            setSelection(null);
-            await delay(offDuration);
-        }
-        setSelection(index);
-        await delay(offDuration);
-
-        setBlinking(false);
-        onDismissMenu();
+    function onClick(item: ContextMenuItem) {
+        //TODO: Blink the menu if the pointer is a mouse. See Chrome's
+        // src/ui/views/controls/menu/menu_closure_animation_mac.h for timing.  This is difficult
+        // because if we don't run the action straight away some things like opening software
+        // keyboards might not work.
+        if (item.label == null) return false;
         item.action?.();
+        onDismissMenu();
     }
 
     function onKeyDown(e: React.KeyboardEvent) {
@@ -110,19 +105,17 @@ export default function ContextMenu({ items, origin, onDismissMenu, popover }: C
             case "Enter":
             case "Space":
                 if (selection) {
-                    onClick(items[selection], selection);
+                    onClick(items[selection]);
                 } else {
                     onDismissMenu();
                 }
                 break;
             default: {
-                let i = 0;
                 for (const item of items) {
                     if (item.keyEquivalent === e.key) {
-                        if (!item.disabled) onClick(item, i);
+                        if (!item.disabled) onClick(item);
                         return;
                     }
-                    i++;
                 }
             }
         }
@@ -139,7 +132,7 @@ export default function ContextMenu({ items, origin, onDismissMenu, popover }: C
             onKeyDown={onKeyDown}
             tabIndex={0}
             onBlur={onDismissMenu}
-            ref={(el) => el?.focus()}
+            ref={wrapperRef}
         >
             <Menu
                 popover={popover}
@@ -148,9 +141,7 @@ export default function ContextMenu({ items, origin, onDismissMenu, popover }: C
                 onClick={onClick}
                 containerRef={containerRef}
                 // Do not allow selecting separators.
-                onSetSelected={(i) =>
-                    blinking || setSelection(i != null && items[i].label != null ? i : null)
-                }
+                onSetSelected={(i) => setSelection(i != null && items[i].label != null ? i : null)}
                 minimalPadding={(i) =>
                     items[i].label == null || (items[i].hidden === true && !showingHidden)
                 }
