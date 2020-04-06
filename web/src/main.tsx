@@ -80,7 +80,7 @@ const Container = styled.div`
         "nav nav nav" min-content
         "toybox editor history" 1fr
         "hints hints hints" min-content /
-        max-content 1fr max-content;
+        max-content minmax(300px, 1fr) max-content;
     gap: 20px;
     height: 100%;
     position: relative;
@@ -94,7 +94,7 @@ const HeaderGrid = styled.div`
             1fr
         );
     align-items: center;
-    gap: 40px;
+    gap: 10px;
     padding: 10px 20px;
     background: ${(p) => p.theme.colour.innerBackground};
 `;

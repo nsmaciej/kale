@@ -4,7 +4,7 @@ import React, { ReactNode } from "react";
 import styled from "styled-components";
 
 import { Box, Stack, NonIdealText, IconButton, PaneHeading } from "components";
-import { useContextChecked } from "hooks";
+import { useContextChecked, useMediaQuery } from "hooks";
 import Builtins from "vm/builtins";
 import EditorWrapper from "editor";
 
@@ -107,6 +107,7 @@ function UserEditor({ editor }: { editor: OpenedEditor }) {
 
 export default function EditorList() {
     const editorStack = useContextChecked(EditorStack);
+    const showMinimap = useMediaQuery("(min-width: 1100px)");
     return (
         <Stack gap={20} justifyContent="space-between" overflow="auto">
             <Stack vertical gap={20} flex="auto" overflow="auto">
@@ -135,9 +136,11 @@ export default function EditorList() {
                     ))}
                 </AnimatePresence>
             </Stack>
-            <Box top={0} position="sticky" flex="none" overflow="auto">
-                <Minimap />
-            </Box>
+            {showMinimap && (
+                <Box top={0} position="sticky" flex="none" overflow="auto">
+                    <Minimap />
+                </Box>
+            )}
         </Stack>
     );
 }
