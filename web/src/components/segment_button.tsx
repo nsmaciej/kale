@@ -10,21 +10,19 @@ export interface SegmentButtonProps<L> {
 const Container = styled.div`
     display: flex;
     border-radius: ${(p) => p.theme.general.borderRadius}px;
-    border: 1px solid ${(p) => p.theme.colour.clickable};
+    border: 1px solid ${(p) => p.theme.colour.subtleClickable};
+    overflow: hidden;
 `;
 
 const Segment = styled.button<{ active: boolean }>`
-    padding: 6px 10px 4px;
-    & + & {
-        border-left: 1px solid ${(p) => p.theme.colour.clickable};
-    }
-    background: ${(p) => p.active && p.theme.colour.clickable};
+    padding: 10px 10px 8px;
+    background: ${(p) => (p.active ? p.theme.colour.clickable : p.theme.colour.innerBackground)};
     color: ${(p) => p.active && p.theme.colour.background};
+    & + & {
+        border-left: 1px solid ${(p) => p.theme.colour.subtleClickable};
+    }
     &:hover {
         color: ${(p) => !p.active && p.theme.colour.clickable};
-    }
-    &:focus {
-        box-shadow: 0 0 3px solid ${(p) => p.theme.colour.active};
     }
 `;
 

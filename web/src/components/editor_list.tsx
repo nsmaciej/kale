@@ -24,7 +24,7 @@ const EditorHeader = styled(Stack).attrs({ gap: 5 })`
     top: 0;
     background: ${(p) => p.theme.colour.background};
     padding-bottom: 5px;
-    border-bottom: 1px solid ${(p) => p.theme.colour.grey};
+    border-bottom: 1px solid ${(p) => p.theme.colour.subtleClickableDark};
     align-items: center;
     z-index: 50;
 `;
@@ -111,7 +111,7 @@ function UserEditor({ editor }: { editor: OpenedEditor }) {
 export default function EditorList() {
     const editorStack = useContextChecked(EditorStack);
     return (
-        <Stack gap={20} justifyContent="space-between" gridArea="editor" overflow="auto">
+        <Stack gap={20} justifyContent="space-between" overflow="auto">
             <Stack vertical flex="auto" overflow="auto">
                 {editorStack.stack.length === 0 && (
                     <NonIdealText>

@@ -29,7 +29,6 @@ export default React.memo(function ClipboardList() {
     return (
         <Pane
             ref={containerRef}
-            gridArea="history"
             name="Clipboard"
             extras={
                 <SubtleButton

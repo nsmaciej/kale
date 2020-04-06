@@ -51,17 +51,28 @@ export class Highlight {
 }
 
 const colour = {
+    /** Everything that needs to be clickable */
     clickable: "#1b65f1",
-    clickableBackground: "#0672ff",
+    /** Even more clickable stuff, like context menus. */
+    brightClickable: "#0672ff",
+    /** Accent colour for less clickable stuff. */
+    subtleClickable: "#dadce0",
+    /** Search box etc. */
+    subtleClickableDark: "#e2e2e2",
     active: "#003fb7",
     brand: "#0ba902",
     error: "#f44336",
+    /** The main background used by the page */
     background: "#ffffff",
-    innerBackground: "#fcfcfc",
-    grey: "#e4e4e4",
+    /** Alternative background to suggest nesting. */
+    innerBackground: "#f5f5f5",
+    /** Background used for pop-ups (brigher in dark mode) */
+    popupBackground: "#ffffff",
+    /** Disabled text colour */
     disabled: "#d8d8d8",
-    subtleClickable: "#cccccc",
+    /** Text that does not need to be as visible. */
     subtleText: "#7b7b7b",
+    /** Text colour. */
     mainText: "#111111",
 };
 
@@ -162,14 +173,15 @@ function updateTheme(partial: { [p in keyof KaleTheme]?: Partial<KaleTheme[p]> }
 export const DarkTheme = updateTheme({
     colour: {
         clickable: "#70aeff",
-        clickableBackground: "#2483ff",
+        brightClickable: "#2483ff",
+        subtleClickable: "#3a3a3a",
+        subtleClickableDark: "#424242",
         active: "#2483ff",
         brand: "#0dde02",
         background: "#202020",
         innerBackground: "#282828",
-        grey: "#404040",
+        popupBackground: "#282828",
         disabled: "#424242",
-        subtleClickable: "#525252",
         mainText: "#ffffff",
     },
     shadow: {

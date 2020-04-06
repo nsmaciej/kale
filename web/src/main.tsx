@@ -82,7 +82,6 @@ const Container = styled.div`
         "hints hints hints" min-content /
         max-content 1fr max-content;
     gap: 20px;
-    padding: 15px 20px 0;
     height: 100%;
     position: relative;
 `;
@@ -90,14 +89,14 @@ const Container = styled.div`
 const HeaderGrid = styled.div`
     grid-area: nav;
     display: grid;
-    padding-bottom: 15px;
-    border-bottom: 1px solid ${(p) => p.theme.colour.grey};
     grid-template: "branding search menu" / minmax(max-content, 1fr) max-content minmax(
             max-content,
             1fr
         );
     align-items: center;
     gap: 40px;
+    padding: 10px 20px;
+    background: ${(p) => p.theme.colour.innerBackground};
 `;
 
 const MainHeading = styled.h1`
@@ -171,9 +170,13 @@ function Kale() {
                     </a>
                 </Stack>
             </HeaderGrid>
-            <ToyBox />
+            <Box paddingLeft={20}>
+                <ToyBox />
+            </Box>
             <EditorList />
-            <ClipboardList />
+            <Box paddingRight={20}>
+                <ClipboardList />
+            </Box>
             <Hints />
         </Container>
     );

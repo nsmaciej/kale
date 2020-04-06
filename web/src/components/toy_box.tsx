@@ -67,9 +67,9 @@ export default React.memo(function ToyBox() {
 
     if (!theme.feature.toyBox) return null;
     return (
-        <Pane gridArea="toybox" name="Blocks">
+        <Pane name="Blocks">
             <Stack gap={20} marginTop="">
-                <Stack vertical gap={10} alignItems="end">
+                <Stack vertical gap={10} alignItems="stretch">
                     {Object.keys(Category).map((x) => (
                         <SubtleButton
                             key={x}

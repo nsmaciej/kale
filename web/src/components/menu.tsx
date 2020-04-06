@@ -5,7 +5,7 @@ import { Optional } from "utils";
 import { useDisableScrolling } from "hooks";
 
 const Container = styled.div`
-    background: ${(p) => p.theme.colour.innerBackground};
+    background: ${(p) => p.theme.colour.popupBackground};
     border-radius: ${(p) => p.theme.general.borderRadius}px;
     box-shadow: ${(p) => p.theme.shadow.normal};
     z-index: 1000;
@@ -33,7 +33,7 @@ const Arrow = styled.div`
     top: -${triangleSize}px;
 
     &::before {
-        background: ${(p) => p.theme.colour.innerBackground};
+        background: ${(p) => p.theme.colour.popupBackground};
         left: ${triangleSize / 2}px;
         top: ${triangleSize / 2}px;
         box-shadow: ${(p) => p.theme.shadow.small};
@@ -53,7 +53,7 @@ interface MenuItemContainerProps {
 
 const MenuItemContainer = styled.div<MenuItemContainerProps>`
     background: ${(p) =>
-        !p.disabled && p.selected ? p.theme.colour.clickableBackground : "transparent"};
+        !p.disabled && p.selected ? p.theme.colour.brightClickable : "transparent"};
     display: flex;
     align-items: center;
     & > svg {
@@ -88,7 +88,7 @@ export interface MenuProps<I> {
     selected: Optional<number>;
     containerRef?: Ref<HTMLDivElement>;
     onSetSelected(index: number | null): void;
-    onClick(item: I, index: number): void;
+    onClick(item: I): void;
     // Function-children to render a menu item in a flexbox context.
     children(item: I): ReactNode;
     // Special function for the context menu.
@@ -116,7 +116,7 @@ export default function Menu<I extends MenuItem>(props: MenuProps<I>) {
                             <MenuItemContainer
                                 key={item.id}
                                 onMouseDown={(e) => e.preventDefault()} // Don't blur.
-                                onClick={() => props.onClick(item, i)}
+                                onClick={() => props.onClick(item)}
                                 onContextMenu={(e) => e.preventDefault()} // Can't right click.
                                 onMouseMove={() => props.onSetSelected(i)}
                                 onMouseLeave={() => props.onSetSelected(null)}

@@ -25,6 +25,7 @@ const ExprListItem = styled(motion.div)`
     grid-column: expr;
     justify-self: left;
     border: 1px solid ${(p) => p.theme.colour.subtleClickable};
+    background: ${(p) => p.theme.colour.background};
     border-radius: ${(p) => p.theme.exprList.borderRadius}px;
     display: flex;
 `;

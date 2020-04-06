@@ -17,15 +17,16 @@ const inputWidthPx = 400;
 const EditorInput = styled.input`
     font: inherit;
     color: inherit;
-    border: 1px solid ${(p) => p.theme.colour.subtleClickable};
+    border: 1px solid transparent;
     border-radius: ${(p) => p.theme.general.borderRadius}px;
     width: ${inputWidthPx}px;
     position: relative;
     padding: 8px 5px;
-    background: ${(p) => p.theme.colour.background};
+    background: ${(p) => p.theme.colour.subtleClickableDark};
     -webkit-appearance: none;
     &:focus {
         border: 1px solid ${(p) => p.theme.colour.clickable};
+        background: ${(p) => p.theme.colour.background};
     }
 `;
 

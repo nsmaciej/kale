@@ -6,7 +6,7 @@ const ShortcutKey = styled.kbd`
     background-color: ${(p) => p.theme.colour.innerBackground};
     border-radius: 3px;
     border: 1px solid ${(p) => p.theme.colour.subtleClickable};
-    box-shadow: 0 1px 1px ${(p) => p.theme.colour.subtleText};
+    box-shadow: 0 1px 1px ${(p) => p.theme.colour.subtleClickableDark};
     font-size: 0.85em;
     padding: 2px;
     white-space: nowrap;

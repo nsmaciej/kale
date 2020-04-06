@@ -47,11 +47,17 @@ export const Stack = styled(Box)`
 `;
 
 export const SubtleButton = styled.button<{ selected?: boolean }>`
-    color: ${(p) => p.theme.colour.clickable};
     transition: color 0.1s;
-    ${(p) => p.selected && "-webkit-text-stroke: 1px currentcolor"};
+    color: ${(p) => p.selected && p.theme.colour.background};
+    background: ${(p) => (p.selected ? p.theme.colour.clickable : p.theme.colour.innerBackground)};
+    text-align: left;
+    padding: 4px;
+    text-align: center;
+    border: 1px solid ${(p) => p.theme.colour.subtleClickable};
+    border-radius: ${(p) => p.theme.general.borderRadius}px;
+    padding: 10px 4px;
     &:hover {
-        color: ${(p) => (p.selected ? undefined : p.theme.colour.active)};
+        color: ${(p) => (p.selected ? undefined : p.theme.colour.clickable)};
     }
     &:disabled {
         color: ${(p) => p.theme.colour.disabled};
