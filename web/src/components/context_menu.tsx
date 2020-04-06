@@ -40,7 +40,6 @@ interface ContextMenuProps {
 
 export default function ContextMenu({ items, origin, onDismissMenu, popover }: ContextMenuProps) {
     assert(items.length > 0);
-    useDisableScrolling();
     const [selection, setSelection] = useState<number | null>(null);
     const [blinking, setBlinking] = useState(false);
     const showingHidden = usePlatformModifierKey();

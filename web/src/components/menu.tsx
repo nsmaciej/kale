@@ -2,6 +2,7 @@ import React, { ReactNode, Ref } from "react";
 import styled from "styled-components";
 
 import { Optional } from "utils";
+import { useDisableScrolling } from "hooks";
 
 const Container = styled.div`
     background: ${(p) => p.theme.colour.innerBackground};
@@ -44,11 +45,13 @@ const Arrow = styled.div`
     }
 `;
 
-const MenuItemContainer = styled.div<{
+interface MenuItemContainerProps {
     selected: boolean;
     disabled: boolean;
     minimalPadding: boolean;
-}>`
+}
+
+const MenuItemContainer = styled.div<MenuItemContainerProps>`
     background: ${(p) =>
         !p.disabled && p.selected ? p.theme.colour.clickableBackground : "transparent"};
     display: flex;
@@ -60,6 +63,9 @@ const MenuItemContainer = styled.div<{
         p.disabled ? p.theme.colour.disabled : p.selected ? "white" : p.theme.colour.mainText};
     overflow: hidden;
     padding: ${(p) => (p.minimalPadding ? "0" : "6px 10px")};
+    @media (any-pointer: coarse) {
+        padding: ${(p) => (p.minimalPadding ? "0" : "14px 10px")};
+    }
 `;
 
 // Convenience class for overflowing text.
@@ -90,6 +96,7 @@ export interface MenuProps<I> {
 }
 
 export default function Menu<I extends MenuItem>(props: MenuProps<I>) {
+    useDisableScrolling();
     return (
         // Shift the position: fixed container by popover triangle's size.
         <div style={{ position: "relative", top: props.popover ? triangleSize : 0 }}>
