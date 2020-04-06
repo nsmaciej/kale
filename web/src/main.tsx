@@ -49,7 +49,7 @@ body {
     overflow: hidden;
 }
 p {
-    line-height: 1.8;
+    line-height: 1.5;
     font-variant-numeric: oldstyle-nums;
 }
 a {
