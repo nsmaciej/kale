@@ -9,7 +9,6 @@ import Expr from "expr";
 import layoutExpr from "expr_view/layout";
 
 const Container = styled.div`
-    background: rgba(255, 0, 0, 0.2);
     position: fixed;
     z-index: 1000;
     touch-action: none;

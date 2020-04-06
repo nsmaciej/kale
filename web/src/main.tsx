@@ -45,6 +45,8 @@ body {
     /* Nothing is selectable by default. This used to not be true, but Safari is overzealous with
     selection while dragging. In the future this should be fixed to allow selecting p and a. */
     user-select: none;
+    /* Prevent body scrolling on mobile. */
+    overflow: hidden;
 }
 p {
     line-height: 1.8;

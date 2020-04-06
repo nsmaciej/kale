@@ -111,14 +111,8 @@ function UserEditor({ editor }: { editor: OpenedEditor }) {
 export default function EditorList() {
     const editorStack = useContextChecked(EditorStack);
     return (
-        <Stack
-            gap={20}
-            height="100%"
-            justifyContent="space-between"
-            overflowX="hidden"
-            gridArea="editor"
-        >
-            <Stack vertical overflowX="hidden" flex="auto">
+        <Stack gap={20} justifyContent="space-between" gridArea="editor" overflow="auto">
+            <Stack vertical flex="auto" overflow="auto">
                 {editorStack.stack.length === 0 && (
                     <NonIdealText>
                         No editors open.
@@ -144,7 +138,7 @@ export default function EditorList() {
                     ))}
                 </AnimatePresence>
             </Stack>
-            <Box top={0} position="sticky" flex="none">
+            <Box top={0} position="sticky" flex="none" overflow="auto">
                 <Minimap />
             </Box>
         </Stack>
