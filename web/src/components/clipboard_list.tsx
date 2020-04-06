@@ -41,6 +41,7 @@ export default React.memo(function ClipboardList() {
         >
             <ExprViewList
                 animate
+                stretch
                 width={260}
                 items={history}
                 showDropMarker={draggingOver}

@@ -337,15 +337,15 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         g: "demoAddString",
         i: "insert",
         I: "insertBefore",
-        m: "move",
         n: "newLine",
         N: "newLineBefore",
         o: "openEditor",
+        P: "barfUp", // Like the parent motion but actually do something.
         q: "comment",
         r: "replace",
         s: "shuffle",
         v: "demoAddVariable",
-        P: "barfUp", // Like the parent motion but actually do something.
+        x: "move",
     };
 
     // The shortcuts only accessible from the keyboard.
@@ -379,6 +379,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
     //TODO: Ideally the names would also be dynamic.
     private readonly enableForCalls = (expr: Expr) => expr instanceof E.Call;
     private readonly disableForBlanks = (expr: Expr) => !(expr instanceof E.Blank);
+    private readonly disableForTopLevel = (expr: Expr) => expr.id !== this.expr.id;
 
     private readonly exprMenu: (null | {
         label: string;
@@ -386,32 +387,34 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         enabled?(expr: Expr): boolean;
         hidden?: boolean;
     })[] = [
-        { action: "edit", label: "Edit..." },
-        { action: "smartSpace", label: "New Blank or Move Blank Up" },
         { action: "copy", label: "Copy" },
+        { action: "edit", label: "Edit..." },
+        {
+            action: "smartSpace",
+            label: "Add Space or Move Space Up",
+            enabled: this.disableForTopLevel,
+        },
         { action: "openEditor", label: "Open definition", enabled: this.enableForCalls },
-        { action: "barfUp", label: "Move Up" },
+        { action: "barfUp", label: "Move Up", enabled: this.disableForTopLevel },
         { action: "showDebugOverlay", label: "Toggle the Debug Overlay", hidden: true },
         null,
         { action: "delete", label: "Delete" },
-        { action: "move", label: "Delete and Copy" },
-        { action: "replace", label: "Replace" },
-        { action: "shuffle", label: "Replace and Copy" },
+        { action: "move", label: "Cut" },
+        { action: "replace", label: "Delete and Add Space" },
+        { action: "shuffle", label: "Cut and Add Space" },
         null,
-        { action: "insert", label: "New Argument Before", enabled: this.enableForCalls },
-        { action: "insertBefore", label: "New Argument After", enabled: this.enableForCalls },
         { action: "newLine", label: "New Line Below" },
         { action: "newLineBefore", label: "New Line Above" },
+        { action: "insert", label: "New Argument Before", enabled: this.enableForCalls },
+        { action: "insertBefore", label: "New Argument After", enabled: this.enableForCalls },
         null,
         { action: "comment", label: "Comment..." },
         { action: "disable", label: "Disable", enabled: this.disableForBlanks },
-        // Move this into some sort of editor-wide menu.
-        { action: "foldComments", label: "Fold Comments" },
         null,
         { action: "demoAddVariable", label: "Make a Variable..." },
         { action: "demoAddString", label: "Make a String..." },
         { action: "smartMakeCall", label: "Turn Into a Function Call..." },
-        { action: "moveToParent", label: "Replace The Parent" },
+        { action: "moveToParent", label: "Replace The Parent", enabled: this.disableForTopLevel },
     ];
 
     // Bound methods.

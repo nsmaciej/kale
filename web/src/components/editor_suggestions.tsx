@@ -1,8 +1,8 @@
 import React, { useState, Ref } from "react";
 import styled from "styled-components";
-import { AiOutlinePlusCircle } from "react-icons/ai";
+import { AiOutlinePlusCircle, AiOutlineSearch } from "react-icons/ai";
 
-import { SubtleButton, Box, Stack } from "components";
+import { Box, Stack } from "components";
 import { useContextChecked } from "hooks";
 import useSuggestions from "hooks/suggestions";
 
@@ -11,6 +11,7 @@ import Workspace from "contexts/workspace";
 
 import Menu, { MenuTextWrapper } from "components/menu";
 import Shortcut from "components/shortcut";
+import Button from "components/button";
 
 const inputWidthPx = 400;
 
@@ -110,9 +111,11 @@ export default React.forwardRef(function EditorSuggestions(_, ref: Ref<HTMLInput
                     </Menu>
                 )}
             </Box>
-            <SubtleButton onClick={() => selectCurrent()} disabled={suggestions.length === 0}>
-                Open
-            </SubtleButton>
+            <Button
+                icon={<AiOutlineSearch />}
+                onClick={() => selectCurrent()}
+                disabled={suggestions.length === 0}
+            />
         </Stack>
     );
 });

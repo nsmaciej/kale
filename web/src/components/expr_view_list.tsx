@@ -49,7 +49,7 @@ const Fallback = styled.div`
 `;
 
 const Extras = styled.div`
-    margin: ${(p) => p.theme.exprView.widePadding.css} !important;
+    margin: 5px !important;
 `;
 
 export interface ShortcutExpr {
@@ -70,6 +70,8 @@ interface ExprViewListItemProps<E> {
 }
 
 interface ExprViewListProps<E> extends ExprViewListItemProps<E> {
+    /** Should the exprs stretch to fill the width. */
+    stretch?: boolean;
     width?: number;
     animate?: boolean;
     items: readonly E[];
@@ -114,6 +116,7 @@ export default function ExprViewList<E extends ShortcutExpr>({
     showDropMarker,
     onGetExtras,
     width,
+    stretch,
     ...itemProps
 }: ExprViewListProps<E>) {
     const theme = useTheme();
@@ -129,6 +132,7 @@ export default function ExprViewList<E extends ShortcutExpr>({
                 initial={animate && { opacity: 0.8, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.1, ease: "easeIn" }}
+                style={{ width: stretch ? "100%" : undefined }}
             >
                 <ExprViewListItem item={item} {...itemProps} />
                 {onGetExtras && <Extras>{onGetExtras(item)}</Extras>}

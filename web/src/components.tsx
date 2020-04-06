@@ -46,7 +46,12 @@ export const Stack = styled(Box)`
     }
 `;
 
+export const StackSpacer = styled.div<{ gap?: number }>`
+    margin-left: ${(p) => (p.gap ? p.gap + "px" : "auto")};
+`;
+
 export const SubtleButton = styled.button<{ selected?: boolean }>`
+    min-width: 40px;
     transition: color 0.1s;
     color: ${(p) => p.selected && p.theme.colour.background};
     background: ${(p) => (p.selected ? p.theme.colour.clickable : p.theme.colour.innerBackground)};
@@ -61,6 +66,10 @@ export const SubtleButton = styled.button<{ selected?: boolean }>`
     }
     &:disabled {
         color: ${(p) => p.theme.colour.disabled};
+    }
+    &:active {
+        background: ${(p) =>
+            p.selected ? p.theme.colour.clickable : p.theme.colour.subtleClickable};
     }
 `;
 

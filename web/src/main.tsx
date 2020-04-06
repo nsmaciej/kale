@@ -177,7 +177,7 @@ function Kale() {
             <Box paddingRight={20}>
                 <ClipboardList />
             </Box>
-            <Hints />
+            {/* <Hints /> */}
         </Container>
     );
 }

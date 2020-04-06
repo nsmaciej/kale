@@ -62,7 +62,7 @@ const MenuItemContainer = styled.div<MenuItemContainerProps>`
     color: ${(p) =>
         p.disabled ? p.theme.colour.disabled : p.selected ? "white" : p.theme.colour.mainText};
     overflow: hidden;
-    padding: ${(p) => (p.minimalPadding ? "0" : "6px 10px")};
+    padding: ${(p) => (p.minimalPadding ? "0" : "7px 10px")};
     @media (any-pointer: coarse) {
         padding: ${(p) => (p.minimalPadding ? "0" : "14px 10px")};
     }

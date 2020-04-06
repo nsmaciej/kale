@@ -90,7 +90,7 @@ export const DefaultTheme = {
     droppable,
 
     general: {
-        borderRadius: 4,
+        borderRadius: 5,
     },
 
     shadow: {

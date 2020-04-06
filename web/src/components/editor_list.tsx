@@ -1,15 +1,26 @@
-import { AiOutlineCloseCircle, AiOutlinePlayCircle, AiOutlineUndo } from "react-icons/ai";
+import {
+    AiOutlineCloseCircle,
+    AiOutlinePlayCircle,
+    AiOutlineUndo,
+    AiOutlinePlusCircle,
+    AiOutlineDelete,
+    AiOutlineEdit,
+    AiOutlineMore,
+    AiOutlineTag,
+    AiOutlineEnter,
+} from "react-icons/ai";
 import { motion, AnimatePresence } from "framer-motion";
 import React, { ReactNode } from "react";
 import styled from "styled-components";
 
-import { Box, Stack, NonIdealText, IconButton, PaneHeading } from "components";
+import { Box, Stack, NonIdealText, IconButton, PaneHeading, StackSpacer } from "components";
 import { useContextChecked, useMediaQuery } from "hooks";
 import Builtins from "vm/builtins";
 import EditorWrapper from "editor";
 
 import Minimap from "components/minimap";
 import Shortcut from "components/shortcut";
+import Button from "components/button";
 
 import Debugger from "contexts/debugger";
 import EditorStack, { OpenedEditor } from "contexts/editor_stack";
@@ -24,10 +35,6 @@ const EditorItemContainer = styled.div`
 const EditorHeader = styled(Stack).attrs({ gap: 5 })`
     padding-left: ${(p) => p.theme.exprView.padding.left}px;
     align-items: center;
-`;
-
-const RightGroup = styled.div`
-    margin-left: auto;
 `;
 
 function EditorItem({
@@ -50,7 +57,8 @@ function EditorItem({
                     <AiOutlineCloseCircle />
                 </IconButton>
                 {buttons}
-                <RightGroup>{rightButtons}</RightGroup>
+                <StackSpacer />
+                {rightButtons}
             </EditorHeader>
             <Box marginTop={10} overflowX="auto">
                 {children}
@@ -105,12 +113,35 @@ function UserEditor({ editor }: { editor: OpenedEditor }) {
     );
 }
 
+const EditorMenuStack = styled(Stack).attrs({ gap: 15 })`
+    z-index: 100;
+    position: sticky;
+    top: 0;
+    background: ${(p) => p.theme.colour.background};
+    padding-bottom: 10px;
+`;
+
+function EditorMenu() {
+    return (
+        <EditorMenuStack>
+            <Button name="Edit" icon={<AiOutlineEdit />} />
+            <Button name="Comment" icon={<AiOutlineTag />} />
+            <Button name="New Space" icon={<AiOutlineEnter />} />
+            <StackSpacer />
+            <Button menu name="New" icon={<AiOutlinePlusCircle />} />
+            <Button menu name="Delete" icon={<AiOutlineDelete />} />
+            <Button menu name="More" icon={<AiOutlineMore />} />
+        </EditorMenuStack>
+    );
+}
+
 export default function EditorList() {
     const editorStack = useContextChecked(EditorStack);
     const showMinimap = useMediaQuery("(min-width: 1100px)");
     return (
         <Stack gap={20} justifyContent="space-between" overflow="auto">
             <Stack vertical gap={20} flex="auto" overflow="auto">
+                <EditorMenu />
                 {editorStack.stack.length === 0 && (
                     <NonIdealText>
                         No editors open.
