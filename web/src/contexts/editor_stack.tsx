@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useCallback, useState, ReactNode, createContext } from "react";
 
 import { idGenerator, assert } from "utils";
-import { useRefMap, useDocumentEvent } from "hooks";
+import { useRefMap, useWindowEvent } from "hooks";
 import { builtinFunctions } from "vm/interpreter";
 
 const editorKeyGenerator = idGenerator("editor");
@@ -38,7 +38,7 @@ function useEditorStack() {
         return null;
     }
 
-    useDocumentEvent("focusin", (event) => {
+    useWindowEvent("focusin", (event) => {
         const key = findEditorKey(event.target);
         if (key !== null) {
             jumpList.push(key);

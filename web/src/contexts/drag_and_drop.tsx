@@ -4,7 +4,7 @@ import styled, { useTheme } from "styled-components";
 
 import { assertSome, assert, filterMap, map } from "utils";
 import { ClientOffset, Offset } from "geometry";
-import { useDocumentEvent, usePlatformModifierKey, useRefMap } from "hooks";
+import { useWindowEvent, usePlatformModifierKey, useRefMap } from "hooks";
 import Expr from "expr";
 import layoutExpr from "expr_view/layout";
 
@@ -64,6 +64,8 @@ interface DragState {
     /** How much to offset the hit-point, accounting for any padding the container has plus some
      * fudge. */
     hitpointDelta: Offset | null;
+    /** Where was the the overlay rendered. */
+    position: ClientOffset | null;
 }
 
 // There are three states to a drag.
@@ -73,21 +75,25 @@ interface DragState {
 export function DragAndDropSurface({ children }: { children: ReactNode }) {
     const theme = useTheme();
     const listeners = useRef(new Set<DropListener>()).current;
-    const [positions, setPositions] = useState<Map<PointerId, ClientOffset>>(new Map());
+    const [rendering, setRendering] = useState<Set<PointerId>>(new Set());
     const drags = useRef<Map<PointerId, DragState>>(new Map()).current;
-    const overlayRefs = useRefMap<PointerId, HTMLDivElement>(positions.keys());
+    const overlayRefs = useRefMap<PointerId, HTMLDivElement>(rendering.keys());
 
     // If user is pressing the platform modifier key, copy expressions instead of moving them.
     // const copyMode = usePlatformModifierKey((isDown) => drag.current?.onDragUpdate?.(isDown));
     const copyMode = false;
-    useDocumentEvent("pointermove", onPointerMove);
+    useWindowEvent("pointermove", (e) => onPointerMove(e));
+    // This should ideally use pointer capture on the Overlay elements, but Safari doesn't like
+    // nested pointer capture elements in Safari 13. See https://bugs.webkit.org/show_bug.cgi?id=203364
+    useWindowEvent("pointerup", (e) => completeDrag(e.pointerId));
+    useWindowEvent("pointercancel", (e) => dismissDrag(e.pointerId));
 
     // Since we aren't using ExprView, we add highlight padding on our own.
     const padding = theme.exprList.padding.combine(theme.highlight.padding);
 
     const contextValue = useRef<DragAndDropContext>({
         maybeStartDrag(data: DragData) {
-            drags.set(data.pointerId, { data, delta: null, hitpointDelta: null });
+            drags.set(data.pointerId, { data, delta: null, hitpointDelta: null, position: null });
         },
         addListener(listener) {
             listeners.add(listener);
@@ -97,13 +103,16 @@ export function DragAndDropSurface({ children }: { children: ReactNode }) {
         },
     }).current;
 
+    function dismissDrag(pointerId: number) {
+        drags.delete(pointerId);
+        markRendering(pointerId, false);
+    }
+
     function completeDrag(pointerId: number) {
         const drag = drags.get(pointerId);
         if (drag === undefined) return;
         // // Note this calls both .drop and then .update on the listeners.
-        const exprCorner = assertSome(positions.get(pointerId)).offset(
-            assertSome(drag.hitpointDelta),
-        );
+        const exprCorner = assertSome(drag.position).offset(assertSome(drag.hitpointDelta));
         const expr = drag.data.expr;
         for (const listener of listeners) {
             if (listener.acceptDrop(exprCorner, expr)) {
@@ -112,35 +121,26 @@ export function DragAndDropSurface({ children }: { children: ReactNode }) {
             }
         }
         drag.data.onDragEnd?.();
-        setPosition(pointerId, null);
-        drags.delete(pointerId);
+        dismissDrag(pointerId);
     }
 
-    function dismissDrag(pointerId: number) {
-        // eslint-disable-next-line no-console
-        console.log("Drag dismissed", pointerId);
-        setPosition(pointerId, null);
-        drags.delete(pointerId);
-    }
-
-    function setPosition(pointerId: PointerId, position: ClientOffset | null) {
-        // Quick paths.
-        if (position === null && !positions.has(pointerId)) return;
-        if (positions.get(pointerId) === position) return;
-
-        const copy = new Map(positions);
-        if (position === null) {
-            copy.delete(pointerId);
+    function markRendering(pointerId: PointerId, visible: boolean) {
+        let copy;
+        if (visible) {
+            if (rendering.has(pointerId)) return;
+            copy = new Set(rendering);
+            copy.add(pointerId);
         } else {
-            copy.set(pointerId, position);
+            if (!rendering.has(pointerId)) return;
+            copy = new Set(rendering);
+            copy.delete(pointerId);
         }
-        setPositions(copy);
+        setRendering(copy);
     }
 
     function onPointerMove(event: PointerEvent) {
         if (event.buttons !== 1) return;
         const drag = drags.get(event.pointerId);
-        console.log(event.pointerId);
         if (drag === undefined) return;
 
         const DRAG_THRESHOLD = 4; // Based on Windows default, DragHeight registry.
@@ -154,11 +154,20 @@ export function DragAndDropSurface({ children }: { children: ReactNode }) {
                     .difference(new Offset(6, 0));
                 // Send the initial drag update, reflecting the current modifer state.
                 drag.data.onDragUpdate?.(copyMode);
-                setPosition(drag.data.pointerId, nextPosition);
+                drag.position = nextPosition;
+                markRendering(event.pointerId, true);
             }
         } else if (event.pointerId === drag.data.pointerId) {
             // Update the drag.
-            setPosition(drag.data.pointerId, nextPosition);
+            drag.position = nextPosition;
+            const overlay = overlayRefs.get(event.pointerId)?.current;
+            const pos = nextPosition.offset(assertSome(drag.delta));
+            if (overlay !== undefined) {
+                // Highly cursed directy dom manipulation, we set drag.position so a full re-render
+                // should yield the same result.
+                overlay.style.top = pos.y.toString() + "px";
+                overlay.style.left = pos.x.toString() + "px";
+            }
             const exprCorner = nextPosition.offset(drag.hitpointDelta);
             listeners.forEach((x) => x.dragUpdate(exprCorner, drag.data.expr));
         }
@@ -167,8 +176,7 @@ export function DragAndDropSurface({ children }: { children: ReactNode }) {
     function renderExpr(pointerId: PointerId) {
         const drag = drags.get(pointerId);
         if (drag === undefined) return;
-        const position = assertSome(positions.get(pointerId));
-        const pos = assertSome(position).offset(assertSome(drag.delta));
+        const pos = assertSome(drag.position).offset(assertSome(drag.delta));
 
         const { nodes, size } = layoutExpr(theme, drag.data.expr);
         return (
@@ -182,8 +190,6 @@ export function DragAndDropSurface({ children }: { children: ReactNode }) {
                     top: pos.y,
                     left: pos.x,
                 }}
-                onPointerUp={(e) => completeDrag(e.pointerId)}
-                onPointerCancel={(e) => dismissDrag(e.pointerId)}
             >
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -198,19 +204,10 @@ export function DragAndDropSurface({ children }: { children: ReactNode }) {
         );
     }
 
-    useEffect(() => {
-        for (const pointerId of positions.keys()) {
-            const overlay = overlayRefs.get(pointerId)?.current;
-            if (overlay !== undefined) {
-                overlay.setPointerCapture(pointerId);
-            }
-        }
-    }, [overlayRefs, positions]);
-
     // Declare the global droppable filter here once.
     return (
         <DragAndDrop.Provider value={contextValue}>
-            {map(positions.keys(), (x) => ReactDOM.createPortal(renderExpr(x), document.body))}
+            {map(rendering.keys(), (x) => ReactDOM.createPortal(renderExpr(x), document.body))}
             <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="0"

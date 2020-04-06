@@ -20,8 +20,8 @@ export function useDebounce<T>(value: T, delayMs: number): T {
 
 export function useDisableScrolling(): void {
     const preventDefault = (e: Event) => e.preventDefault();
-    useDocumentEvent("wheel", preventDefault, { passive: false });
-    useDocumentEvent("touchmove", preventDefault, { passive: false });
+    useWindowEvent("wheel", preventDefault, { passive: false });
+    useWindowEvent("touchmove", preventDefault, { passive: false });
 }
 
 export function useRefMap<K, T>(keys: Iterable<K>): ReadonlyMap<K, MutableRefObject<T>> {
@@ -41,14 +41,14 @@ export function useRefMap<K, T>(keys: Iterable<K>): ReadonlyMap<K, MutableRefObj
     return refs.current;
 }
 
-export function useDocumentEvent<K extends keyof DocumentEventMap>(
+export function useWindowEvent<K extends keyof WindowEventMap>(
     name: K,
-    listener: (event: DocumentEventMap[K]) => void,
+    listener: (event: WindowEventMap[K]) => void,
     options?: boolean | AddEventListenerOptions,
 ): void {
     useEffect(() => {
-        document.addEventListener(name, listener, options);
-        return () => document.removeEventListener(name, listener);
+        window.addEventListener(name, listener, options);
+        return () => window.removeEventListener(name, listener);
     }, [name, listener, options]);
 }
 
