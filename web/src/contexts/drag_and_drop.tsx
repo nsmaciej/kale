@@ -109,9 +109,9 @@ export function DragAndDropSurface({ children }: { children: ReactNode }) {
 
     function completeDrag(pointerId: number) {
         const drag = drags.get(pointerId);
-        if (drag === undefined) return;
+        if (drag === undefined || drag.position === null || drag.hitpointDelta === null) return;
         // // Note this calls both .drop and then .update on the listeners.
-        const exprCorner = assertSome(drag.position).offset(assertSome(drag.hitpointDelta));
+        const exprCorner = drag.position.offset(drag.hitpointDelta);
         const expr = drag.data.expr;
         for (const listener of listeners) {
             if (listener.acceptDrop(exprCorner, expr)) {
