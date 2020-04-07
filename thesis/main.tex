@@ -1,5 +1,6 @@
 %TODO: Adjust 
 \documentclass[11pt]{report}
+%\renewcommand{\clearpage}{}
 
 % Used indirectly by natlib
 \usepackage{hyperref}
@@ -12,6 +13,8 @@
 \usepackage[a4paper, margin=25mm]{geometry}
 % For the \say command
 \usepackage{dirtytalk}
+% Draft watermark.
+\usepackage{draftwatermark}
 
 \title{Kale - An attempt at an accessible and powerful visual programming
 environment}
@@ -22,15 +25,20 @@ environment}
 
 \maketitle
 \tableofcontents
+\clearpage
 
-% *	The abstract must be an accurate reflection of what is in your report. 
+% Do not clear page after every chapter
+\begingroup
+\let\clearpage\relax
+
+% *	The abstract must be an accurate reflection of what is in your report.
 % * Your abstract must be self-contained, without abbreviations, footnotes, or
-%   references. It should be a microcosm of the full report. 
+%   references. It should be a microcosm of the full report.
 % * Your abstract must be 150-250 words written as one paragraph, and should
-%   not contain displayed mathematical equations or tabular material. 
-% * Ensure that your abstract reads well and is grammatically correct. 
+%   not contain displayed mathematical equations or tabular material.
+% * Ensure that your abstract reads well and is grammatically correct.
 % * The abstract must cover: motivation, the problem statement, the approach,
-%   your results, and your conclusions. 
+%   your results, and your conclusions.
 
 \chapter{Abstract}
 Contemporary text-based programming languages require the programer to be
@@ -43,10 +51,47 @@ used to mitigate syntax issues while remaining attractive to both novices and
 professional programmers.
 
 \chapter{Introduction}
-\section{Topic addressed in this project}
+
+% Why would one care about the problem and the results? Cite appropriate
+% references in this section. Explain the high-level, abstract problem that
+% your project addresses. Explain what you are trying to achieve in a way that
+% leads naturally into the next section.
 \section{Motivation}
+Syntax errors are a fact of life in the programming industry. Programmers from
+novice\cite{Denny2011} to professional spend significant time fighting or
+avoiding syntax errors. It is clear a visual programming environment such
+%TODO: Cite scratch, cite syntax errors among professionals
+Scratch could eliminate syntax errors. There exists a large body of existing
+visual programming environments\cite{Beldie1983}, but most focus exclusively on
+making programming accessible to children and young adults. Most professional
+tools focus instead of error-detection, ignoring visual means of editing
+programs as slow and cumbersome. It should be possible to create a visual
+programming environment friendly to novices, but powerful enough to be taken
+seriously by professionals. 
+
+
+% Describe the technical problem needed to be solved in your project. Note that
+% most projects solve both a more abstract, high-level problem and a specific,
+% technical problem: your problem statement is the detailed technical problem
+% (your motivation should cover the more abstract high-level problem). 
 \section{Problem statement}
+This project implements a web based visual programming environment, designed
+from the ground up to fit many skill levels. Kale should demonstrate that a
+drag and drop/blocks style interface can co-exist alongside a keyboard driven
+professional focused editing experience. It should generate usable code,
+runnable from within the interface.
+
 \section{Approach}
+
+%TODO: Write these out
+\begin{itemize}
+	\item Implementing the rendering engine
+	\item Keyboard shortcuts
+	\item Drag and drop functionality
+	\item Working interpreter
+\end{itemize}
+Lisp's highly uniform syntax, makes it the perfect 
+
 \section{Metrics}
 \section{Project}
 
@@ -61,10 +106,48 @@ version\cite{github-pr-styled-components}.
 \section{Technical material}
 
 \chapter{The Problem}
+
+•	Implement KaleLisp alongside Kale, a simple Kale-specific Lisp-like
+language.
+•	Have Kale run in the browser (but other platforms would be great)
+•	It should have enough functionality to write and edit basic KaleLisp programs
+easily and efficiently.
+•	Kale should be easily discoverable and learnable at different skill levels.
+•	A proficient user should be able to create a KaleLisp expression without
+touching the mouse.
+•	Kale should work equally well in colour as greyscale.
+
+
+The programming language which Kale users will be writing should map well to
+the UI, but be powerful enough to be able to express complex programs. It need
+not necessarily be an existing language, it fact it might not be desirable to
+make it one.
+
+A proficient User should be able to write programs and navigate Kale without
+having to reach for the mouse. This might involve mapping Kale concepts to
+standard shortcut keys as well as developing new ones. It should be possible
+for users of existing programming environments to adjust to Kale with relative
+ease.
+
+Novice users should be able to to construct Kale programs in a simple and
+initiative manner, on every device form-factor, whether touch-screen or
+mouse-driven. It should be simple for them to discover new functionality and
+edit existing programs without knowledge of higher level operations.
+
 \chapter{The Solution}
+
+\section{Novice Users}
+
+
+
+\section{Discoverability}
+
+\section{Implementation}
+
 \chapter{Evaluation}
 \chapter{Conclusion}
 
+\endgroup % Ends the clearpage re-definition group
 \renewcommand*{\bibfont}{\raggedright} % Make the reference ragged right.
 \bibliographystyle{unsrtnat} % List in order of mention.
 \bibliography{bibliography.bib}
