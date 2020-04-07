@@ -10,10 +10,38 @@
 \setstretch{1.15}
 % As required by the handbook.
 \usepackage[a4paper, margin=25mm]{geometry}
+% For the \say command
+\usepackage{dirtytalk}
+
+\title{Kale - An attempt at an accessible and powerful visual programming
+environment}
+\author{Maciej Goszczycki - 16316981}
+\date{}
 
 \begin{document}
 
+\maketitle
+\tableofcontents
+
+% *	The abstract must be an accurate reflection of what is in your report. 
+% * Your abstract must be self-contained, without abbreviations, footnotes, or
+%   references. It should be a microcosm of the full report. 
+% * Your abstract must be 150-250 words written as one paragraph, and should
+%   not contain displayed mathematical equations or tabular material. 
+% * Ensure that your abstract reads well and is grammatically correct. 
+% * The abstract must cover: motivation, the problem statement, the approach,
+%   your results, and your conclusions. 
+
 \chapter{Abstract}
+Contemporary text-based programming languages require the programer to be
+constantly vigilant against syntax errors. This affects both novice and
+experienced programmers. One obvious way of eliminating syntax errors is
+get rid of text. While there exist many visual programming environments, many
+eschew powerful editing capabilities for being beginner friendly.
+This project explores how a Lisp-based visual programming environment might be
+used to mitigate syntax issues while remaining attractive to both novices and
+professional programmers.
+
 \chapter{Introduction}
 \section{Topic addressed in this project}
 \section{Motivation}
@@ -22,6 +50,11 @@
 \section{Metrics}
 \section{Project}
 
+As part of the development process I contributed patches to two different
+open-source projects, including adding \texttt{{\#}rrggbbaa} notation support
+to the Popmotion library\cite{github-pr-popmotion} and updating
+\say{styled-components} TypeScript typings to the a new major 5.0
+version\cite{github-pr-styled-components}.
 
 \chapter{Technical Background}
 \section{Topic material}
