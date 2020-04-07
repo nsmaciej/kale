@@ -1,4 +1,6 @@
 \documentclass[12pt]{report}
+\usepackage{hyperref} % Used indirectly by natlib
+\usepackage[square, numbers]{natbib} % Add url support for web pages etc.
 
 \begin{document}
 
@@ -20,5 +22,10 @@
 \chapter{The Solution}
 \chapter{Evaluation}
 \chapter{Conclusion}
+
+\renewcommand*{\bibfont}{\raggedright} % Make the reference ragged right.
+\bibliographystyle{unsrtnat} % List in order of mention.
+\bibliography{bibliography.bib}
+
 
 \end{document}
