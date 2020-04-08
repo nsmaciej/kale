@@ -52,26 +52,28 @@ export class Highlight {
 
 const colour = {
     /** Everything that needs to be clickable */
-    clickable: "#1b65f1",
+    clickable: "#1666ff",
     /** Even more clickable stuff, like context menus. */
     brightClickable: "#0672ff",
     /** Accent colour for less clickable stuff. */
-    subtleClickable: "#dadce0",
+    subtleClickable: "#e4e4e4",
     /** Search box etc. */
-    subtleClickableDark: "#e2e2e2",
+    subtleClickableDark: "#e8e8e8",
     active: "#003fb7",
     brand: "#0ba902",
     error: "#f44336",
     /** The main background used by the page */
     background: "#ffffff",
-    /** Alternative background to suggest nesting. */
-    innerBackground: "#f5f5f5",
+    /** Alternative background to suggest nesting, including buttons. */
+    innerBackground: "#fafafb",
     /** Background used for pop-ups (brigher in dark mode) */
     popupBackground: "#ffffff",
     /** Disabled text colour */
     disabled: "#d8d8d8",
     /** Text that does not need to be as visible. */
     subtleText: "#7b7b7b",
+    /** Text inside buttons. */
+    buttonText: "#232323",
     /** Text colour. */
     mainText: "#111111",
 };
@@ -115,7 +117,7 @@ export const DefaultTheme = {
             return DefaultTheme.highlight.mainPadding.add(droppable.radius);
         },
         get widePadding() {
-            return DefaultTheme.highlight.padding.add(droppable.radius);
+            return DefaultTheme.highlight.padding.add(droppable.radius).add(3);
         },
     },
 

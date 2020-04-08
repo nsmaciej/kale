@@ -97,6 +97,7 @@ const HeaderGrid = styled.div`
     gap: 10px;
     padding: 10px 20px;
     background: ${(p) => p.theme.colour.innerBackground};
+    border-bottom: 1px solid ${(p) => p.theme.colour.subtleClickable};
 `;
 
 const MainHeading = styled.h1`

@@ -53,14 +53,14 @@ export const StackSpacer = styled.div<{ gap?: number }>`
 export const SubtleButton = styled.button<{ selected?: boolean }>`
     min-width: 40px;
     transition: color 0.1s;
-    color: ${(p) => p.selected && p.theme.colour.background};
+    color: ${(p) => (p.selected ? p.theme.colour.background : p.theme.colour.buttonText)};
     background: ${(p) => (p.selected ? p.theme.colour.clickable : p.theme.colour.innerBackground)};
     text-align: left;
     padding: 4px;
     text-align: center;
     border: 1px solid ${(p) => p.theme.colour.subtleClickable};
     border-radius: ${(p) => p.theme.general.borderRadius}px;
-    padding: 10px 4px;
+    padding: 10px 6px;
     &:hover {
         color: ${(p) => (p.selected ? undefined : p.theme.colour.clickable)};
     }
