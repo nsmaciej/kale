@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import * as E from "expr";
 import { Category } from "vm/types";
 import { groupEntries, assert } from "utils";
-import { Stack, SubtleButton } from "components";
+import { Stack } from "components";
 import { useContextChecked } from "hooks";
 import Builtins from "vm/builtins";
 import Expr, { exprData } from "expr";

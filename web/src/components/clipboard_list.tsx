@@ -2,10 +2,11 @@ import { AiOutlinePushpin, AiFillPushpin } from "react-icons/ai";
 import React, { useRef } from "react";
 
 import { mod } from "utils";
-import { SubtleButton, NonIdealText } from "components";
+import { NonIdealText } from "components";
 import { useSimpleDrop, useContextChecked } from "hooks";
 import Clipboard, { ClipboardEntry } from "contexts/clipboard";
 
+import Button from "components/button";
 import ExprViewList from "components/expr_view_list";
 import Pane from "components/pane";
 import Shortcut from "components/shortcut";
@@ -31,12 +32,11 @@ export default React.memo(function ClipboardList() {
             ref={containerRef}
             name="Clipboard"
             extras={
-                <SubtleButton
+                <Button
+                    name="Clear All"
                     onClick={() => clipboard.dispatch({ type: "clear" })}
                     disabled={clipboard.value.every((x) => x.pinned)}
-                >
-                    Clear All
-                </SubtleButton>
+                />
             }
         >
             <ExprViewList
@@ -77,9 +77,10 @@ export default React.memo(function ClipboardList() {
                     </NonIdealText>
                 }
                 onGetExtras={(item) => (
-                    <SubtleButton onClick={() => togglePin(item)}>
-                        {item.pinned ? <AiFillPushpin /> : <AiOutlinePushpin />}
-                    </SubtleButton>
+                    <Button
+                        onClick={() => togglePin(item)}
+                        icon={item.pinned ? <AiFillPushpin /> : <AiOutlinePushpin />}
+                    />
                 )}
             />
         </Pane>

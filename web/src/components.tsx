@@ -70,11 +70,6 @@ export const ButtonBase = styled.button<{ selected?: boolean }>`
     }
 `;
 
-export const SubtleButton = styled(ButtonBase)`
-    border: 1px solid ${(p) => p.theme.colour.subtleClickable};
-    border-radius: ${(p) => p.theme.general.borderRadius}px;
-`;
-
 // Meant for wrapping react-icons icons.
 export const IconButton = styled.button`
     background: none;

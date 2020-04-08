@@ -1,13 +1,13 @@
 import {
     AiOutlineCloseCircle,
-    AiOutlinePlayCircle,
-    AiOutlineUndo,
-    AiOutlinePlusCircle,
     AiOutlineDelete,
     AiOutlineEdit,
     AiOutlineMore,
+    AiOutlinePlayCircle,
+    AiOutlinePlus,
+    AiOutlineRight,
     AiOutlineTag,
-    AiOutlineEnter,
+    AiOutlineUndo,
 } from "react-icons/ai";
 import { motion, AnimatePresence } from "framer-motion";
 import React, { ReactNode } from "react";
@@ -126,9 +126,9 @@ function EditorMenu() {
         <EditorMenuStack>
             <Button name="Edit" icon={<AiOutlineEdit />} />
             <Button name="Comment" icon={<AiOutlineTag />} />
-            <Button name="New Space" icon={<AiOutlineEnter />} />
+            <Button name="New Space" icon={<AiOutlineRight />} />
             <StackSpacer />
-            <Button menu name="New" icon={<AiOutlinePlusCircle />} />
+            <Button menu name="New" icon={<AiOutlinePlus />} />
             <Button menu name="Delete" icon={<AiOutlineDelete />} />
             <Button menu name="More" icon={<AiOutlineMore />} />
         </EditorMenuStack>
@@ -137,7 +137,7 @@ function EditorMenu() {
 
 export default function EditorList() {
     const editorStack = useContextChecked(EditorStack);
-    const showMinimap = useMediaQuery("(min-width: 1100px)");
+    const showMinimap = useMediaQuery("(min-width: 1350px)");
     return (
         <Stack gap={20} justifyContent="space-between" overflow="auto">
             <Stack vertical gap={20} flex="auto" overflow="auto">

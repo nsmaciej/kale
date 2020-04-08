@@ -1,7 +1,8 @@
 import { AiOutlineCaretDown } from "react-icons/ai";
 import React, { ReactNode } from "react";
+import styled from "styled-components";
 
-import { SubtleButton, Stack } from "components";
+import { ButtonBase, Stack } from "components";
 
 export interface ButtonProps {
     name?: string;
@@ -11,14 +12,20 @@ export interface ButtonProps {
     onClick?(): void;
 }
 
+export const ButtonContainer = styled(ButtonBase)`
+    border: 1px solid ${(p) => p.theme.colour.subtleClickable};
+    border-radius: ${(p) => p.theme.general.borderRadius}px;
+    flex: none;
+`;
+
 export default function Button({ name, icon, menu, onClick, disabled }: ButtonProps) {
     return (
-        <SubtleButton onClick={onClick} disabled={disabled}>
+        <ButtonContainer onClick={onClick} disabled={disabled}>
             <Stack gap={6} justifyContent="center">
                 {icon}
                 {name && <div>{name}</div>}
                 {menu && <AiOutlineCaretDown />}
             </Stack>
-        </SubtleButton>
+        </ButtonContainer>
     );
 }
