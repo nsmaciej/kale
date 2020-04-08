@@ -15,11 +15,21 @@
 \usepackage{dirtytalk}
 % Draft watermark.
 \usepackage{draftwatermark}
+% Figures etc.
+\usepackage{graphicx}
+% Acronym support.
+\usepackage{acro}
 
 \title{Kale - An attempt at an accessible and powerful visual programming
 environment}
 \author{Maciej Goszczycki - 16316981}
 \date{}
+
+% Acronyms must be defined before the document starts.
+\DeclareAcronym{svg}{short=SVG, long=Scalable Vector Graphics}
+\DeclareAcronym{ui}{short=UI, long=user interface}
+\DeclareAcronym{dom}{short=DOM, long=Document Object Model}
+\DeclareAcronym{jsx}{short=JSX, long=JavaScript XML}
 
 \begin{document}
 
@@ -62,12 +72,12 @@ novice\cite{Denny2011} to professional spend significant time fighting or
 avoiding syntax errors. It is clear a visual programming environment such
 %TODO: Cite scratch, cite syntax errors among professionals
 Scratch could eliminate syntax errors. There exists a large body of existing
-visual programming environments\cite{Beldie1983}, but most focus exclusively on
-making programming accessible to children and young adults. Most professional
-tools focus instead of error-detection, ignoring visual means of editing
-programs as slow and cumbersome. It should be possible to create a visual
-programming environment friendly to novices, but powerful enough to be taken
-seriously by professionals. 
+visual programming environments \cite{Beldie1983}, but most focus exclusively
+on making programming accessible to children and young adults. Most
+professional tools focus instead of error-detection, ignoring visual means of
+editing programs as slow and cumbersome. It should be possible to create a
+visual programming environment friendly to novices, but powerful enough to be
+taken seriously by professionals. 
 
 
 % Describe the technical problem needed to be solved in your project. Note that
@@ -78,7 +88,7 @@ seriously by professionals.
 This project implements a web based visual programming environment, designed
 from the ground up to fit many skill levels. Kale should demonstrate that a
 drag and drop/blocks style interface can co-exist alongside a keyboard driven
-professional focused editing experience. It should generate usable code,
+professional-focused editing experience. It should generate usable code,
 runnable from within the interface.
 
 \section{Approach}
@@ -97,26 +107,53 @@ Lisp's highly uniform syntax, makes it the perfect
 
 As part of the development process I contributed patches to two different
 open-source projects, including adding \texttt{\#rrggbbaa} notation support
-to the Popmotion library\cite{github-pr-popmotion} and updating
+to the Popmotion library \cite{github-pr-popmotion} and updating
 \say{styled-components} TypeScript typings to the a new major 5.0
 version\cite{github-pr-styled-components}.
 
 \chapter{Technical Background}
+
 \section{Topic material}
+
+\subsection{Visual Programming Environments}
+
+
+\subsection{Command Composition}
+Composing user commands is an important concern for any code editor. Chodarev
+\cite{Chodarev2016} discussed this in length, pointing out that casual
+text-based editing environments rely on simple commands that operate only on
+elementary objects, manipulating single character at a time. However this
+approach is quite inefficient, leading leading apps to adopt a secondary set of
+ad-hoc commands for performing specific combinations of operations and
+high-level objects (like deleting a word). One proposed alternative are
+Vim-like shortcuts, where the user combines a smaller set of motion and action
+commands to work on high-level objects.
+
 \section{Technical material}
 
+\subsection{TypeScript}
+TypeScript is a structurally and gradually typed superset of JavaScript being
+developed at Microsoft \cite{Typescript}. It provides stronger type-safety
+guarantees than JavaScript and allows programs to use modern and experimental
+JavaScript features, such as class properties or optional chaining. 
+
+
+\subsection{React and related libraries}
+To ease the burden of manually manipulating the \ac{dom}, Kale uses the React
+\cite{React} JavaScript library. React is a self-proclaimed \say{JavaScript
+library for making user interfaces} being developed by Facebook. It
+allows the program to write rendering
+code in a functional fashion, relying a \say{Virtual \ac{dom} to make \ac{dom}
+updates efficient}. Together with \ac{jsx}, a JavaScript extension supported by
+TypeScript, it makes it easy to write complex \acp{ui} for the browser.
+
+\subsection{\acf{svg}}
+\ac{svg} is a web technology which can be used to display vector images in the
+browser. It is scriptable by JavaScript and styleable with CSS, making it the
+perfect fit for dynamically rendering any highly custom \acp{ui}. It is used by
+Scratch for rendering their blocks interface.
+
 \chapter{The Problem}
-
-•	Implement KaleLisp alongside Kale, a simple Kale-specific Lisp-like
-language.
-•	Have Kale run in the browser (but other platforms would be great)
-•	It should have enough functionality to write and edit basic KaleLisp programs
-easily and efficiently.
-•	Kale should be easily discoverable and learnable at different skill levels.
-•	A proficient user should be able to create a KaleLisp expression without
-touching the mouse.
-•	Kale should work equally well in colour as greyscale.
-
 
 The programming language which Kale users will be writing should map well to
 the UI, but be powerful enough to be able to express complex programs. It need
@@ -127,27 +164,50 @@ A proficient User should be able to write programs and navigate Kale without
 having to reach for the mouse. This might involve mapping Kale concepts to
 standard shortcut keys as well as developing new ones. It should be possible
 for users of existing programming environments to adjust to Kale with relative
-ease.
+ease. Programs written in Kale should be readable, balancing accessibility and
+information density.
 
 Novice users should be able to to construct Kale programs in a simple and
 initiative manner, on every device form-factor, whether touch-screen or
 mouse-driven. It should be simple for them to discover new functionality and
 edit existing programs without knowledge of higher level operations.
 
+Effectively manipulating Lisp programs often requires commands for high-level
+hierarchical selections and actions, which are often difficult for users to
+remember. Editors like Vim use the command composition pattern to enable these
+actions, but this comes at a great cost to the learning
+curve \cite{Chodarev2016}
+
 \chapter{The Solution}
 
-\section{Novice Users}
+\includegraphics[width=3cm]{example-image-a}
 
+\section{Novice Users}
+A very powerful operation for manipulating programs is drag and drop. It allows
+for direct manipulation of Kale expressions, without requiring any knowledge of
+the keybindings.
+
+
+\section{Command structure}
 
 
 \section{Discoverability}
 
+\section{Professional users}
+
+High level operations and complex programs necessitate an intelligent layout
+engine which is able 
+
 \section{Implementation}
 
 \chapter{Evaluation}
+
+Kale good, text editing bad.
+
 \chapter{Conclusion}
 
 \endgroup % Ends the clearpage re-definition group
+\clearpage
 \renewcommand*{\bibfont}{\raggedright} % Make the reference ragged right.
 \bibliographystyle{unsrtnat} % List in order of mention.
 \bibliography{bibliography.bib}
