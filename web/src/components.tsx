@@ -50,17 +50,14 @@ export const StackSpacer = styled.div<{ gap?: number }>`
     margin-left: ${(p) => (p.gap ? p.gap + "px" : "auto")};
 `;
 
-export const SubtleButton = styled.button<{ selected?: boolean }>`
+export const ButtonBase = styled.button<{ selected?: boolean }>`
     min-width: 40px;
     transition: color 0.1s;
     color: ${(p) => (p.selected ? p.theme.colour.background : p.theme.colour.buttonText)};
     background: ${(p) => (p.selected ? p.theme.colour.clickable : p.theme.colour.innerBackground)};
-    text-align: left;
-    padding: 4px;
     text-align: center;
-    border: 1px solid ${(p) => p.theme.colour.subtleClickable};
-    border-radius: ${(p) => p.theme.general.borderRadius}px;
-    padding: 10px 6px;
+    padding: 10px 8px;
+    transition: color 0.1s;
     &:hover {
         color: ${(p) => (p.selected ? undefined : p.theme.colour.clickable)};
     }
@@ -71,6 +68,11 @@ export const SubtleButton = styled.button<{ selected?: boolean }>`
         background: ${(p) =>
             p.selected ? p.theme.colour.clickable : p.theme.colour.subtleClickable};
     }
+`;
+
+export const SubtleButton = styled(ButtonBase)`
+    border: 1px solid ${(p) => p.theme.colour.subtleClickable};
+    border-radius: ${(p) => p.theme.general.borderRadius}px;
 `;
 
 // Meant for wrapping react-icons icons.

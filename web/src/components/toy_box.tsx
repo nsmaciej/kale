@@ -14,6 +14,7 @@ import Pane from "components/pane";
 
 import Clipboard from "contexts/clipboard";
 import EditorStack from "contexts/editor_stack";
+import SegmentButton from "./segment_button";
 
 function createToyBox(): Readonly<{ [category in Category]: ShortcutExpr[] }> {
     function blank(comment: string) {
@@ -68,18 +69,13 @@ export default React.memo(function ToyBox() {
     if (!theme.feature.toyBox) return null;
     return (
         <Pane name="Blocks">
-            <Stack gap={20} marginTop="">
-                <Stack vertical gap={10} alignItems="stretch">
-                    {Object.keys(Category).map((x) => (
-                        <SubtleButton
-                            key={x}
-                            onClick={() => setCategory(x as Category)}
-                            selected={x === category}
-                        >
-                            {x}
-                        </SubtleButton>
-                    ))}
-                </Stack>
+            <Stack gap={20} marginTop="" alignItems="start">
+                <SegmentButton
+                    vertical
+                    labels={Object.keys(Category)}
+                    active={category}
+                    onClick={(label) => setCategory(label as Category)}
+                />
                 <ExprViewList
                     items={toyBoxExprs[category]}
                     width={200}

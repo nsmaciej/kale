@@ -72,7 +72,7 @@ const colour = {
     disabled: "#d8d8d8",
     /** Text that does not need to be as visible. */
     subtleText: "#7b7b7b",
-    /** Text inside buttons. */
+    /**  Text inside buttons. */
     buttonText: "#232323",
     /** Text colour. */
     mainText: "#111111",
@@ -176,7 +176,7 @@ export const DarkTheme = updateTheme({
     colour: {
         clickable: "#70aeff",
         brightClickable: "#2483ff",
-        subtleClickable: "#3a3a3a",
+        subtleClickable: "#363636",
         subtleClickableDark: "#424242",
         active: "#2483ff",
         brand: "#0dde02",
@@ -184,6 +184,7 @@ export const DarkTheme = updateTheme({
         innerBackground: "#282828",
         popupBackground: "#282828",
         disabled: "#424242",
+        buttonText: "#dddddd",
         mainText: "#ffffff",
     },
     shadow: {

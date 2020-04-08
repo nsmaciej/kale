@@ -27,7 +27,7 @@ import EditorStack, { OpenedEditor } from "contexts/editor_stack";
 import Workspace from "contexts/workspace";
 
 const EditorItemContainer = styled.div`
-    border-radius: ${(p) => p.theme.exprList.borderRadius}px;
+    border-radius: 10px;
     border: 1px solid ${(p) => p.theme.colour.subtleClickable};
     padding: 10px;
 `;
@@ -113,12 +113,12 @@ function UserEditor({ editor }: { editor: OpenedEditor }) {
     );
 }
 
-const EditorMenuStack = styled(Stack).attrs({ gap: 15 })`
+const EditorMenuStack = styled(Stack).attrs({ gap: 8 })`
     z-index: 100;
     position: sticky;
     top: 0;
     background: ${(p) => p.theme.colour.background};
-    padding-bottom: 10px;
+    padding-bottom: 5px;
 `;
 
 function EditorMenu() {
