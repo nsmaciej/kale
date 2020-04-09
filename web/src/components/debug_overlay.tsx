@@ -10,6 +10,7 @@ export default function SvgDebugOverlay({ area }: { area: Area }) {
     const [showAreas, setShowAreas] = useState(true);
     const [showGaps, setShowGaps] = useState(false);
     const [showIds, setShowIds] = useState(false);
+    const [showButtons, setShowButtons] = useState(true);
     function text(rect: Rect, content: number | string) {
         if (!showIds) return null;
         return (
@@ -60,6 +61,7 @@ export default function SvgDebugOverlay({ area }: { area: Area }) {
         type: string,
         setState: (updater: (old: boolean) => boolean) => void,
     ) {
+        if (!showButtons) return null;
         return (
             <text
                 fontSize={10}
@@ -83,6 +85,7 @@ export default function SvgDebugOverlay({ area }: { area: Area }) {
             {renderButton(0, "Gaps", setShowGaps)}
             {renderButton(1, "IDs", setShowIds)}
             {renderButton(2, "Areas", setShowAreas)}
+            {renderButton(3, "Buttons", setShowButtons)}
         </>
     );
 }
