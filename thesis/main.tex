@@ -15,8 +15,8 @@
 \usepackage{acro}
 % Extra appendix control; Add appendices to the toc and add a blank page.
 \usepackage[page, toc]{appendix}
-% Menus and menu keys.
-\usepackage{menukeys}
+% Figure wrapping.
+\usepackage{wrapfig}
 % PDFs links. Must be loaded before geometry, but as late as possible.
 \usepackage{hyperref}
 \hypersetup{
@@ -25,6 +25,8 @@
 }
 % As required by the handbook.
 \usepackage[a4paper, margin=25mm]{geometry}
+% Menus and menu keys. Recommended to load late.
+\usepackage{menukeys}
 
 \title{Kale - An attempt at an accessible and powerful visual programming
 environment}
@@ -192,12 +194,24 @@ difficulty \cite{Chodarev2016}
 
 \chapter{The Solution}
 
+\section{Drag and drop}
+
+One of the main changes Kale introduces compared to a normal Lisp editor is
+drag and drop. It lets novice users effectively manipulate Kale programs,
+without prior knowledge of commands like copy and paste. Kale distinguished
+between two types of drag and drop: Replacement and Insertion. 
+
 \section{Layout}
 
-TODO Talk about in inline, non-inline, underlines optional bubbles.
+One of the key ideas in Kale is that of structural underlines. As a
+fundamental unit of nesting, parentheses present a number of challenges to a
+user using drag and drop.
+%TODO Talk about in inline, non-inline, underlines optional bubbles.
 
 \section{Command structure}
-Because Kale does not operate on elementary text elements, even the most basic
+
+Because Kale does not operate on elementary text elements, even the most
+basic
 commands can be much higher-level than ordinary editors, since instead of a
 current cursor position, Kale operates on the selected expression. Even so,
 figuring out the correct set of commands proved to be a challenge.
@@ -210,19 +224,21 @@ fundamental tree operations: \say{Select parent}, \say{Select first child},
 While logical, these operations were unintuitive to every user
 Kale was shown too, including the author. In the end \say{smart selection} was
 implemented, where \ak{<} and \ak{>} use the pre-order
-%
+
 \footnote{The preorder traversal algorithm traverses the parent node first,
 then traverses the left and right tree by calling the itself on each.}
-%
+
 traversal, while \ak{^} and \ak{v}
 pre-order traverse only non-inline non-list expressions, mirroring the visual
 line motion a normal cursor might make.
 
 \section{Discoverability}
-
-%TODO: Menu pic
-%\includegraphics[width=3cm, height=6cm]{example-image-a}
-
+\setlength\intextsep{0pt}
+\begin{wrapfigure}{R}{0pt}
+\vspace{-22pt}
+\includegraphics[width=6cm]{figures/menu.png}
+\caption{Kale's Context Menu}
+\end{wrapfigure}
 Most commands can be accessed in at least three ways, through their dedicated
 keyboard shortcut, the context menu and the top-level editor menu. In case the
 user is keen on using the keyboard shortcuts but forgot a specific command,
@@ -242,7 +258,7 @@ High level operations and complex programs necessitate an intelligent layout
 engine which is able to cleanly layout arbitrary code.
 %TODO: Write a quick slurp program
 
-The conditions for an inline expr are as follows:
+The conditions for an inline expressions are as follows:
 
 \begin{itemize}
 	\item Expression is a literal\footnote{In the future this might not be the
