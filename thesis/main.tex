@@ -17,6 +17,8 @@
 \usepackage[page, toc]{appendix}
 % Figure wrapping.
 \usepackage{wrapfig}
+% Additional control over itemize.
+\usepackage{enumitem}
 % PDFs links. Must be loaded before geometry, but as late as possible.
 \usepackage{hyperref}
 \hypersetup{
@@ -235,15 +237,48 @@ line motion a normal cursor might make.
 \section{Discoverability}
 \setlength\intextsep{0pt}
 \begin{wrapfigure}{R}{0pt}
-\vspace{-22pt}
-\includegraphics[width=6cm]{figures/menu.png}
+\includegraphics[width=5.5cm]{figures/menu.png}
 \caption{Kale's Context Menu}
 \end{wrapfigure}
 Most commands can be accessed in at least three ways, through their dedicated
 keyboard shortcut, the context menu and the top-level editor menu. In case the
 user is keen on using the keyboard shortcuts but forgot a specific command,
 each editor menu-item shows the corresponding keyboard shortcut, and each
-shortcut can be triggered whilst the context menu is open.
+shortcut can be triggered whilst the context menu is open. These keyboard
+shortcut indicators are also placed throughout Kale to help with discovering
+shortcuts for the Clipboard List or the Function Search menu.
+
+\section{High-level manipulation}
+\subsection{Smart space}
+%TODO: Show a sequence explaining how this works.
+%TODO: Mention how this isn't a problem in scratch since you can't add new
+% arguments.
+Normal 
+
+\subsection{Clipboard list}
+Relinquishing control over the elementary elements of a program might
+potentially make more high-level manipulation problematic. To remedy this
+Kale needed to provide a better way of transforming expressions. Andrew Blinn's
+Fructure \cite{Fructure} environment tackles this by letting user colour
+expressions, then
+using a special transformation mode where the user can enter new expression or
+use one of the previously coloured ones. While imbued with a certain sense of
+mathematical purity, this approach deals poorly with more complex refactorings
+and requires colour vision.
+
+Kale's solution to this comes in the form of the \textbf{Clipboard List}. The
+Clipboard List is a stack of expressions, shown on the right-hand side of the
+screen. Kale provides a \say{Copy} \keys{C} command, which copies the currently
+selected expression to the top of the stack. To facilitate more destructive
+refactoring, Kale provides a palette of deletion commands:
+
+\begin{itemize}[noitemsep]
+	\item \say{Delete} \keys{\backspace}
+	\item \say{Cut} \keys{X}
+	\item \say{Delete and Add Space} \keys{R}
+	\item \say{Cut and Add Space} \keys{S}
+\end{itemize}
+
 
 \section{Novice Users}
 A very powerful operation for manipulating programs is drag and drop. It allows
@@ -260,20 +295,18 @@ engine which is able to cleanly layout arbitrary code.
 
 The conditions for an inline expressions are as follows:
 
-\begin{itemize}
+\begin{itemize}[noitemsep]
 	\item Expression is a literal\footnote{In the future this might not be the
 only condition as more literal types get added}
 	\item Expression is a variable name
 	\item Expression is a call with no arguments
 	\item Expression is a call and the following are true
-	\begin{enumerate}
+	\begin{enumerate}[noitemsep]
 		\item Every argument is also inline
 		\item The sum total length of the arguments is below 300 pixels
 		\item The hight of the expression tree of every argument is below 4
 	\end{enumerate}
 \end{itemize}
-
-\section{Clipboard list}
 
 \section{Font choice}
 
@@ -288,6 +321,10 @@ Kale good, text editing bad.
 \section{Feasibility of visual programming environments}
 
 \section{Future Work}
+
+\begin{itemize}
+	\item 
+\end{itemize}
 
 \endgroup % Ends the clearpage re-definition group
 \clearpage
