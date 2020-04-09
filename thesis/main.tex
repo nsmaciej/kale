@@ -1,16 +1,10 @@
-%TODO: Adjust 
 \documentclass[11pt]{report}
-%\renewcommand{\clearpage}{}
 
-% Used indirectly by natlib
-\usepackage{hyperref}
 % Add url support for web pages etc.
 \usepackage[square, numbers]{natbib}
 % For custom spacing
 \usepackage{setspace}
 \setstretch{1.15}
-% As required by the handbook.
-\usepackage[a4paper, margin=25mm]{geometry}
 % For the \say command
 \usepackage{dirtytalk}
 % Draft watermark.
@@ -19,6 +13,19 @@
 \usepackage{graphicx}
 % Acronym support.
 \usepackage{acro}
+% Extra appendix control; Add appendices to the toc and add a blank page.
+\usepackage[page, toc]{appendix}
+% Menus and menu keys.
+\usepackage{menukeys}
+% PDFs links. Must be loaded before geometry, but as late as possible.
+\usepackage{hyperref}
+\hypersetup{
+	colorlinks,
+    allcolors=blue,
+    pageanchor=false
+}
+% As required by the handbook.
+\usepackage[a4paper, margin=25mm]{geometry}
 
 \title{Kale - An attempt at an accessible and powerful visual programming
 environment}
@@ -129,6 +136,12 @@ high-level objects (like deleting a word). One proposed alternative are
 Vim-like shortcuts, where the user combines a smaller set of motion and action
 commands to work on high-level objects.
 
+\subsection{Proportional fonts}
+Studies like Campbell et al. \cite{Campbell1981} and Beldie et al.
+\cite{Beldie1983} have shown that proportional (variable-pitch) fonts are
+faster to read than their \texttt{monospaced} counterparts. One notable exaple
+of a proportional font being used typeset code is 
+
 \section{Technical material}
 
 \subsection{TypeScript}
@@ -160,7 +173,7 @@ the UI, but be powerful enough to be able to express complex programs. It need
 not necessarily be an existing language, it fact it might not be desirable to
 make it one.
 
-A proficient User should be able to write programs and navigate Kale without
+A proficient user should be able to write programs and navigate Kale without
 having to reach for the mouse. This might involve mapping Kale concepts to
 standard shortcut keys as well as developing new ones. It should be possible
 for users of existing programming environments to adjust to Kale with relative
@@ -174,31 +187,86 @@ edit existing programs without knowledge of higher level operations.
 
 Effectively manipulating Lisp programs often requires commands for high-level
 hierarchical selections and actions, which are often difficult for users to
-remember. Editors like Vim use the command composition pattern to enable these
-actions, but this comes at a great cost to the learning
-curve \cite{Chodarev2016}
+remember. Editors like Vim use the command composition
+pattern to enable these actions, but this comes at a great cost to the learning
+difficulty \cite{Chodarev2016}
 
 \chapter{The Solution}
 
-\includegraphics[width=3cm]{example-image-a}
+\section{Layout}
+
+TODO Talk about in inline, non-inline, underlines optional bubbles.
+
+\section{Command structure}
+Because Kale does not operate on elementary text elements, even the most basic
+commands can be much higher-level than ordinary editors, since instead of a
+current cursor position, Kale operates on the selected expression. Even so,
+figuring out the correct set of commands proved to be a challenge.
+
+\newcommand{\aup}{\keys{\arrowkeyup}}
+\newcommand{\adown}{\keys{\arrowkeydown}}
+\newcommand{\aleft}{\keys{\arrowkeyleft}}
+\newcommand{\aright}{\keys{\arrowkeyright}}
+A good example of the difficulties that arise are the arrow key commands
+\aup{} \adown{} \aleft{} \aright{}. Initially these were implemented as
+fundamental tree operations: \say{Select parent}, \say{Select first child},
+\say{Select left sibling}, and \say{Select right sibling} respectively; this
+was known as. While logical, these operations were unintuitive to every user
+Kale was shown too, including the author. In the end \say{smart selection} was
+implemented, where \aleft{} and \aright{} use the pre-order
+%
+\footnote{The preorder traversal algorithm traverses the parent node first,
+then traverses the left and right tree by calling the itself on each.}
+%
+traversal,while \aup{} and \adown{}
+pre-order traverse only non-inline non-list expressions, mirroring the visual
+line motion a normal cursor might make.
+
+\section{Discoverability}
+
+%TODO: Menu pic
+\includegraphics[width=3cm, height=6cm]{example-image-a}
+
+Most commands can be accessed in at least three ways, through their dedicated
+keyboard shortcut, the context menu and the top-level editor menu. In case the
+user is keen on using the keyboard shortcuts but forgot a specific command,
+each editor menu-item shows the corresponding keyboard shortcut, and each
+shortcut can be triggered whilst the context menu is open.
 
 \section{Novice Users}
 A very powerful operation for manipulating programs is drag and drop. It allows
 for direct manipulation of Kale expressions, without requiring any knowledge of
 the keybindings.
 
-
-\section{Command structure}
-
-
-\section{Discoverability}
-
 \section{Professional users}
 
-High level operations and complex programs necessitate an intelligent layout
-engine which is able 
+%TODO: Talk about the different expr types
 
-\section{Implementation}
+High level operations and complex programs necessitate an intelligent layout
+engine which is able to cleanly layout arbitrary code.
+%TODO: Write a quick slurp program
+
+The conditions for an inline expr are as follows:
+
+
+\section{Clipboard list}
+
+\section{Font choice}
+
+\chapter{Implementation}
+
+\begin{itemize}
+	\item Expression is a literal\footnote{In the future this might not be the
+only condition as more literal types get added}
+	\item Expression is a variable name
+	\item Expression is a call with no arguments
+	\item Expression is a call and the following are true
+	\begin{enumerate}
+		\item Every argument is also inline
+		\item The sum total length of the arguments is below 300 pixels
+		\item The hight of the expression tree of every argument is below 4
+	\end{enumerate}
+\end{itemize}
 
 \chapter{Evaluation}
 
@@ -206,11 +274,22 @@ Kale good, text editing bad.
 
 \chapter{Conclusion}
 
+\section{Feasibility of visual programming environments}
+
+\section{Future Work}
+
 \endgroup % Ends the clearpage re-definition group
 \clearpage
 \renewcommand*{\bibfont}{\raggedright} % Make the reference ragged right.
 \bibliographystyle{unsrtnat} % List in order of mention.
 \bibliography{bibliography.bib}
 
+\begin{appendices}
+\chapter{Kale commands}
+
+\section{Copy}
+
+
+\end{appendices}
 
 \end{document}
