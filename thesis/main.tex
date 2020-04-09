@@ -202,22 +202,19 @@ commands can be much higher-level than ordinary editors, since instead of a
 current cursor position, Kale operates on the selected expression. Even so,
 figuring out the correct set of commands proved to be a challenge.
 
-\newcommand{\aup}{\keys{\arrowkeyup}}
-\newcommand{\adown}{\keys{\arrowkeydown}}
-\newcommand{\aleft}{\keys{\arrowkeyleft}}
-\newcommand{\aright}{\keys{\arrowkeyright}}
+\newcommand{\ak}[1]{\keys{\arrowkey{#1}}}
 A good example of the difficulties that arise are the arrow key commands
-\aup{} \adown{} \aleft{} \aright{}. Initially these were implemented as
+\ak{^} \ak{v} \ak{<} \ak{>}. Initially these were implemented as
 fundamental tree operations: \say{Select parent}, \say{Select first child},
-\say{Select left sibling}, and \say{Select right sibling} respectively; this
-was known as. While logical, these operations were unintuitive to every user
+\say{Select left sibling}, and \say{Select right sibling} respectively.
+While logical, these operations were unintuitive to every user
 Kale was shown too, including the author. In the end \say{smart selection} was
-implemented, where \aleft{} and \aright{} use the pre-order
+implemented, where \ak{<} and \ak{>} use the pre-order
 %
 \footnote{The preorder traversal algorithm traverses the parent node first,
 then traverses the left and right tree by calling the itself on each.}
 %
-traversal,while \aup{} and \adown{}
+traversal, while \ak{^} and \ak{v}
 pre-order traverse only non-inline non-list expressions, mirroring the visual
 line motion a normal cursor might make.
 
