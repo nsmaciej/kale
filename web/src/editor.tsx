@@ -361,11 +361,12 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         "7": this.pasteAction(6),
         "8": this.pasteAction(7),
         "9": this.pasteAction(9),
-        d: this.actions["delete"], // An alternative to the Backspace
         ArrowDown: this.selectionAction(Select.downSmart),
         ArrowLeft: this.selectionAction(Select.leftSmart),
         ArrowRight: this.selectionAction(Select.rightSmart),
         ArrowUp: this.selectionAction(Select.upSmart),
+        d: this.actions["delete"], // An alternative to the Backspace
+        e: this.actions["edit"], // An alternative to the Enter
         H: this.selectionAction(Select.leftSiblingSmart),
         h: this.selectionAction(Select.leftSmart),
         j: this.selectionAction(Select.downSmart),

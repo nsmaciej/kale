@@ -1,39 +1,97 @@
 \chapter{Kale commands}
 \newcommand{\shortcut}[3]{\section[#1]{#1 \hfill #2}\label{cmd:#3}}
+\newcommand{\pskip}[1]{{\parskip=1em\par\noindent #1}}
 
 Note that usefully a command and it's shifted \keys{\shift} variety are closely
 related. Commands that change the selection are usually not listed in the
-context menu.
+context menu. Where applicable mnemonics are represented by a \textbf{B}old
+letter.
 
 \shortcut{Up / Down}{\ak{^} / \ak{v}}{up_down}
-The up and down arrows
+Change the selection to the previous or next expression by pre-order traversal.
+This means that by running a command repeatedly, you will move through every
+possible selection to either side of the cursor. If there is no previous or
+next expression, the current selection is preserved.
+\pskip{Alternative shortcuts: \keys{K} / \keys{J} (based on the Vim editor).}
 
 \shortcut{Left / Right}{\ak{<} / \ak{>}}{left_right}
-The up and down arrows
+Change the selection to previous or next non-inline non-list expression by
+pre-order traversal. This approximates moving between expressions that visually
+resemble lines, or broken up lines. If there is no previous or next expression,
+the current selection is preserved.
+\pskip{Alternative shortcuts: \keys{H} / \keys{L} (based on the Vim editor).}
 
 \shortcut{Add Space or Move Space Up}{\keys{\SPACE}}{smart_space}
-Add Space or Move Space Up
+This is also known as the \say{smart space}. If the currently selected
+expression is a blank, \hyperref[cmd:move_up]{\say{Move Up}} is ran on the
+current selection. If the selection is a function call, a new child space
+is added in the first argument. Otherwise a new sibling space is inserted to
+the right of the current selection. 
+
+Because this command will not create a new sibling to function calls, the 
+\hyperref[cmd:new_line]{\say{New Line Below /Above}}
+\keys{N} / \keys{\shift + N} 
+command is also useful to know.
+
+\shortcut{Edit}{\keys{\return}}{edit}
+This can also be invoked by double clicking on an expression. Edits the text
+inside the expression.
+
+If the expression is a space, instead opens a new menu,
+letting you select the type of expression with which to replace the space. 
+Once a selection is made editing proceeds as normal, with the exception of
+editing function expressions, which when the edit is complete, will create
+an appropriate number of spaces for their arguments.
+
+If the expression is a list, no action is performed.
+
+\pskip{Alternative shortcut: \keys{E}}
 
 \shortcut{Copy}{\keys{C}}{copy}
-Copy
+Copy the currently selected expression to the top of the Clipboard Stack
 
 \shortcut{Select Parent}{\keys{P}}{parent}
-Select Parent
+Select the parent of the currently selected expression. If a parent does not
+exist, the current selection is preserved.
 
 \shortcut{Move Up}{\keys{\shift + P}}{move_up}
-Move Up
+Move the currently selected expression to be the last sibling of its parent.
+If a parent does not exist, no action is performed.
+This is similar to the "Barf" operation in the Emacs Par Edit mode.
 
-\shortcut{New Line Above / Below}{\keys{N} / \keys{\shift + N}}{new_line}
-New Line Above / Below
+
+\shortcut{New Line Below / Above}{\keys{N} / \keys{\shift + N}}{new_line}
+Inserts a new list expression around the current selection. Note that "list
+merging" is performed, merging immediate list children of a list with their
+parent. This means that, for example, invoking this command on an expression which
+already has a list as its parent, will not create a new list, instead appending
+a new sibling to the selection to the current list.
 
 \shortcut{Delete}{\keys{\backspace}}{delete}
-Delete
+Delete the currently selected expression, potentially replacing it with a new
+space if no other expression would remain in a function.
+
+\pskip{Alternative shortcut: \keys{D}}
 
 \shortcut{Cut}{\keys{X}}{cut}
-Cut
+\hyperref[cmd:copy]{Copy} the currently selected expression, then
+\hyperref[cmd:delete]{delete} it. Similar to the \keys{\ctrl + X} command in
+text editors.
 
 \shortcut{Delete and Add Space}{\keys{R}}{delete_blank}
-Delete and Add Space
+
+Delete the currently selected expression, replacing it with a new space. This
+helps helps if you want to completetly \textbf{R}eplace an expression with
+something new.
 
 \shortcut{Cut and Add Space}{\keys{S}}{cut_blank}
-Cut and Add Space
+\hyperref[cmd:copy]{Copy} the currently selected expression, then perform
+\hyperref[cmd:delete_blank]{\say{Delete and Add Space}}. This helps if you want
+to \textbf{S}huffle expressions around, replacing the current selection with
+something new, but using the old expression somewhere else.
+
+\shortcut{Open Definition}{\keys{O}}{open_def}
+\shortcut{New Argument Before / After}{\keys{I} / \keys{\shift + I}}{new_arg}
+\shortcut{Comment}{\keys{Q}}{open_def}
+\shortcut{Disable}{\keys{\textbackslash}}{open_def}
+%TODO: Add the space transformation commands.
