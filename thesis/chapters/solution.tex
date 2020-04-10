@@ -30,11 +30,11 @@ fundamental tree operations: \say{Select parent}, \say{Select first child},
 \say{Select left sibling}, and \say{Select right sibling} respectively.
 While logical, these operations were unintuitive to every user
 Kale was shown too, including the author. In the end \say{smart selection} was
-implemented, where \ak{<} and \ak{>} use the pre-order
-
+implemented, where \ak{<} and \ak{>} use the pre-order%
+%
 \footnote{The preorder traversal algorithm traverses the parent node first,
 then traverses the left and right tree by calling the itself on each.}
-
+%
 traversal, while \ak{^} and \ak{v}
 pre-order traverse only non-inline non-list expressions, mirroring the visual
 line motion a normal cursor might make.
@@ -121,13 +121,13 @@ is still exists as
 	\begin{minipage}{0.5\linewidth}
 	\centering
 	\includegraphics[width=\linewidth]{figures/clipboard.png}
-	\caption{First.}
+	\caption{TODO: Before smart space}
 	\end{minipage}
 	\qquad
 	\begin{minipage}{0.5\linewidth}
 	\centering
 	\includegraphics[width=\linewidth]{figures/clipboard.png}
-	\caption{First.}
+	\caption{TODO: After smart space}
 	\end{minipage}
 \end{figure}
 
@@ -136,8 +136,15 @@ A very powerful operation for manipulating programs is drag and drop. It allows
 for direct manipulation of Kale expressions, without requiring any knowledge of
 the keybindings.
 
+\begin{itemize}
+	\item Mention touch-screen support.
+	\item The toy box / Blocks area.
+	\item Drag and drop details
+\end{itemize}
+
 \section{Professional users}
 
+TODO: Move this around, mention command structure again,
 %TODO: Talk about the different expr types
 
 High level operations and complex programs necessitate an intelligent layout
@@ -161,3 +168,9 @@ only condition as more literal types get added}
 
 \section{Font choice}
 
+\begin{itemize}
+	\item Open source proportional font (cite)
+	\item Something normally difficult to achieve in normal text-based grid-based
+	editors.
+	
+\end{itemize}

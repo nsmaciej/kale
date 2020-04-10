@@ -2,7 +2,7 @@
 \newcommand{\shortcut}[3]{\section[#1]{#1 \hfill #2}\label{cmd:#3}}
 \newcommand{\pskip}[1]{{\parskip=1em\par\noindent #1}}
 
-Note that usefully a command and it's shifted \keys{\shift} variety are closely
+Commands different by only a shift key \keys{\shift} are closely
 related. Commands that change the selection are usually not listed in the
 context menu. Where applicable mnemonics are represented by a \textbf{B}old
 letter.
@@ -63,9 +63,9 @@ This is similar to the "Barf" operation in the Emacs Par Edit mode.
 \shortcut{New Line Below / Above}{\keys{N} / \keys{\shift + N}}{new_line}
 Inserts a new list expression around the current selection. Note that "list
 merging" is performed, merging immediate list children of a list with their
-parent. This means that, for example, invoking this command on an expression which
-already has a list as its parent, will not create a new list, instead appending
-a new sibling to the selection to the current list.
+parent. This means that, for example, invoking this command on an expression
+which already has a list as its parent, will not create a new list, instead
+appending a new sibling to the selection to the current list.
 
 \shortcut{Delete}{\keys{\backspace}}{delete}
 Delete the currently selected expression, potentially replacing it with a new
