@@ -1,0 +1,47 @@
+\chapter{Technical Background}
+
+\section{Topic material}
+
+\subsection{Visual Programming Environments}
+
+
+\subsection{Command Composition}
+Composing user commands is an important concern for any code editor. Chodarev
+\cite{Chodarev2016} discussed this in length, pointing out that casual
+text-based editing environments rely on simple commands that operate only on
+elementary objects, manipulating single character at a time. However this
+approach is quite inefficient, leading leading apps to adopt a secondary set of
+ad-hoc commands for performing specific combinations of operations and
+high-level objects (like deleting a word). One proposed alternative are
+Vim-like shortcuts, where the user combines a smaller set of motion and action
+commands to work on high-level objects.
+
+\subsection{Proportional fonts}
+Studies like Campbell et al. \cite{Campbell1981} and Beldie et al.
+\cite{Beldie1983} have shown that proportional (variable-pitch) fonts are
+faster to read than their \texttt{monospaced} counterparts. One notable exaple
+of a proportional font being used typeset code is 
+
+\section{Technical material}
+
+\subsection{TypeScript}
+TypeScript is a structurally and gradually typed superset of JavaScript being
+developed at Microsoft \cite{Typescript}. It provides stronger type-safety
+guarantees than JavaScript and allows programs to use modern and experimental
+JavaScript features, such as class properties or optional chaining. 
+
+
+\subsection{React and related libraries}
+To ease the burden of manually manipulating the \ac{dom}, Kale uses the React
+\cite{React} JavaScript library. React is a self-proclaimed \say{JavaScript
+library for making user interfaces} being developed by Facebook. It
+allows the program to write rendering
+code in a functional fashion, relying a \say{Virtual \ac{dom} to make \ac{dom}
+updates efficient}. Together with \ac{jsx}, a JavaScript extension supported by
+TypeScript, it makes it easy to write complex \acp{ui} for the browser.
+
+\subsection{\acf{svg}}
+\ac{svg} is a web technology which can be used to display vector images in the
+browser. It is scriptable by JavaScript and styleable with CSS, making it the
+perfect fit for dynamically rendering any highly custom \acp{ui}. It is used by
+Scratch for rendering their blocks interface.
