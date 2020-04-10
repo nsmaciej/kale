@@ -7,10 +7,10 @@
 \setstretch{1.15}
 % For the \say command
 \usepackage{dirtytalk}
-% Draft watermark.
-\usepackage{draftwatermark}
 % Figures etc.
 \usepackage{graphicx}
+% Draft watermark.
+\usepackage{draftwatermark}
 % Acronym support.
 \usepackage{acro}
 % Extra appendix control; Add appendices to the toc and add a blank page.
@@ -28,7 +28,7 @@
 % As required by the handbook.
 \usepackage[a4paper, margin=25mm]{geometry}
 % Menus and menu keys. Recommended to load late.
-\usepackage{menukeys}
+\usepackage[os=win]{menukeys}
 
 \title{Kale - An attempt at an accessible and powerful visual programming
 environment}
@@ -196,6 +196,8 @@ difficulty \cite{Chodarev2016}
 
 \chapter{The Solution}
 
+\section{Expression structure}
+
 \section{Drag and drop}
 
 One of the main changes Kale introduces compared to a normal Lisp editor is
@@ -236,7 +238,7 @@ line motion a normal cursor might make.
 
 \section{Discoverability}
 \setlength\intextsep{0pt}
-\begin{wrapfigure}{R}{0pt}
+\begin{wrapfigure}[21]{R}{5.5cm}
 \includegraphics[width=5.5cm]{figures/menu.png}
 \caption{Kale's Context Menu}
 \end{wrapfigure}
@@ -248,14 +250,17 @@ shortcut can be triggered whilst the context menu is open. These keyboard
 shortcut indicators are also placed throughout Kale to help with discovering
 shortcuts for the Clipboard List or the Function Search menu.
 
+
 \section{High-level manipulation}
-\subsection{Smart space}
-%TODO: Show a sequence explaining how this works.
-%TODO: Mention how this isn't a problem in scratch since you can't add new
-% arguments.
-Normal 
+
+
 
 \subsection{Clipboard list}
+\begin{wrapfigure}[11]{R}{0.pt}
+	\includegraphics[width=5.5cm]{figures/clipboard}
+	\caption{The Clipboard List}
+\end{wrapfigure}
+
 Relinquishing control over the elementary elements of a program might
 potentially make more high-level manipulation problematic. To remedy this
 Kale needed to provide a better way of transforming expressions. Andrew Blinn's
@@ -275,10 +280,54 @@ refactoring, Kale provides a palette of deletion commands:
 \begin{itemize}[noitemsep]
 	\item \say{Delete} \keys{\backspace}
 	\item \say{Cut} \keys{X}
+		\footnote{Based on the common \keys{\ctrl + X} shortcut}
 	\item \say{Delete and Add Space} \keys{R}
+		%TODO: Which appendix.
+		\footnote{See Appendix for detailed origins of the shortcuts}
 	\item \say{Cut and Add Space} \keys{S}
 \end{itemize}
 
+\subsection{Smart space}
+%TODO: Show a sequence explaining how this works.
+%TODO: Mention how this isn't a problem in scratch since you can't add new
+% arguments.
+In contemporary programming environments various punctuation marks are used to
+create new expressions. This presents a challenge for an editor like Kale, how
+to create new expressions. At first this was implemented as a set of
+expression kind specific operations like \say{Create new child}, \say{Create
+new sibling}, and \say{Create new line}. However this proved unintuitive as
+unlike classical punctuation, the keys for these operations did not correspond
+to any character on the screen, thus making it hard to memorise the shortcuts.
+
+The solution Kale is using is named \textbf{Smart Space}. Smart space is a
+high-level operation that attempts to perform a reasonable action no matter the
+selection.
+\begin{itemize}[noitemsep]
+	\item If a function is selected, create a new child space in the first
+argument.
+	\item If a space is selected, use the \say{Move Up} \keys{\shift + P}
+operation.
+	\item Otherwise create a new sibling space to the right of the selection, for
+example creating a new argument.
+\end{itemize}
+
+Note that this does not cover \say{Crete new line} operation, so this option is
+still exists as
+\say{New Line Below} \keys{N} / \say{New Line Below} \keys{\shift + N}.
+
+\begin{figure}
+	\begin{minipage}{0.5\linewidth}
+	\centering
+	\includegraphics[width=\linewidth]{figures/clipboard.png}
+	\caption{First.}
+	\end{minipage}
+	\qquad
+	\begin{minipage}{0.5\linewidth}
+	\centering
+	\includegraphics[width=\linewidth]{figures/clipboard.png}
+	\caption{First.}
+	\end{minipage}
+\end{figure}
 
 \section{Novice Users}
 A very powerful operation for manipulating programs is drag and drop. It allows
@@ -334,8 +383,37 @@ Kale good, text editing bad.
 
 \begin{appendices}
 \chapter{Kale commands}
+\newcommand{\shortcut}[2]{\section[#1]{#1 \hfill #2}}
 
-\section{Copy}
+Note that usefully a command and it's shifted \keys{\shift} variety are closely
+related.
+
+\shortcut{Add Space or Move Space Up}{\keys{\SPACE}}
+Add Space or Move Space Up
+
+\shortcut{Copy}{\keys{C}}
+Copy
+
+\shortcut{Select Parent}{\keys{P}}
+Select Parent
+
+\shortcut{Move Up}{\keys{\shift + P}}
+Move Up
+
+\shortcut{New Line Above / Below}{\keys{N} / \keys{\shift + N}}
+New Line Above / Below
+
+\shortcut{Delete}{\keys{\backspace}}
+Delete
+
+\shortcut{Cut}{\keys{X}}
+Cut
+
+\shortcut{Delete and Add Space}{\keys{R}}
+Delete and Add Space
+
+\shortcut{Cut and Add Space}{\keys{S}}
+Cut and Add Space
 
 
 \end{appendices}
