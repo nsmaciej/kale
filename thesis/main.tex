@@ -44,21 +44,15 @@ environment}
 \begin{document}
 
 \maketitle
+% This must be defined before TOC, because the shortcut appendix uses it
+% (even if it doesn't appear in the actual toc)
+\newcommand{\ak}[1]{\keys{\arrowkey{#1}}}
 \tableofcontents
 \clearpage
 
 % Do not clear page after every chapter
 \begingroup
 \let\clearpage\relax
-
-% *	The abstract must be an accurate reflection of what is in your report.
-% * Your abstract must be self-contained, without abbreviations, footnotes, or
-%   references. It should be a microcosm of the full report.
-% * Your abstract must be 150-250 words written as one paragraph, and should
-%   not contain displayed mathematical equations or tabular material.
-% * Ensure that your abstract reads well and is grammatically correct.
-% * The abstract must cover: motivation, the problem statement, the approach,
-%   your results, and your conclusions.
 
 \chapter{Abstract}
 Contemporary text-based programming languages require the programer to be
@@ -72,10 +66,6 @@ professional programmers.
 
 \chapter{Introduction}
 
-% Why would one care about the problem and the results? Cite appropriate
-% references in this section. Explain the high-level, abstract problem that
-% your project addresses. Explain what you are trying to achieve in a way that
-% leads naturally into the next section.
 \section{Motivation}
 Syntax errors are a fact of life in the programming industry. Programmers from
 novice\cite{Denny2011} to professional spend significant time fighting or
@@ -89,12 +79,6 @@ editing programs as slow and cumbersome. It should be possible to create a
 visual programming environment friendly to novices, but powerful enough to be
 taken seriously by professionals. 
 
-
-% Describe the technical problem needed to be solved in your project. Note that
-% most projects solve both a more abstract, high-level problem and a specific,
-% technical problem: your problem statement is the detailed technical problem
-% (your motivation should cover the more abstract high-level problem). 
-\section{Problem statement}
 This project implements a web based visual programming environment, designed
 from the ground up to fit many skill levels. Kale should demonstrate that a
 drag and drop/blocks style interface can co-exist alongside a keyboard driven
@@ -220,7 +204,6 @@ commands can be much higher-level than ordinary editors, since instead of a
 current cursor position, Kale operates on the selected expression. Even so,
 figuring out the correct set of commands proved to be a challenge.
 
-\newcommand{\ak}[1]{\keys{\arrowkey{#1}}}
 A good example of the difficulties that arise are the arrow key commands
 \ak{^} \ak{v} \ak{<} \ak{>}. Initially these were implemented as
 fundamental tree operations: \say{Select parent}, \say{Select first child},
@@ -273,18 +256,18 @@ and requires colour vision.
 
 Kale's solution to this comes in the form of the \textbf{Clipboard List}. The
 Clipboard List is a stack of expressions, shown on the right-hand side of the
-screen. Kale provides a \say{Copy} \keys{C} command, which copies the currently
+screen. Kale provides a \hyperref[cmd:copy]{\say{Copy}} \keys{C} command, which
+copies
+the
+currently
 selected expression to the top of the stack. To facilitate more destructive
 refactoring, Kale provides a palette of deletion commands:
 
 \begin{itemize}[noitemsep]
-	\item \say{Delete} \keys{\backspace}
-	\item \say{Cut} \keys{X}
-		\footnote{Based on the common \keys{\ctrl + X} shortcut}
-	\item \say{Delete and Add Space} \keys{R}
-		%TODO: Which appendix.
-		\footnote{See Appendix for detailed origins of the shortcuts}
-	\item \say{Cut and Add Space} \keys{S}
+	\item \hyperref[cmd:delete]{\say{Delete}} \keys{\backspace}
+	\item \hyperref[cmd:cut]{\say{Cut}} \keys{X}
+	\item \hyperref[cmd:delete_blank]{\say{Delete and Add Space}} \keys{R}
+	\item \hyperref[cmd:cut_blank]{\say{Cut and Add Space}} \keys{S}
 \end{itemize}
 
 \subsection{Smart space}
@@ -305,15 +288,16 @@ selection.
 \begin{itemize}[noitemsep]
 	\item If a function is selected, create a new child space in the first
 argument.
-	\item If a space is selected, use the \say{Move Up} \keys{\shift + P}
-operation.
+	\item If a space is selected, use the \hyperref[cmd:up_down]{\say{Move Up}}
+	\keys{\shift + P} operation.
 	\item Otherwise create a new sibling space to the right of the selection, for
 example creating a new argument.
 \end{itemize}
 
-Note that this does not cover \say{Crete new line} operation, so this option is
-still exists as
-\say{New Line Below} \keys{N} / \say{New Line Below} \keys{\shift + N}.
+Note that this does not cover \say{Create new line} operation, so this option
+is still exists as
+\hyperref[cmd:new_line]{\say{New Line Below}} \keys{N} /
+\hyperref[cmd:new_line]{\say{New Line Below}} \keys{\shift + N}.
 
 \begin{figure}
 	\begin{minipage}{0.5\linewidth}
@@ -383,36 +367,43 @@ Kale good, text editing bad.
 
 \begin{appendices}
 \chapter{Kale commands}
-\newcommand{\shortcut}[2]{\section[#1]{#1 \hfill #2}}
+\newcommand{\shortcut}[3]{\section[#1]{#1 \hfill #2}\label{cmd:#3}}
 
 Note that usefully a command and it's shifted \keys{\shift} variety are closely
-related.
+related. Commands that change the selection are usually not listed in the
+context menu.
 
-\shortcut{Add Space or Move Space Up}{\keys{\SPACE}}
+\shortcut{Up / Down}{\ak{^} / \ak{v}}{up_down}
+The up and down arrows
+
+\shortcut{Left / Right}{\ak{<} / \ak{>}}{left_right}
+The up and down arrows
+
+\shortcut{Add Space or Move Space Up}{\keys{\SPACE}}{smart_space}
 Add Space or Move Space Up
 
-\shortcut{Copy}{\keys{C}}
+\shortcut{Copy}{\keys{C}}{copy}
 Copy
 
-\shortcut{Select Parent}{\keys{P}}
+\shortcut{Select Parent}{\keys{P}}{parent}
 Select Parent
 
-\shortcut{Move Up}{\keys{\shift + P}}
+\shortcut{Move Up}{\keys{\shift + P}}{move_up}
 Move Up
 
-\shortcut{New Line Above / Below}{\keys{N} / \keys{\shift + N}}
+\shortcut{New Line Above / Below}{\keys{N} / \keys{\shift + N}}{new_line}
 New Line Above / Below
 
-\shortcut{Delete}{\keys{\backspace}}
+\shortcut{Delete}{\keys{\backspace}}{delete}
 Delete
 
-\shortcut{Cut}{\keys{X}}
+\shortcut{Cut}{\keys{X}}{cut}
 Cut
 
-\shortcut{Delete and Add Space}{\keys{R}}
+\shortcut{Delete and Add Space}{\keys{R}}{delete_blank}
 Delete and Add Space
 
-\shortcut{Cut and Add Space}{\keys{S}}
+\shortcut{Cut and Add Space}{\keys{S}}{cut_blank}
 Cut and Add Space
 
 
