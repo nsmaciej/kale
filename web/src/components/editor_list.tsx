@@ -121,6 +121,21 @@ const EditorMenuStack = styled(Stack).attrs({ gap: 8 })`
     padding-bottom: 5px;
 `;
 
+const ComingSoon = styled.div`
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: ${(p) => p.theme.colour.background};
+    opacity: 0.85;
+    color: ${(p) => p.theme.colour.subtleText};
+    display: table-cell;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+`;
+
 function EditorMenu() {
     return (
         <EditorMenuStack>
@@ -131,6 +146,9 @@ function EditorMenu() {
             <Button menu name="New" icon={<AiOutlinePlus />} />
             <Button menu name="Delete" icon={<AiOutlineDelete />} />
             <Button menu name="More" icon={<AiOutlineMore />} />
+            <ComingSoon>
+                <p>Coming Soon</p>
+            </ComingSoon>
         </EditorMenuStack>
     );
 }
