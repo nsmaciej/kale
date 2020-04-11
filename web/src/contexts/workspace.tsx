@@ -2,7 +2,7 @@ import produce, { enableMapSet } from "immer";
 import React, { ReactNode, useReducer, useEffect } from "react";
 
 import * as Sample from "sample";
-import { assertSome, createReducer } from "utils";
+import { assertSome, createPlainReducer } from "utils";
 import { Type, Value, Func, Workspace as InterpterWorkspace, Builtin, assertFunc } from "vm/types";
 import Builtins from "vm/builtins";
 import Expr, { Blank } from "expr";
@@ -37,7 +37,7 @@ type WorkspaceActions =
     | { type: "undo"; name: string };
 
 enableMapSet();
-const workspaceReducer = createReducer<WorkspaceValue, WorkspaceActions>({
+const workspaceReducer = createPlainReducer<WorkspaceValue, WorkspaceActions>({
     ensureExists(state, { name, initial }) {
         if (state.scope.has(name)) return state;
         return produce(state, (draft) => {

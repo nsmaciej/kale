@@ -8,13 +8,14 @@ import { Stack } from "components";
 import { useContextChecked } from "hooks";
 import Builtins from "vm/builtins";
 import Expr, { exprData } from "expr";
+import Clipboard from "state/clipboard";
 
 import ExprViewList, { ShortcutExpr } from "components/expr_view_list";
 import Pane from "components/pane";
 
-import Clipboard from "contexts/clipboard";
 import EditorStack from "contexts/editor_stack";
 import SegmentButton from "./segment_button";
+import { useDispatch } from "react-redux";
 
 function createToyBox(): Readonly<{ [category in Category]: ShortcutExpr[] }> {
     function blank(comment: string) {
@@ -41,7 +42,7 @@ const toyBoxExprs = createToyBox();
 export default React.memo(function ToyBox() {
     const theme = useTheme();
     const editorStack = useContextChecked(EditorStack);
-    const clipboard = useContextChecked(Clipboard);
+    const dispatch = useDispatch();
     const [category, setCategory] = useState(Category.General);
 
     function onContextMenu(item: ShortcutExpr) {
@@ -60,7 +61,7 @@ export default React.memo(function ToyBox() {
                 label: "Copy",
                 keyEquivalent: "c",
                 action() {
-                    clipboard.dispatch({ type: "add", entry: { expr: item.expr, pinned: false } });
+                    dispatch(Clipboard.actions.add({ expr: item.expr, pinned: false }));
                 },
             },
         ];

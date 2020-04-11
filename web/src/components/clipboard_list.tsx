@@ -1,10 +1,11 @@
 import { AiOutlinePushpin, AiFillPushpin } from "react-icons/ai";
+import { useDispatch, useSelector } from "react-redux";
 import React, { useRef } from "react";
 
 import { mod } from "utils";
 import { NonIdealText } from "components";
-import { useSimpleDrop, useContextChecked } from "hooks";
-import Clipboard, { ClipboardEntry } from "contexts/clipboard";
+import { useSimpleDrop } from "hooks";
+import Clipboard, { ClipboardEntry } from "state/clipboard";
 
 import Button from "components/button";
 import ExprViewList from "components/expr_view_list";
@@ -12,17 +13,18 @@ import Pane from "components/pane";
 import Shortcut from "components/shortcut";
 
 export default React.memo(function ClipboardList() {
+    const dispatch = useDispatch();
+    const clipboard = useSelector<ClipboardEntry[]>((x) => x) as ClipboardEntry[];
     const containerRef = useRef<HTMLDivElement>(null);
-    const clipboard = useContextChecked(Clipboard);
     const draggingOver = useSimpleDrop(containerRef, (expr) =>
-        clipboard.dispatch({ type: "add", entry: { pinned: false, expr } }),
+        dispatch(Clipboard.actions.add({ pinned: false, expr })),
     );
 
     function togglePin(item: ClipboardEntry) {
-        clipboard.dispatch({ type: "togglePinned", expr: item.expr.id });
+        dispatch(Clipboard.actions.togglePinned(item.expr.id));
     }
 
-    const history = clipboard.value.map((x, i) => ({
+    const history = clipboard.map((x, i) => ({
         ...x,
         shortcut: i < 10 ? mod(i + 1, 10).toString() : undefined,
         persistent: x.pinned,
@@ -34,8 +36,8 @@ export default React.memo(function ClipboardList() {
             extras={
                 <Button
                     name="Clear All"
-                    onClick={() => clipboard.dispatch({ type: "clear" })}
-                    disabled={clipboard.value.every((x) => x.pinned)}
+                    onClick={() => dispatch(Clipboard.actions.clear())}
+                    disabled={clipboard.every((x) => x.pinned)}
                 />
             }
         >
@@ -45,9 +47,7 @@ export default React.memo(function ClipboardList() {
                 width={260}
                 items={history}
                 showDropMarker={draggingOver}
-                onDraggedOut={(item) => {
-                    clipboard.dispatch({ type: "use", expr: item.expr.id });
-                }}
+                onDraggedOut={(item) => dispatch(Clipboard.actions.use(item.expr.id))}
                 onContextMenu={(item) => [
                     {
                         id: "pin",
@@ -62,13 +62,11 @@ export default React.memo(function ClipboardList() {
                         label: "Remove",
                         keyEquivalent: "d",
                         action() {
-                            clipboard.dispatch({ type: "remove", expr: item.expr.id });
+                            dispatch(Clipboard.actions.remove(item.expr.id));
                         },
                     },
                 ]}
-                onMiddleClick={(item) => {
-                    clipboard.dispatch({ type: "remove", expr: item.expr.id });
-                }}
+                onMiddleClick={(item) => dispatch(Clipboard.actions.remove(item.expr.id))}
                 fallback={
                     <NonIdealText>
                         Nothing here yet.

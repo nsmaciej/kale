@@ -1,5 +1,6 @@
-import React, { Ref, PureComponent } from "react";
 import { useTheme } from "styled-components";
+import React, { Ref, PureComponent } from "react";
+import { connect, useDispatch, useSelector } from "react-redux";
 
 import * as E from "expr";
 import * as Select from "selection";
@@ -17,11 +18,11 @@ import { ClientOffset } from "geometry";
 import { useContextChecked } from "hooks";
 import Expr, { ExprId } from "expr";
 import ExprView, { ExprAreaMap, OnDropMode } from "expr_view";
+import Clipboard, { ClipboardEntry } from "state/clipboard";
 
 import { Type, Func, assertFunc, Value, Builtin } from "vm/types";
 import { specialFunctions } from "vm/interpreter";
 
-import Clipboard, { ClipboardContext } from "contexts/clipboard";
 import Workspace, { WorkspaceContext } from "contexts/workspace";
 import EditorStack, { EditorStackContext } from "contexts/editor_stack";
 
@@ -45,8 +46,9 @@ interface EditorWrapperProps {
 }
 
 interface EditorProps extends EditorWrapperProps {
+    onCopy(expr: Expr): void;
+    onPaste(ix: number): Expr | null;
     workspace: WorkspaceContext;
-    clipboard: ClipboardContext;
     editorStack: EditorStackContext;
     theme: KaleTheme;
     forwardedRef: Ref<HTMLDivElement>;
@@ -96,13 +98,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
     }
 
     private addToClipboard(expr: ExprId) {
-        const selected = this.expr.findId(expr);
-        if (selected) {
-            this.props.clipboard.dispatch({
-                type: "add",
-                entry: { expr: selected.resetIds(), pinned: false },
-            });
-        }
+        this.props.onCopy(this.expr.get(expr));
     }
 
     private removeExpr(sel: ExprId) {
@@ -237,10 +233,9 @@ class Editor extends PureComponent<EditorProps, EditorState> {
 
     private pasteAction(ix: number): () => void {
         return () => {
-            const clipboard = this.props.clipboard.value;
-            if (ix < clipboard.length) {
-                this.replaceExpr(this.state.selection, clipboard[ix].expr);
-                this.props.clipboard.dispatch({ type: "use", expr: clipboard[ix].expr.id });
+            const paste = this.props.onPaste(ix);
+            if (paste !== null) {
+                this.replaceExpr(this.state.selection, paste);
             }
         };
     }
@@ -671,11 +666,21 @@ export default React.forwardRef(function EditorWrapper(
     props: EditorWrapperProps,
     ref: Ref<HTMLDivElement>,
 ) {
+    const dispatch = useDispatch();
+    const clipboard = useSelector<ClipboardEntry[]>((x) => x) as ClipboardEntry[];
     return (
         <Editor
             {...props}
+            onCopy={(expr) => dispatch(Clipboard.actions.add({ expr, pinned: false }))}
+            onPaste={(ix) => {
+                if (ix < clipboard.length) {
+                    const expr = clipboard[ix].expr;
+                    dispatch(Clipboard.actions.use(expr.id));
+                    return expr;
+                }
+                return null;
+            }}
             workspace={useContextChecked(Workspace)}
-            clipboard={useContextChecked(Clipboard)}
             editorStack={useContextChecked(EditorStack)}
             theme={useTheme()}
             forwardedRef={ref}

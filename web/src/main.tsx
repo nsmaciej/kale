@@ -1,7 +1,9 @@
-import ReactDOM from "react-dom";
 import { AiOutlineGithub } from "react-icons/ai";
+import { createStore } from "redux";
+import { Provider } from "react-redux";
 import { ToastProvider } from "react-toast-notifications";
 import React, { useRef } from "react";
+import ReactDOM from "react-dom";
 import styled, { createGlobalStyle } from "styled-components";
 
 import { DefaultTheme } from "theme";
@@ -10,18 +12,18 @@ import { Stack, Box } from "components";
 import { useContextChecked } from "hooks";
 import TextMetrics from "text_metrics";
 
-import { ClipboardProvider } from "contexts/clipboard";
 import { DebuggerProvider } from "contexts/debugger";
 import { DragAndDropSurface } from "contexts/drag_and_drop";
 import { KaleThemeProvider } from "contexts/theme";
 import { WorkspaceProvider } from "contexts/workspace";
 import EditorStack, { EditorStackProvider } from "contexts/editor_stack";
 
+import Clipboard from "state/clipboard";
+
 import ClipboardList from "components/clipboard_list";
 import EditorList from "components/editor_list";
 import EditorSuggestions from "components/editor_suggestions";
 import ErrorBoundary from "components/error_boundary";
-import Hints from "components/hints";
 import ThemeSwitcher from "components/theme_switcher";
 import ToyBox from "components/toy_box";
 
@@ -183,14 +185,19 @@ function Kale() {
     );
 }
 
+const store = createStore(
+    Clipboard.reducer,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any).__REDUX_DEVTOOLS_EXTENSION__ && (window as any).__REDUX_DEVTOOLS_EXTENSION__(),
+);
 function App() {
     return (
         <React.StrictMode>
-            <KaleThemeProvider>
-                <GlobalStyle />
-                <ToastProvider>
-                    <ErrorBoundary>
-                        <ClipboardProvider>
+            <Provider store={store}>
+                <KaleThemeProvider>
+                    <GlobalStyle />
+                    <ToastProvider>
+                        <ErrorBoundary>
                             <DragAndDropSurface>
                                 <WorkspaceProvider>
                                     <EditorStackProvider>
@@ -200,10 +207,10 @@ function App() {
                                     </EditorStackProvider>
                                 </WorkspaceProvider>
                             </DragAndDropSurface>
-                        </ClipboardProvider>
-                    </ErrorBoundary>
-                </ToastProvider>
-            </KaleThemeProvider>
+                        </ErrorBoundary>
+                    </ToastProvider>
+                </KaleThemeProvider>
+            </Provider>
         </React.StrictMode>
     );
 }

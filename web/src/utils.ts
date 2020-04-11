@@ -111,7 +111,7 @@ export function insertSibling<T>(
     return array;
 }
 
-export function createReducer<
+export function createPlainReducer<
     State,
     Actions extends { type: string },
     Types extends string = Actions["type"]
@@ -122,18 +122,6 @@ export function createReducer<
 ): (state: State, action: Actions) => State {
     return (state, action) =>
         reducers[action.type as Types](state, action as Extract<Actions, { type: Types }>);
-}
-
-/** Handy reducer transformer that logs the reducer state and actions. */
-export function loggingReducer<S, A>(
-    reducer: (state: S, action: A) => S,
-    // eslint-disable-next-line no-console
-    logger: (state: S, action: A) => void = console.log,
-): typeof reducer {
-    return (state, action) => {
-        logger(state, action);
-        return reducer(state, action);
-    };
 }
 
 /** This is an alternative to React.createRef, which produces readonly ref objects. */
