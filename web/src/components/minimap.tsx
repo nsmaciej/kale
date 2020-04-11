@@ -5,10 +5,10 @@ import { assertFunc } from "vm/types";
 import { assertSome } from "utils";
 import { Stack } from "components";
 import { useDebounce, useContextChecked } from "hooks";
+import { useSelector } from "state/root";
 import ExprView from "expr_view";
 
 import EditorStack, { OpenedEditor } from "contexts/editor_stack";
-import Workspace from "contexts/workspace";
 
 const MinimapItemStack = styled(Stack).attrs({ gap: 8, vertical: true })<{ focused: boolean }>`
     border-radius: ${(p) => p.theme.general.borderRadius}px;
@@ -22,8 +22,8 @@ const MinimapItemStack = styled(Stack).attrs({ gap: 8, vertical: true })<{ focus
 `;
 
 function MinimapExpr({ name }: { name: string }) {
-    const workspace = useContextChecked(Workspace).workspace;
-    const expr = useDebounce(assertFunc(assertSome(workspace.scope.get(name))).expr, 1000);
+    const scope = useSelector((x) => x.workspace.scope);
+    const expr = useDebounce(assertFunc(assertSome(scope.get(name))).expr, 1000);
     return <ExprView immutable atomic persistent scale={0.2} expr={expr} />;
 }
 

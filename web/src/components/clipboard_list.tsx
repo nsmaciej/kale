@@ -1,11 +1,13 @@
 import { AiOutlinePushpin, AiFillPushpin } from "react-icons/ai";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import React, { useRef } from "react";
 
 import { mod } from "utils";
 import { NonIdealText } from "components";
 import { useSimpleDrop } from "hooks";
+
 import Clipboard, { ClipboardEntry } from "state/clipboard";
+import { useSelector } from "state/root";
 
 import Button from "components/button";
 import ExprViewList from "components/expr_view_list";
@@ -14,7 +16,7 @@ import Shortcut from "components/shortcut";
 
 export default React.memo(function ClipboardList() {
     const dispatch = useDispatch();
-    const clipboard = useSelector<ClipboardEntry[]>((x) => x) as ClipboardEntry[];
+    const clipboard = useSelector((x) => x.clipboard);
     const containerRef = useRef<HTMLDivElement>(null);
     const draggingOver = useSimpleDrop(containerRef, (expr) =>
         dispatch(Clipboard.actions.add({ pinned: false, expr })),

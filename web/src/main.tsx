@@ -11,14 +11,12 @@ import { mod } from "utils";
 import { Stack, Box } from "components";
 import { useContextChecked } from "hooks";
 import TextMetrics from "text_metrics";
+import Root from "state/root";
 
 import { DebuggerProvider } from "contexts/debugger";
 import { DragAndDropSurface } from "contexts/drag_and_drop";
 import { KaleThemeProvider } from "contexts/theme";
-import { WorkspaceProvider } from "contexts/workspace";
 import EditorStack, { EditorStackProvider } from "contexts/editor_stack";
-
-import Clipboard from "state/clipboard";
 
 import ClipboardList from "components/clipboard_list";
 import EditorList from "components/editor_list";
@@ -186,7 +184,7 @@ function Kale() {
 }
 
 const store = createStore(
-    Clipboard.reducer,
+    Root.reducer,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (window as any).__REDUX_DEVTOOLS_EXTENSION__ && (window as any).__REDUX_DEVTOOLS_EXTENSION__(),
 );
@@ -199,13 +197,11 @@ function App() {
                     <ToastProvider>
                         <ErrorBoundary>
                             <DragAndDropSurface>
-                                <WorkspaceProvider>
-                                    <EditorStackProvider>
-                                        <DebuggerProvider>
-                                            <Kale />
-                                        </DebuggerProvider>
-                                    </EditorStackProvider>
-                                </WorkspaceProvider>
+                                <EditorStackProvider>
+                                    <DebuggerProvider>
+                                        <Kale />
+                                    </DebuggerProvider>
+                                </EditorStackProvider>
                             </DragAndDropSurface>
                         </ErrorBoundary>
                     </ToastProvider>

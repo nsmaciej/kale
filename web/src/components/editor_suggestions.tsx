@@ -1,13 +1,14 @@
+import { AiOutlinePlusCircle, AiOutlineSearch } from "react-icons/ai";
+import { useDispatch } from "react-redux";
 import React, { useState, Ref } from "react";
 import styled from "styled-components";
-import { AiOutlinePlusCircle, AiOutlineSearch } from "react-icons/ai";
 
 import { Box, Stack } from "components";
 import { useContextChecked } from "hooks";
 import useSuggestions from "hooks/suggestions";
+import Workspace from "state/workspace";
 
 import EditorStack from "contexts/editor_stack";
-import Workspace from "contexts/workspace";
 
 import Menu, { MenuTextWrapper } from "components/menu";
 import Shortcut from "components/shortcut";
@@ -37,12 +38,12 @@ export default React.forwardRef(function EditorSuggestions(_, ref: Ref<HTMLInput
     const { setSelection, selection, suggestions, moveSelection } = useSuggestions(value, {
         showValue: true,
     });
-    const workspace = useContextChecked(Workspace);
     const editorStack = useContextChecked(EditorStack);
+    const dispatch = useDispatch();
 
     function selectEditor(name: string) {
         editorStack.createEditor(name);
-        workspace.dispatch({ type: "ensureExists", name });
+        dispatch(Workspace.actions.ensureExists({ name }));
         setValue("");
         setSelection(0);
     }

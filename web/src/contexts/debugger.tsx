@@ -1,13 +1,13 @@
 import { useToasts } from "react-toast-notifications";
 import React, { useState, ReactNode } from "react";
 
-import { useContextChecked } from "hooks";
+import { useSelector } from "state/root";
+
 import { VmError } from "vm/types";
 import Interpreter from "vm/interpreter";
-import Workspace from "contexts/workspace";
 
 export function useDebugProvider() {
-    const workspace = useContextChecked(Workspace);
+    const scope = useSelector((x) => x.workspace.scope);
     const { addToast } = useToasts();
     const [continueEval, setContinueEval] = useState<(() => void) | null>(null);
     const [interpreter, setInterpeter] = useState<Interpreter | null>(null);
@@ -22,7 +22,7 @@ export function useDebugProvider() {
                 onBreakpoint: (cc) => setContinueEval(cc),
                 onTerminated: () => setInterpeter(null),
             });
-            int.setWorkspace(workspace.workspace.scope);
+            int.setWorkspace(scope);
             setInterpeter(int);
             try {
                 await int.evalFunction(name);

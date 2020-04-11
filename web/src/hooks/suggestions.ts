@@ -4,8 +4,7 @@ import Fuse from "fuse.js";
 import { MenuItem } from "components/menu";
 import { Optional, mod } from "utils";
 import { specialFunctions } from "vm/interpreter";
-import { useContextChecked } from "hooks";
-import Workspace from "contexts/workspace";
+import { useSelector } from "state/root";
 
 // Using MenuItem is just convenient.
 interface Suggestion extends MenuItem {
@@ -25,14 +24,14 @@ export default function useSuggestions(
     value: string,
     { showValue = false, showSpecials = false, disable = false } = {},
 ): SuggestionsHook {
-    const workspace = useContextChecked(Workspace);
+    const functionList = useSelector((x) => x.workspace.functions);
     const [selection, setSelection] = useState<Optional<number>>(0);
 
     // We use functionList, which is specially updated to make this memo infrequent.
     const fuse = useMemo(() => {
         if (disable) return null;
         console.info("Indexing functions...");
-        const functions = workspace.workspace.functions.map((name) => ({
+        const functions = functionList.map((name) => ({
             name,
             id: name,
             original: false,
@@ -47,7 +46,7 @@ export default function useSuggestions(
             enabled: true,
         }));
         return new Fuse([...functions, ...special], { keys: ["name"], findAllMatches: true });
-    }, [disable, workspace.workspace.functions, showSpecials]);
+    }, [disable, functionList, showSpecials]);
 
     const suggestions = useMemo(() => {
         const results = fuse?.search(value)?.slice(0, 5);

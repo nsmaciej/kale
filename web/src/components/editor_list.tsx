@@ -10,6 +10,7 @@ import {
     AiOutlineUndo,
 } from "react-icons/ai";
 import { motion, AnimatePresence } from "framer-motion";
+import { useDispatch } from "react-redux";
 import React, { ReactNode } from "react";
 import styled from "styled-components";
 
@@ -18,13 +19,15 @@ import { useContextChecked, useMediaQuery } from "hooks";
 import Builtins from "vm/builtins";
 import EditorWrapper from "editor";
 
+import { useSelector } from "state/root";
+import Workspace from "state/workspace";
+
 import Minimap from "components/minimap";
 import Shortcut from "components/shortcut";
 import Button from "components/button";
 
 import Debugger from "contexts/debugger";
 import EditorStack, { OpenedEditor } from "contexts/editor_stack";
-import Workspace from "contexts/workspace";
 
 const EditorItemContainer = styled.div`
     border-radius: 10px;
@@ -81,16 +84,18 @@ function BuiltinEditor({ editor }: { editor: OpenedEditor }) {
 }
 
 function UserEditor({ editor }: { editor: OpenedEditor }) {
+    const dispatch = useDispatch();
     const dbg = useContextChecked(Debugger);
     const editorStack = useContextChecked(EditorStack);
-    const { workspace, dispatch } = useContextChecked(Workspace);
-    const canUndo = (workspace.history.get(editor.name)?.length ?? 0) > 0;
+    const canUndo = useSelector((x) => (x.workspace.history.get(editor.name)?.length ?? 0) > 0);
     return (
         <EditorItem
             editor={editor}
             buttons={
                 <IconButton disabled={!canUndo}>
-                    <AiOutlineUndo onClick={() => dispatch({ type: "undo", name: editor.name })} />
+                    <AiOutlineUndo
+                        onClick={() => dispatch(Workspace.actions.undo({ name: editor.name }))}
+                    />
                 </IconButton>
             }
             rightButtons={

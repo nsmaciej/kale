@@ -1,6 +1,6 @@
 import { useTheme } from "styled-components";
 import React, { Ref, PureComponent } from "react";
-import { connect, useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 
 import * as E from "expr";
 import * as Select from "selection";
@@ -18,12 +18,14 @@ import { ClientOffset } from "geometry";
 import { useContextChecked } from "hooks";
 import Expr, { ExprId } from "expr";
 import ExprView, { ExprAreaMap, OnDropMode } from "expr_view";
-import Clipboard, { ClipboardEntry } from "state/clipboard";
 
 import { Type, Func, assertFunc, Value, Builtin } from "vm/types";
 import { specialFunctions } from "vm/interpreter";
 
-import Workspace, { WorkspaceContext } from "contexts/workspace";
+import { useSelector } from "state/root";
+import Clipboard, { ClipboardEntry } from "state/clipboard";
+import Workspace, { WorkspaceValue } from "state/workspace";
+
 import EditorStack, { EditorStackContext } from "contexts/editor_stack";
 
 import ContextMenu, { ContextMenuItem } from "components/context_menu";
@@ -48,7 +50,9 @@ interface EditorWrapperProps {
 interface EditorProps extends EditorWrapperProps {
     onCopy(expr: Expr): void;
     onPaste(ix: number): Expr | null;
-    workspace: WorkspaceContext;
+    onEnsureExists(name: string): void;
+    onUpdate(name: string, updater: (expr: Expr) => Expr): void;
+    workspace: WorkspaceValue;
     editorStack: EditorStackContext;
     theme: KaleTheme;
     forwardedRef: Ref<HTMLDivElement>;
@@ -79,21 +83,17 @@ class Editor extends PureComponent<EditorProps, EditorState> {
             const nextMain = main.update(childId ?? main.id, transform);
             return nextMain ?? new E.Blank(E.exprData("Double Tap Me"));
         }
-        this.props.workspace.dispatch({
-            type: "update",
-            name: this.props.functionName,
-            updater,
-        });
+        this.props.onUpdate(this.props.functionName, updater);
     }
 
     private getWorkspaceValue(
-        workspace: WorkspaceContext,
+        workspace: WorkspaceValue,
         name: string,
     ): Value<Builtin | Func> | undefined {
-        return workspace.workspace.scope.get(name);
+        return workspace.scope.get(name);
     }
 
-    private getWorkspaceFunc(workspace: WorkspaceContext, name: string): Expr {
+    private getWorkspaceFunc(workspace: WorkspaceValue, name: string): Expr {
         return assertFunc(assertSome(this.getWorkspaceValue(workspace, name))).expr;
     }
 
@@ -243,10 +243,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
     private readonly openEditor = (target: ExprId) => {
         const selected = this.expr.findId(target);
         if (selected instanceof E.Call) {
-            this.props.workspace.dispatch({
-                type: "ensureExists",
-                name: selected.fn,
-            });
+            this.props.onEnsureExists(selected.fn);
             this.props.editorStack.openEditor(selected.fn);
         }
     };
@@ -667,7 +664,8 @@ export default React.forwardRef(function EditorWrapper(
     ref: Ref<HTMLDivElement>,
 ) {
     const dispatch = useDispatch();
-    const clipboard = useSelector<ClipboardEntry[]>((x) => x) as ClipboardEntry[];
+    const clipboard = useSelector((x) => x.clipboard);
+    const workspace = useSelector((x) => x.workspace);
     return (
         <Editor
             {...props}
@@ -680,7 +678,9 @@ export default React.forwardRef(function EditorWrapper(
                 }
                 return null;
             }}
-            workspace={useContextChecked(Workspace)}
+            onEnsureExists={(name) => dispatch(Workspace.actions.ensureExists({ name }))}
+            onUpdate={(name, updater) => dispatch(Workspace.actions.update({ name, updater }))}
+            workspace={workspace}
             editorStack={useContextChecked(EditorStack)}
             theme={useTheme()}
             forwardedRef={ref}
