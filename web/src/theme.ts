@@ -141,7 +141,8 @@ export const DefaultTheme = {
 
     highlight: {
         padding: new Padding(3),
-        mainPadding: new Padding(3, 20, 3, 3),
+        //TODO: Remove this.
+        mainPadding: new Padding(3),
         radius: 3,
         selection: new Highlight("selection", "#f5f9ff", "#1b65f1")
             .blurred("#fcfdff", "#edeffc")

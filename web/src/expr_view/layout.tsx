@@ -231,7 +231,8 @@ class ExprLayout implements ExprVisitor<Layout> {
             (
                 <g {...this.exprProps(expr)} key="0">
                     <motion.rect
-                        {...{ width, height, x, y }}
+                        // Nudge the rect down by the stroke.
+                        {...{ width, height, x: x + 1, y: y + 1 }}
                         animate={{
                             // Here we recreate the selection rect colouring logic.
                             fill: highlight.blankFill(this.props.focused === true),
