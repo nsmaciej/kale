@@ -1,5 +1,7 @@
 \chapter{The Solution}
 
+\section{Spaces}
+
 \section{Expression structure}
 
 \section{Drag and drop}
@@ -57,6 +59,28 @@ shortcuts for the Clipboard List or the Function Search menu.
 \section{High-level manipulation}
 
 \subsection{List merging}
+
+\subsection{Commenting}
+Comments in text-based programming are normally quite ad-hoc. It's up to the
+reader to establish which comment applies to which expression. This problem
+is exacerbated by using comments to selectively disable pieces of code. Kale
+addresses both of these problems elegantly.
+
+Similar to to other visual
+%TODO: Which ones?
+programming environments, Kale allows assigning comments directly to specific
+expressions, make them completely unambiguous and leaving it to the layout
+engine to figure out where a comment should appear. In the future rich or
+formatted text might be used also. Presently every expression can be commented.
+However comments on spaces are displayed inside the space \say{bubble}, while
+comments on literals are not directly displayed, instead being accessible
+inside a special comment tooltip.
+
+Disabling pieces of code is another common operation, most modern programming
+editors provide a single command to format a line or selection like
+\keys{\ctrl + /}. Kale's semantics driven selection mechanism neatly fits with
+the need to disable specific expressions. Using the
+\hyperref[cmd:disable]{\say{Disable}} \keys{\textbackslash}
 
 \subsection{Clipboard list}
 \begin{wrapfigure}[11]{R}{0.pt}
@@ -116,6 +140,8 @@ Note that this does not cover \say{Create new line} operation, so this option
 is still exists as
 \hyperref[cmd:new_line]{\say{New Line Below}} \keys{N} /
 \hyperref[cmd:new_line]{\say{New Line Below}} \keys{\shift + N}.
+
+\subsection{Open definition}
 
 \begin{figure}
 	\begin{minipage}{0.5\linewidth}
