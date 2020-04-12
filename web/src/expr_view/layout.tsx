@@ -209,12 +209,7 @@ class ExprLayout implements ExprVisitor<Layout> {
     }
 
     visitBlank(expr: E.Blank): Layout {
-        const padding = this.t.blank.padding;
-        const text = this.layoutText(expr, expr.data.comment ?? "?", {
-            colour: this.t.blank.textColour,
-            offset: padding.topLeft,
-        });
-
+        // Find the topmost highlight to apply.
         let highlight = this.t.blank.resting;
         if (this.props.highlights != null) {
             for (const [exprId, hl] of this.props.highlights) {
@@ -222,32 +217,38 @@ class ExprLayout implements ExprVisitor<Layout> {
             }
         }
 
-        let rect = new Rect(Offset.zero, text.size.padding(padding));
-        if (rect.width < rect.height) {
-            rect = rect.withSize(new Size(rect.height)); // Make the pill square.
+        const padding = this.t.blank.padding;
+        const margin = this.t.blank.margin;
+        const text = this.layoutText(expr, expr.data.comment ?? "?", {
+            colour: this.t.blank.textColour,
+        });
+
+        let rectSize = text.size.padding(this.t.blank.padding);
+        if (rectSize.width < rectSize.height) {
+            rectSize = new Size(rectSize.height);
         }
-        const { x, y, width, height } = rect;
         const layout = new Layout(
             (
-                <g {...this.exprProps(expr)} key="0">
+                // Need to use a <g> because exprProps type doesn't match motion.rect.
+                <SvgGroup {...this.exprProps(expr)} translate={this.t.blank.margin.topLeft}>
                     <motion.rect
-                        // Nudge the rect down by the stroke.
-                        {...{ width, height, x: x + 1, y: y + 1 }}
+                        width={rectSize.width}
+                        height={rectSize.height}
                         animate={{
                             // Here we recreate the selection rect colouring logic.
                             fill: highlight.blankFill(this.props.focused === true),
                         }}
                         initial={false}
-                        rx={rect.height / 2}
+                        rx={rectSize.height / 2}
                         stroke={highlight.blankStroke(this.props.focused === true)}
                         style={{ filter: highlight.droppable ? "url(#droppable)" : undefined }}
                     />
-                    {text.nodes}
-                </g>
+                </SvgGroup>
             ),
-            rect.size.padding(this.t.blank.margin),
         );
+        layout.place(padding.combine(margin).topLeft, text);
         layout.inline = true;
+        layout.size = rectSize.padding(this.t.blank.margin);
         return layout;
     }
 

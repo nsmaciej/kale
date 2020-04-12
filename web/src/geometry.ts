@@ -85,6 +85,10 @@ export class Size {
         return this.width === rhs.width && this.height === rhs.height;
     }
 
+    add(value: number): Size {
+        return new Size(this.width + value, this.height + value);
+    }
+
     pad({ x, y }: Offset) {
         return new Size(this.width + x, this.height + y);
     }
