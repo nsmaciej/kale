@@ -135,6 +135,8 @@ export const DefaultTheme = {
         padding: new Padding(0, 10),
         textColour: "#909090",
         resting: new Highlight("selection", "#f7f7f7", "#dcdcdc"),
+        // Space out the blanks from the underlines and such.
+        margin: new Padding(1, 0),
     },
 
     highlight: {

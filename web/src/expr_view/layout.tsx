@@ -244,7 +244,7 @@ class ExprLayout implements ExprVisitor<Layout> {
                     {text.nodes}
                 </g>
             ),
-            rect.size,
+            rect.size.padding(this.t.blank.margin),
         );
         layout.inline = true;
         return layout;
