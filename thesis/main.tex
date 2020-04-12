@@ -1,3 +1,5 @@
+% Maciej Goszczycki 2019
+% Some tricks stolen from Conor Reynolds
 \documentclass[11pt]{report}
 
 % Add url support for web pages etc.
@@ -23,7 +25,9 @@
 \usepackage{hyperref}
 \hypersetup{
 	colorlinks,
-    allcolors=blue,
+	linkcolor={red!50!black},
+	citecolor={red!50!black},
+	urlcolor={blue!50!black}
 }
 % As required by the handbook.
 \usepackage[a4paper, margin=25mm]{geometry}
@@ -43,16 +47,21 @@ environment}
 
 \begin{document}
 
+% Print the toc etc.
+\pagenumbering{alph}
 \maketitle
 % This must be defined before TOC, because the shortcut appendix uses it
 % (even if it doesn't appear in the actual toc)
 \newcommand{\ak}[1]{\keys{\arrowkey{#1}}}
 \tableofcontents
 \clearpage
+\pagenumbering{arabic}
 
 % Do not clear page after every chapter
 \begingroup
 \let\clearpage\relax
+% Start counting for real, now that we printed the toc.
+\setcounter{page}{1}
 
 \chapter{Abstract}
 Contemporary text-based programming languages require the programer to be

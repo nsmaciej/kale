@@ -1,8 +1,57 @@
 \chapter{The Solution}
 
-\section{Spaces}
-
 \section{Expression structure}
+
+Adapting programming language syntax to be easy to consistently manipulate
+visually requires simplifying the structure that is common in contemporary
+languages. Lisp is known for regular syntax, making it the perfect fit for
+Kale.
+
+
+\subsection{Spaces}
+Because the fundamental way of moving around code in Kale is the currently
+selected expression, instead of a cursor another way of inserting new
+expressions must be provided. One way of achieving this might be different
+ command, like \say{Paste after this expression}. Kale
+provides insertion points using spaces (or \say{blanks}).
+Space are similar to Snippet Placeholders used in modern editors,
+but are actually part of the expression tree (instead of being simple ephemeral
+placeholders used only during code completion). Spaces make it simple to create
+new Kale expression by simply \say{filling in the blanks}, and simplify the
+command structure, by 
+
+\subsection{Function calls}
+Are analogous to Lisp's S-expressions, but with a constraint that the first
+value must be a function identifier. While this makes higher-level functions
+%TODO: Quote the CL docs.
+somewhat harder to write (simillary to Common Lisp), it allows for a more
+consistent navigation system, by removing the distinction between a function
+call expression being selected or just the function itself.
+
+\subsection{Expression lists}
+In Lisp new scope is introduced by the \texttt{let} macro, while elegant, the
+complex, nesting level syntax is difficult to express well visually. Kale
+%TODO: cite the paper on scoping
+attempts to make scoping more visible, while also providing a visually clean
+way of representing the \texttt{progn} (also called \texttt{do}) macro,
+through the expression list structure.
+
+The expression list structure adheres to two invariants:
+\begin{itemize}[noitemsep]
+	\item Every list must have at least two expressions. If there are one or
+	fewer expressions, the list is automatically removed, leaving its content
+	in its place. In Lisp this might be expressed as
+	$\texttt{(progn a)} \equiv \texttt{a}$.
+	\item A list's direct children cannot be lists themselves. Immediate child
+	list's contents are merged into their parent list. This is because
+	$\texttt{(progn (progn a b) c)} \equiv \texttt{(progn a b c)}$.
+	Nested lists are almost never intentional in Kale and enforcing this
+	invariant simplifies many commands.
+\end{itemize}
+
+\subsection{Literals}
+
+\subsection{Variables}
 
 \section{Drag and drop}
 
@@ -26,18 +75,18 @@ commands can be much higher-level than ordinary editors, since instead of a
 current cursor position, Kale operates on the selected expression. Even so,
 figuring out the correct set of commands proved to be a challenge.
 
-A good example of the difficulties that arise are the arrow key commands
-\ak{^} \ak{v} \ak{<} \ak{>}. Initially these were implemented as
+A good example of the difficulties that arise are the arrow key
+commands~\ak{^}~\ak{v}~\ak{<}~\ak{>}. Initially these were implemented as
 fundamental tree operations: \say{Select parent}, \say{Select first child},
 \say{Select left sibling}, and \say{Select right sibling} respectively.
 While logical, these operations were unintuitive to every user
 Kale was shown too, including the author. In the end \say{smart selection} was
-implemented, where \ak{<} and \ak{>} use the pre-order%
+implemented, where~\ak{<} and~\ak{>} use the pre-order%
 %
 \footnote{The preorder traversal algorithm traverses the parent node first,
 then traverses the left and right tree by calling the itself on each.}
 %
-traversal, while \ak{^} and \ak{v}
+traversal, while~\ak{^} and~\ak{v}
 pre-order traverse only non-inline non-list expressions, mirroring the visual
 line motion a normal cursor might make.
 
@@ -80,10 +129,10 @@ Disabling pieces of code is another common operation, most modern programming
 editors provide a single command to format a line or selection like
 \keys{\ctrl + /}. Kale's semantics driven selection mechanism neatly fits with
 the need to disable specific expressions. Using the
-\hyperref[cmd:disable]{\say{Disable}} \keys{\textbackslash}
+\hyperref[cmd:disable]{\say{Disable}}~\keys{\textbackslash}
 
 \subsection{Clipboard list}
-\begin{wrapfigure}[11]{R}{0.pt}
+\begin{wrapfigure}[13]{R}{0.pt}
 	\includegraphics[width=5.5cm]{figures/clipboard}
 	\caption{The Clipboard List}
 \end{wrapfigure}
@@ -100,7 +149,7 @@ and requires colour vision.
 
 Kale's solution to this comes in the form of the \textbf{Clipboard List}. The
 Clipboard List is a stack of expressions, shown on the right-hand side of the
-screen. Kale provides a \hyperref[cmd:copy]{\say{Copy}} \keys{C} command, which
+screen. Kale provides a \hyperref[cmd:copy]{\say{Copy}}~\keys{C} command, which
 copies the currently
 selected expression to the top of the stack. To facilitate more destructive
 refactoring, Kale provides a palette of deletion commands:
@@ -130,16 +179,16 @@ selection.
 \begin{itemize}[noitemsep]
 	\item If a function is selected, create a new child space in the first
 argument.
-	\item If a space is selected, use the \hyperref[cmd:up_down]{\say{Move Up}}
-	\keys{\shift + P} operation.
+	\item If a space is selected, use the
+	\hyperref[cmd:up_down]{\say{Move Up}}~\keys{\shift + P} operation.
 	\item Otherwise create a new sibling space to the right of the selection, for
 example creating a new argument.
 \end{itemize}
 
 Note that this does not cover \say{Create new line} operation, so this option
 is still exists as
-\hyperref[cmd:new_line]{\say{New Line Below}} \keys{N} /
-\hyperref[cmd:new_line]{\say{New Line Below}} \keys{\shift + N}.
+\hyperref[cmd:new_line]{\say{New Line Below}}~\keys{N} /
+\hyperref[cmd:new_line]{\say{New Line Below}}~\keys{\shift + N}.
 
 \subsection{Open definition}
 
