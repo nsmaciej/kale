@@ -407,7 +407,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         { action: "demoAddVariable", label: "Make a Variable..." },
         { action: "demoAddString", label: "Make a String..." },
         { action: "smartMakeCall", label: "Turn Into a Function Call..." },
-        { action: "moveToParent", label: "Replace The Parent", enabled: this.disableForTopLevel },
+        { action: "moveToParent", label: "Replace the Parent", enabled: this.disableForTopLevel },
     ];
 
     // Bound methods.

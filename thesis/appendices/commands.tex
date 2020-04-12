@@ -91,7 +91,30 @@ to \textbf{S}huffle expressions around, replacing the current selection with
 something new, but using the old expression somewhere else.
 
 \shortcut{Open Definition}{\keys{O}}{open_def}
-\shortcut{New Argument Before / After}{\keys{I} / \keys{\shift + I}}{new_arg}
-\shortcut{Comment}{\keys{Q}}{open_def}
-\shortcut{Disable}{\keys{\textbackslash}}{open_def}
-%TODO: Add the space transformation commands.
+Opens an editor with the function name of the currently selected expression.
+If a function with a given name does not exist in the current workspace, one is
+created.
+If an editor with a given function is already opened, no new editor is created,
+instead focus is moved to the closest editor displaying that function.
+
+\shortcut{New Argument After / Before}{\keys{I} / \keys{\shift + I}}{new_arg}
+Creates a new sibling space before or after the currently selected
+expression. This is command largely superseded by the
+\hyperref[cmd:smart_space]{\say{Smart Space}} \keys{\SPACE} action, but can be
+useful for creating multiple consecutive spaces or if a sibling is desired
+instead of a child and the currently selected expression is a function call.
+
+\shortcut{Comment}{\keys{Q}}{comment}
+Edits the comment on the currently selected expression. If no comment exists,
+one is created. Note that comments on spaces and literals are handled
+specially. An empty comment is automatically removed.
+
+\shortcut{Disable}{\keys{\textbackslash}}{disable}
+Disable the currently selected expression, enabling it if it is already
+disabled. Spaces cannot be disabled.
+
+\shortcut{Make a Variable...}{\keys{V}}{make_var}
+\shortcut{Make a String...}{\keys{V}}{make_string}
+\shortcut{Turn into a Function Call}{\keys{F}}{make_function}
+\shortcut{Replace the Parent}{\keys{\shift + F}}{make_function}
+%TODO: Document these
