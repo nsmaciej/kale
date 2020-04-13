@@ -8,16 +8,43 @@
 % https://lookherefirst.wordpress.com/2008/04/28/citations-within-a-caption-in
 % -latex/
 \caption{Kale's internal layout information\protect\footnotemark}
+\label{fig:layout}
 \end{figure}
 \footnotetext{The layout debug overlay is always available within Kale,
 to access it, right click any expression, then press \keys{\ctrl}
 (or \keys{\Alt} on macOS) to reveal a new hidden
 \say{Toggle the Debug Overlay} option}
+\medskip
+
+A key component of the layout engine is the notion of \say{inline} expressions.
+An inline expression is one which can be easily displayed inside another inline
+expression. In \autoref{fig:layout} inline expression are those with a
+\textcolor{blue}{blue} outline, those with a \textcolor{red}{red} outline are
+non-inline.
+
+\hyperref[expr:literal]{Literals}, \hyperref[expr:blank]{blanks} and
+\hyperref[expr:variable]{variables} are always inline, while
+\hyperref[expr:list]{lists} are always non-inline.
+For \hyperref[expr:function]{function calls} a heuristic-driven algorithm is
+used to determine the inline status. The |isCallInline| algorithm, determines
+a function call to be inline if:
+
+\begin{enumerate}[noitemsep]
+	\item No comment exists on the function call.
+	\item Every argument is also inline.
+	\item The sum total length of the argument widths is below 300 pixels.
+	\item The hight of the expression tree of every argument is below four.
+\end{enumerate}
+
+Non-inline function calls are broken up, and their underline stack (explained
+\hyperref[layout:underlines]{below}) is rendered onto the screen, while inline
+calls continue to build up the underline stack.
 
 \subsection{Data structure}
 
-Intelligently laying out Kale expressions, enabling in-line editing and
-support drag and drop requires an advanced layout engine.
+Keeping track of all the data required by the layout algorithm
+including enabling in-line editing and supporting drag and drop requires a
+complex layout data structure.
 Because parent expressions like function calls need access to their children's
 layout information to make layout decisions, it is not sufficient to simply
 treat Kale expressions as React components to be rendered. Instead the
@@ -38,7 +65,10 @@ export class Layout {
 }
 \end{Verbatim}
 
-\newcommand{\field}[1]{\paragraph{\texttt{#1}}}
+\newcommand{\field}[1]{
+	\paragraph{\texttt{#1}}
+	\label{layout:#1}
+}
 \field{size} A key component of effectively laying out expressions is
 keeping track of their size. Note that since \ac{svg} elements have no
 inherent size, this is simply a suggestion of what the predicated size
@@ -94,7 +124,6 @@ Instead Kale takes the same approach as the Scratch Blocks \cite{ScratchBlocks}
 library, using \ac{svg}'s |getComputedTextLength| API and an invisible
 |<svg>| element onto which new pieces of text are rendered. 
 
-\subsection{Function layout}
 \subsection{Drag and drop areas}
 \section{Drag and drop}
 \section{Data flow}

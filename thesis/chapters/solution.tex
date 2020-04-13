@@ -17,6 +17,7 @@ expression within Kale belongs to one of five categories.
 	\noindent
 }
 \subsection{Literals}
+\label{expr:literal}
 \exprfig{literal}
 Kale relies on a very generic notion of literals. A literal is a string
 tagged with its type, which is an arbitrary string. In practice Kale currently
@@ -25,11 +26,13 @@ system is designed to handle any literal type that can be serialised into a
 string.
 
 \subsection{Variables}
+\label{expr:variable}
 \exprfig{variable}
 Variables are simplest of Kale's expression types. Each variable is a string,
 encoding the variable name it represents. 
 
 \subsection{Function calls}
+\label{expr:function}
 \exprfig{function}
 Are analogous to Lisp's S-expressions, but with a constraint that the first
 value must be a function identifier. While this makes higher-level functions
@@ -39,6 +42,7 @@ consistent navigation system, by removing the distinction between a function
 call expression being selected or just the function itself.
 
 \subsection{Spaces}
+\label{expr:blank}
 \exprfig{blank}
 Because the fundamental way of moving around code in Kale is the currently
 selected expression, instead of a cursor another way of inserting new
@@ -52,6 +56,7 @@ new Kale expression by simply \say{filling in the blanks}, and simplify the
 command structure, by 
 
 \subsection{Expression lists}
+\label{expr:list}
 \exprfig{list}
 In Lisp new scope is introduced by the \texttt{let} macro, while elegant, the
 complex, nesting level syntax is difficult to express well visually. Kale
@@ -109,6 +114,10 @@ then traverses the left and right tree by calling the itself on each.}
 traversal, while~\ak{^} and~\ak{v}
 pre-order traverse only non-inline non-list expressions, mirroring the visual
 line motion a normal cursor might make.
+
+\section{Inline editing}
+
+\section{Code navigation}
 
 \needspace{8cm}
 \section{Discoverability}
@@ -244,21 +253,6 @@ TODO: Move this around, mention command structure again,
 High level operations and complex programs necessitate an intelligent layout
 engine which is able to cleanly layout arbitrary code.
 %TODO: Write a quick slurp program
-
-The conditions for an inline expressions are as follows:
-
-\begin{itemize}[noitemsep]
-	\item Expression is a literal\footnote{In the future this might not be the
-only condition as more literal types get added}
-	\item Expression is a variable name
-	\item Expression is a call with no arguments
-	\item Expression is a call and the following are true
-	\begin{enumerate}[noitemsep]
-		\item Every argument is also inline
-		\item The sum total length of the arguments is below 300 pixels
-		\item The hight of the expression tree of every argument is below four.
-	\end{enumerate}
-\end{itemize}
 
 \section{Font choice}
 
