@@ -1,25 +1,64 @@
 \section{Future Work}
 
+\subsection{User studies}
+The main concern of this project was creating a property of the Kale
+environment, in the future, it would be beneficial to perform user studies on
+the Kale and the various design choices made along the way. Somethings that
+would be investigated might be
+
 \begin{itemize}[noitemsep]
-	\item Better drag and drop - inserting at the end of expressions
-	\item Value of structured underlines?
-	\item User studies and feedback
-	\item Debugging capabilities
-	\item Explore more the high-level operations afforded by treating functions as
-	fundamental unit of organising files.
-	%TODO: Right now there is no save at all, fix that.
-	\item Ability to work on multiple projects
+	\item The value of the structured underlines.
+	%TODO: Cite that study
+	\item The effectiveness of Kale, in transitioning children away from scratch.
+	\item User experience of professional programmers.
 \end{itemize}
 
-\subsection{Fluid entry}
+\subsection{Drag-and-drop improvements}
+Currently due to the limitations of drag-and-drop implementation, it is
+impossible to insert new expression as the last sibling of expression lists
+and function calls.
+
+\subsection{Integrated debugging}
+%TODO: Include a screenshot of a highlighted expr to show how breakpoints might
+% work
+Right now the runtime capabilities provided by Kale are quite basic. While
+effort was put into making the error messages somewhat descriptive, there are 
+are advanced debugging capabilities available. This is unfortunate as
+expression-oriented selection lends itself nicely to visualising the currently
+execution expression or setting breakpoints. Modern text-oriented debuggers use
+inline markers to try and indicate which expression the debugger is on, a
+feature called \fnurl{\say{inline breakpoints}}
+{https://developers.google.com/web/updates/2019/04/devtools\#inline}.
+
+\subsection{Fluid field editor}
 \say{Fluid entry} is a concept for simplifying entering new expressions. Right
 now to turn a space into another expression the user needs to either enter the
 \hyperref[soln:space_popover]{\say{space popover}} or memorise a set of
 shortcuts like
 \hyperref[cmd:make_var]{\say{Make a Variable...}}~\keys{V} or
 \hyperref[cmd:make_var]{\say{Turn into a Function Call...}}~\keys{F}.
-These shortcuts are currently essential to efficently creating new Kale
-expressions, 
+These shortcuts are currently essential to efficiently creating new Kale
+expressions, but for many expressions they feel like an extra step that would
+not be necessary under a normal text editor.
+
+The idea behind the \say{fluid field editor} would be to eliminate these
+shortcuts, instead delaying the decision on what type of expression
+should be created until the user has typed a character.
+\medskip
+\begingroup
+\def\arraystretch{1.2}
+\begin{center}
+\begin{tabular}{ l l }
+	\textbf{Typed character} & \textbf{Resulting expression} \\
+	\hline
+	\keys{"} or \keys{'} & Text literal \\
+	\keys{0} -- \keys{9} & Number literal \\
+	\keys{\shift + A} -- \keys{\shift + Z} & Function call \\
+	\keys{A} -- \keys{Z} & Variable expression \\
+\end{tabular}
+\end{center}
+\endgroup
+\medskip
 
 \subsection{Removing modality}
 Removing the \hyperref[soln:field_editing]{field editing} feature might be

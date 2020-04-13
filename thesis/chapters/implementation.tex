@@ -14,7 +14,7 @@
 \footnotetext{The layout debug overlay is always available within Kale,
 to access it, right click any expression, then press \keys{\ctrl}
 (or \keys{\Alt} on macOS) to reveal a new hidden
-\say{Toggle the Debug Overlay} option}
+\say{Toggle the Debug Overlay} option.}
 \medskip
 
 A key component of the layout engine is the notion of \say{inline} expressions.
@@ -52,7 +52,7 @@ treat Kale expressions as React components to be rendered. Instead the
 \texttt{Layout} class is responsible for keeping track of state required
 of each expression and \ac{svg} elements by their parents.
 
-\begin{Verbatim}[samepage]
+\begin{Verbatim}[samepage, frame=lines]
 class Layout {
     size: Size;
     nodes: ReactNode[] = [];

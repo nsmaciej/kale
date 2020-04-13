@@ -23,7 +23,7 @@ the current selection is preserved.
 
 \shortcut{Add Space or Move Space Up}{\keys{\SPACE}}{smart_space}
 This is also known as the \say{smart space}. If the currently selected
-expression is a blank, \hyperref[cmd:move_up]{\say{Move Up}} is ran on the
+expression is a space, \hyperref[cmd:move_up]{\say{Move Up}} is ran on the
 current selection. If the selection is a function call, a new child space
 is added in the first argument. Otherwise a new sibling space is inserted to
 the right of the current selection. 
@@ -125,7 +125,11 @@ expression, then
 performs the \hyperref[cmd:edit]{\say{Edit}}~\keys{\return} command.
 
 \shortcut{Turn into a Function Call}{\keys{F}}{make_function}
-
+If the currently selected expression is a space, replace it with a function
+call expression. Otherwise wrap the currently selected expression in a new
+function call expression, making it its first argument, and perform
+the \hyperref[cmd:edit]{\say{Edit}}~\keys{\return} command.
 
 \shortcut{Replace the Parent}{\keys{\shift + F}}{replace_parent}
-%TODO: Document these
+Replace the parent of the currently selected expression with the selected
+expression and its siblings. 
