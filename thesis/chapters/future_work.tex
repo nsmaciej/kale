@@ -10,3 +10,21 @@
 	%TODO: Right now there is no save at all, fix that.
 	\item Ability to work on multiple projects
 \end{itemize}
+
+\subsection{Fluid entry}
+\say{Fluid entry} is a concept for simplifying entering new expressions. Right
+now to turn a space into another expression the user needs to either enter the
+\hyperref[soln:space_popover]{\say{space popover}} or memorise a set of
+shortcuts like
+\hyperref[cmd:make_var]{\say{Make a Variable...}}~\keys{V} or
+\hyperref[cmd:make_var]{\say{Turn into a Function Call...}}~\keys{F}.
+These shortcuts are currently essential to effectively 
+
+\subsection{Removing modality}
+
+Removing the \hyperref[soln:field_editing]{field editing} feature might be
+worth investigation. This could be achieved by implicitly entering the field
+editing mode when changing the selection. \ak{<}~and~\ak{>} could then always
+move the cursor inside the current field, similarly to standard text editors,
+once. If the cursor reaches the end of a field, the next expression would be
+selected, following the current default behaviour.
