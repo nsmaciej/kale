@@ -17,11 +17,14 @@ perfect fit for Kale.%
 Each expression within Kale belongs to one of five categories.
 
 \newcommand{\exprfig}[1]{
-  \vspace{-1ex}
-  \begin{flushright}
-    \includegraphics[scale=0.35, right]{structure/#1}
-  \end{flushright}
-  \vspace{-3ex}
+%  \me
+  \begin{wrapfigure}{l}{0pt}
+%  \begin{flushright}
+    \includegraphics[scale=0.35]{structure/#1}
+%  \end{flushright}
+\end{wrapfigure}
+%  \vspace{-3ex}
+
 }
 \subsection{Literals}
 \label{expr:literal}
@@ -32,6 +35,7 @@ makes use of only two types of literals: \say{text} and \say{number}, but the
 system is designed to handle any literal type that can be serialised into a
 string.
 
+\needspace{3cm}
 \subsection{Variables}
 \label{expr:variable}
 \exprfig{variable}
@@ -114,7 +118,7 @@ commands~\ak{^}~\ak{v}~\ak{<}~\ak{>}. Initially these were implemented as
 fundamental tree operations: \say{Select parent}, \say{Select first child},
 \say{Select left sibling}, and \say{Select right sibling} respectively.
 While logical, these operations were unintuitive to every user
-Kale was shown too, including the author. In the end \say{smart selection} was
+Kale was shown to, including the author. In the end \say{smart selection} was
 implemented, where~\ak{<} and~\ak{>} use the pre-order%
 %
 \footnote{The pre-order traversal algorithm traverses the parent node first,
@@ -177,8 +181,8 @@ addresses both of these problems elegantly.
 Similar to to other visual
 %TODO: Which ones?
 programming environments, Kale allows assigning comments directly to specific
-expressions, make them completely unambiguous and leaving it to the layout
-engine to figure out where a comment should appear. In the future rich or
+expressions, making them completely unambiguous and leaving it to the layout
+engine to figure out where a comment should appear. However, in the future rich or
 formatted text might be used also. Presently every expression can be commented.
 However comments on spaces are displayed inside the space \say{bubble}, while
 comments on literals are not directly displayed, instead being accessible
