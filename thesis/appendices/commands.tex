@@ -19,7 +19,13 @@ Change the selection to previous or next non-inline non-list expression by
 pre-order traversal. This approximates moving between expressions that visually
 resemble lines, or broken up lines. If there is no previous or next expression,
 the current selection is preserved.
-\pskip{Alternative shortcuts: \keys{H}~/~\keys{L} (based on the Vim editor).}
+\pskip{%
+Alternative shortcuts: \keys{H}~/~\keys{L} (based on the Vim editor).
+See also the
+\hyperref[cmd:left_right_sibling]{\say{Left / Right Sibling}}%
+~{\keys{\shift + H}~/~\keys{\shift + L}}
+commands.
+}
 
 \shortcut{Add Space or Move Space Up}{\keys{\SPACE}}{smart_space}
 This is also known as the \say{smart space}. If the currently selected
@@ -133,3 +139,30 @@ the \hyperref[cmd:edit]{\say{Edit}}~\keys{\return} command.
 \shortcut{Replace the Parent}{\keys{\shift + F}}{replace_parent}
 Replace the parent of the currently selected expression with the selected
 expression and its siblings. 
+
+\shortcut{Left / Right Sibling}
+	{\keys{\shift + H} / \keys{\shift + L}}{left_right_sibling}
+Change the selection to left or right sibling of the currently selected
+expression. Unlike the \ak{^}~\ak{v}, this ignores any children the
+currently selected expression might have. If no left or right sibling
+exists, move the previous or next expression by pre-order traversal.
+
+\shortcut{Open a Function}{\keys{/}}{search_functions}
+Switches focus from the current editor to the "Open a Function..." search
+field. From within the field you can use~\ak{^} and~\ak{v} to move between
+suggestions, then press \keys{\return} to confirm.
+
+\shortcut{Focus on Editor Above / Below}
+	{\keys{\shift + K} / \keys{\shift + J}}{move_focus}
+Move the focus from the current editor to the one above or below it. If
+editor above / below exists, wrap around. Each jump is added to the
+editor jump list and can be reversed by using
+\hyperref[cmd:jump_back]{\say{Jump back}}~\keys{\shift + O} command.
+
+\shortcut{Jump back}{\keys{\shift + O}}{jump_back}
+Move back through the editor jump stack populated by the
+\hyperref[cmd:move_focus]{\say{Focus on Editor Above / Below}}~
+\keys{\shift + K} / \keys{\shift + J} commands.
+
+\shortcut{Close Editor}{\keys{\shift + D}}{close_editor}
+Close the current editor.
