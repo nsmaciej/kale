@@ -117,7 +117,7 @@ While logical, these operations were unintuitive to every user
 Kale was shown too, including the author. In the end \say{smart selection} was
 implemented, where~\ak{<} and~\ak{>} use the pre-order%
 %
-\footnote{The preorder traversal algorithm traverses the parent node first,
+\footnote{The pre-order traversal algorithm traverses the parent node first,
 then traverses the left and right tree by calling the itself on each.}
 %
 traversal, while~\ak{^} and~\ak{v}
@@ -125,15 +125,29 @@ pre-order traverse only non-inline non-list expressions, mirroring the visual
 line motion a normal cursor might make.
 
 \section{Field editing}
-\label{soln:field_editing}
-
+%\label{soln:field_editing}
+%\label{soln:space_popover}
+%\begin{wrapfigure}[10]{r}{5cm}
+%\includegraphics[width=5cm]{field_editor}
+%\end{wrapfigure}
 Because the Kale selection is not tied directly to the text underlying many
 expressions, 
+%TODO: Finish
 
+%\needspace{25em}
 \section{Space popover}
-\label{soln:space_popover}
+%\label{soln:space_popover}
+%\begin{wrapfigure}[10]{r}{5.5cm}
+%\includegraphics[width=5.5cm]{space_popover}
+%\end{wrapfigure}
+%TODO: Finish
+
+
+
 
 \section{Code navigation}
+%TODO: Finish
+
 
 \needspace{8cm}
 \section{Discoverability}
@@ -148,6 +162,9 @@ each editor menu-item shows the corresponding keyboard shortcut, and each
 shortcut can be triggered whilst the context menu is open. These keyboard
 shortcut indicators are also placed throughout Kale to help with discovering
 shortcuts for the Clipboard List or the Function Search menu.
+
+
+
 
 \section{High-level manipulation}
 
@@ -175,11 +192,13 @@ the need to disable specific expressions. Using the
 disabled, marking them to be ignored by the interpreter. This effectively
 eliminates any ambiguity that exists in text-only comments.
 
-\subsection{Clipboard list}
-%\begin{wrapfigure}[13]{R}{0.pt}
-%	\includegraphics[width=5.5cm]{clipboard}
-%	\caption{The Clipboard List}
-%\end{wrapfigure}
+\needspace{7cm}
+\subsection{Clipboard stack}
+\label{soln:clipboard_list}
+\begin{wrapfigure}[15]{R}{0.pt}
+	\includegraphics[width=6.5cm]{clipboard}
+	\caption{The Clipboard Stack}
+\end{wrapfigure}
 
 Relinquishing control over the elementary elements of a program might
 potentially make more high-level manipulation problematic. To remedy this
@@ -191,12 +210,12 @@ use one of the previously coloured ones. While imbued with a certain sense of
 mathematical purity, this approach deals poorly with more complex refactorings
 and requires colour vision.
 
-Kale's solution to this comes in the form of the \textbf{Clipboard List}. The
-Clipboard List is a stack of expressions, shown on the right-hand side of the
+Kale's solution to this comes in the form of the \textbf{Clipboard Stack}. The
+Clipboard Stack is a stack of expressions, shown on the right-hand side of the
 screen. Kale provides a \hyperref[cmd:copy]{\say{Copy}}~\keys{C} command, which
 copies the currently
-selected expression to the top of the stack. To facilitate more destructive
-refactoring, Kale provides a palette of deletion commands:
+selected expression to the top of the clipboard stack. To facilitate more
+destructive refactoring, Kale provides a palette of deletion commands:
 
 \begin{itemize}[noitemsep]
 	\item \hyperref[cmd:delete]{\say{Delete}} \keys{\backspace}
@@ -204,6 +223,17 @@ refactoring, Kale provides a palette of deletion commands:
 	\item \hyperref[cmd:delete_blank]{\say{Delete and Add Space}} \keys{R}
 	\item \hyperref[cmd:cut_blank]{\say{Cut and Add Space}} \keys{S}
 \end{itemize}
+
+Expressions on the clipboard stack can replace the currently selected
+expression by using one of nine \hyperref[cmd:paste]{\say{paste}}~
+\keys{0}~--~\keys{9} commands, with each command prominently displayed
+to the right of each expression it would paste.
+
+Sometimes it is beneficial to be able to paste the same expression multiple
+times. Expression on the clipboard stack can be pinned using the \emph{Pin}
+button. Pinned expression are not removed the stack when their corresponding
+paste command is invoked. They are also not cleared by the \say{Clear All}
+button.
 
 \subsection{Smart space}
 %TODO: Show a sequence explaining how this works.

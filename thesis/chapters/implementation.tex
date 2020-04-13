@@ -113,7 +113,10 @@ a new underline. Kale
 chooses to not underline atomic expressions like spaces, literals and variable
 names.
 
-\field{expr}
+\field{expr} Generating the |areas| field requires keeping track of the
+expression each layout element \say{belongs to}. Setting this field indicates
+to the layout system that this layout element should be assigned an area and
+optionally an underline.
 
 \field{partOfExpr} Drag and drop \hyperref[layout:areas]{gap areas} for most
 expressions allow inserting a new dropped expression between sibling
@@ -147,7 +150,7 @@ library, using \ac{svg}'s |getComputedTextLength| API and an invisible
 
 \section{Drag and drop}
 \label{impl:dnd}
-\begin{wrapfigure}[6]{r}{0pt}
+\begin{wrapfigure}[10]{r}{0pt}
 \includegraphics[width=7cm]{dnd_gaps}
 \caption{The expression from \autoref{fig:layout} showing drag and drop
 insertion slots.}
@@ -158,9 +161,14 @@ Diagram.
 
 
 \section{Expression IDs}
-
-Mention the effect on the selection across editors.
-
+Originally reference identity was used for handling the selection and edition
+functionality. However, this presented a challenge when more than one editor
+was opened. Editing an expression would change its reference identity,
+invalidating the current selection in other editors displaying the same
+function. To remedy this, each expression is now allocated a unique ID number.
+Simply editing an expression, such as changing its children or editing its text
+leaves the ID intact, but creating a new expression, or copying one from the
+\hyperref[soln:clipboard_list]{clipboard list} creates a new ID.
 
 
 

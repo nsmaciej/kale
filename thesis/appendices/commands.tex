@@ -54,7 +54,14 @@ If the expression is a list, no action is performed.
 \pskip{Alternative shortcut: \keys{E}}
 
 \shortcut{Copy}{\keys{C}}{copy}
-Copy the currently selected expression to the top of the Clipboard Stack
+Copy the currently selected expression to the top of the
+\hyperref[soln:clipboard_list]{Clipboard Stack}
+
+\shortcut{Paste}{\keys{0} -- \keys{9}}{paste}
+Replace the currently selected expression with an expression at the index
+matching the shortcut key from the
+\hyperref[soln:clipboard_list]{Clipboard Stack}, removing it if it is not
+pinned.
 
 \shortcut{Select Parent}{\keys{P}}{parent}
 Select the parent of the currently selected expression. If a parent does not
