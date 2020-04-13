@@ -42,8 +42,9 @@ export default React.forwardRef(function EditorSuggestions(_, ref: Ref<HTMLInput
     const dispatch = useDispatch();
 
     function selectEditor(name: string) {
-        editorStack.createEditor(name);
+        // The order here is very important.
         dispatch(Workspace.actions.ensureExists({ name }));
+        editorStack.createEditor(name);
         setValue("");
         setSelection(0);
     }

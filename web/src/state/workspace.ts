@@ -53,13 +53,12 @@ function reducer(state: WorkspaceValue | undefined, action: Action<unknown>): Wo
         next = ensureExists(next, "Sample-1", Sample.SAMPLE_1);
         next = ensureExists(next, "Sample-2", Sample.SAMPLE_2);
         next = ensureExists(next, "Hello-World", Sample.HELLO_WORLD);
-        console.log(next);
         return next;
     }
 
     if (actions.ensureExists.match(action)) {
         const { name, initial } = action.payload;
-        ensureExists(state, name, initial);
+        return ensureExists(state, name, initial);
     }
 
     if (actions.update.match(action)) {

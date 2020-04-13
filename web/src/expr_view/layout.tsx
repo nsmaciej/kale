@@ -230,7 +230,7 @@ class ExprLayout implements ExprVisitor<Layout> {
         const layout = new Layout(
             (
                 // Need to use a <g> because exprProps type doesn't match motion.rect.
-                <SvgGroup {...this.exprProps(expr)} translate={this.t.blank.margin.topLeft}>
+                <SvgGroup {...this.exprProps(expr)} translate={this.t.blank.margin.topLeft} key="0">
                     <motion.rect
                         width={rectSize.width}
                         height={rectSize.height}
