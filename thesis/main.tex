@@ -30,9 +30,13 @@
 \usepackage{wrapfig}
 % Additional control over itemize.
 \usepackage{enumitem}
+% Show git version
+\usepackage[noheader]{gitver}
 % PDFs links. Must be loaded before geometry, but as late as possible.
 \usepackage{hyperref}
 \hypersetup{
+	pdftitle={Kale Visual Programming Environment},
+	pdfauthor={Maciej Goszczycki},
 	colorlinks,
 	linkcolor={red!50!black},
 	citecolor={red!50!black},
@@ -44,10 +48,9 @@
 \usepackage[os=win]{menukeys}
 
 
-\title{Kale - An attempt at an accessible and powerful visual programming
-environment}
+\title{Preliminary Report on the \\ Kale Visual Programming Environment}
 \author{Maciej Goszczycki - 16316981}
-\date{}
+\date{\versionBox}
 
 % Acronyms must be defined before the document starts.
 \DeclareAcronym{svg}{short=SVG, long=Scalable Vector Graphics}
@@ -90,7 +93,7 @@ environment}
 \begin{document}
 
 % Print the toc etc.
-\pagenumbering{alph}
+\pagenumbering{roman}
 \maketitle
 \tableofcontents
 \clearpage
