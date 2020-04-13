@@ -9,6 +9,7 @@ script:
   - cp -r dist vendor deploy
   - cp index.html deploy
   - touch deploy/.nojekyll
+  - cp ../thesis/16316981.pdf deploy/report.pdf
 
 deploy:
   provider: pages
