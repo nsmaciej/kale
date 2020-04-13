@@ -7,3 +7,13 @@
 Kale is an attempt at an accessible and powerful visual programming environment.
 
 ![Screenshot of Kale](kale.png)
+
+## Running Kale
+
+With npm installed.
+
+```
+cd web
+npm install
+npm start
+```
