@@ -4,45 +4,45 @@
 
 \subsection{Block based languages}
 
-The MIT Media lab's Scratch \cite{Maloney2010} is probably the most broadly
-successful block based programming language.
+The MIT Media lab's Scratch \citep{Maloney2010} is probably the most broadly
+successful block-based programming language.
 
 
 \subsection{Frame based editing}
 
 Another attempt at mitigating syntax errors has been made in the form of
-\say{frame based editing} \cite{Kolling2017}. Kolling et al. created a new
+\say{frame based editing}.  \citet{Kolling2017} created a new
 editing environment based around the concept of frames. In it, 
 
 \section{Technical Material}
 
 \subsection{Command Composition}
-Composing user commands is an important concern for any code editor. Chodarev
-\cite{Chodarev2016} discussed this in length, pointing out that casual
+Composing user commands is an important concern for any code editor.
+\citet{Chodarev2016} discussed this at length, pointing out that casual
 text-based editing environments rely on simple commands that operate only on
-elementary objects, manipulating single character at a time. However this
-approach is quite inefficient, leading leading apps to adopt a secondary set of
+elementary objects, manipulating a single character at a time. However this
+approach is quite inefficient, leading applications to adopt a secondary set of
 ad-hoc commands for performing specific combinations of operations and
-high-level objects (like deleting a word). One proposed alternative are
+high-level objects (like deleting a word). One proposed alternative is
 Vim-like shortcuts, where the user combines a smaller set of motion and action
 commands to work on high-level objects.
 
 \subsection{Proportional fonts}
-Studies like \citet{Campbell1981} and \citet{Beldie1983} have shown that
+Studies have shown that
 proportional (variable-pitch) fonts are
-faster to read than their \texttt{monospaced} counterparts. One notable exaple
+faster to read than their \texttt{monospaced} counterparts \citep{Campbell1981, Beldie1983}. One notable exaple
 of a proportional font being used typeset code is 
 
 \subsection{TypeScript}
 TypeScript is a structurally and gradually typed superset of JavaScript being
-developed at Microsoft \cite{Typescript}. It provides stronger type-safety
+developed at Microsoft \citep{Typescript}. It provides stronger type-safety
 guarantees than JavaScript and allows programs to use modern and experimental
 JavaScript features, such as class properties or optional chaining. 
 
 
 \subsection{React and related libraries}
 To ease the burden of manually manipulating the \ac{dom}, Kale uses the React
-\cite{React} JavaScript library. React is a self-proclaimed \say{JavaScript
+JavaScript library \citep{React}. React is a self-proclaimed \say{JavaScript
 library for making user interfaces} being developed by Facebook. It
 allows the program to write rendering
 code in a functional fashion, relying a \say{Virtual \ac{dom} to make \ac{dom}
@@ -57,4 +57,4 @@ Scratch for rendering their blocks interface.
 
 \subsection{Lisp}
 Lisp is a family of programming languages, known for it's regular syntax,
-homoiconicity and dynamic features.
+homoiconicity, and dynamic features.
