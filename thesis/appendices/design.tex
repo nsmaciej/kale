@@ -1,0 +1,28 @@
+\clearpage
+\chapter{Design exploration}
+
+\newcommand{\exploration}[2]{
+\begingroup
+\fboxsep=5mm
+\begin{figure}[h]
+	\centering
+	\includegraphics[
+		max width=\linewidth-20mm,
+		max height=0.25\textheight,
+		fbox]
+		{design/#1}
+	\caption{#2}
+\end{figure}
+\endgroup
+}
+
+\bigskip
+\exploration{explicit}{Explicit atomic expression underlines}
+% Figure is respecting 'here' too much.
+\bigskip
+\bigskip
+\bigskip
+\exploration{implicit}{Implicit atomic expression underlines}
+\exploration{line_breaking}{Exploring line breaking \ac{ui}}
+\exploration{algo}{Line breaking algorithm exploration}
+\exploration{dollar}{Exploring more compact notations}
