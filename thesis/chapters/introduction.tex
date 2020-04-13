@@ -21,21 +21,34 @@ runnable from within the interface.
 
 \section{Approach}
 
-%TODO: Write these out
-\begin{itemize}
-	\item Rough out design
-	\item Implement the rendering engine
-	\item Keyboard shortcuts
-	\item Drag and drop functionality
-	\item Working interpreter; which language?
-	\item Editor support for refactoring
-\end{itemize}
+The project consists of three major phases.
 
-%\section{Metrics}
+\subsection{Layout engine development}
+In this phase, the goal is to implement a functional layout engine. Capable
+of displaying static expressions and handling sufficiently complex code.
+
+\subsection{Establishing a workflow}
+The next phase consists of adding editing capabilities to the project.
+These will be very keyboard-driven, to easily test out new ways of editing
+code and find any major flaws.
+
+\subsection{Simplifying the workflow}
+Once completed the final goal will be to simplify the editing experience by
+presenting the different editing operations in easy-to-use and accessible ways,
+such as mouse or touch driven editing.
+
 \section{Project}
 
-As part of the development process I contributed patches to two different
-open-source projects, including adding \texttt{\#rrggbbaa} notation support
-to the Popmotion library \citep{github-pr-popmotion} and updating
-\say{styled-components} TypeScript typings to the a new major 5.0
-version \citep{github-pr-styled-components}.
+\begin{itemize}
+	\item The Kale visual programming environment can edit arbitrary expressions,
+	using both mouse-driven and keyboard-driven workflows.
+	
+	\item A simple interpreted programming language always testing the editing
+	experience on functioning examples.
+	
+	\item As part of the development process I contributed patches to two different
+	open-source projects, including adding \texttt{\#rrggbbaa} notation support
+	to the Popmotion library \citep{github-pr-popmotion} and updating
+	\say{styled-components} TypeScript typings to the a new major 5.0
+	version \citep{github-pr-styled-components}.
+\end{itemize}
