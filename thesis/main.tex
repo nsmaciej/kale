@@ -2,8 +2,6 @@
 % Some tricks stolen from Conor Reynolds
 \documentclass[11pt]{report}
 
-% Text generation.
-\usepackage{lipsum}
 % Fancy titles.
 \usepackage[sc, bf]{titlesec}
 % Moving images about. 'export' means swap out \includegraphics
@@ -20,8 +18,12 @@
 % Figures etc.
 \usepackage{graphicx}
 \graphicspath{{figures/}}
+% Force HERE floats.
+\usepackage{float}
 % Acronym support.
 \usepackage{acro}
+% Code listings.
+\usepackage{fancyvrb}
 % Extra appendix control; Add appendices to the toc and add a blank page.
 \usepackage[page, toc]{appendix}
 % Figure wrapping.
@@ -77,6 +79,13 @@ environment}
 % (even if it doesn't appear in the actual toc)
 \newcommand{\ak}[1]{\keys{\arrowkey{#1}}}
 
+% Based on
+% https://tex.stackexchange.com/questions/115479/insert-footnotes-with-href
+\usepackage{hyperref}
+\newcommand\fnurl[2]{%
+\href{#2}{#1}\footnote{\url{#2}}%
+}
+
 \begin{document}
 
 % Print the toc etc.
@@ -88,6 +97,9 @@ environment}
 % Start counting for real, now that we printed the toc.
 \setcounter{page}{1}
 \setlength\intextsep{0pt}
+
+% Handy verb.
+\DefineShortVerb{\|}
 
 \input{chapters/abstract}
 \input{chapters/introduction}

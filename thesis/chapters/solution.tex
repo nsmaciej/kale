@@ -1,32 +1,36 @@
 \chapter{The Solution}
 \section{Expression structure}
 
-Adapting programming language syntax to be easy to consistently manipulate
-visually requires simplifying the structure that is common in contemporary
-languages. Lisp is known for regular syntax, making it the perfect fit for
-Kale.
+Adapting programming language syntax to be elegant to display and easy to
+consistently manipulate requires radically simplifying the structure that is
+common in contemporary languages. Lisp\cite{McCarthy1960} is a family of
+languages is known for their regular syntax and homoiconicity, making Lisp the
+perfect fit for Kale%
+\footnote{In fact kale originally stood for Kick Ass Lisp Environment}. Each
+expression within Kale belongs to one of five categories.
 
-\lipsum[1-2]
+\newcommand{\exprfig}[1]{
+	\begin{figure}[H]
+		\includegraphics[scale=0.35, right]{structure/#1}
+	\end{figure}
+	\smallskip
+	\noindent
+}
 \subsection{Literals}
-\medskip
-\begin{figure}[h]
-	\includegraphics[scale=0.35, right]{structure/literal}
-\end{figure}
-\noindent
-\lipsum[1]
+\exprfig{literal}
+Kale relies on a very generic notion of literals. A literal is a string
+tagged with its type, which is an arbitrary string. In practice Kale currently
+makes use of only two types of literals: \say{text} and \say{number}, but the
+system is designed to handle any literal type that can be serialised into a
+string.
 
 \subsection{Variables}
-\medskip
-\begin{figure}[h]
-	\includegraphics[scale=0.35, right]{structure/variable}
-\end{figure}
-\noindent
-\lipsum[1]
+\exprfig{variable}
+Variables are simplest of Kale's expression types. Each variable is a string,
+encoding the variable name it represents. 
 
 \subsection{Function calls}
-\begin{wrapfigure}[2]{R}{0pt}
-	\includegraphics[scale=0.35]{structure/function}
-\end{wrapfigure}
+\exprfig{function}
 Are analogous to Lisp's S-expressions, but with a constraint that the first
 value must be a function identifier. While this makes higher-level functions
 %TODO: Quote the CL docs.
@@ -35,9 +39,7 @@ consistent navigation system, by removing the distinction between a function
 call expression being selected or just the function itself.
 
 \subsection{Spaces}
-\begin{wrapfigure}[2]{R}{0pt}
-	\includegraphics[scale=0.35]{structure/blank}
-\end{wrapfigure}
+\exprfig{blank}
 Because the fundamental way of moving around code in Kale is the currently
 selected expression, instead of a cursor another way of inserting new
 expressions must be provided. One way of achieving this might be different
@@ -50,9 +52,7 @@ new Kale expression by simply \say{filling in the blanks}, and simplify the
 command structure, by 
 
 \subsection{Expression lists}
-\begin{wrapfigure}[3]{R}{0pt}
-	\includegraphics[scale=0.35]{structure/list}
-\end{wrapfigure}
+\exprfig{list}
 In Lisp new scope is introduced by the \texttt{let} macro, while elegant, the
 complex, nesting level syntax is difficult to express well visually. Kale
 %TODO: cite the paper on scoping
@@ -125,8 +125,6 @@ shortcut indicators are also placed throughout Kale to help with discovering
 shortcuts for the Clipboard List or the Function Search menu.
 
 \section{High-level manipulation}
-
-\subsection{List merging}
 
 \subsection{Commenting}
 Comments in text-based programming are normally quite ad-hoc. It's up to the

@@ -1,6 +1,99 @@
 \chapter{Implementation}
 
 \section{Layout engine}
+
+\begin{figure}[H]
+\includegraphics[width=\linewidth]{debug_overlay}
+% No idea why I need to protect this
+% https://lookherefirst.wordpress.com/2008/04/28/citations-within-a-caption-in
+% -latex/
+\caption{Kale's internal layout information\protect\footnotemark}
+\end{figure}
+\footnotetext{The layout debug overlay is always available within Kale,
+to access it, right click any expression, then press \keys{\ctrl}
+(or \keys{\Alt} on macOS) to reveal a new hidden
+\say{Toggle the Debug Overlay} option}
+
+\subsection{Data structure}
+
+Intelligently laying out Kale expressions, enabling in-line editing and
+support drag and drop requires an advanced layout engine.
+Because parent expressions like function calls need access to their children's
+layout information to make layout decisions, it is not sufficient to simply
+treat Kale expressions as React components to be rendered. Instead the
+\texttt{Layout} class is responsible for keeping track of state required
+of each expression and \ac{svg} element by their parents.
+
+\begin{Verbatim}[samepage]
+export class Layout {
+    size: Size;
+    nodes: ReactNode[] = [];
+    underlines: Underline[] = [];
+    areas: Area[] = [];
+    inline = false;
+    isUnderlined = false;
+    expr: Expr | null = null;
+    partOfExpr: Expr | null = null;
+    text: Optional<TextProperties>;
+}
+\end{Verbatim}
+
+\newcommand{\field}[1]{\paragraph{\texttt{#1}}}
+\field{size} A key component of effectively laying out expressions is
+keeping track of their size. Note that since \ac{svg} elements have no
+inherent size, this is simply a suggestion of what the predicated size
+of a layout element will be.
+
+\field{nodes} The nodes array is responsible for aggregating all the
+\ac{svg} nodes rendered to up to this point.
+
+\field{underlines} Kale's inverted stack of underlines means individual
+expressions cannot know at what level and at what depth their underline will
+be rendered. Instead the underlines to be drawn at the first non-inline
+function calls are lazily kept track of. With each parent expression laid
+out, the level and the offset relative to the parent expression is updated.
+Once underlines are finally drawn.
+
+\begin{Verbatim}[samepage]
+export interface Underline {
+    level: number;
+    offset: number;
+    length: number;
+}
+\end{Verbatim}
+
+\field{areas}
+
+\field{inline}
+
+\field{isUnderlined} Not every inline layout element needs to create
+a new underline. Kale
+chooses to not underline atomic expressions like spaces, literals and variable
+names.
+
+\field{expr}
+
+\field{partOfExpr}
+
+\field{text}
+
+\subsection{Text metrics}
+
+Creating the \texttt{Layout} data structure for text elements requires
+information on the metrics of piece of rendered text. Unfortunately the current
+state of web text-metrics API leaves a lot to be desired. While
+the |<canvas>| element provides a seemingly comprehensive
+\fnurl{TextMetrics}
+{https://developer.mozilla.org/en-US/docs/Web/API/TextMetrics} API.
+In reality the vast majority of the metrics a system like Kale might
+be interested in consuming are currently only available in latest
+browsers behind experimental flags.
+
+
+Instead Kale takes the same approach as the Scratch Blocks \cite{ScratchBlocks}
+library, using \ac{svg}'s |getComputedTextLength| API and an invisible
+|<svg>| element onto which new pieces of text are rendered. 
+
 \subsection{Function layout}
 \subsection{Drag and drop areas}
 \section{Drag and drop}
