@@ -19,15 +19,15 @@ to access it, right click any expression, then press \keys{\ctrl}
 
 A key component of the layout engine is the notion of \say{inline} expressions.
 An inline expression is one which can be easily displayed inside another inline
-expression. In \autoref{fig:layout} inline expression are those with a
-\textcolor{blue}{blue} outline, those with a \textcolor{red}{red} outline are
+expression. In \autoref{fig:layout}, inline expressions are those with a
+\textcolor{blue}{blue} outline, while those with a \textcolor{red}{red} outline are
 non-inline.
 
 \hyperref[expr:literal]{Literals}, \hyperref[expr:blank]{blanks} and
 \hyperref[expr:variable]{variables} are always inline, while
 \hyperref[expr:list]{lists} are always non-inline.
 For \hyperref[expr:function]{function calls} a heuristic-driven algorithm is
-used to determine the inline status. The |isCallInline| algorithm, determines
+used to determine the inline status. The |isCallInline| algorithm determines
 a function call to be inline if:
 
 \begin{enumerate}[noitemsep]
