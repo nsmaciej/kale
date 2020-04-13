@@ -1,5 +1,4 @@
 \chapter{The Solution}
-
 \section{Expression structure}
 
 Adapting programming language syntax to be easy to consistently manipulate
@@ -7,8 +6,38 @@ visually requires simplifying the structure that is common in contemporary
 languages. Lisp is known for regular syntax, making it the perfect fit for
 Kale.
 
+\lipsum[1-2]
+\subsection{Literals}
+\medskip
+\begin{figure}[h]
+	\includegraphics[scale=0.35, right]{structure/literal}
+\end{figure}
+\noindent
+\lipsum[1]
+
+\subsection{Variables}
+\medskip
+\begin{figure}[h]
+	\includegraphics[scale=0.35, right]{structure/variable}
+\end{figure}
+\noindent
+\lipsum[1]
+
+\subsection{Function calls}
+\begin{wrapfigure}[2]{R}{0pt}
+	\includegraphics[scale=0.35]{structure/function}
+\end{wrapfigure}
+Are analogous to Lisp's S-expressions, but with a constraint that the first
+value must be a function identifier. While this makes higher-level functions
+%TODO: Quote the CL docs.
+somewhat harder to write (simillary to Common Lisp), it allows for a more
+consistent navigation system, by removing the distinction between a function
+call expression being selected or just the function itself.
 
 \subsection{Spaces}
+\begin{wrapfigure}[2]{R}{0pt}
+	\includegraphics[scale=0.35]{structure/blank}
+\end{wrapfigure}
 Because the fundamental way of moving around code in Kale is the currently
 selected expression, instead of a cursor another way of inserting new
 expressions must be provided. One way of achieving this might be different
@@ -20,15 +49,10 @@ placeholders used only during code completion). Spaces make it simple to create
 new Kale expression by simply \say{filling in the blanks}, and simplify the
 command structure, by 
 
-\subsection{Function calls}
-Are analogous to Lisp's S-expressions, but with a constraint that the first
-value must be a function identifier. While this makes higher-level functions
-%TODO: Quote the CL docs.
-somewhat harder to write (simillary to Common Lisp), it allows for a more
-consistent navigation system, by removing the distinction between a function
-call expression being selected or just the function itself.
-
 \subsection{Expression lists}
+\begin{wrapfigure}[3]{R}{0pt}
+	\includegraphics[scale=0.35]{structure/list}
+\end{wrapfigure}
 In Lisp new scope is introduced by the \texttt{let} macro, while elegant, the
 complex, nesting level syntax is difficult to express well visually. Kale
 %TODO: cite the paper on scoping
@@ -48,10 +72,6 @@ The expression list structure adheres to two invariants:
 	Nested lists are almost never intentional in Kale and enforcing this
 	invariant simplifies many commands.
 \end{itemize}
-
-\subsection{Literals}
-
-\subsection{Variables}
 
 \section{Drag and drop}
 
@@ -90,10 +110,10 @@ traversal, while~\ak{^} and~\ak{v}
 pre-order traverse only non-inline non-list expressions, mirroring the visual
 line motion a normal cursor might make.
 
+\needspace{8cm}
 \section{Discoverability}
-\setlength\intextsep{0pt}
-\begin{wrapfigure}[21]{R}{5.5cm}
-\includegraphics[width=5.5cm]{figures/menu.png}
+\begin{wrapfigure}[21]{r}{5.5cm}
+\includegraphics[width=5.5cm]{menu}
 \caption{Kale's Context Menu}
 \end{wrapfigure}
 Most commands can be accessed in at least three ways, through their dedicated
@@ -103,7 +123,6 @@ each editor menu-item shows the corresponding keyboard shortcut, and each
 shortcut can be triggered whilst the context menu is open. These keyboard
 shortcut indicators are also placed throughout Kale to help with discovering
 shortcuts for the Clipboard List or the Function Search menu.
-
 
 \section{High-level manipulation}
 
@@ -129,13 +148,15 @@ Disabling pieces of code is another common operation, most modern programming
 editors provide a single command to format a line or selection like
 \keys{\ctrl + /}. Kale's semantics driven selection mechanism neatly fits with
 the need to disable specific expressions. Using the
-\hyperref[cmd:disable]{\say{Disable}}~\keys{\textbackslash}
+\hyperref[cmd:disable]{\say{Disable}}~\keys{\textbackslash} expressions can be
+disabled, marking them to be ignored by the interpreter. This effectively
+eliminates any ambiguity that exists in text-only comments.
 
 \subsection{Clipboard list}
-\begin{wrapfigure}[13]{R}{0.pt}
-	\includegraphics[width=5.5cm]{figures/clipboard}
-	\caption{The Clipboard List}
-\end{wrapfigure}
+%\begin{wrapfigure}[13]{R}{0.pt}
+%	\includegraphics[width=5.5cm]{clipboard}
+%	\caption{The Clipboard List}
+%\end{wrapfigure}
 
 Relinquishing control over the elementary elements of a program might
 potentially make more high-level manipulation problematic. To remedy this
@@ -195,13 +216,13 @@ is still exists as
 \begin{figure}
 	\begin{minipage}{0.5\linewidth}
 	\centering
-	\includegraphics[width=\linewidth]{figures/clipboard.png}
+	\includegraphics[width=\linewidth]{clipboard}
 	\caption{TODO: Before smart space}
 	\end{minipage}
 	\qquad
 	\begin{minipage}{0.5\linewidth}
 	\centering
-	\includegraphics[width=\linewidth]{figures/clipboard.png}
+	\includegraphics[width=\linewidth]{clipboard}
 	\caption{TODO: After smart space}
 	\end{minipage}
 \end{figure}
@@ -237,7 +258,7 @@ only condition as more literal types get added}
 	\begin{enumerate}[noitemsep]
 		\item Every argument is also inline
 		\item The sum total length of the arguments is below 300 pixels
-		\item The hight of the expression tree of every argument is below 4
+		\item The hight of the expression tree of every argument is below four.
 	\end{enumerate}
 \end{itemize}
 

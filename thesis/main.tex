@@ -2,17 +2,24 @@
 % Some tricks stolen from Conor Reynolds
 \documentclass[11pt]{report}
 
+% Text generation.
+\usepackage{lipsum}
+% Fancy titles.
+\usepackage[sc, bf]{titlesec}
+% Moving images about. 'export' means swap out \includegraphics
+\usepackage[export]{adjustbox}
 % Add url support for web pages etc.
 \usepackage[square, numbers]{natbib}
 % For custom spacing
 \usepackage{setspace}
 \setstretch{1.15}
+% Hack to get wrap fig to behave nicely near bottom of a page
+\usepackage{needspace}
 % For the \say command
 \usepackage{dirtytalk}
 % Figures etc.
 \usepackage{graphicx}
-% Draft watermark.
-\usepackage{draftwatermark}
+\graphicspath{{figures/}}
 % Acronym support.
 \usepackage{acro}
 % Extra appendix control; Add appendices to the toc and add a blank page.
@@ -34,6 +41,7 @@
 % Menus and menu keys. Recommended to load late.
 \usepackage[os=win]{menukeys}
 
+
 \title{Kale - An attempt at an accessible and powerful visual programming
 environment}
 \author{Maciej Goszczycki - 16316981}
@@ -45,82 +53,51 @@ environment}
 \DeclareAcronym{dom}{short=DOM, long=Document Object Model}
 \DeclareAcronym{jsx}{short=JSX, long=JavaScript XML}
 
+% Don't clear page.
+\titleclass{\chapter}{straight}
+% Inspired by Conor's thesis.
+\titleformat
+	{\chapter}
+	% Shape.
+	[display]
+	% Format
+	{\huge\bfseries}
+	% Label
+	{}
+	% Sep
+	{0pt}
+	% Before
+	{\Huge}
+	% After
+	[\vspace{-20pt}\rule{\textwidth}{0.3pt}]
+ % The starred version means the par isn't indented
+\titlespacing*{\chapter}{0pt}{0pt}{10pt}
+
+% This must be defined before TOC, because the shortcut appendix uses it
+% (even if it doesn't appear in the actual toc)
+\newcommand{\ak}[1]{\keys{\arrowkey{#1}}}
+
 \begin{document}
 
 % Print the toc etc.
 \pagenumbering{alph}
 \maketitle
-% This must be defined before TOC, because the shortcut appendix uses it
-% (even if it doesn't appear in the actual toc)
-\newcommand{\ak}[1]{\keys{\arrowkey{#1}}}
 \tableofcontents
 \clearpage
 \pagenumbering{arabic}
-
-% Do not clear page after every chapter
-\begingroup
-\let\clearpage\relax
 % Start counting for real, now that we printed the toc.
 \setcounter{page}{1}
+\setlength\intextsep{0pt}
 
-\chapter{Abstract}
-Contemporary text-based programming languages require the programer to be
-constantly vigilant against syntax errors. This affects both novice and
-experienced programmers. One obvious way of eliminating syntax errors is
-get rid of text. While there exist many visual programming environments, many
-eschew powerful editing capabilities for being beginner friendly.
-This project explores how a Lisp-based visual programming environment might be
-used to mitigate syntax issues while remaining attractive to both novices and
-professional programmers.
-
+\input{chapters/abstract}
 \input{chapters/introduction}
-
 \input{chapters/technical_background}
-
 \input{chapters/problem}
-
 \input{chapters/solution}
-
-\chapter{Implementation}
-
-\section{Layout engine}
-\subsection{Function layout}
-\subsection{Drag and drop areas}
-\section{Drag and drop}
-\section{Data flow}
-\section{Expression data structure}
-
-\chapter{Evaluation}
-
-\begin{itemize}[noitemsep]
-	\item Kale good, text editing bad.
-	\item Hopefully a sneaky user study before Sunday.
-	\item It works and almost never crashes horribly
-\end{itemize}
-
-\chapter{Conclusion}
-\section{Feasibility of visual programming environments}
-\begin{itemize}[noitemsep]
-	\item Seems like most programs can be written and edited well
-	\item The demo program
-\end{itemize}
-
-\section{Future Work}
-
-\begin{itemize}[noitemsep]
-	\item Better drag and drop - inserting at the end of expressions
-	\item Value of structured underlines?
-	\item User studies and feedback
-	\item Debugging capabilities
-	\item Explore more the high-level operations afforded by treating functions as
-	fundamental unit of organising files.
-	%TODO: Right now there is no save at all, fix that.
-	\item Ability to work on multiple projects
-\end{itemize}
-
-% Ends the clearpage re-definition group
-\endgroup
-\clearpage
+\input{chapters/implementation}
+\input{chapters/evaluation}
+\input{chapters/conclusion}
+\input{chapters/future_work}
 
 % Make the reference ragged right.
 \renewcommand*{\bibfont}{\raggedright}
