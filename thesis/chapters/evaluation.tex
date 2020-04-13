@@ -1,7 +1,69 @@
 \chapter{Evaluation}
 
-\begin{itemize}[noitemsep]
-	\item Kale good, text editing bad.
-	\item Hopefully a sneaky user study before Sunday.
-	\item It works and almost never crashes horribly
-\end{itemize}
+With the currently implemented features, Kale forms a completely
+usable visual programming environment. Users are able to create
+arbitrary expressions, and manipulate them with relative ease, without
+every encountering a single syntax error. Kale is stable and the layout
+algorithm is quite efficient.
+
+\section{Editing}
+Many features work in tandem to make the editing experience as complete as it
+is now. Drag and drop is simple to use, supports touch-screen devices and
+common idioms like pressing~\keys{\ctrl} to copy instead of move an expression.
+Most features can be accessed in variety of ways, catering to an extensive
+set of skill levels, the 
+
+
+\section{Editor features}
+\begin{wrapfigure}[11]{r}{8cm}
+\includegraphics[width=8cm]{dark_ui}	
+\caption{Kale Dark theme}
+\end{wrapfigure}
+
+Kale provides a substantial set of features one would expect from a modern
+programming editor. Auto complete suggestions are provided when typing
+function expressions. Functions can be quickly opened or created by using an
+easily accessible fuzzy matching search box. The editor is available in both
+Light and Dark themes, to match the taste of the user and the \ac{ui} is
+reasonably polished.
+
+\section{User interface}
+On touch-screen devices, buttons and menus follow
+\fnurl{Apple Human Interface Guidelines}
+{https://developer.apple.com/design/human-interface-guidelines/ios/visual-design/adaptivity-and-layout/}
+44pt x 44pt tappable area recommendations. By using the HTML
+\fnurl{Pointer Events}{https://www.w3.org/TR/pointerevents/} API,
+all reasonable input devices are support for drag and drop, including dragging
+multiple expression simultaneously should the user so desire.
+
+\section{Workflow}
+Modern editors often provide a tabbing system, to allow
+users to work on several files at once. While Kale's editing experience
+is completely function focused, a single function stack makes it hard
+to develop larger projects. A tabbing system, switching between several
+different function stacks would greatly help scaling Kale to work on bigger,
+more challenging projects.
+
+\section{Kale language}
+The Kale language right now really serves as a placeholder for a more complete
+programming language Kale might operate on.
+It is sufficient for demonstrating the broader editing experience, but is somewhat
+hindered by the fact that Kale does expose an interface to set function parameters
+on user-defined functions. Developing the language more might further help to
+demonstrate the unique features Kale can provide. Even better, the Kale language
+could instead consist of a simple translation layer over an existing, established
+language, helping to broaden the appeal of the new editing paradigm. 
+
+
+\section{Implementation}
+React proved to be excellent choice as the \ac{ui} library. While there exists a
+certain impedance mismatch between the Kale layout algorithm and React's programming
+style, in practice this wasn't much of an issue, given how custom Kale's layout
+algorithm is. Typescript and React are mature technologies that made much of
+the rapid iteration essential to developing Kale into the editor it is today possible.
+
+%TODO: Cite this all.
+An earlier version of Kale was written in the Rust programming language. Rust is a
+modern, powerful and safe programming language, which recently gained a WebAssembly
+compilation target. Unfortunately Rust's immature web-library ecosystem,
+combined with its strict memory model made it hard to implement a complete editor in.

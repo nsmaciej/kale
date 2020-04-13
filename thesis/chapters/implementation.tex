@@ -1,4 +1,3 @@
-\clearpage
 \chapter{Implementation}
 
 \section{Layout engine}
@@ -155,9 +154,10 @@ library, using \ac{svg}'s |getComputedTextLength| API and an invisible
 \caption{The expression from \autoref{fig:layout} showing drag and drop
 insertion slots.}
 \end{wrapfigure}
-Diagram.
-
-
+The area system is used to create drag and drop areas in-between expressions.
+Each area keeps track of its related expression and whether dropping an
+expression into it should cause it to be added as a sibling or a child
+of that expression.
 
 
 \section{Expression IDs}
