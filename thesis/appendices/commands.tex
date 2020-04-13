@@ -1,6 +1,6 @@
 \chapter{Kale commands}
 \newcommand{\shortcut}[3]{\section[#1]{#1 \hfill #2}\label{cmd:#3}}
-\newcommand{\pskip}[1]{{\parskip=1em\par\noindent #1}}
+\newcommand{\pskip}[1]{{\bigskip\par\noindent #1}}
 
 Commands different by only a shift key \keys{\shift} are closely
 related. Commands that change the selection are usually not listed in the
@@ -97,6 +97,8 @@ created.
 If an editor with a given function is already opened, no new editor is created,
 instead focus is moved to the closest editor displaying that function.
 
+\pskip{This command can also be triggered by middle-clicking the expression.}
+
 \shortcut{New Argument After / Before}{\keys{I} / \keys{\shift + I}}{new_arg}
 Creates a new sibling space before or after the currently selected
 expression. This is command largely superseded by the
@@ -114,7 +116,16 @@ Disable the currently selected expression, enabling it if it is already
 disabled. Spaces cannot be disabled.
 
 \shortcut{Make a Variable...}{\keys{V}}{make_var}
+Replaces the currently selected expression with a new variable expression, then
+performs the \hyperref[cmd:edit]{\say{Edit}}~\keys{\return} command.
+
 \shortcut{Make a String...}{\keys{G}}{make_string}
+Replaces the currently selected expression with a new string literal
+expression, then
+performs the \hyperref[cmd:edit]{\say{Edit}}~\keys{\return} command.
+
 \shortcut{Turn into a Function Call}{\keys{F}}{make_function}
+
+
 \shortcut{Replace the Parent}{\keys{\shift + F}}{replace_parent}
 %TODO: Document these

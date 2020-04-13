@@ -1,8 +1,9 @@
+\clearpage
 \chapter{Implementation}
 
 \section{Layout engine}
 
-\begin{figure}[H]
+\begin{figure}[t]
 \includegraphics[width=\linewidth]{debug_overlay}
 % No idea why I need to protect this
 % https://lookherefirst.wordpress.com/2008/04/28/citations-within-a-caption-in
@@ -52,7 +53,7 @@ treat Kale expressions as React components to be rendered. Instead the
 of each expression and \ac{svg} element by their parents.
 
 \begin{Verbatim}[samepage]
-export class Layout {
+class Layout {
     size: Size;
     nodes: ReactNode[] = [];
     underlines: Underline[] = [];
@@ -77,24 +78,35 @@ of a layout element will be.
 \field{nodes} The nodes array is responsible for aggregating all the
 \ac{svg} nodes rendered to up to this point.
 
-\field{underlines} Kale's inverted stack of underlines means individual
-expressions cannot know at what level and at what depth their underline will
-be rendered. Instead the underlines to be drawn at the first non-inline
-function calls are lazily kept track of. With each parent expression laid
-out, the level and the offset relative to the parent expression is updated.
-Once underlines are finally drawn.
-
+\setlength{\columnsep}{5ex}
+\begin{wrapfigure}[7]{R}{30ex}
+\vspace*{-\baselineskip}
 \begin{Verbatim}[samepage]
-export interface Underline {
+interface Underline {
     level: number;
     offset: number;
     length: number;
 }
 \end{Verbatim}
+\caption{The underline interface}
+\end{wrapfigure}
+\field{underlines} Kale's inverted stack of underlines means individual
+expressions cannot know at what level and at what depth their underline will
+be rendered. Instead the underlines to be drawn at the first non-inline
+function call parent are lazily kept track of during the layout process. With
+each parent expression laid
+out, the level and the offset relative to the parent expression is updated.
+Once underlines are finally drawn, the stack is cleared.
 
-\field{areas}
+\field{areas} Expression areas are the aggregation of all the layout element
+data collected up this a certain point in the rendering process. It has a
+variety of uses throughout Kale including, drag and drop hit-testing and inline
+data used for the~\ak{^} and~\ak{v} traversal. Kale supports two kinds of
+areas: expression areas and \say{gap} areas used for implementing
+\hyperref[impl:dnd]{drag and drop}.
 
-\field{inline}
+\field{inline} Stores the inline status of an layout element as explained
+above.
 
 \field{isUnderlined} Not every inline layout element needs to create
 a new underline. Kale
@@ -103,9 +115,16 @@ names.
 
 \field{expr}
 
-\field{partOfExpr}
+\field{partOfExpr} Drag and drop \hyperref[layout:areas]{gap areas} for most
+expressions allow inserting a new dropped expression between sibling
+expressions. However, when using drag and drop over function call expressions
+it is desirable to be able to create new \emph{child} expressions. This field
+complements the |expr| field, and allows the function calls's text to have a
+drop areas where one normally would not exist.
 
-\field{text}
+\field{text} Creating the \hyperref[soln:field_editing]{field editor} requires
+re-creating the same text style as used during layout, this field is set by the
+text layout methods to keep track of the exact text-styling used.
 
 \subsection{Text metrics}
 
@@ -115,16 +134,49 @@ state of web text-metrics API leaves a lot to be desired. While
 the |<canvas>| element provides a seemingly comprehensive
 \fnurl{TextMetrics}
 {https://developer.mozilla.org/en-US/docs/Web/API/TextMetrics} API.
-In reality the vast majority of the metrics a system like Kale might
-be interested in consuming are currently only available in latest
-browsers behind experimental flags.
+In reality the vast majority of the metrics systems like Kale might
+be interested in consuming are currently only available in the latest
+browsers, behind experimental flags.
 
 
 Instead Kale takes the same approach as the Scratch Blocks \cite{ScratchBlocks}
 library, using \ac{svg}'s |getComputedTextLength| API and an invisible
 |<svg>| element onto which new pieces of text are rendered. 
 
-\subsection{Drag and drop areas}
+
+
 \section{Drag and drop}
-\section{Data flow}
-\section{Expression data structure}
+\label{impl:dnd}
+\begin{wrapfigure}[6]{r}{0pt}
+\includegraphics[width=7cm]{dnd_gaps}
+\caption{The expression from \autoref{fig:layout} showing drag and drop
+insertion slots.}
+\end{wrapfigure}
+Diagram.
+
+
+
+
+\section{Expression IDs}
+
+Mention the effect on the selection across editors.
+
+
+
+
+\section{Workspace}
+
+Mention the undo stack.
+
+
+
+
+\section{Deployment}
+Any code committed to Kale's Github repository%
+\footnote{\url{https://github.com/mgoszcz2/kale}}
+is automatically built by the Travis \ac{ci} service, which runs tests, bundles
+and optimises code using
+\href{https://webpack.js.org/}{webpack}
+and deploys the resulting site to
+\href{https://pages.github.com/}{Github Pages}%
+.
