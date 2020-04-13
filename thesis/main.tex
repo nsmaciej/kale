@@ -30,6 +30,8 @@
 \usepackage{wrapfig}
 % Additional control over itemize.
 \usepackage{enumitem}
+% For callout boxes
+\usepackage{mdframed}
 % PDFs links. Must be loaded before geometry, but as late as possible.
 \usepackage{hyperref}
 \hypersetup{
@@ -45,6 +47,16 @@
 % Menus and menu keys. Recommended to load late.
 \usepackage[os=win]{menukeys}
 
+\definecolor{calloutbg}{HTML}{fceda1}
+\definecolor{calloutborder}{HTML}{C7B092}
+\newenvironment{callouttip}[1]{
+    \begin{mdframed}[style=titlecallout,
+        linecolor=calloutborder, backgroundcolor=calloutbg,
+        frametitle={#1}]
+}{
+	\medskip
+    \end{mdframed}
+}
 
 \title{Preliminary Report on the \\ Kale Visual Programming Environment}
 \author{Maciej Goszczycki - 16316981}
@@ -97,8 +109,31 @@
 
 % Print the toc etc.
 \pagenumbering{roman}
+
+\begin{callouttip}
+\normalfont{The latest version of this report can be found at}
+\url{https://kale.maciej.ie/report.pdf}
+\end{callouttip}
 \tableofcontents
 \clearpage
+\section*{Declaration}
+\vspace{0.10\paperheight}
+I hereby certify that this material, which I now submit for assessment
+on the program of study as part of B.Sc Computer Science and Software
+Engineering qualification,
+is entirely my own work and has not been taken from the work of others 
+save and to the extent that such work has been cited and acknowledged
+within the text of my work. 
+
+\vspace{0.10\paperheight}
+\noindent I hereby acknowledge and accept that this thesis may be distributed to
+future final year students, as an example of the standard expected of
+final year projects.
+\vspace{0.20\paperheight}
+
+{Signed:\hfill Date: Monday 13th April 2020}
+\clearpage
+
 \pagenumbering{arabic}
 % Start counting for real, now that we printed the toc.
 \setcounter{page}{1}
