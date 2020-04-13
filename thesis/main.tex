@@ -87,10 +87,12 @@
 % https://tex.stackexchange.com/questions/115479/insert-footnotes-with-href
 \usepackage{hyperref}
 \newcommand\fnurl[2]{%
-\href{#2}{#1}\footnote{\url{#2}}%
+	\href{#2}{#1}\footnote{\url{#2}}%
 }
 
 \begin{document}
+
+\input{titlepage}
 
 % Print the toc etc.
 \pagenumbering{roman}
