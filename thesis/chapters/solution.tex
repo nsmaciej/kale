@@ -8,12 +8,12 @@
 
 \section{Expression structure}
 
-Adapting programming language syntax to be elegant to display and easy to
-consistently manipulate requires radically simplifying the structure that is
+Adapting programming language syntax, to be elegant to display and easy to
+consistently manipulate, requires radically simplifying the structure that is
 common in contemporary languages. Lisp \citep{McCarthy1960} is a family of
-languages known for their regular syntax and homoiconicity, making Lisp the
+languages known for their regular syntax and homoiconicity, making it a
 perfect fit for Kale.%
-\footnote{In fact kale originally stood for Kick Ass Lisp Environment}
+\footnote{In fact Kale originally stood for Kick Ass Lisp Environment}
 Each expression within Kale belongs to one of five categories.
 
 \newcommand{\exprfig}[1]{
@@ -30,7 +30,7 @@ Each expression within Kale belongs to one of five categories.
 \label{expr:literal}
 \exprfig{literal}
 Kale relies on a very generic notion of literals. A literal is a string
-tagged with its type, which is an arbitrary string. In practice Kale currently
+tagged with its type, which is an arbitrary string. In practice, Kale currently
 makes use of only two types of literals: \say{text} and \say{number}, but the
 system is designed to handle any literal type that can be serialised into a
 string.
@@ -45,34 +45,35 @@ encoding the variable name it represents.
 \subsection{Function calls}
 \label{expr:function}
 \exprfig{function}
-Are analogous to Lisp's S-expressions, but with a constraint that the first
+Are analogous to Lisp's S-expressions but with a constraint that the first
 value must be a function identifier. While this makes higher-level functions
 %TODO: Quote the CL docs.
 somewhat harder to write (simillary to Common Lisp), it allows for a more
-consistent navigation system, by removing the distinction between a function
+consistent navigation system by removing the distinction between a function
 call expression being selected or just the function itself.
 
 \subsection{Spaces}
 \label{expr:blank}
 \exprfig{blank}
 Because the fundamental way of moving around code in Kale is the currently
-selected expression, instead of a cursor another way of inserting new
+selected expression, instead of a cursor, another way of inserting new
 expressions must be provided. One way of achieving this might be different
- command, like \say{Paste after this expression}. Kale
+commands, like \say{Paste after this expression}, but this would
+significantly complicate Kale's command structure. Kale
 provides insertion points using spaces (or \say{blanks}).
-Space are similar to Snippet Placeholders used in modern editors,
+Spaces are similar to Snippet Placeholders used in modern editors,
 but are actually part of the expression tree (instead of being simple ephemeral
 placeholders used only during code completion). Spaces make it simple to create
-new Kale expression by simply \say{filling in the blanks}, and simplify the
-command structure, by 
+new Kale expression by simply \say{filling in the blanks} and simplify the
+command structure.
 
 \subsection{Expression lists}
 \label{expr:list}
 \exprfig{list}
-In Lisp new scope is introduced by the \texttt{let} macro, while elegant, the
-complex, nesting level syntax is difficult to express well visually. Kale
+In Lisp, new scope is introduced by the \texttt{let} macro, while elegant, the
+complex nesting level syntax is difficult to express well visually. Kale
 %TODO: cite the paper on scoping
-attempts to make scoping more visible, while also providing a visually clean
+attempts to make scoping more visible while also providing a visually clean
 way of representing the \texttt{progn} (also called \texttt{do}) macro,
 through the expression list structure.
 
@@ -82,21 +83,23 @@ The expression list structure adheres to two invariants:
 	fewer expressions, the list is automatically removed, leaving its content
 	in its place. In Lisp this might be expressed as
 	$\texttt{(progn a)} \equiv \texttt{a}$.
-	\item A list's direct children cannot be lists themselves. Immediate child
-	list's contents are merged into their parent list. This is because
+	\item A list's direct children cannot be lists themselves. Nested list's
+	contents are merged into their parent list. This is because
 	$\texttt{(progn (progn a b) c)} \equiv \texttt{(progn a b c)}$.
 	Nested lists are almost never intentional in Kale and enforcing this
 	invariant simplifies many commands.
 \end{itemize}
 
-Each list introduces a new scope 
+%TODO: Finish this sentance
+Each list introduces a new lexical scope, 
 
 \clearpage
 \section{Drag and drop}
 
-One of the main changes Kale introduces compared to a normal Lisp editor is
-drag and drop. It lets novice users effectively manipulate Kale programs,
-without prior knowledge of commands like copy and paste. Kale distinguished
+One of the main changes Kale introduces, compared to a normal Lisp editor, is
+drag and drop. It lets novice users effectively manipulate Kale programs
+without prior knowledge of commands like copy and paste. Kale distinguishes
+%TODO: More
 between two types of drag and drop: Replacement and Insertion. 
 
 \section{Layout}
@@ -110,20 +113,21 @@ user using drag and drop.
 
 Because Kale does not operate on elementary text elements, even the most
 basic
-commands can be much higher-level than ordinary editors, since instead of a
+commands can be much higher-level than ordinary editors since instead of a
 current cursor position, Kale operates on the selected expression. Even so,
 figuring out the correct set of commands proved to be a challenge.
 
-A good example of the difficulties that arise are the arrow key
-commands~\ak{^}~\ak{v}~\ak{<}~\ak{>}. Initially these were implemented as
+A good example of the difficulties that arise in common text editors
+are the arrow key commands~\ak{^}~\ak{v}~\ak{<}~\ak{>}.
+Initially, these were implemented as
 fundamental tree operations: \say{Select parent}, \say{Select first child},
 \say{Select left sibling}, and \say{Select right sibling} respectively.
 While logical, these operations were unintuitive to every user
-Kale was shown to, including the author. In the end \say{smart selection} was
+Kale was shown to, including the author. In the end \textbf{Smart Selection} was
 implemented, where~\ak{<} and~\ak{>} use the pre-order%
 %
 \footnote{The pre-order traversal algorithm traverses the parent node first,
-then traverses the left and right tree by calling the itself on each.}
+then traverses the left and right tree by calling itself on each.}
 %
 traversal, while~\ak{^} and~\ak{v}
 pre-order traverse only non-inline non-list expressions, mirroring the visual
@@ -160,8 +164,8 @@ line motion a normal cursor might make.
 \includegraphics[width=5.5cm]{menu}
 \caption{Kale's Context Menu}
 \end{wrapfigure}
-Most commands can be accessed in at least three ways, through their dedicated
-keyboard shortcut, the context menu and the top-level editor menu. In case the
+Most commands can be accessed in at least three ways: through their dedicated
+keyboard shortcut, the context menu, and the top-level editor menu. In case the
 user is keen on using the keyboard shortcuts but forgot a specific command,
 each editor menu-item shows the corresponding keyboard shortcut, and each
 shortcut can be triggered whilst the context menu is open. These keyboard
@@ -174,7 +178,7 @@ shortcuts for the Clipboard List or the Function Search menu.
 \section{High-level manipulation}
 
 \subsection{Commenting}
-Comments in text-based programming are normally quite ad-hoc. It's up to the
+Comments in text-based programming are normally quite ad-hoc. It is up to the
 reader to establish which comment applies to which expression. This problem
 is exacerbated by using comments to selectively disable pieces of code. Kale
 addresses both of these problems elegantly.
@@ -182,19 +186,19 @@ addresses both of these problems elegantly.
 Similar to to other visual
 %TODO: Which ones?
 programming environments, Kale allows assigning comments directly to specific
-expressions, making them completely unambiguous and leaving it to the layout
-engine to figure out where a comment should appear. However, in the future rich or
-formatted text might be used also. Presently every expression can be commented.
-However comments on spaces are displayed inside the space \say{bubble}, while
+expressions, making them completely unambiguous and leaving it up to the layout
+engine to figure out where each comment should appear. However, in the future, rich or
+formatted text might be used also. Presently, every expression can be commented on.
+However, comments on spaces are displayed inside the space's \say{bubble}, while
 comments on literals are not directly displayed, instead being accessible
-inside a special comment tooltip.
+thought a special comment tooltip.
 
-Disabling pieces of code is another common operation, most modern programming
+Disabling pieces of code is another common operation. Most modern programming
 editors provide a single command to format a line or selection like
 \keys{\ctrl + /}. Kale's semantics driven selection mechanism neatly fits with
 the need to disable specific expressions. Using the
-\hyperref[cmd:disable]{\say{Disable}}~\keys{\textbackslash} expressions can be
-disabled, marking them to be ignored by the interpreter. This effectively
+\hyperref[cmd:disable]{\say{Disable}}~\keys{\textbackslash} command, expressions can
+be easily disabled, marking them to be ignored by the interpreter. This effectively
 eliminates any ambiguity that exists in text-only comments.
 
 \needspace{7cm}
@@ -206,7 +210,7 @@ eliminates any ambiguity that exists in text-only comments.
 \end{wrapfigure}
 
 Relinquishing control over the elementary elements of a program might
-potentially make more high-level manipulation problematic. To remedy this
+potentially make more high-level manipulation problematic. To remedy this,
 Kale needed to provide a better way of transforming expressions. Andrew Blinn's
 Fructure \cite{Fructure} environment tackles this by letting user colour
 expressions, then
@@ -215,8 +219,8 @@ use one of the previously coloured ones. While imbued with a certain sense of
 mathematical purity, this approach deals poorly with more complex refactorings
 and requires colour vision.
 
-Kale's solution to this comes in the form of the \textbf{Clipboard Stack}. The
-Clipboard Stack is a stack of expressions, shown on the right-hand side of the
+Kale's solution to this problem comes in the form of the \textbf{Clipboard Stack}. The
+clipboard stack is a stack of expressions, shown on the right-hand side of the
 screen. Kale provides a \hyperref[cmd:copy]{\say{Copy}}~\keys{C} command, which
 copies the currently
 selected expression to the top of the clipboard stack. To facilitate more
@@ -235,10 +239,10 @@ expression by using one of nine \hyperref[cmd:paste]{\say{paste}}~
 to the right of each expression it would paste.
 
 Sometimes it is beneficial to be able to paste the same expression multiple
-times. Expression on the clipboard stack can be pinned using the \emph{Pin}
-button. Pinned expression are not removed the stack when their corresponding
-paste command is invoked. They are also not cleared by the \say{Clear All}
-button.
+times. Expression on the clipboard stack can be pinned using the Pin-shaped
+button. Pinned expressions are not removed from the stack when their
+corresponding paste command is invoked.
+They are also not cleared by the \say{Clear All} button.
 
 \subsection{Smart space}
 %TODO: Show a sequence explaining how this works.
@@ -252,22 +256,25 @@ new sibling}, and \say{Create new line}. However this proved unintuitive as
 unlike classical punctuation, the keys for these operations did not correspond
 to any character on the screen, thus making it hard to memorise the shortcuts.
 
-The solution Kale is using is named \textbf{Smart Space}. Smart space is a
+Kale's solution to this problem is the \textbf{Smart Space}. Smart space is a
 high-level operation that attempts to perform a reasonable action no matter the
 selection.
+
+\begin{samepage}
 \begin{itemize}[noitemsep]
 	\item If a function is selected, create a new child space in the first
 argument.
 	\item If a space is selected, use the
 	\hyperref[cmd:up_down]{\say{Move Up}}~\keys{\shift + P} operation.
-	\item Otherwise create a new sibling space to the right of the selection, for
+	\item Otherwise, create a new sibling space to the right of the selection, for
 example creating a new argument.
 \end{itemize}
+\end{samepage}
 
-Note that this does not cover \say{Create new line} operation, so this option
-is still exists as
+Note that this does not cover the \say{Create new line} operation, so this
+option still exists in the form of
 \hyperref[cmd:new_line]{\say{New Line Below}}~\keys{N} /
-\hyperref[cmd:new_line]{\say{New Line Below}}~\keys{\shift + N}.
+\hyperref[cmd:new_line]{\say{New Line Below}}~\keys{\shift + N} commands.
 
 %\begin{figure}
 %	\begin{minipage}{0.5\linewidth}

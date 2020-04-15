@@ -10,8 +10,8 @@
 \caption{Kale's internal layout information\protect\footnotemark}
 \label{fig:layout}
 \end{wrapfigure}
-\footnotetext{The layout debug overlay is always available within Kale,
-to access it, right click any expression, then press \keys{\ctrl}
+\footnotetext{The layout debug overlay is always available within Kale.
+To access it, right click any expression, then press \keys{\ctrl}
 (or \keys{\Alt} on macOS) to reveal a new hidden
 \say{Toggle the Debug Overlay} option.}
 \medskip
@@ -90,7 +90,7 @@ interface Underline {
 \caption{The underline interface}
 \end{wrapfigure}
 \field{underlines} Kale's inverted stack of underlines means individual
-expressions cannot know at what level and at what depth their underline will
+expressions cannot know at what level and depth their underline will
 be rendered. Instead the underlines to be drawn at the first non-inline
 function call parent are lazily kept track of during the layout process. With
 each parent expression laid
@@ -98,13 +98,13 @@ out, the level and the offset relative to the parent expression is updated.
 Once underlines are finally drawn, the stack is cleared.
 
 \field{areas} Expression areas are the aggregation of all the layout element
-data collected up this a certain point in the rendering process. It has a
+data collected up to a certain point in the rendering process. It has a
 variety of uses throughout Kale including, drag and drop hit-testing and inline
 data used for the~\ak{^} and~\ak{v} traversal. Kale supports two kinds of
 areas: expression areas and \say{gap} areas used for implementing
 \hyperref[impl:dnd]{drag and drop}.
 
-\field{inline} Stores the inline status of an layout element as explained
+\field{inline} Stores the inline status of a layout element as explained
 above.
 
 \field{isUnderlined} Not every inline layout element needs to create
@@ -119,24 +119,24 @@ optionally an underline.
 
 \field{partOfExpr} Drag and drop \hyperref[layout:areas]{gap areas} for most
 expressions allow inserting a new dropped expression between sibling
-expressions. However, when using drag and drop over function call expressions
+expressions. However, when using drag and drop over function call expressions,
 it is desirable to be able to create new \emph{child} expressions. This field
 complements the |expr| field, and allows the function calls's text to have a
 drop areas where one normally would not exist.
 
 \field{text} Creating the \hyperref[soln:field_editing]{field editor} requires
-re-creating the same text style as used during layout, this field is set by the
+re-creating the same text style as used during layout. This field is set by the
 text layout methods to keep track of the exact text-styling used.
 
 \subsection{Text metrics}
 
 Creating the \texttt{Layout} data structure for text elements requires
-information on the metrics of piece of rendered text. Unfortunately the current
-state of web text-metrics API leaves a lot to be desired. While
+information on the metrics of piece of rendered text. Unfortunately, the current
+state of web text-metrics APIs leaves a lot to be desired. While
 the |<canvas>| element provides a seemingly comprehensive
 \fnurl{TextMetrics}
-{https://developer.mozilla.org/en-US/docs/Web/API/TextMetrics} API.
-In reality the vast majority of the metrics systems like Kale might
+{https://developer.mozilla.org/en-US/docs/Web/API/TextMetrics} API,
+the reality is the vast majority of the metrics systems like Kale might
 be interested in consuming are currently only available in the latest
 browsers, behind experimental flags.
 
@@ -155,9 +155,9 @@ library, using \ac{svg}'s |getComputedTextLength| API and an invisible
 insertion slots.}
 \end{wrapfigure}
 The area system is used to create drag and drop areas in-between expressions.
-Each area keeps track of its related expression and whether dropping an
-expression into it should cause it to be added as a sibling or a child
-of that expression.
+Each area keeps track of its related expression, and whether dropping an
+expression on it should cause the dropped expression to be added as a
+sibling or a child of that expression.
 
 
 \section{Expression IDs}
@@ -165,7 +165,7 @@ Originally reference identity was used for handling the selection and edition
 functionality. However, this presented a challenge when more than one editor
 was opened. Editing an expression would change its reference identity,
 invalidating the current selection in other editors displaying the same
-function. To remedy this, each expression is now allocated a unique ID number.
+function. To remedy this, each expression is allocated a unique ID number.
 Simply editing an expression, such as changing its children or editing its text
 leaves the ID intact, but creating a new expression, or copying one from the
 \hyperref[soln:clipboard_list]{clipboard list} creates a new ID.
@@ -183,8 +183,6 @@ leaves the ID intact, but creating a new expression, or copying one from the
 Any code committed to Kale's Github repository%
 \footnote{\url{https://github.com/mgoszcz2/kale}}
 is automatically built by the Travis \ac{ci} service, which runs tests, bundles
-and optimises code using
-\href{https://webpack.js.org/}{webpack}
-and deploys the resulting site to
-\href{https://pages.github.com/}{Github Pages}%
-.
+and optimises code using \href{https://webpack.js.org/}{webpack},
+as well as deploys the resulting site to
+\href{https://pages.github.com/}{Github Pages}.

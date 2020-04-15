@@ -8,10 +8,11 @@ algorithm is quite efficient.
 
 \section{Editing}
 Many features work in tandem to make the editing experience as complete as it
-is now. Drag and drop is simple to use, supports touch-screen devices and
+%TODO: Drag and drop vs drag-and-drop
+is now. Drag and drop is simple to use, supports touch-screen devices, and
 common idioms like pressing~\keys{\ctrl} to copy instead of move an expression.
 Most features can be accessed in variety of ways, catering to an extensive
-set of skill levels, the 
+set of skill levels. %TODO: Finish nicely
 
 
 \section{Editor features}
@@ -23,6 +24,7 @@ set of skill levels, the
 Kale provides a substantial set of features one would expect from a modern
 programming editor. Auto-complete suggestions are provided when typing
 function expressions. Functions can be quickly opened or created by using an
+%TODO: Look at this sentence, two 'and's.
 easily accessible fuzzy matching search box. The editor is available in both
 Light and Dark themes, to match the taste of the user and the \ac{ui} is
 reasonably polished.
@@ -34,7 +36,7 @@ On touch-screen devices, buttons and menus follow
 44pt x 44pt tappable area recommendations. By using the HTML
 \fnurl{Pointer Events}{https://www.w3.org/TR/pointerevents/} API,
 all reasonable input devices are support for drag and drop, including dragging
-multiple expression simultaneously should the user so desire.
+multiple expression simultaneously, should the user so desire.
 
 \section{Workflow}
 Modern editors often provide a tabbing system, to allow
@@ -58,9 +60,9 @@ language, helping to broaden the appeal of the new editing paradigm.
 \section{Implementation}
 React proved to be excellent choice as the \ac{ui} library. While there exists a
 certain impedance mismatch between the Kale layout algorithm and React's programming
-style, in practice this wasn't much of an issue, given how custom Kale's layout
+style, in practice this was not much of an issue, given how custom Kale's layout
 algorithm is. Typescript and React are mature technologies that made much of
-the rapid iteration essential to developing Kale into the editor it is today possible.
+the rapid iteration, essential to developing Kale into the editor it is today, possible.
 
 %TODO: Cite this all.
 An earlier version of Kale was written in the Rust programming language. Rust is a

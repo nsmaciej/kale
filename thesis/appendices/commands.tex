@@ -1,10 +1,11 @@
+%TODO: Consistant imperative tone
 \chapter{Kale commands}
 \newcommand{\shortcut}[3]{\section[#1]{#1 \hfill #2}\label{cmd:#3}}
 \newcommand{\pskip}[1]{{\bigskip\par\noindent #1}}
 
 Commands different by only a shift key \keys{\shift} are closely
 related. Commands that change the selection are usually not listed in the
-context menu. Where applicable mnemonics are represented by a \textbf{B}old
+context menu. Applicable mnemonics are represented by a \textbf{B}old
 letter.
 
 \shortcut{Up / Down}{\ak{^} / \ak{v}}{up_down}
@@ -76,7 +77,8 @@ This is similar to the "Barf" operation in the Emacs Par Edit mode.
 \shortcut{New Line Below / Above}{\keys{N} / \keys{\shift + N}}{new_line}
 Inserts a new list expression around the current selection. Note that "list
 merging" is performed, merging immediate list children of a list with their
-parent. This means that, for example, invoking this command on an expression
+%TODO: "to the" twice.
+parent. For example, invoking this command on an expression
 which already has a list as its parent, will not create a new list, instead
 appending a new sibling to the selection to the current list.
 
@@ -107,7 +109,7 @@ something new, but using the old expression somewhere else.
 Opens an editor with the function name of the currently selected expression.
 If a function with a given name does not exist in the current workspace, one is
 created.
-If an editor with a given function is already opened, no new editor is created,
+If an editor with a given function is already opened, no new editor is created;
 instead focus is moved to the closest editor displaying that function.
 
 \pskip{This command can also be triggered by middle-clicking the expression.}
@@ -115,6 +117,7 @@ instead focus is moved to the closest editor displaying that function.
 \shortcut{New Argument After / Before}{\keys{I} / \keys{\shift + I}}{new_arg}
 Creates a new sibling space before or after the currently selected
 expression. This is command largely superseded by the
+% Comma before "but,"?
 \hyperref[cmd:smart_space]{\say{Smart Space}} \keys{\SPACE} action, but can be
 useful for creating multiple consecutive spaces or if a sibling is desired
 instead of a child and the currently selected expression is a function call.
