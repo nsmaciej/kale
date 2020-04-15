@@ -316,6 +316,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         // Demo things that should be moved to the toy-box.
         demoAddVariable: (e: ExprId) => this.replaceAndEdit(e, new E.Variable(""), true),
         demoAddString: (e: ExprId) => this.replaceAndEdit(e, new E.Literal("", Type.Text), true),
+        demoAddNumber: (e: ExprId) => this.replaceAndEdit(e, new E.Literal("", Type.Num), true),
         showDebugOverlay: () =>
             this.setState({ showingDebugOverlay: !this.state.showingDebugOverlay }),
     };
@@ -334,6 +335,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         g: "demoAddString",
         i: "insert",
         I: "insertBefore",
+        m: "demoAddNumber",
         n: "newLine",
         N: "newLineBefore",
         o: "openEditor",
@@ -411,6 +413,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         null,
         { action: "demoAddVariable", label: "Make a Variable..." },
         { action: "demoAddString", label: "Make a String..." },
+        { action: "demoAddNumber", label: "Make a Number..." },
         { action: "smartMakeCall", label: "Turn Into a Function Call..." },
         { action: "moveToParent", label: "Replace the Parent", enabled: this.disableForTopLevel },
     ];
@@ -570,7 +573,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
             { label: "Function Call", expr: new E.Call(""), keyEquivalent: "f" },
             { label: "Variable", expr: new E.Variable(""), keyEquivalent: "v" },
             { label: "Text", expr: new E.Literal("", Type.Text), keyEquivalent: "g" },
-            { label: "Number", expr: new E.Literal("", Type.Num) },
+            { label: "Number", expr: new E.Literal("", Type.Num), keyEquivalent: "m" },
         ];
 
         return (

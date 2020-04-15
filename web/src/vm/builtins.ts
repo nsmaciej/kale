@@ -108,11 +108,14 @@ export default {
     ),
 
     // I/O.
-    Print: builtin(
-        Type.Null,
-        [Type.Text],
+    Print: rawBuiltin(
+        [null],
         // eslint-disable-next-line no-console
-        (show) => alert(show),
+        (args) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            alert((args[0].value as any).toString());
+            return { type: Type.Null, value: null };
+        },
         Category.General,
         "Show a message in the browser",
     ),
