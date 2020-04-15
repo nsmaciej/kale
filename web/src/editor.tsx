@@ -154,7 +154,12 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         // We cannot use the .replace here because we need the next expr for creating the editor.
         const nextWithPrevId = next.resetIds().replaceId(prevId);
         this.update(prevId, () => nextWithPrevId);
-        this.createInlineEditor(nextWithPrevId, created);
+        //TODO: Don't do this.
+        // Please forgive me. Make sure the editor is created with the area information for the
+        // correct expr type.
+        setTimeout(() => {
+            this.createInlineEditor(nextWithPrevId, created);
+        }, 100);
     }
 
     private insertBlankAsSiblingOf(target: ExprId, right: boolean) {
