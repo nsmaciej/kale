@@ -320,7 +320,7 @@ function argsEquals(prev: LayoutExprArgs, next: LayoutExprArgs) {
     function highlightsBlanks(part: LayoutProps) {
         if (part.highlights == null) return false;
         for (const pair of part.highlights) {
-            if (expr.get(pair[0]) instanceof E.Blank) return true;
+            if (expr.findId(pair[0]) instanceof E.Blank) return true;
         }
         return false;
     }
