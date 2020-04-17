@@ -128,6 +128,36 @@ drop areas where one normally would not exist.
 re-creating the same text style as used during layout. This field is set by the
 text layout methods to keep track of the exact text-styling used.
 
+\subsection{Bounding box refinement}
+\begin{wrapfigure}[14]{r}{3cm}
+\centering
+\includegraphics[scale=0.35]{refine_example}
+\vspace{-4mm}
+\caption{\raggedright Expression to be refined}
+\label{refine:example}
+\bigskip
+\includegraphics[scale=0.35]{refine_before}
+\vspace{-4mm}
+\caption{\raggedright Before refinement}
+\label{refine:before}
+\bigskip
+\includegraphics[scale=0.35]{refine_after}
+\vspace{-4mm}
+\caption{\raggedright After refinement}
+\label{refine:after}
+\end{wrapfigure}
+When laying out inline expressions the layout engine does not know how
+tall the underlines under under each expression will be until its first
+non-inline parent is rendered. Once this happens, bounding box refinement
+is performed: all inline children of the rendered non-inline
+expression have their heights adjusted to match their non-inline ancestor.
+
+\autoref{refine:example} shows an example expression. Without the
+refinement process the bounding boxes of |a|'s children are too short, as seen
+in \autoref{refine:before}. This would lead to expression highlights potentially
+overlapping with the underlines. \autoref{refine:after} shows the bounding boxes
+after the refinement has been performed. 
+
 \subsection{Text metrics}
 
 Creating the \texttt{Layout} data structure for text elements requires
@@ -146,7 +176,7 @@ library, using \ac{svg}'s |getComputedTextLength| API and an invisible
 |<svg>| element onto which new pieces of text are rendered. 
 
 
-
+\needspace{7cm}
 \section{Drag and drop}
 \label{impl:dnd}
 \begin{wrapfigure}[10]{r}{0pt}
@@ -179,7 +209,7 @@ leaves the ID intact, but creating a new expression, or copying one from the
 
 
 
-\section{Deployment}
+\section{Web deployment}
 Any code committed to Kale's Github repository%
 \footnote{\url{https://github.com/mgoszcz2/kale}}
 is automatically built by the Travis \ac{ci} service, which runs tests, bundles
