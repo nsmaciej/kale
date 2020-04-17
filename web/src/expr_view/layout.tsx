@@ -39,7 +39,8 @@ function setAreasHeightInPlace(areas: Area[], height: number) {
     }
 }
 
-function materialiseUnderlines(theme: KaleTheme, parent: Layout) {
+function materialiseUnderlines(theme: KaleTheme, props: LayoutProps, parent: Layout) {
+    if (props.inlineParens) return parent;
     const layout = parent.withNoUnderlines();
     const gap = theme.layout.underlineSpacing;
     parent.underlines.forEach((x, i) => {
@@ -158,7 +159,9 @@ class ExprLayout implements ExprVisitor<Layout> {
     visitList(expr: E.List): Layout {
         const layout = vstack(
             this.t.layout.lineSpacing,
-            expr.list.map((x) => materialiseUnderlines(this.t, this.layoutInner(expr, x))),
+            expr.list.map((x) =>
+                materialiseUnderlines(this.t, this.props, this.layoutInner(expr, x)),
+            ),
         );
         const line = new Rect(new Offset(3, 5), new Size(0, layout.size.height - 8));
         // Only thing outside layoutText checking this.
@@ -289,7 +292,7 @@ class ExprLayout implements ExprVisitor<Layout> {
                 fnName,
                 vstack(
                     this.t.layout.lineSpacing,
-                    args.map((x) => materialiseUnderlines(this.t, x)),
+                    args.map((x) => materialiseUnderlines(this.t, this.props, x)),
                 ),
             );
         }
@@ -345,11 +348,8 @@ function argsEquals(prev: LayoutExprArgs, next: LayoutExprArgs) {
 const emptyProps = {};
 //TODO: One day implement this as a hook with useMemo now that ExprView is a functional component.
 export default memoizeOne(
-    function layoutExpr(theme: KaleTheme, expr: Expr, props?: LayoutProps): Layout {
-        return materialiseUnderlines(
-            theme,
-            new ExprLayout(theme, props ?? emptyProps).layout(expr),
-        );
+    function layoutExpr(theme: KaleTheme, expr: Expr, props: LayoutProps = emptyProps): Layout {
+        return materialiseUnderlines(theme, props, new ExprLayout(theme, props).layout(expr));
     },
     // This library is badly typed.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
