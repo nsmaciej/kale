@@ -2,7 +2,7 @@
 
 With the currently implemented features, Kale forms a completely
 usable visual programming environment. Users are able to create
-arbitrary expressions, and manipulate them with relative ease, without
+arbitrary expressions, and manipulate them with relative ease without
 ever encountering a single syntax error. Kale is stable and the layout
 algorithm is quite efficient.
 
@@ -25,24 +25,24 @@ programming editor. Auto-complete suggestions are provided when typing
 function expressions. Functions can be quickly opened or created by using an
 %TODO: Look at this sentence, two 'and's.
 easily accessible fuzzy matching search box. The editor is available in both
-Light and Dark themes, to match the taste of the user and the \ac{ui} is
-reasonably polished.
+Light and Dark themes, to match the taste of the user; and provides a
+reasonably polished \ac{ui}.
 
 \section{User interface}
 On touch-screen devices, buttons and menus follow
 \fnurl{Apple Human Interface Guidelines}
 {https://developer.apple.com/design/human-interface-guidelines/ios/visual-design/adaptivity-and-layout/}
-44pt x 44pt tappable area recommendations. By using the HTML
+44pt x 44pt tappable area recommendations. By using the \ac{html}
 \fnurl{Pointer Events}{https://www.w3.org/TR/pointerevents/} API,
-all reasonable input devices are support for drag and drop, including dragging
+all reasonable input devices are supported for drag and drop, including dragging
 multiple expression simultaneously, should the user so desire.
 
 \section{Workflow}
-Modern editors often provide a tabbing system, to allow
+Modern editors often provide a tabbing system to allow
 users to work on several files at once. While Kale's editing experience
 is completely function focused, a single function stack makes it hard
 to develop larger projects. A tabbing system, switching between several
-different function stacks would greatly help scaling Kale to work on bigger,
+different function stacks, would greatly help scaling Kale to work on bigger,
 more challenging projects.
 
 \section{Kale language}
@@ -67,4 +67,4 @@ the rapid iteration, essential to developing Kale into the editor it is today, p
 An earlier version of Kale was written in the Rust programming language. Rust is a
 modern, powerful and safe programming language, which recently gained a WebAssembly
 compilation target. Unfortunately Rust's immature web-library ecosystem,
-combined with its strict memory model made it hard to implement a complete editor in.
+combined with its strict memory model, made it hard to implement a complete editor in.

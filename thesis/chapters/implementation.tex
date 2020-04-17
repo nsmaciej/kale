@@ -11,15 +11,15 @@
 \label{fig:layout}
 \end{wrapfigure}
 \footnotetext{The layout debug overlay is always available within Kale.
-To access it, right click any expression, then press \keys{\ctrl}
+To access it, right click any expression, then hold \keys{\ctrl}
 (or \keys{\Alt} on macOS) to reveal a new hidden
 \say{Toggle the Debug Overlay} option.}
 \medskip
 
 A key component of the layout engine is the notion of \say{inline} expressions.
 An inline expression is one which can be easily displayed inside another inline
-expression. In \autoref{fig:layout}, inline expressions are those with a
-\textcolor{blue}{blue} outline, while those with a \textcolor{red}{red} outline
+expression. In \autoref{fig:layout} inline expressions are those with a
+\textcolor{blue}{blue} outline while those with a \textcolor{red}{red} outline
 are non-inline.
 
 \hyperref[expr:literal]{Literals}, \hyperref[expr:blank]{blanks} and
@@ -47,7 +47,7 @@ including enabling in-line editing and supporting drag and drop requires a
 complex layout data structure.
 Because parent expressions like function calls need access to their children's
 layout information to make layout decisions, it is not sufficient to simply
-treat Kale expressions as React components to be rendered. Instead the
+treat Kale expressions as React components to be rendered. Instead, the
 \texttt{Layout} class is responsible for keeping track of state required
 of each expression and \ac{svg} elements by their parents.
 
@@ -109,7 +109,7 @@ above.
 
 \field{isUnderlined} Not every inline layout element needs to create
 a new underline. Kale
-chooses to not underline atomic expressions like spaces, literals and variable
+chooses to not underline atomic expressions like spaces, literals, and variable
 names.
 
 \field{expr} Generating the |areas| field requires keeping track of the
@@ -121,7 +121,7 @@ optionally an underline.
 expressions allow inserting a new dropped expression between sibling
 expressions. However, when using drag and drop over function call expressions,
 it is desirable to be able to create new \emph{child} expressions. This field
-complements the |expr| field, and allows the function calls's text to have a
+complements the |expr| field and allows the function calls's text to have a
 drop areas where one normally would not exist.
 
 \field{text} Creating the \hyperref[soln:field_editing]{field editor} requires

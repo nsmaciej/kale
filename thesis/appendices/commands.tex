@@ -1,4 +1,4 @@
-%TODO: Consistant imperative tone
+% Use the imperative mood throughout.
 \chapter{Kale commands}
 \newcommand{\shortcut}[3]{\section[#1]{#1 \hfill #2}\label{cmd:#3}}
 \newcommand{\pskip}[1]{{\bigskip\par\noindent #1}}
@@ -30,10 +30,10 @@ commands.
 
 \shortcut{Add Space or Move Space Up}{\keys{\SPACE}}{smart_space}
 This is also known as the \say{smart space}. If the currently selected
-expression is a space, \hyperref[cmd:move_up]{\say{Move Up}} is ran on the
-current selection. If the selection is a function call, a new child space
-is added in the first argument. Otherwise a new sibling space is inserted to
-the right of the current selection. 
+expression is a space, run \hyperref[cmd:move_up]{\say{Move Up}} on the
+current selection. If the selection is a function call, add a new
+child space in the first argument. Otherwise insert a new sibling
+space to the right of the current selection.
 
 Because this command will not create a new sibling to function calls, the 
 \hyperref[cmd:new_line]{\say{New Line Below /Above}}
@@ -41,10 +41,10 @@ Because this command will not create a new sibling to function calls, the
 command is also useful to know.
 
 \shortcut{Edit}{\keys{\return}}{edit}
-This can also be invoked by double clicking on an expression. Edits the text
+This can also be invoked by double clicking on an expression. Edit the text
 inside the expression.
 
-If the expression is a space, instead opens a new menu,
+If the expression is a space, open a new menu instead,
 letting you select the type of expression with which to replace the space. 
 Once a selection is made editing proceeds as normal, with the exception of
 editing function expressions, which when the edit is complete, will create
@@ -75,7 +75,7 @@ This is similar to the "Barf" operation in the Emacs Par Edit mode.
 
 
 \shortcut{New Line Below / Above}{\keys{N} / \keys{\shift + N}}{new_line}
-Inserts a new list expression around the current selection. Note that "list
+Insert a new list expression around the current selection. Note that "list
 merging" is performed, merging immediate list children of a list with their
 %TODO: "to the" twice.
 parent. For example, invoking this command on an expression
@@ -106,39 +106,38 @@ to \textbf{S}huffle expressions around, replacing the current selection with
 something new, but using the old expression somewhere else.
 
 \shortcut{Open Definition}{\keys{O}}{open_def}
-Opens an editor with the function name of the currently selected expression.
-If a function with a given name does not exist in the current workspace, one is
-created.
-If an editor with a given function is already opened, no new editor is created;
-instead focus is moved to the closest editor displaying that function.
+Open an editor with the function name of the currently selected expression.
+If a function with a given name does not exist in the current workspace,
+create one.
+If an editor with a given function is already opened, do not create a new editor,
+instead move the focus to the closest editor displaying the selected function.
 
 \pskip{This command can also be triggered by middle-clicking the expression.}
 
 \shortcut{New Argument After / Before}{\keys{I} / \keys{\shift + I}}{new_arg}
-Creates a new sibling space before or after the currently selected
+Create a new sibling space before or after the currently selected
 expression. This is command largely superseded by the
-% Comma before "but,"?
-\hyperref[cmd:smart_space]{\say{Smart Space}} \keys{\SPACE} action, but can be
+\hyperref[cmd:smart_space]{\say{Smart Space}} \keys{\SPACE} action but can be
 useful for creating multiple consecutive spaces or if a sibling is desired
 instead of a child and the currently selected expression is a function call.
 
 \shortcut{Comment}{\keys{Q}}{comment}
-Edits the comment on the currently selected expression. If no comment exists,
-one is created. Note that comments on spaces and literals are handled
-specially. An empty comment is automatically removed.
+Edit the comment on the currently selected expression. If no comment exists,
+create one. Note that comments on spaces and literals are handled
+specially. Any empty comments are automatically removed.
 
 \shortcut{Disable}{\keys{\textbackslash}}{disable}
 Disable the currently selected expression, enabling it if it is already
 disabled. Spaces cannot be disabled.
 
 \shortcut{Make a Variable...}{\keys{V}}{make_var}
-Replaces the currently selected expression with a new variable expression, then
-performs the \hyperref[cmd:edit]{\say{Edit}}~\keys{\return} command.
+Replace the currently selected expression with a new variable expression, then
+perform the \hyperref[cmd:edit]{\say{Edit}}~\keys{\return} command.
 
 \shortcut{Make a String...}{\keys{G}}{make_string}
-Replaces the currently selected expression with a new string literal
+Replace the currently selected expression with a new string literal
 expression, then
-performs the \hyperref[cmd:edit]{\say{Edit}}~\keys{\return} command.
+perform the \hyperref[cmd:edit]{\say{Edit}}~\keys{\return} command.
 
 \shortcut{Turn into a Function Call}{\keys{F}}{make_function}
 If the currently selected expression is a space, replace it with a function
@@ -158,9 +157,9 @@ currently selected expression might have. If no left or right sibling
 exists, move the previous or next expression by pre-order traversal.
 
 \shortcut{Open a Function}{\keys{/}}{search_functions}
-Switches focus from the current editor to the "Open a Function..." search
+Switch focus from the current editor to the \say{Open a Function...} search
 field. From within the field you can use~\ak{^} and~\ak{v} to move between
-suggestions, then press \keys{\return} to confirm.
+suggestions, then press \keys{\return} to confirm the selected suggestion.
 
 \shortcut{Focus on Editor Above / Below}
 	{\keys{\shift + K} / \keys{\shift + J}}{move_focus}

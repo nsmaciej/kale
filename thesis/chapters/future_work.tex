@@ -16,20 +16,27 @@ would be investigated might be:
 \subsection{Drag and drop improvements}
 Currently due to the limitations of drag and drop implementation, it is
 impossible to insert new expression as the last sibling of expression lists
-and function calls.
+and function calls. This can be viewed as a limitation of the
+structural-underlines system as, unlike with parentheses, there is no
+clear point at which each sub-expression ends. In the future this might be
+solved by making the dropped expression the last child of the inner-most
+function call or providing a disambiguating \ac{ui} while a drag is in progress.
 
 \subsection{Integrated debugging}
-%TODO: Include a screenshot of a highlighted expr to show how breakpoints might
-% work
+\begin{wrapfigure}{r}{6cm}
+	\includegraphics[width=6cm]{breakpoints}
+	\caption{A prototype of expression breakpoints}
+\end{wrapfigure}
 Right now the runtime capabilities provided by Kale are quite basic. While
 effort was put into making the error messages somewhat descriptive, there
-are advanced debugging capabilities available. This is unfortunate as
+are no advanced debugging capabilities available. This is unfortunate as
 expression-oriented selection lends itself nicely to visualising the currently
-execution expression or setting breakpoints. Modern text-oriented debuggers use
-inline markers to try and indicate which expression the debugger is on, a
-feature called \fnurl{\say{inline breakpoints}}
-{https://developers.google.com/web/updates/2019/04/devtools\#inline}, which
-%TODO: finish
+executing expression and setting new breakpoints. Modern text-oriented debuggers
+use various inline markers
+\fnurl{\say{inline breakpoints}}{https://developers.google.com/web/updates/2019/04/devtools}.
+to try to indicate what expression the execution is halted on. In Kale,
+setting a new breakpoint would follow from the selection mechanism and use the
+same highlighting machinery.
 
 \subsection{Fluid field editor}
 \say{Fluid entry} is a concept for simplifying entering new expressions. Right
@@ -43,9 +50,8 @@ expressions, but for many expressions they feel like an extra step that would
 not be necessary under a normal text editor.
 
 The idea behind the \say{fluid field editor} would be to eliminate these
-shortcuts, instead delaying the decision on what type of expression
-%TODO: Shorten?
-should be created, until the user has typed a character.
+shortcuts. Instead, delaying the decision on what type of expression
+should be created, until the user has typed at least one character.
 \medskip
 \begingroup
 \def\arraystretch{1.2}

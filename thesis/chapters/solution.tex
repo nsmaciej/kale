@@ -43,7 +43,7 @@ encoding the variable name it represents.
 Are analogous to Lisp's S-expressions but with a constraint that the first
 value must be a function identifier. While this makes higher-level functions
 %TODO: Quote the CL docs.
-somewhat harder to write (simillary to Common Lisp), it allows for a more
+somewhat harder to write (similarly to Common Lisp), it allows for a more
 consistent navigation system by removing the distinction between a function
 call expression being selected or just the function itself.
 
@@ -255,8 +255,8 @@ mathematical purity, this approach deals poorly with more complex refactorings
 and requires colour vision.
 
 Kale's solution to this problem comes in the form of the \textbf{Clipboard Stack}. The
-clipboard stack is a stack of expressions, shown on the right-hand side of the
-screen. Kale provides a \hyperref[cmd:copy]{\say{Copy}}~\keys{C} command, which
+clipboard stack is a stack of expressions shown on the right-hand side of the
+screen. Kale provides a \hyperref[cmd:copy]{\say{Copy}}~\keys{C} command which
 copies the currently
 selected expression to the top of the clipboard stack. To facilitate more
 destructive refactoring, Kale provides a palette of deletion commands:
@@ -269,9 +269,9 @@ destructive refactoring, Kale provides a palette of deletion commands:
 \end{itemize}
 
 Expressions on the clipboard stack can replace the currently selected
-expression by using one of nine \hyperref[cmd:paste]{\say{paste}}~
-\keys{0}~--~\keys{9} commands, with each command prominently displayed
-to the right of each expression it would paste.
+expression by using one of nine \hyperref[cmd:paste]{\say{Paste}}~
+\keys{0}~--~\keys{9} commands, with each command's shortcut prominently
+displayed to the right of each expression it would paste.
 
 Sometimes it is beneficial to be able to paste the same expression multiple
 times. Expression on the clipboard stack can be pinned using the Pin-shaped
@@ -283,24 +283,32 @@ They are also not cleared by the \say{Clear All} button.
 %TODO: Show a sequence explaining how this works.
 %TODO: Mention how this isn't a problem in scratch since you can't add new
 % arguments.
-In contemporary programming environments various punctuation marks are used to
-create new expressions. This presents a challenge for an editor like Kale, how
-to create new expressions. At first this was implemented as a set of
-expression kind specific operations like \say{Create new child}, \say{Create
+In text-based programming languages various punctuation marks are used to
+indicate new statements and function arguments.
+This presents a challenge for an editor like Kale; How
+to let the user indicate that a new expression should be created.
+At first this was implemented as a set of
+expression-kind specific operations: \say{Create new child}, \say{Create
 new sibling}, and \say{Create new line}. However this proved unintuitive as
-unlike classical punctuation, the keys for these operations did not correspond
-to any character on the screen, thus making it hard to memorise the shortcuts.
+unlike normal punctuation, the shortcut keys for these operations did not correspond
+to any character produced on the screen, making them difficult to memorize.
+Additionally, while these actions were more powerful than their text counterparts,
+it was unintuitive how the command needed to create a new argument changed
+depending on whether a function call or one of its arguments was selected.
 
-Kale's solution to this problem is the \textbf{Smart Space}. Smart space is a
+Kale's current solution to this problem is the
+\hyperref[cmd:smart_space]{\say{Smart Space}} command. Smart space is a
 high-level operation that attempts to perform a reasonable action no matter the
-selection.
+selection:
 
 \begin{samepage}
-\begin{itemize}[noitemsep]
-	\item If a function is selected, create a new child space in the first
+\begin{itemize}
+	\item If a function is selected create a new child space in the first
 argument.
-	\item If a space is selected, use the
-	\hyperref[cmd:up_down]{\say{Move Up}}~\keys{\shift + P} operation.
+	\item If a space is selected use the
+	\hyperref[cmd:up_down]{\say{Move Up}}~\keys{\shift + P} command,
+	making the currently selected expression the last sibling of its
+	current parent.
 	\item Otherwise, create a new sibling space to the right of the selection, for
 example creating a new argument.
 \end{itemize}
