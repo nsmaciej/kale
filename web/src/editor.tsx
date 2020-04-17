@@ -23,7 +23,7 @@ import { Type, Func, assertFunc, Value, Builtin } from "vm/types";
 import { specialFunctions } from "vm/interpreter";
 
 import { useSelector } from "state/root";
-import Clipboard, { ClipboardEntry } from "state/clipboard";
+import Clipboard from "state/clipboard";
 import Workspace, { WorkspaceValue } from "state/workspace";
 
 import EditorStack, { EditorStackContext } from "contexts/editor_stack";
@@ -36,6 +36,7 @@ interface EditorState {
     editing: { expr: ExprId; created: boolean } | null;
     showingDebugOverlay: boolean;
     showInlineParens: boolean;
+    screenshotMode: boolean;
     blankPopover: ExprId | null;
     // Highlights.
     selection: ExprId;
@@ -67,8 +68,10 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         foldingComments: false,
         editing: null,
         blankPopover: null,
+        // Hidden debug stuffs.
         showingDebugOverlay: false,
         showInlineParens: false,
+        screenshotMode: false,
         // Highlights.
         selection: this.expr.id,
         hoverHighlight: null,
@@ -322,6 +325,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         showDebugOverlay: () =>
             this.setState({ showingDebugOverlay: !this.state.showingDebugOverlay }),
         toggleInlineParens: () => this.setState({ showInlineParens: !this.state.showInlineParens }),
+        toggleScreenshotMode: () => this.setState({ screenshotMode: !this.state.screenshotMode }),
     };
 
     // See https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values.
@@ -401,6 +405,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         { action: "barfUp", label: "Move Up", enabled: this.disableForTopLevel },
         { action: "showDebugOverlay", label: "Toggle the Debug Overlay", hidden: true },
         { action: "toggleInlineParens", label: "Toggle the Inline Parentheses", hidden: true },
+        { action: "toggleScreenshotMode", label: "Toggle Screenshot Mode", hidden: true },
         null,
         { action: "delete", label: "Delete" },
         { action: "move", label: "Cut" },
@@ -603,12 +608,14 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         const highlights: [ExprId, Highlight][] = [];
         const hl = this.props.theme.highlight;
         // Highlights pushed later have higher priority.
-        if (this.state.hoverHighlight !== null) {
+        if (this.state.hoverHighlight !== null && !this.state.screenshotMode) {
             highlights.push([this.state.hoverHighlight, hl.hover]);
         }
         // Preferablly this would be above the hover-highlight, but the blank hover-highlight has a
         // solid background, which would cover the blue-selection effect.
-        highlights.push([this.state.selection, hl.selection]);
+        if (!this.state.screenshotMode) {
+            highlights.push([this.state.selection, hl.selection]);
+        }
         if (this.state.blankPopover !== null) {
             highlights.push([this.state.blankPopover, hl.contextMenu]);
         }
@@ -643,7 +650,11 @@ class Editor extends PureComponent<EditorProps, EditorState> {
                 tabIndex={0}
                 ref={this.attachRef}
                 // Needed for positioning the inline editor.
-                style={{ position: "relative", width: "max-content" }}
+                style={{
+                    position: "relative",
+                    width: "max-content",
+                    margin: this.state.screenshotMode ? 100 : 0,
+                }}
             >
                 <ExprView
                     widePadding
