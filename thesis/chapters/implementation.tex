@@ -99,7 +99,7 @@ Once underlines are finally drawn, the stack is cleared.
 
 \field{areas} Expression areas are the aggregation of all the layout element
 data collected up to a certain point in the rendering process. It has a
-variety of uses throughout Kale including, drag and drop hit-testing and inline
+variety of uses throughout Kale including, drag-and-drop hit-testing and inline
 data used for the~\ak{^} and~\ak{v} traversal. Kale supports two kinds of
 areas: expression areas and \say{gap} areas used for implementing
 \hyperref[impl:dnd]{drag and drop}.
@@ -117,7 +117,7 @@ expression each layout element \say{belongs to}. Setting this field indicates
 to the layout system that this layout element should be assigned an area and
 optionally an underline.
 
-\field{partOfExpr} Drag and drop \hyperref[layout:areas]{gap areas} for most
+\field{partOfExpr} Drag-and-drop \hyperref[layout:areas]{gap areas} for most
 expressions allow inserting a new dropped expression between sibling
 expressions. However, when using drag and drop over function call expressions,
 it is desirable to be able to create new \emph{child} expressions. This field
@@ -151,10 +151,10 @@ library, using \ac{svg}'s |getComputedTextLength| API and an invisible
 \label{impl:dnd}
 \begin{wrapfigure}[10]{r}{0pt}
 \includegraphics[width=7cm]{dnd_gaps}
-\caption{The expression from \autoref{fig:layout} showing drag and drop
+\caption{The expression from \autoref{fig:layout} showing drag-and-drop
 insertion slots.}
 \end{wrapfigure}
-The area system is used to create drag and drop areas in-between expressions.
+The area system is used to create drag-and-drop areas between expressions.
 Each area keeps track of its related expression, and whether dropping an
 expression on it should cause the dropped expression to be added as a
 sibling or a child of that expression.
