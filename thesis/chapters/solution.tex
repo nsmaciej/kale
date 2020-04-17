@@ -17,14 +17,9 @@ perfect fit for Kale.%
 Each expression within Kale belongs to one of five categories.
 
 \newcommand{\exprfig}[1]{
-%  \me
-  \begin{wrapfigure}{l}{0pt}
-%  \begin{flushright}
+	\begin{wrapfigure}{l}{0pt}
     \includegraphics[scale=0.35]{structure/#1}
-%  \end{flushright}
-\end{wrapfigure}
-%  \vspace{-3ex}
-
+	\end{wrapfigure}
 }
 \subsection{Literals}
 \label{expr:literal}
@@ -75,10 +70,11 @@ complex nesting level syntax is difficult to express well visually. Kale
 %TODO: cite the paper on scoping
 attempts to make scoping more visible while also providing a visually clean
 way of representing the \texttt{progn} (also called \texttt{do}) macro,
-through the expression list structure.
-
-The expression list structure adheres to two invariants:
-\begin{itemize}[noitemsep]
+through the expression list structure. Each list contains at least two
+expression and introduces a new lexical scope. This makes it easy to explain
+Kale's scoping rules visually. More precisely, each expression list
+adheres to two invariants:
+\begin{itemize}
 	\item Every list must have at least two expressions. If there are one or
 	fewer expressions, the list is automatically removed, leaving its content
 	in its place. In Lisp this might be expressed as
@@ -90,24 +86,62 @@ The expression list structure adheres to two invariants:
 	invariant simplifies many commands.
 \end{itemize}
 
-%TODO: Finish this sentance
-Each list introduces a new lexical scope, 
-
-\clearpage
+\needspace{7cm}
 \section{Drag and drop}
-
+% Use LaTeX they said, it will be fun they said.
+\begin{wrapfigure}[7]{r}{6.5cm}
+	\vspace*{-2mm}
+	\centering
+	\begin{minipage}{3cm}
+	\capstart
+	\includegraphics[width=3cm]{dnd_insert}
+	\vspace*{-14mm}
+	\caption{\centering Inserting an expression}
+	\label{dnd:insert}
+	\end{minipage}
+	\begin{minipage}{3cm}
+	\capstart
+	\includegraphics[width=3cm]{dnd_replace}
+	\vspace*{-14mm}
+	\caption{\centering Replacing an expression}
+	\label{dnd:replace}
+	\end{minipage}
+\end{wrapfigure}
 One of the main changes Kale introduces, compared to a normal Lisp editor, is
 drag and drop. It lets novice users effectively manipulate Kale programs
-without prior knowledge of commands like copy and paste. Kale distinguishes
-%TODO: More
-between two types of drag and drop: Replacement and Insertion. 
+without prior knowledge of commands like copy and paste. Unlike the majority
+of other visual programming environments, Kale distinguishes
+between two types of drag and drop: Replacement and Insertion. These can can be
+seen in \autoref{dnd:replace} and \autoref{dnd:insert} respectively.
 
-\section{Layout}
-
-One of the key ideas in Kale is that of structural underlines. As a
-fundamental unit of nesting, parentheses present a number of challenges to a
-user using drag and drop.
-%TODO Talk about in inline, non-inline, underlines optional bubbles.
+\section{Structural underlines}
+% No idea how to put this in a group without breaking wrapfigure.
+\setlength{\columnsep}{25pt}
+\begin{wrapfigure}[8]{r}{6.5cm}
+	\vspace{-3mm}
+	\includegraphics[scale=0.35]{underlines_normal}
+	\vspace{-7mm}
+	\caption{Expression using structural underlines}
+	\label{underlines:normal}
+	\bigskip
+	\includegraphics[scale=0.35]{underlines_parens}
+	\vspace{-12mm}
+	\caption{Equivalent parenthesised expression}
+	\label{underlines:parens}
+\end{wrapfigure}
+%TODO: Cite
+Lisp (on which Kale's expression structured is heavily based on), is known
+for its high number of parentheses. To solve this, Kale expressions rely on
+on the concept of \textbf{Structural underlines}. Any function-call arguments
+to a single line function call expression are underlined. Any child underlines are
+placed \emph{under} their parent underlines. This approach sacrifices some
+vertical space for a clear visual representation of an expression's nesting
+structure. Using structural underlines, the only characters on the screen are
+those that can be directly typed by the user. Operations like
+\hyperref[cmd:move_up]{\say{Move Up}}~\keys{\shift + P}, are also cleanly
+represented by the underlines. Design exploration for this feature can be
+found in figures
+\ref{design:explicit} and \ref{design:implicit}.
 
 \section{Command structure}
 
@@ -204,7 +238,7 @@ eliminates any ambiguity that exists in text-only comments.
 \needspace{7cm}
 \subsection{Clipboard stack}
 \label{soln:clipboard_list}
-\begin{wrapfigure}[15]{R}{0.pt}
+\begin{wrapfigure}[15]{R}{0pt}
 	\includegraphics[width=6.5cm]{clipboard}
 	\caption{The Clipboard Stack}
 \end{wrapfigure}

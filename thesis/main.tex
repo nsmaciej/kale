@@ -42,6 +42,8 @@
 	citecolor={red!50!black},
 	urlcolor={blue!50!black}
 }
+% Make hyperref jump to the float, not just to a caption.
+\usepackage[all]{hypcap}
 % As required by the handbook.
 \usepackage[a4paper, margin=25mm]{geometry}
 % Menus and menu keys. Recommended to load late.
@@ -101,9 +103,6 @@
 }
 
 \begin{document}
-
-% Disable hypens
-\tolerance=9000
 
 \input{titlepage}
 
