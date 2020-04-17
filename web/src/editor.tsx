@@ -35,6 +35,7 @@ interface EditorState {
     foldingComments: boolean;
     editing: { expr: ExprId; created: boolean } | null;
     showingDebugOverlay: boolean;
+    showInlineParens: boolean;
     blankPopover: ExprId | null;
     // Highlights.
     selection: ExprId;
@@ -67,6 +68,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         editing: null,
         blankPopover: null,
         showingDebugOverlay: false,
+        showInlineParens: false,
         // Highlights.
         selection: this.expr.id,
         hoverHighlight: null,
@@ -319,6 +321,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         demoAddNumber: (e: ExprId) => this.replaceAndEdit(e, new E.Literal("", Type.Num), true),
         showDebugOverlay: () =>
             this.setState({ showingDebugOverlay: !this.state.showingDebugOverlay }),
+        toggleInlineParens: () => this.setState({ showInlineParens: !this.state.showInlineParens }),
     };
 
     // See https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values.
@@ -397,6 +400,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
         { action: "openEditor", label: "Open definition", enabled: this.enableForCalls },
         { action: "barfUp", label: "Move Up", enabled: this.disableForTopLevel },
         { action: "showDebugOverlay", label: "Toggle the Debug Overlay", hidden: true },
+        { action: "toggleInlineParens", label: "Toggle the Inline Parentheses", hidden: true },
         null,
         { action: "delete", label: "Delete" },
         { action: "move", label: "Cut" },
@@ -650,6 +654,7 @@ class Editor extends PureComponent<EditorProps, EditorState> {
                     foldComments={this.state.foldingComments}
                     exprAreaMapRef={this.exprAreaMapRef}
                     showDebugOverlay={this.state.showingDebugOverlay}
+                    showInlineParens={this.state.showInlineParens}
                     // Callbacks.
                     onContextMenu={this.onContextMenu}
                     onClick={this.selectExpr}

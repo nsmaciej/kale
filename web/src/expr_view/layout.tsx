@@ -268,7 +268,17 @@ class ExprLayout implements ExprVisitor<Layout> {
         const commentIsInline =
             expr.data.comment == null || this.props.foldComments || this.state.hasListParent;
         if (isCallInline(this.t, args) && commentIsInline) {
-            layout = hstack(TextMetrics.global.space.width, fnName, args);
+            if (this.props.inlineParens) {
+                layout = hstack(
+                    0,
+                    fnName,
+                    this.layoutText(expr, "("),
+                    hstack(TextMetrics.global.space.width, args),
+                    this.layoutText(expr, ")"),
+                );
+            } else {
+                layout = hstack(TextMetrics.global.space.width, fnName, args);
+            }
             // This normally wouldn't matter but if we have a comment the vstack would add another
             // underline we don't want.
             layout.isUnderlined = !this.state.hasListParent;
@@ -294,6 +304,8 @@ export interface LayoutProps {
     focused?: boolean;
     highlights?: readonly [ExprId, Highlight][];
     foldComments?: boolean;
+    /** Render inline parenthesis as a visualisation aid. */
+    inlineParens?: boolean;
 }
 
 type LayoutExprArgs = [KaleTheme, Expr, LayoutProps | undefined];
@@ -311,6 +323,7 @@ function argsEquals(prev: LayoutExprArgs, next: LayoutExprArgs) {
         rhs !== undefined &&
         lhs.exprPropsFor === rhs.exprPropsFor &&
         lhs.foldComments === rhs.foldComments &&
+        lhs.inlineParens === rhs.inlineParens &&
         lhs?.ghost === rhs?.ghost;
     if (!quickCheck) return false;
 

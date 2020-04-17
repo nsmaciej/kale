@@ -69,6 +69,8 @@ interface ExprViewProps {
     foldComments?: boolean;
     /** Should a special debug overlay be shown over this view. */
     showDebugOverlay?: boolean;
+    /** Should parentheses around inline expressions be rendered. */
+    showInlineParens?: boolean;
     /** Use the alternative wide main expr padding. */
     widePadding?: boolean;
 
@@ -104,6 +106,7 @@ export default React.memo(function ExprView({
     persistent,
     scale,
     showDebugOverlay,
+    showInlineParens,
     widePadding,
 }: ExprViewProps) {
     const theme = useTheme();
@@ -369,6 +372,7 @@ export default React.memo(function ExprView({
         focused,
         foldComments,
         ghost,
+        inlineParens: showInlineParens,
         exprPropsFor: immutable ? undefined : exprPropsFor,
         // Pass something that can be momoized if we can.
         highlights: showingMenu || droppable !== null ? finalHighlights : highlights,
